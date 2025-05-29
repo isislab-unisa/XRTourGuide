@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     "unfold",  # before django.contrib.admin
-    'xr2guide_core',
+    # 'xr2guide_core',
     'drf_yasg',
     'location_field.apps.DefaultConfig',
     # "django_jsonform",

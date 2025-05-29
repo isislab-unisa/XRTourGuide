@@ -102,7 +102,7 @@ services:
       /bin/sh -c '
       until /usr/bin/mc config host add myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
         echo "Waiting for MinIO to be ready...";
-        sleep 3;
+        sleep 5;
       done;
       /usr/bin/mc mb --quiet myminio/${AWS_STORAGE_BUCKET_NAME} || true;
       /usr/bin/mc policy set none myminio/${AWS_STORAGE_BUCKET_NAME} || true;
