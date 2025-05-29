@@ -134,7 +134,7 @@ class Waypoint(models.Model):
     coordinates = PlainLocationField(zoom=7, null=True, blank=True)
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints')
     description = models.TextField()
-
+    model_path = models.CharField(max_length=200, blank=False, null=False)
     class Meta:
         db_table = "Waypoint"
         verbose_name = "Waypoint"
