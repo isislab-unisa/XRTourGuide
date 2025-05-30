@@ -12,11 +12,11 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - mysql_data_xr2guide:/var/lib/mysql
+      - mysql_data_xr_tour_guide:/var/lib/mysql
 
   web:
     build: .
-    container_name: xr2guide
+    container_name: xr_tour_guide
     volumes:
       - .:/workspace
       - ./staticfiles:/workspace/staticfiles
@@ -31,8 +31,8 @@ services:
 
   celery:
     build: .
-    container_name: xr2guide_celery
-    command: celery -A xr2guide worker --concurrency=1 --loglevel=info
+    container_name: xr_tour_guide_celery
+    command: celery -A xr_tour_guide worker --concurrency=1 --loglevel=info
     volumes:
       - .:/workspace
     depends_on:
@@ -43,8 +43,8 @@ services:
 
   celery-beat:
     build: .
-    container_name: xr2guide_celery_beat
-    command: celery -A xr2guide beat --loglevel=info
+    container_name: xr_tour_guide_celery_beat
+    command: celery -A xr_tour_guide beat --loglevel=info
     volumes:
       - .:/workspace
     depends_on:
@@ -134,5 +134,5 @@ services:
 
 
 volumes:
-  mysql_data_xr2guide:
+  mysql_data_xr_tour_guide:
   minio_data:

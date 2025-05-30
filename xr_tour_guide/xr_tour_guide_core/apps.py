@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class Xr2GuideCoreConfig(AppConfig):
+class xr_tour_guideCoreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'xr2guide_core'
+    name = 'xr_tour_guide_core'

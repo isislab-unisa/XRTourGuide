@@ -23,3 +23,4 @@ django-nested-admin
 django-redis
 django-celery-beat
 django-multiupload
+django-allauth

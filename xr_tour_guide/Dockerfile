@@ -24,5 +24,5 @@ RUN pip install gunicorn
 
 EXPOSE 8001
 
-CMD sh -c "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8001 xr2guide.wsgi:application"
+CMD sh -c "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8001 xr_tour_guide.wsgi:application"
 # python manage.py init_groups && 

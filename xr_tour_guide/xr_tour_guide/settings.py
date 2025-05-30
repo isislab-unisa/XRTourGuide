@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     "unfold",  # before django.contrib.admin
-    # 'xr2guide_core',
+    # 'xr_tour_guide_core',
     'drf_yasg',
     'location_field.apps.DefaultConfig',
     # "django_jsonform",
@@ -83,7 +83,7 @@ CACHES = {
 }
 
 
-ROOT_URLCONF = 'xr2guide.urls'
+ROOT_URLCONF = 'xr_tour_guide.urls'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760 * 10  # 10 GB
 
 REST_FRAMEWORK = {
@@ -142,7 +142,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'xr2guide.wsgi.application'
+WSGI_APPLICATION = 'xr_tour_guide.wsgi.application'
 
 # Database
 
@@ -198,60 +198,60 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.templatetags.static import static
 UNFOLD = {
-    "SITE_TITLE": "xr2guide Login",
-    "SITE_HEADER": "xr2guide",
+    "SITE_TITLE": "xr_tour_guide Login",
+    "SITE_HEADER": "xr_tour_guide",
     # "SITE_TAGLINE": "Gestione contenuti",
-    # "SITE_LOGO": "/static/viewer/xr2guide.png",
+    # "SITE_LOGO": "/static/viewer/xr_tour_guide.png",
     "SHOW_VIEW_ON_SITE": False,
-    "DASHBOARD_CALLBACK": "xr2guide.views.dashboard_callback",
+    "DASHBOARD_CALLBACK": "xr_tour_guide.views.dashboard_callback",
     "STYLES": [
         lambda request: static("unfold/css/styles.css"),
     ],
     
-    # "SIDEBAR": {
-    #     "show_search": True,
-    #     "show_all_applications": True,
-    #     "navigation": [
-    #         {
-    #             "separator": False,  # Top border
-    #             "collapsible": False,  # Collapsible group of links
-    #             "items": [
-    #                 {
-    #                     "title": _("Dashboard"),
-    #                     "icon": "dashboard",
-    #                     "link": reverse_lazy("admin:index"),
-    #                 },
-    #             ],
-    #         },
-    #         {
-    #             "title": _("Users & Groups"),
-    #             "separator": False,
-    #             "collapsible": True,
-    #             "items": [
-    #                 {
-    #                     "title": _("Users"),
-    #                     "icon": "person",
-    #                     "link": reverse_lazy("admin:auth_user_changelist"),
-    #                 },
-    #                 {
-    #                     "title": _("Groups"),
-    #                     "icon": "group",
-    #                     "link": reverse_lazy("admin:auth_group_changelist"),
-    #                 },
-    #             ],
-    #         },
-    #         {
-    #             "title": _("xr2guide"),
-    #             "separator": False,
-    #             "collapsible": True,
-    #             "items": [
-    #                 {
-    #                     "title": _("xr2guide POI"),
-    #                     "icon": "book",
-    #                     "link": reverse_lazy("admin:xr2guide_core_xr2guide_poi_changelist"),
-    #                 },
-    #             ],
-    #         },
-    #     ],
-    # }
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "separator": False,  # Top border
+                "collapsible": False,  # Collapsible group of links
+                "items": [
+                    {
+                        "title": _("Dashboard"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                ],
+            },
+            {
+                "title": _("Users & Groups"),
+                "separator": False,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Users"),
+                        "icon": "person",
+                        "link": reverse_lazy("admin:auth_user_changelist"),
+                    },
+                    {
+                        "title": _("Groups"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("xr_tour_guide"),
+                "separator": False,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("xr_tour_guide"),
+                        "icon": "book",
+                        "link": reverse_lazy("admin:xr_tour_guide_core_xr_tour_guide_poi_changelist"),
+                    },
+                ],
+            },
+        ],
+    }
 }
