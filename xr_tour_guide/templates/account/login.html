@@ -1,0 +1,43 @@
+{% extends 'registration_base.html' %}
+{% load socialaccount %}
+
+{% block title %}Log In{% endblock %}
+
+{% block registration_content %}
+    <div class="card rounded-4 border-0 shadow-lg">
+        <div class="card-body">
+
+        <p class="lead">Enter username and password!</p>
+        <form class="mb-3 mt-md-4" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <input class="form-control" type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" placeholder="{{ field.label }}">
+                </div>
+            {% endfor %}
+            <p class="small">
+                <a class="text-primary" href="#">Forgot password?</a>
+            </p>
+            <div class="d-grid">
+                <button class="btn btn-primary" type="submit">Log in</button>
+            </div>
+        </form>
+
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+        <hr class="my-4">
+
+        <!-- Login con Google -->
+        <div class="d-grid">
+            <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger">
+                <i class="bi bi-google me-2"></i> Login con Google
+            </a>
+        </div>
+
+        </div>
+    </div>
+{% endblock %}

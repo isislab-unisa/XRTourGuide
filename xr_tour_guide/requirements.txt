@@ -1,0 +1,27 @@
+django
+django-unfold
+dotenv
+gunicorn
+mysqlclient
+whitenoise
+pillow
+django-storages
+boto3
+minio
+celery
+redis
+requests
+certifi
+pip-system-certs
+django-jsonform
+# django-map-widgets
+django-location-field
+djangorestframework
+djangorestframework-simplejwt
+drf-yasg
+django-nested-admin
+django-redis
+django-celery-beat
+django-multiupload
+django-allauth
+cryptography
