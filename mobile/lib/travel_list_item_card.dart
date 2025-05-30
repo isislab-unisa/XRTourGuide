@@ -14,6 +14,10 @@ class TravelListItemCard extends StatelessWidget {
   final double? rating; // Optional rating value
   final int? reviewCount; // Optional review count
   // final bool isFavorite; // Whether to show as favorite
+  final String? creator;
+  final String? lastEdited;
+  final String? totViews;
+
 
   const TravelListItemCard({
     Key? key,
@@ -28,6 +32,9 @@ class TravelListItemCard extends StatelessWidget {
     this.category,
     this.rating,
     this.reviewCount,
+    this.creator,
+    this.lastEdited,
+    this.totViews,
     // this.isFavorite = false,
   }) : super(key: key);
 
@@ -70,25 +77,6 @@ class TravelListItemCard extends StatelessWidget {
                           (height != null ? height! * 0.7 : null),
                     ),
                   ),
-
-                  // Favorite icon (if applicable)
-                  // if (isFavorite)
-                  //   Positioned(
-                  //     right: 10,
-                  //     top: 10,
-                  //     child: Container(
-                  //       padding: const EdgeInsets.all(6.0),
-                  //       decoration: const BoxDecoration(
-                  //         color: Colors.white,
-                  //         shape: BoxShape.circle,
-                  //       ),
-                  //       child: const Icon(
-                  //         Icons.favorite,
-                  //         size: 18,
-                  //         color: Colors.red,
-                  //       ),
-                  //     ),
-                  //   ),
                 ],
               ),
 
@@ -117,30 +105,49 @@ class TravelListItemCard extends StatelessWidget {
 
                             // Rating
                             if (rating != null)
-                              Row(
+                              Column(
                                 children: [
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$rating',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  if (reviewCount != null)
-                                    Text(
-                                      ' ($reviewCount)',
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.amber,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$rating',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      if (reviewCount != null)
+                                        Text(
+                                          ' ($reviewCount)',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      SizedBox(width: 8),
+                                      const Icon(
+                                        Icons.remove_red_eye,
+                                        size: 16,
                                         color: AppColors.textSecondary,
                                       ),
-                                    ),
+                                      Text(
+                                        totViews ?? '0',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      )
+
+                                    ],
+                                  ),
                                 ],
                               ),
                           ],

@@ -1,24 +1,21 @@
+// lib/video_player_widget.dart
+import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
-import 'package:flutter/material.dart';
-import 'package:markdown_widget/markdown_widget.dart';
+import 'app_colors.dart'; // Import AppColors
 
-class CustomVideoPlayerWidget extends StatefulWidget {
+class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
 
-  const CustomVideoPlayerWidget({Key? key, required this.videoUrl})
-    : super(key: key);
+  const VideoPlayerWidget({Key? key, required this.videoUrl}) : super(key: key);
 
   @override
-  State<CustomVideoPlayerWidget> createState() =>
-      _CustomVideoPlayerWidgetState();
+  State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
 }
 
-class _CustomVideoPlayerWidgetState extends State<CustomVideoPlayerWidget> {
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   late VideoPlayerController _videoPlayerController;
   ChewieController? _chewieController;
-  bool _isLoading = true;
-  bool _hasError = false;
 
   @override
   void initState() {
@@ -27,32 +24,28 @@ class _CustomVideoPlayerWidgetState extends State<CustomVideoPlayerWidget> {
   }
 
   Future<void> _initializePlayer() async {
-    try {
-      _videoPlayerController =
-          widget.videoUrl.startsWith('http')
-              ? VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-              : VideoPlayerController.asset(widget.videoUrl);
-
-      await _videoPlayerController.initialize();
-      if (!mounted) return;
-
-      setState(() {
-        _chewieController = ChewieController(
-          videoPlayerController: _videoPlayerController,
-          autoPlay: false,
-          looping: false,
-          // You can add more customization options here
-        );
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
-        print('Error initializing video player: $e');
-      }
+    _videoPlayerController = VideoPlayerController.networkUrl(
+      Uri.parse(widget.videoUrl),
+    );
+    await _videoPlayerController.initialize();
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
+      autoPlay:
+          false, // Don't autoplay when embedded to avoid performance issues with multiple players
+      looping: false,
+      aspectRatio: _videoPlayerController.value.aspectRatio,
+      showControls: true,
+      allowFullScreen: true,
+      // You can customize controls color/theme if needed
+      materialProgressColors: ChewieProgressColors(
+        playedColor: AppColors.primary,
+        handleColor: AppColors.primary,
+        backgroundColor: AppColors.divider,
+        bufferedColor: AppColors.lightGrey,
+      ),
+    );
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -65,49 +58,39 @@ class _CustomVideoPlayerWidgetState extends State<CustomVideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_hasError) {
-      return const Center(
-        child: Text(
-          'Could not load video.',
-          style: TextStyle(color: Colors.red),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'Video Tour',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: AppColors.textPrimary),
+          ),
         ),
-      );
-    }
-    if (_chewieController != null &&
-        _chewieController!.videoPlayerController.value.isInitialized) {
-      return AspectRatio(
-        aspectRatio: _videoPlayerController.value.aspectRatio,
-        child: Chewie(controller: _chewieController!),
-      );
-    } else {
-      return const Center(child: Text('Initializing video...'));
-    }
+        AspectRatio(
+          aspectRatio:
+              _chewieController?.aspectRatio ??
+              16 / 9, // Default aspect ratio while loading
+          child:
+              _chewieController != null &&
+                      _chewieController!
+                          .videoPlayerController
+                          .value
+                          .isInitialized
+                  ? Chewie(controller: _chewieController!)
+                  : Container(
+                    color: AppColors.secondaryBackground,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+        ),
+      ],
+    );
   }
 }
-
-
-// class VideoMarkdownBuilder extends MarkdownElementBuilder {
-//   VideoMarkdownBuilder()
-//     : super(textStyle: const TextStyle()); // Base textStyle, can be anything
-
-//   @override
-//   bool get isBlock => true;
-
-//   @override
-//   List<String> get matchTypes => const <String>['video']; // Matches <video> tag
-
-//   @override
-//   Widget? visitElementAfter(Element element, TextStyle? preferredStyle) {
-//     final String? src = element.attributes['src'];
-//     if (src == null || src.isEmpty) {
-//       return const Text(
-//         'Video source not specified',
-//         style: TextStyle(color: Colors.red),
-//       );
-//     }
-//     return CustomVideoPlayerWidget(videoUrl: src);
-//   }
-// }

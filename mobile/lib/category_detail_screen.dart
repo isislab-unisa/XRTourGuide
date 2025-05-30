@@ -93,6 +93,9 @@ class CategoryDetailScreen extends StatelessWidget {
                               category: tour['subcategory'],
                               description:
                                   'Discover the beauty and history of this amazing destination with our guided tour.',
+                              creator: "Andrea Rossi",
+                              lastEdited: "24/10/2023",
+                              totViews: "100",
                             ),
                       ),
                     );

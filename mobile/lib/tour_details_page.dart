@@ -17,6 +17,9 @@ class Waypoint {
   final LatLng location;
   final List<String> images;
   final String category; // Added category field
+  final String creator;
+  final String lastEdited;
+  final String totViews;
 
   Waypoint({
     required this.title,
@@ -25,6 +28,9 @@ class Waypoint {
     required this.location,
     required this.images,
     this.category = '', // Default empty category
+    required this.creator,
+    required this.lastEdited,
+    required this.totViews,
   });
 }
 
@@ -37,6 +43,9 @@ class TourDetailScreen extends StatefulWidget {
   final List<String> images;
   final String category;
   final String description;
+  final String creator;
+  final String lastEdited;
+  final String totViews;
   final double latitude;
   final double longitude;
 
@@ -50,6 +59,9 @@ class TourDetailScreen extends StatefulWidget {
     required this.images,
     required this.category,
     required this.description,
+    required this.creator,
+    required this.lastEdited,
+    required this.totViews,
     this.latitude = 40.93579072684478,
     this.longitude = 14.728316097194247,
   }) : super(key: key);
@@ -89,6 +101,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       location: LatLng(40.93579072684478, 14.728316097194247),
       images: ['assets/montevergine.jpg', 'assets/montevergine.jpg'],
       category: 'Cultural',
+      creator: "Test1",
+      lastEdited: "2023-10-01",
+      totViews: "1000",
     ),
     Waypoint(
       title: 'Tappa 2',
@@ -98,6 +113,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       location: LatLng(40.93228115205057, 14.73164203632444),
       images: [],
       category: 'Cultural',
+      creator: "Test2",
+      lastEdited: "2023-10-02",
+      totViews: "500",
     ),
     Waypoint(
       title: 'Tappa 3',
@@ -107,6 +125,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       location: LatLng(40.93416159407318, 14.72459319140844),
       images: [],
       category: 'Historical',
+      creator: "Test3",
+      lastEdited: "2023-10-03",
+      totViews: "200",
     ),
     Waypoint(
       title: 'Tappa 4',
@@ -116,6 +137,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       location: LatLng(40.94001346036333, 14.724761197705648),
       images: [],
       category: 'Historical',
+      creator: "Test4",
+      lastEdited: "2023-10-04",
+      totViews: "300",
     ),
     Waypoint(
       title: 'Tappa 5',
@@ -125,6 +149,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       location: LatLng(40.9355568038218, 14.737636977690212),
       images: [],
       category: 'Religious',
+      creator: "Test5",
+      lastEdited: "2023-10-05",
+      totViews: "150",
     ),
   ];
 
@@ -854,119 +881,152 @@ class _TourDetailScreenState extends State<TourDetailScreen>
             // Category, title, and rating
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
+              child: Column(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
                       Text(
-                        widget.category,
+                        "Created by ${widget.creator}",
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      Row(
-                        children: [
-                          ...List.generate(5, (index) {
-                            if (index < widget.rating.floor()) {
-                              return const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 18,
-                              );
-                            } else if (index < widget.rating) {
-                              return const Icon(
-                                Icons.star_half,
-                                color: Colors.amber,
-                                size: 18,
-                              );
-                            } else {
-                              return const Icon(
-                                Icons.star_border,
-                                color: Colors.amber,
-                                size: 18,
-                              );
-                            }
-                          }),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${widget.rating} (${widget.reviewCount.toString()})',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      // const SizedBox(height: 8),
-                      Row(
-                        children: [ 
-                          Text(
-                            widget.tourName,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 135),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.location,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                      SizedBox(width: 80),
+                      Text(
+                        "Last edited: ${widget.lastEdited}",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0),
-                    child: Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: AR Guide functionality
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ARCameraScreen(),
+
+                  Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              ...List.generate(5, (index) {
+                                if (index < widget.rating.floor()) {
+                                  return const Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                    size: 18,
+                                  );
+                                } else if (index < widget.rating) {
+                                  return const Icon(
+                                    Icons.star_half,
+                                    color: Colors.amber,
+                                    size: 18,
+                                  );
+                                } else {
+                                  return const Icon(
+                                    Icons.star_border,
+                                    color: Colors.amber,
+                                    size: 18,
+                                  );
+                                }
+                              }),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${widget.rating} (${widget.reviewCount.toString()})',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              //Eye icon
+                              const Icon(
+                                Icons.remove_red_eye,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              Text(
+                                widget.totViews.toString(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textSecondary,
+                                ),
+                              )
+                            ],
+                          ),
+                          // const SizedBox(height: 8),
+                          Row(
+                            children: [ 
+                              Text(
+                                widget.tourName,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 135),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.location,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20.0),
+                        child: Center(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // TODO: AR Guide functionality
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ARCameraScreen(),
+                                ),
+                              );
+                              print('Activate AR Guide');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 30,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(40),
+                              ),
+                              elevation: 0,
                             ),
-                          );
-                          print('Activate AR Guide');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 30,
-                            vertical: 10,
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 28,
+                              color: Colors.white,
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 28,
-                          color: Colors.white,
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

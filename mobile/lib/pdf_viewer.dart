@@ -1,37 +1,120 @@
-import 'package:markdown_widget/markdown_widget.dart';
-import 'package:flutter/material.dart'; // For md.Element
+// lib/pdf_viewer_widget.dart
+import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'app_colors.dart';
 
-// class PdfMarkdownBuilder extends MarkdownElementBuilder {
-//   PdfMarkdownBuilder() : super(textStyle: const TextStyle());
+// ONLY IMPORT THIS FILE FOR THE DOWNLOAD SERVICE!
+// This single import brings in both the 'DownloadService' interface
+// and the 'getDownloadServiceForPlatform()' function.
+import 'download_service_locator.dart';
+// Note: We don't need 'download_service.dart' specifically here anymore
+// because 'download_service_locator.dart' already exports it.
 
-//   @override
-//   bool get isBlock => true;
-//   @override
-//   List<String> get matchTypes => const <String>['pdf']; // Matches <pdf> tag
+class PdfViewerWidget extends StatefulWidget {
+  final String pdfUrl;
 
-//   @override
-//   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
-//     final String? src = element.attributes['src'];
-//     final String? heightStr = element.attributes['height'];
-//     final double height =
-//         double.tryParse(heightStr ?? '500') ?? 500.0; // Default height
+  const PdfViewerWidget({Key? key, required this.pdfUrl}) : super(key: key);
 
-//     if (src == null || src.isEmpty) {
-//       return const Text(
-//         'PDF source not specified',
-//         style: TextStyle(color: Colors.red),
-//       );
-//     }
+  @override
+  _PdfViewerWidgetState createState() => _PdfViewerWidgetState();
+}
 
-//     return SizedBox(
-//       height: height,
-//       child:
-//           src.startsWith('http')
-//               ? SfPdfViewer.network(src)
-//               : SfPdfViewer.asset(
-//                 src,
-//               ), // Or SfPdfViewer.file for absolute file paths
-//     );
-//   }
-// }
+class _PdfViewerWidgetState extends State<PdfViewerWidget> {
+  bool _isDownloading = false;
+  String? _downloadMessage;
+  late DownloadService _downloadService; // Declare using the interface type
+
+  @override
+  void initState() {
+    super.initState();
+    // Get the platform-specific service instance using the locator function.
+    // The compiler now correctly resolves getDownloadServiceForPlatform()
+    // based on the conditional export in download_service_locator.dart.
+    _downloadService = getDownloadServiceForPlatform();
+  }
+
+  Future<void> _initiateDownload() async {
+    setState(() {
+      _isDownloading = true;
+      _downloadMessage = null;
+    });
+
+    final fileName =
+        widget.pdfUrl.split('/').last.split('?').first; // Extract filename
+
+    // Call the platform-specific download method via the interface
+    await _downloadService.downloadFile(widget.pdfUrl, fileName, _showSnackBar);
+
+    setState(() {
+      _isDownloading = false;
+    });
+  }
+
+  void _showSnackBar(String message, Color color) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Document Viewer',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              if (_isDownloading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.download),
+                  color: AppColors.textPrimary,
+                  onPressed: _initiateDownload,
+                  tooltip: 'Download PDF',
+                ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SfPdfViewer.network(
+              widget.pdfUrl,
+              canShowHyperlinkDialog: false,
+              canShowScrollHead: false,
+            ),
+          ),
+        ),
+        if (_downloadMessage != null)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              _downloadMessage!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
+      ],
+    );
+  }
+}

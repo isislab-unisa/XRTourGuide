@@ -2,8 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'home_screen.dart';
+import 'package:flutter_downloader/flutter_downloader.dart'; // Import flutter_downloader
 
-void main() {
+
+// This is a top-level function and MUST NOT be a method of a class.
+// It serves as the entry point for FlutterDownloader's background tasks.
+@pragma('vm:entry-point')
+void downloadCallback(String id, int status, int progress) {
+  print('Download task ($id) is $status and progress is $progress');
+  // You can implement custom logic here, like updating UI using isolates or state management.
+}
+
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
+  await FlutterDownloader.initialize(
+    debug: true, // Set to false in production for less console output
+    ignoreSsl: false, // Set to true if you need to ignore SSL verification (not recommended for production)
+  );
+
+  // Register the callback function for background downloads
+  FlutterDownloader.registerCallback(downloadCallback);
+
+
   // Set transparent status bar
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

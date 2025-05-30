@@ -29,35 +29,6 @@ void main() {
   runApp(const MyApp());
 }
 
-// The root of your application.
-// class MyApp extends StatelessWidget {
-//   const MyApp({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       // Application title, shown in the task switcher.
-//       title: 'Travel Explorer UI',
-//       // Hide the debug banner in the corner.
-//       debugShowCheckedModeBanner: false,
-//       // Define the application's theme.
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue, // Primary color for the app
-//         // Adaptive visual density helps widgets look good on different platforms.
-//         visualDensity: VisualDensity.adaptivePlatformDensity,
-//         // Set the primary color to our app's primary color
-//         primaryColor: AppColors.primary,
-//         // Set the accent color to our app's accent color
-//         colorScheme: ColorScheme.fromSwatch().copyWith(
-//           secondary: AppColors.accent,
-//         ),
-//       ),
-//       // The home screen of the application.
-//       home: const TravelExplorerScreen(),
-//     );
-//   }
-// }
-
 // The main screen widget, a StatelessWidget as the content is static for this example.
 class TravelExplorerScreen extends StatelessWidget {
   const TravelExplorerScreen({Key? key}) : super(key: key);
@@ -269,42 +240,6 @@ class TravelExplorerScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Title bar that scrolls with content
-                // Positioned(
-                //   top:
-                //       MediaQuery.of(context).padding.top +
-                //       20, // Add padding for status bar
-                //   left: 0,
-                //   right: 0,
-                //   child: Padding(
-                //     padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                //     child: Container(
-                //       // Wrap the Row in a Container for the semi-transparent panel
-                //       padding: const EdgeInsets.symmetric(
-                //         vertical: 8.0,
-                //         horizontal: 12.0,
-                //       ),
-                //       child: SizedBox(
-                //         height: screenHeight * 0.225,
-                //         child: Column(
-                //           mainAxisAlignment: MainAxisAlignment.end,
-                //           children: [
-                //             Text(
-                //               "XRTOURGUIDE",
-                //               style: TextStyle(
-                //                 fontSize: screenWidth * 0.08,
-                //                 fontWeight: FontWeight.bold,
-                //                 color: Colors.black.withOpacity(0.8),
-                //                 fontFamily: "point_panther",
-                //               ),
-                //             ),
-                //           ],
-                //         ),
-                //       ),
-                //     ),
-                //   ),
-                // ),
               ],
             ),
 
@@ -315,33 +250,6 @@ class TravelExplorerScreen extends StatelessWidget {
                 horizontal: 20.0,
                 vertical: 10.0,
               ),
-              // child: TextField(
-              //   decoration: InputDecoration(
-              //     hintText: 'What do you want to see?', // Placeholder text
-              //     prefixIcon: Icon(
-              //       Icons.search,
-              //       color:
-              //           AppColors
-              //               .textSecondary, // Using AppColors for icon color
-              //     ), // Search icon at the beginning
-              //     // Define the border style. OutlineInputBorder creates a border around the field.
-              //     border: OutlineInputBorder(
-              //       borderRadius: BorderRadius.circular(
-              //         30.0,
-              //       ), // Rounded corners
-              //       borderSide: BorderSide.none, // No visible border line
-              //     ),
-              //     filled: true, // Fill the background with a color
-              //     fillColor:
-              //         AppColors
-              //             .searchBarBackground, // Using AppColors for search bar background
-              //     // Adjust content padding inside the TextField.
-              //     contentPadding: const EdgeInsets.symmetric(
-              //       vertical: 0,
-              //       horizontal: 20,
-              //     ),
-              //   ),
-              // ),
               child: GestureDetector(
                 onTap: () {
                   // Navigate to the search screen with a page route animation
@@ -374,7 +282,7 @@ class TravelExplorerScreen extends StatelessWidget {
                         );
                       },
                       // Make the transition slightly faster
-                      transitionDuration: const Duration(milliseconds: 250),
+                      transitionDuration: const Duration(milliseconds: 500),
                     ),
                   );
                 },
@@ -408,7 +316,7 @@ class TravelExplorerScreen extends StatelessWidget {
               ),
             ),
 
-            // Horizontal List 1: Exploring the Wonders of Sri Lanka.
+            // Horizontal List 1:
             Padding(
               // Add vertical padding to separate this section.
               padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -474,6 +382,9 @@ class TravelExplorerScreen extends StatelessWidget {
                             category: "Natura",
                             rating: 4.5,
                             reviewCount: 675,
+                            creator: "Andrea Amorosini",
+                            lastEdited: "24/10/2023",
+                            totViews: "1000",
 
                             onTap: () {
                               // Handle card tap
@@ -500,6 +411,9 @@ class TravelExplorerScreen extends StatelessWidget {
                                             index == 0
                                                 ? 675
                                                 : 100 + (index * 25),
+                                        creator: "Andrea Amorosini",
+                                        lastEdited: "24/10/2023",
+                                        totViews: "1000",
                                         images: [
                                             index == 0
                                                 ? 'assets/montevergine.jpg'
@@ -677,6 +591,9 @@ class TravelExplorerScreen extends StatelessWidget {
                                         ],
                                         category: 'Cibo',
                                         description: 'Discover the beauty and history of this amazing destination with our guided tour.',
+                                        creator: "Andrea Amorosini",
+                                        lastEdited: "24/10/2023",
+                                        totViews: "1000",
                                       ),
                                 ),
                               );
