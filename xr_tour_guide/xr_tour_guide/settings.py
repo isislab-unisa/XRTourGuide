@@ -9,6 +9,10 @@ dotenv.load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SITE_ID = 1
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -35,17 +39,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     "unfold",  # before django.contrib.admin
-    # 'xr_tour_guide_core',
     'drf_yasg',
     'location_field.apps.DefaultConfig',
-    # "django_jsonform",
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
     "unfold.contrib.inlines",  # optional, if special inlines are needed
     "unfold.contrib.import_export",  # optional, if django-import-export package is used
     "unfold.contrib.guardian",  # optional, if django-guardian package is used
     "unfold.contrib.simple_history",
-    # 'whitenoise.runserver_nostatic',
     "storages",
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,11 +56,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'nested_admin',
     'django_celery_beat',
+    'xr_tour_guide_core',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+]
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -246,9 +259,9 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {
-                        "title": _("xr_tour_guide"),
+                        "title": _("Tour"),
                         "icon": "book",
-                        "link": reverse_lazy("admin:xr_tour_guide_core_xr_tour_guide_poi_changelist"),
+                        "link": reverse_lazy("admin:xr_tour_guide_core_tour_changelist"),
                     },
                 ],
             },

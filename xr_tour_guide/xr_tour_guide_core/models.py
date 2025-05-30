@@ -53,15 +53,7 @@ class Category(models.TextChoices):
     INSIDE = "INSIDE", "Inside"
     OUTSIDE = "OUTSIDE", "Outside"
     THING = "THING", "Thing"
-    
-    
-    class Meta:
-        db_table = "Category"
-        verbose_name = "Category"
-        verbose_name_plural = "Category"
         
-    def __str__(self):
-        return self.name
 class TourQuerySet(models.QuerySet):
     def delete(self, *args, **kwargs):
         for obj in self:
@@ -144,7 +136,7 @@ class Waypoint(models.Model):
         return self.title
 
 class WaypointView(models.Model):
-    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=False, blank=False)
+    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
     default_image = models.ImageField(upload_to=default_image, storage=MinioStorage(), null=True, blank=True)
