@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'nested_admin',
     'django_celery_beat',
     'xr_tour_guide_core',
+    'xr_tour_guide_public',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
