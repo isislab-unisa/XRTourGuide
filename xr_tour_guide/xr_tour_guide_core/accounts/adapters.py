@@ -10,7 +10,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             or sociallogin.account.extra_data.get('email')
             or ''
         )
-        print(user.email, "AAAAAAAAAAAAAAAAAAAAAAAAAAA")
         return user
 
     def save_user(self, request, sociallogin, form=None):
