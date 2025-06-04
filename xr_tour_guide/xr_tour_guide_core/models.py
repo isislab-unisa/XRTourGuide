@@ -6,6 +6,7 @@ from django.core.files.base import ContentFile
 import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth import get_user_model
 
 dotenv.load_dotenv()
 
@@ -72,8 +73,10 @@ class Tour(models.Model):
     )
     description = models.TextField()
     objects = TourQuerySet.as_manager()
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
+    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
+    creation_time = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     
     class Meta:
         db_table = "Tour"
