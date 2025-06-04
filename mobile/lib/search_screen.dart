@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'app_colors.dart';
+import 'models/app_colors.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -21,6 +21,7 @@ class _SearchScreenState extends State<SearchScreen>
   late Animation<double> _searchBarAnimation;
   late Animation<double> _contentAnimation;
 
+  //TODO : 
   // List of popular destinations with their icons and descriptions
   final List<Map<String, String>> _popularDestinations = [
     {'name': 'Nearby', 'description': '', 'icon': 'assets/icons/nearby.png'},

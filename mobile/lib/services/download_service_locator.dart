@@ -8,7 +8,7 @@ export 'download_service.dart';
 // - If `dart:html` is available (web build), it exports the function from `download_service_web_impl.dart`.
 // - Otherwise (mobile build), it exports the function from `download_service_mobile_impl.dart`.
 // The compiler will only ever see one of these `getDownloadServiceForPlatform` implementations.
-export 'package:xr_tour_guide/download_service_mobile_impl.dart'
+export 'package:xr_tour_guide/services/download_service_mobile_impl.dart'
     if (dart.library.html) 'package:xr_tour_guide/download_service_web_impl.dart'
     show getDownloadServiceForPlatform;
 

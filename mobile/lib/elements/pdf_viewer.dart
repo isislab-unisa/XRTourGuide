@@ -1,12 +1,12 @@
 // lib/pdf_viewer_widget.dart
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'app_colors.dart';
+import '../models/app_colors.dart';
 
 // ONLY IMPORT THIS FILE FOR THE DOWNLOAD SERVICE!
 // This single import brings in both the 'DownloadService' interface
 // and the 'getDownloadServiceForPlatform()' function.
-import 'download_service_locator.dart';
+import '../services/download_service_locator.dart';
 // Note: We don't need 'download_service.dart' specifically here anymore
 // because 'download_service_locator.dart' already exports it.
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
-import 'app_colors.dart';
+import 'models/app_colors.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,9 +11,9 @@ import 'dart:async';
 import 'dart:math';
 
 // New imports for media players/viewers
-import 'pdf_viewer.dart';
-import 'audio_player.dart';
-import 'video_player.dart';
+import 'elements/pdf_viewer.dart';
+import 'elements/audio_player.dart';
+import 'elements/video_player.dart';
 
 // Enum for recognition states
 enum RecognitionState {

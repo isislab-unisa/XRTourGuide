@@ -5,34 +5,13 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
-import 'dart:math' as math;
-import 'app_colors.dart';
+import 'models/app_colors.dart';
+import "models/waypoint.dart";
+import 'models/review.dart';
+import 'services/tour_service.dart';
 import 'camera_screen.dart'; // Import your camera screen
+import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 
-// Define a class for your waypoints
-class Waypoint {
-  final String title;
-  final String subtitle;
-  final String description;
-  final LatLng location;
-  final List<String> images;
-  final String category; // Added category field
-  final String creator;
-  final String lastEdited;
-  final String totViews;
-
-  Waypoint({
-    required this.title,
-    required this.subtitle,
-    required this.description,
-    required this.location,
-    required this.images,
-    this.category = '', // Default empty category
-    required this.creator,
-    required this.lastEdited,
-    required this.totViews,
-  });
-}
 
 class TourDetailScreen extends StatefulWidget {
   final String tourId;
@@ -48,6 +27,7 @@ class TourDetailScreen extends StatefulWidget {
   final String totViews;
   final double latitude;
   final double longitude;
+  final bool isGuest;
 
   const TourDetailScreen({
     Key? key,
@@ -62,8 +42,9 @@ class TourDetailScreen extends StatefulWidget {
     required this.creator,
     required this.lastEdited,
     required this.totViews,
-    this.latitude = 40.93579072684478,
-    this.longitude = 14.728316097194247,
+    required this.latitude,
+    required this.longitude,
+    required this.isGuest,
   }) : super(key: key);
 
   @override
@@ -72,6 +53,9 @@ class TourDetailScreen extends StatefulWidget {
 
 class _TourDetailScreenState extends State<TourDetailScreen>
     with TickerProviderStateMixin {
+
+  final TourService _tourService = TourService();
+
   String _selectedTab = 'About';
   late List<bool> _expandedWaypoints;
   int _currentImageIndex = 0;
@@ -92,68 +76,12 @@ class _TourDetailScreenState extends State<TourDetailScreen>
   double _sheetMaxSize = 0.4; // Maximum height ratio (This will be adjusted in the Itinerario view)
 
   // Define your waypoints with coordinates
-  final List<Waypoint> _waypoints = [
-    Waypoint(
-      title: 'Tappa 1',
-      subtitle: 'Santuario di Montevergine',
-      description:
-          'Il Santuario di Montevergine è un importante complesso monastico mariano situato a circa 1.270 metri sul livello del mare, nel massiccio del Partenio, nel comune di Mercogliano (Avellino). Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei principali luoghi di pellegrinaggio del Sud Italia, con oltre un milione di visitatori ogni anno.',
-      location: LatLng(40.93579072684478, 14.728316097194247),
-      images: ['assets/montevergine.jpg', 'assets/montevergine.jpg'],
-      category: 'Cultural',
-      creator: "Test1",
-      lastEdited: "2023-10-01",
-      totViews: "1000",
-    ),
-    Waypoint(
-      title: 'Tappa 2',
-      subtitle: 'Funicolare',
-      description:
-          'Stazione di arrivo della funicolare.',
-      location: LatLng(40.93228115205057, 14.73164203632444),
-      images: [],
-      category: 'Cultural',
-      creator: "Test2",
-      lastEdited: "2023-10-02",
-      totViews: "500",
-    ),
-    Waypoint(
-      title: 'Tappa 3',
-      subtitle: 'Postazione TV',
-      description:
-          'Postazione TV per il canale Monte Vergine Trocchio.',
-      location: LatLng(40.93416159407318, 14.72459319140844),
-      images: [],
-      category: 'Historical',
-      creator: "Test3",
-      lastEdited: "2023-10-03",
-      totViews: "200",
-    ),
-    Waypoint(
-      title: 'Tappa 4',
-      subtitle: 'Vetta Montevergine',
-      description:
-          'Vetta della montagna.',
-      location: LatLng(40.94001346036333, 14.724761197705648),
-      images: [],
-      category: 'Historical',
-      creator: "Test4",
-      lastEdited: "2023-10-04",
-      totViews: "300",
-    ),
-    Waypoint(
-      title: 'Tappa 5',
-      subtitle: 'Cappella dello scalzatoio',
-      description:
-          'Cappella Lorem ipsu dorem.',
-      location: LatLng(40.9355568038218, 14.737636977690212),
-      images: [],
-      category: 'Religious',
-      creator: "Test5",
-      lastEdited: "2023-10-05",
-      totViews: "150",
-    ),
-  ];
+  List<Waypoint> _waypoints = [];
+  bool _isLoadingWaypoints = true;
+
+  List<Review> _reviews = [];
+  bool _isLoadingReviews = true;
+  
 
   late LocationPermission _permission;
   Position? _currentPosition;
@@ -161,10 +89,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
   @override
   void initState() {
     super.initState();
-    _expandedWaypoints = List.generate(
-      _waypoints.length,
-      (index) => index == 0,
-    );
+    _loadData();
     _checkLocationPermission();
     _pageController = PageController();
 
@@ -182,6 +107,66 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     // Initialize bottom sheet controller
     _sheetController = DraggableScrollableController();
   }
+
+  Future<void> _loadData() async {
+    // Load all data in parallel
+    await Future.wait([
+      _loadWaypoints(),
+      _loadReviews(),
+    ]);
+  }
+
+
+  Future<void> _loadWaypoints() async {
+    try {
+      final waypoints = await _tourService.getWaypointsByTour();
+      if (mounted) {
+        setState(() {
+          _waypoints = waypoints;
+          _isLoadingWaypoints = false;
+          _expandedWaypoints = List.generate(
+            _waypoints.length,
+            (index) => index == 0,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingWaypoints = false;
+        });
+        _showError('Error loading nearby tours');
+      }
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    try {
+      final reviews = await _tourService.getReviewByTour();
+      if (mounted) {
+        setState(() {
+          _reviews = reviews;
+          _isLoadingReviews = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingReviews = false;
+        });
+        _showError('Error loading nearby tours');
+      }
+    }
+  }
+
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+
 
   @override
   void dispose() {
@@ -221,6 +206,28 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     });
   }
 
+   // Method to launch map application
+  Future<void> _launchMapApp(double latitude, double longitude) async {
+    final String googleMapsUrl =
+        'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving';
+    final String appleMapsUrl =
+        'http://maps.apple.com/?daddr=$latitude,$longitude';
+
+    if (Theme.of(context).platform == TargetPlatform.iOS) {
+      if (await canLaunchUrl(Uri.parse(appleMapsUrl))) {
+        await launchUrl(Uri.parse(appleMapsUrl));
+      } else {
+        _showError('Could not launch Apple Maps');
+      }
+    } else {
+      if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
+        await launchUrl(Uri.parse(googleMapsUrl));
+      } else {
+        _showError('Could not launch Google Maps');
+      }
+    }
+  }
+
   void _centerMap(LatLng latLng) {
     _mapController.move(latLng, _mapController.camera.zoom);
   }
@@ -236,13 +243,13 @@ class _TourDetailScreenState extends State<TourDetailScreen>
 
 
     return Marker(
-      point: waypoint.location,
+      point: LatLng(waypoint.latitude, waypoint.longitude),
       width: 60, // Increased size for better tapping
       height: 60, // Increased size for better tapping
       child: GestureDetector(
         onTap: () {
           print('Tapped on Waypoint ${index + 1}');
-          _centerMap(waypoint.location);
+          _centerMap(LatLng(waypoint.latitude, waypoint.longitude));
 
           if (!isItineraryView) {
             setState(() {
@@ -361,7 +368,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
             options: MapOptions(
               initialCenter:
                   // _waypoints[0].location, // Start with first waypoint
-                  _currentPosition != null ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude) : _waypoints[0].location,
+                  _currentPosition != null ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude) : LatLng(_waypoints[0].latitude, _waypoints[0].longitude),
               initialZoom: 13.0,
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
@@ -449,33 +456,29 @@ class _TourDetailScreenState extends State<TourDetailScreen>
               ),
             ),
           ),
-
-          Positioned(
-            top: MediaQuery.of(context).padding.top - 15,
-            right: 16,
-            child: Container(
-              width: screenWidth * 0.15,
-              height: screenHeight * 0.07,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade700,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.camera_alt, color: Colors.white, size: 28,),
-                onPressed: () {
-                  // TODO: Camera functionality
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ARCameraScreen()),
-                  );
-                  print(
-                    'Open camera for AR at waypoint ${_selectedWaypointIndex + 1}',
-                  );
-                },
+          
+          if (widget.isGuest == false)
+            Positioned(
+              top: MediaQuery.of(context).padding.top - 15,
+              right: 16,
+              child: Container(
+                width: screenWidth * 0.15,
+                height: screenHeight * 0.07,
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade700,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.camera_alt, color: Colors.white, size: 28,),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ARCameraScreen()),
+                    );
+                  },
+                ),
               ),
             ),
-
-          ),
 
 
           // Bottom sheet with waypoint info
@@ -721,8 +724,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                             setState(() {
                                               _selectedWaypointIndex--;
                                               _centerMap(
-                                                _waypoints[_selectedWaypointIndex]
-                                                    .location,
+                                                LatLng(_waypoints[_selectedWaypointIndex]
+                                                    .latitude, _waypoints[_selectedWaypointIndex].longitude)
                                               );
                                             });
                                           }
@@ -746,8 +749,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                             setState(() {
                                               _selectedWaypointIndex++;
                                               _centerMap(
-                                                _waypoints[_selectedWaypointIndex]
-                                                    .location,
+                                                LatLng(_waypoints[_selectedWaypointIndex]
+                                                    .latitude, _waypoints[_selectedWaypointIndex].longitude)
                                               );
                                             });
                                           }
@@ -992,40 +995,41 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20.0),
-                        child: Center(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: AR Guide functionality
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ARCameraScreen(),
+                      if (widget.isGuest == false)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20.0),
+                          child: Center(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // TODO: AR Guide functionality
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ARCameraScreen(),
+                                  ),
+                                );
+                                print('Activate AR Guide');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 30,
+                                  vertical: 10,
                                 ),
-                              );
-                              print('Activate AR Guide');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 30,
-                                vertical: 10,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                elevation: 0,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(40),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 28,
+                                color: Colors.white,
                               ),
-                              elevation: 0,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 28,
-                              color: Colors.white,
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -1135,7 +1139,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                         const Text(
                           'Verified Reviews',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 23,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
                           ),
@@ -1148,9 +1152,20 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                             color: AppColors.textSecondary,
                           ),
                         ),
+                        const SizedBox(width: 70),
+                        IconButton(
+                          onPressed: () {
+                            // TODO: Create Review functionality
+                          },
+                          icon: Icon(
+                            Icons.add_circle,
+                            color: AppColors.primary,
+                            size: 60,
+                            ),
+                          )
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    // const SizedBox(height: 4),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -1210,27 +1225,31 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildReviewItem(
-                      name: 'Gorgia',
-                      date: 'Oct 24, 2024',
-                      rating: 4.2,
-                      comment:
-                          'The tour schedule was nicely arranged, yet we felt rushed and couldn\'t fully savor our time at Disneyland. It would have been...',
-                      imageUrl: "",
-                    ),
-                    const SizedBox(height: 16),
-                    _buildReviewItem(
-                      name: 'John',
-                      date: 'Oct 24, 2024',
-                      rating: 4.8,
-                      comment:
-                          'The historical sites were breathtaking, but the queues were long and it was...',
-                      imageUrl: "",
-                    ),
-                    const SizedBox(height: 16),
+                    //load the first two elements from _reviews
+                    if (_isLoadingReviews)
+                      const Center(child: CircularProgressIndicator())
+                    else ...[
+                      _buildReviewItem(
+                        name: _reviews[0].name,
+                        date: _reviews[0].date,
+                        rating: _reviews[0].rating,
+                        comment: _reviews[0].comment,
+                        imageUrl: _reviews[0].imageUrl,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildReviewItem(
+                        name: _reviews[1].name,
+                        date: _reviews[1].date,
+                        rating: _reviews[1].rating,
+                        comment: _reviews[1].comment,
+                        imageUrl: _reviews[1].imageUrl,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
+                        //TODO: Navigate to all review page
                         onPressed: () {},
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.primary),
@@ -1285,7 +1304,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       child: FlutterMap(
                         mapController: _mapController,
                         options: MapOptions(
-                          initialCenter: _waypoints[0].location,
+                          initialCenter: LatLng(_waypoints[0].latitude, _waypoints[0].longitude),
                           initialZoom: 13.0,
                           interactionOptions: const InteractionOptions(
                             flags: InteractiveFlag.all,
@@ -1355,6 +1374,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   description: waypoint.description,
                   images: waypoint.images,
                   tourCategory: widget.category,
+                  latitude: waypoint.latitude,
+                  longitude: waypoint.longitude,
                 );
               }).toList(),
             ],
@@ -1428,6 +1449,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     required String description,
     required List<String> images,
     required String tourCategory,
+    required double latitude,
+    required double longitude,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -1456,7 +1479,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     _selectedWaypointIndex = index;
                     if (_selectedTab == 'Itinerario' && (tourCategory != "Interno" && tourCategory != "Cibo")) {
                       // Center map on waypoint when expanded in Mappa tab
-                      _centerMap(_waypoints[index].location);
+                      _centerMap(LatLng(_waypoints[index].latitude, _waypoints[index].longitude));
                     }
                   });
                 },
@@ -1580,6 +1603,24 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                           ),
                         ),
                       ),
+                    // Navigate button
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _launchMapApp(latitude, longitude),
+                        icon: const Icon(Icons.navigation),
+                        label: const Text('Navigate to this Waypoint'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

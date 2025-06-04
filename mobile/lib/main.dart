@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'app_colors.dart';
+import 'models/app_colors.dart';
 import 'home_screen.dart';
 import 'package:flutter_downloader/flutter_downloader.dart'; // Import flutter_downloader
 
@@ -23,7 +23,6 @@ Future<void> main() async {
 
   // Register the callback function for background downloads
   FlutterDownloader.registerCallback(downloadCallback);
-
 
   // Set transparent status bar
   SystemChrome.setSystemUIOverlayStyle(
@@ -356,18 +355,18 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                             },
                             context: context,
                           ),
-                          _buildSocialButton(
-                            text: 'Continue With Apple',
-                            icon: const Icon(
-                              Icons.apple,
-                              color: Colors.black,
-                              size: 24,
-                            ),
-                            onPressed: () {
-                              print('Apple login tapped');
-                            },
-                            context: context,
-                          ),
+                          // _buildSocialButton(
+                          //   text: 'Continue With Apple',
+                          //   icon: const Icon(
+                          //     Icons.apple,
+                          //     color: Colors.black,
+                          //     size: 24,
+                          //   ),
+                          //   onPressed: () {
+                          //     print('Apple login tapped');
+                          //   },
+                          //   context: context,
+                          // ),
                           const SizedBox(height: 20),
                           Container(
                             margin: EdgeInsets.symmetric(
@@ -425,6 +424,24 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                         ],
                       ),
                     ),
+                    _buildPrimaryButton(
+                      text: 'Guest Log In',
+                      onPressed: () {
+                        setState(() {
+                          //navigate to main page as guest
+                          // TODO: Replace this with your actual navigation logic
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      TravelExplorerScreen(isGuest: true),
+                            ),
+                          );
+                        });
+                      },
+                      context: context,
+                    ),
+
                   ],
                 ),
               ),
@@ -549,7 +566,7 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                           // TODO: Replace this with your actual navigation logic
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
-                              builder: (context) => TravelExplorerScreen(),
+                              builder: (context) => TravelExplorerScreen(isGuest: false),
                             ),
                           );
                         });
@@ -752,7 +769,7 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                           // TODO: Replace this with your actual navigation logic
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
-                              builder: (context) => TravelExplorerScreen(),
+                              builder: (context) => TravelExplorerScreen(isGuest: false),
                             ),
                           );
                         });

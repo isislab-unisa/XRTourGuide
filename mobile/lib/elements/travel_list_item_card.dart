@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import '../models/app_colors.dart';
 
 class TravelListItemCard extends StatelessWidget {
   final String imagePath; // Path to the image asset

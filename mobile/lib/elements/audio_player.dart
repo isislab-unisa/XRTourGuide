@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
-import 'app_colors.dart'; // Import AppColors
+import '../models/app_colors.dart'; // Import AppColors
 
 class AudioPlayerWidget extends StatefulWidget {
   final String audioUrl;
