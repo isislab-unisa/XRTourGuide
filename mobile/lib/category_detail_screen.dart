@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'app_colors.dart';
-import 'travel_list_item_card.dart';
+import 'package:xr_tour_guide/models/tour.dart';
+import 'models/app_colors.dart';
+import 'elements/travel_list_item_card.dart';
 import 'tour_details_page.dart';
 
 class CategoryDetailScreen extends StatelessWidget {
   final String categoryName;
-  final List<Map<String, dynamic>> tours;
+  final List<Tour> tours;
+  final bool isGuest;
 
   const CategoryDetailScreen({
     Key? key,
     required this.categoryName,
     required this.tours,
+    required this.isGuest,
   }) : super(key: key);
 
   @override
@@ -63,16 +66,15 @@ class CategoryDetailScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final tour = tours[index];
                 return TravelListItemCard(
-                  imagePath: tour['imagePath'],
-                  title: tour['title'],
-                  description:
-                      'Discover the beauty of this amazing destination.',
+                  imagePath: tour.imagePath,
+                  title: tour.title,
+                  description: tour.description,
                   cardWidth: screenWidth - 40, // Full width minus padding
                   fullWidth: true,
                   imageHeight: 180,
-                  category: tour['subcategory'],
-                  rating: tour['rating'],
-                  reviewCount: tour['reviewCount'],
+                  category: tour.subcategory,
+                  rating: tour.rating,
+                  reviewCount: tour.reviewCount,
                   // isFavorite: tour['isFavorite'] ?? false,
                   onTap: () {
                     Navigator.push(
@@ -80,19 +82,24 @@ class CategoryDetailScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder:
                             (context) => TourDetailScreen(
-                              tourId: 'tour_${index + 1}',
-                              tourName: tour['title'],
-                              location: 'Location ${index + 1}',
-                              rating: tour['rating'],
-                              reviewCount: tour['reviewCount'],
+                              tourId: tour.id,
+                              tourName: tour.title,
+                              location: tour.location,
+                              rating: tour.rating,
+                              reviewCount: tour.reviewCount,
                               images: [
-                                tour['imagePath'],
+                                tour.imagePath,
                                 'assets/acquedotto.jpg',
                                 'assets/cibo_example.jpg',
                               ],
-                              category: tour['subcategory'],
-                              description:
-                                  'Discover the beauty and history of this amazing destination with our guided tour.',
+                              category: tour.subcategory,
+                              description: tour.description,
+                              creator: tour.creator,
+                              lastEdited: tour.lastEdited,
+                              totViews: tour.totViews.toString(),
+                              latitude: tour.latitude,
+                              longitude: tour.longitude,
+                              isGuest: isGuest,
                             ),
                       ),
                     );

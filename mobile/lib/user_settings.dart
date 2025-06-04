@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'app_colors.dart';
-import 'home_screen.dart'; // Import for TravelExplorerScreen
+import 'models/app_colors.dart';
+import 'services/tour_service.dart';
+import 'models/user.dart';
+
 
 // Enum to track which profile screen is currently active
 enum ProfileScreenState {
@@ -20,18 +22,21 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
+  final TourService _tourService = TourService();
+
   // Current screen state - starts with main profile
   ProfileScreenState _currentScreen = ProfileScreenState.main;
 
   // User data - would typically come from a user service or state management
-  String _fullName = "Ana Due";
-  String _email = "ana@gmail.com";
+  User? _user;
+  bool _isLoadingUserDetails = true;
 
   // Security settings
   bool _biometricEnabled = false;
   bool _faceIdEnabled = false;
 
   // Language settings
+  //TODO : Implement language selection logic
   String _selectedLanguage = "English(US)";
   final List<Map<String, dynamic>> _availableLanguages = [
     {"name": "English(US)", "code": "en_US", "flag": "🇺🇸", "selected": true},
@@ -45,10 +50,44 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize text controllers with current values
-    _nameController.text = _fullName;
-    _emailController.text = _email;
+    _loadData();
   }
+
+  Future<void> _loadData() async {
+    // Load all data in parallel
+    await Future.wait([_loadUserDetails()]);
+  }
+
+  Future<void> _loadUserDetails() async {
+    try {
+      final userDetails = await _tourService.getUserDetails();
+      if (mounted) {
+        setState(() {
+          _user = userDetails;
+          _isLoadingUserDetails = false;
+          // Initialize text controllers with current values
+          _nameController.text = _user!.name;
+          _emailController.text = _user!.mail;
+
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingUserDetails = false;
+        });
+        _showError('Error loading user Details');
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+
 
   @override
   void dispose() {
@@ -117,9 +156,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   // Save personal info changes
   void _savePersonalInfo() {
+    //TODO: Implement actual save logic, e.g., API call to update user details
     setState(() {
-      _fullName = _nameController.text;
-      _email = _emailController.text;
+      // _fullName = _nameController.text;
+      // _email = _emailController.text;
       _currentScreen = ProfileScreenState.main;
     });
     // Show a snackbar to confirm changes
@@ -157,8 +197,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   // Build the main profile screen
   Widget _buildMainProfileScreen(BuildContext context) {
+    if (_isLoadingUserDetails || _user == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,),
       body: SafeArea(
         child: Column(
           children: [
@@ -188,7 +237,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(50),
                                 child: Image.network(
-                                  'https://randomuser.me/api/portraits/women/44.jpg',
+                                  'https://randomuser.me/api/portraits/men/44.jpg',
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -219,7 +268,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         const SizedBox(height: 16),
                         // User name
                         Text(
-                          _fullName,
+                          '${_user!.name} ${_user!.surname}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -229,7 +278,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         const SizedBox(height: 4),
                         // User email
                         Text(
-                          _email,
+                          _user!.mail,
                           style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,

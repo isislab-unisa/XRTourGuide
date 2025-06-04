@@ -11,6 +11,7 @@ class AppColors {
 
   // Background colors
   static const Color background = Colors.white;
+  static const Color secondaryBackground = Color(0xFF2C2C2C); // Slightly lighter dark background
   static const Color searchBarBackground = Color(0xFFEEEEEE); // Light grey
 
   // Overlay colors

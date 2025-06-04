@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
-import 'app_colors.dart';
+import 'models/app_colors.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
-import 'package:markdown_widget/markdown_widget.dart';
+import 'package:markdown_widget/markdown_widget.dart'; // Keep this for text/link/image
 import 'dart:async';
 import 'dart:math';
+
+// New imports for media players/viewers
+import 'elements/pdf_viewer.dart';
+import 'elements/audio_player.dart';
+import 'elements/video_player.dart';
 
 // Enum for recognition states
 enum RecognitionState {
@@ -18,7 +23,10 @@ enum RecognitionState {
   failure, // Recognition failed,
 }
 
+// _currentMarkdownContent is kept to build markdown strings for MarkdownWidget
 String _currentMarkdownContent = "";
+// This new variable will hold the actual Widget to display in the sheet
+Widget? _currentActiveContent;
 
 class ARCameraScreen extends StatefulWidget {
   // Landmark data passed to the screen
@@ -31,7 +39,7 @@ class ARCameraScreen extends StatefulWidget {
   const ARCameraScreen({
     Key? key,
     this.landmarkName = "Santuario di Montevergine",
-    this.landmarkDescription = """ 
+    this.landmarkDescription = """
 # Santuario di Montevergine
 
 Il Santuario di Montevergine è un importante complesso monastico mariano situato a circa 1.270 metri sul livello del mare, nel massiccio del Partenio, nel comune di Mercogliano (Avellino).
@@ -91,7 +99,7 @@ class _ARCameraScreenState extends State<ARCameraScreen>
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
 
-  // Initial size of the draggable sheet (30% of screen height)
+  // Initial size of the draggable sheet (10% of screen height)
   final double _initialSheetSize = 0.1;
   final double _minSheetSize = 0.1;
   final double _maxSheetSize = 0.8;
@@ -111,7 +119,7 @@ class _ARCameraScreenState extends State<ARCameraScreen>
     _initializeCamera();
     _getCurrentLocation();
     _initializeAnimations();
-    _initializeMarkdownContent();
+    _setInitialContent(); // Set initial content
   }
 
   @override
@@ -147,67 +155,134 @@ class _ARCameraScreenState extends State<ARCameraScreen>
     }
   }
 
-  void _initializeMarkdownContent() {
+  // Helper to build MarkdownConfig once
+  MarkdownConfig _buildMarkdownConfig() {
+    return MarkdownConfig(
+      configs: [
+        const PConfig(
+          textStyle: TextStyle(
+            fontSize: 16,
+            height: 1.5,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        H1Config(
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        H2Config(
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        LinkConfig(
+          style: const TextStyle(
+            color: AppColors.primary,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+        BlockquoteConfig(
+          sideColor: AppColors.primary.withOpacity(0.5),
+          textColor: AppColors.textSecondary.withOpacity(0.8),
+          sideWith: 4.0,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+        ),
+      ],
+    );
+  }
+
+  // Set the initial content for the draggable sheet
+  void _setInitialContent() {
     setState(() {
       _currentMarkdownContent = widget.landmarkDescription;
+      _currentActiveContent = MarkdownWidget(
+        data: _currentMarkdownContent,
+        config: _buildMarkdownConfig(),
+        padding: const EdgeInsets.only(top: 0),
+        shrinkWrap: true,
+      );
     });
   }
 
-  void _getMarkdownContent(String type) {
-    //TODO: Implement logic to fetch or generate markdown content based on type
-    //TODO: Rivedere implementazioni per audio, video editor e document viewer
-    String newContent = '';
+  // Update draggable sheet content based on type
+  void _updateDraggableSheetContent(String type) {
+    // This will hold the content that goes into the _currentActiveContent
+    Widget? contentToDisplay;
+
     switch (type) {
       case 'text':
-        newContent = 'This is some text content about the landmark.';
+        _currentMarkdownContent =
+            widget.landmarkDescription; // Or specific text
+        contentToDisplay = MarkdownWidget(
+          data: _currentMarkdownContent,
+          config: _buildMarkdownConfig(),
+          padding: const EdgeInsets.only(top: 0),
+          shrinkWrap: true,
+        );
         break;
       case 'link':
-        newContent = '''
+        _currentMarkdownContent = '''
 ## External Links
 
 For more information, please visit:
-[Official Website](https://www.santuariodimontevergine.com) 
+[Official Website](https://www.santuariodimontevergine.com)
 [Wikipedia Page](https://en.wikipedia.org/wiki/Montevergine_Sanctuary)
-            ''';	        
+            ''';
+        contentToDisplay = MarkdownWidget(
+          data: _currentMarkdownContent,
+          config: _buildMarkdownConfig(),
+          padding: const EdgeInsets.only(top: 0),
+          shrinkWrap: true,
+        );
         break;
       case 'image':
-        newContent = """
+        _currentMarkdownContent = """
 ## Landmark Image
 
-![${widget.landmarkName} Image](${widget.landmarkImages.isNotEmpty ? widget.landmarkImages[0] : 'https://picsum.photos/300/200'}) 
+![${widget.landmarkName} Image](${widget.landmarkImages.isNotEmpty ? widget.landmarkImages[0] : 'https://picsum.photos/300/200'})
 
 This is one of the key images for this landmark.
-            """;        
+            """;
+        contentToDisplay = MarkdownWidget(
+          data: _currentMarkdownContent,
+          config: _buildMarkdownConfig(),
+          padding: const EdgeInsets.only(top: 0),
+          shrinkWrap: true,
+        );
         break;
       case 'video':
-        newContent = """
-## Video Tour
-
-Unfortunately, direct video embedding might require a more complex setup or a specific markdown package feature. 
-
-You can watch a video about the landmark here:
-[Watch Video](https://www.youtube.com)
-            """;
+        contentToDisplay = const VideoPlayerWidget(
+          videoUrl:
+              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4', // Replace with your video URL
+        );
         break;
       case 'document':
-        newContent = """
-## Document Viewer
-
-Download the informational brochure:
-[Download PDF](https://example.com/brochure.pdf)
-(Note: This is a placeholder link)
-            """;
+        contentToDisplay = const PdfViewerWidget(
+          pdfUrl:
+              'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf', // Replace with your PDF URL
+        );
         break;
       case 'audio':
-        newContent = """
-## Audio Guide
-
-Listen to an audio description:
-[Play Audio Clip](https://example.com/audio_guide.mp3) 
-(Note: This is a placeholder link)
-            """;
+        contentToDisplay = const AudioPlayerWidget(
+          audioUrl:
+              'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Replace with your audio URL
+        );
         break;
+      default:
+        contentToDisplay = Center(
+          child: Text(
+            'No content available for "$type".',
+            style: const TextStyle(color: AppColors.textPrimary),
+          ),
+        );
     }
+
     _sheetController.animateTo(
       _initialSheetSize + 0.25,
       duration: const Duration(milliseconds: 300),
@@ -215,7 +290,7 @@ Listen to an audio description:
     );
 
     setState(() {
-      _currentMarkdownContent = newContent;
+      _currentActiveContent = contentToDisplay;
     });
   }
 
@@ -369,6 +444,13 @@ Listen to an audio description:
       await _failureAnimationController.reverse();
     }
 
+    _sheetController.animateTo(
+      _initialSheetSize,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+
+
     setState(() {
       _recognitionState = RecognitionState.ready;
     });
@@ -517,8 +599,7 @@ Listen to an audio description:
         'isVisible': true,
         'onTapAction': () {
           print('Text Info icon tapped!');
-          // TODO: Implement action for Text Info (e.g., show more details)
-          _getMarkdownContent('text');
+          _updateDraggableSheetContent('text');
         },
       }, // Top
       {
@@ -529,8 +610,7 @@ Listen to an audio description:
         'isVisible': true,
         'onTapAction': () {
           print('Link Info icon tapped!');
-          // TODO: Implement action for Text Info (e.g., show more details)
-          _getMarkdownContent('link');
+          _updateDraggableSheetContent('link');
         },
       }, // Top-right
       {
@@ -541,8 +621,7 @@ Listen to an audio description:
         'isVisible': true,
         'onTapAction': () {
           print('Image Info icon tapped!');
-          // TODO: Implement action for Text Info (e.g., show more details)
-          _getMarkdownContent('image');
+          _updateDraggableSheetContent('image');
         },
       }, // Bottom-right
       {
@@ -553,8 +632,7 @@ Listen to an audio description:
         'isVisible': true,
         'onTapAction': () {
           print('Video Info icon tapped!');
-          // TODO: Implement action for Text Info (e.g., show more details)
-          _getMarkdownContent('video');
+          _updateDraggableSheetContent('video');
         },
       }, // Bottom
       {
@@ -565,8 +643,7 @@ Listen to an audio description:
         'isVisible': true,
         'onTapAction': () {
           print('Doc Info icon tapped!');
-          // TODO: Implement action for Text Info (e.g., show more details)
-          _getMarkdownContent('document');
+          _updateDraggableSheetContent('document');
         },
       }, // Bottom-left
       {
@@ -577,8 +654,7 @@ Listen to an audio description:
         'isVisible': true,
         'onTapAction': () {
           print('Audio Info icon tapped!');
-          // TODO: Implement action for Text Info (e.g., show more details)
-          _getMarkdownContent('audio');
+          _updateDraggableSheetContent('audio');
         },
       }, // Top-left
     ];
@@ -604,12 +680,11 @@ Listen to an audio description:
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            Color.lerp(
-                              Colors.blue.withOpacity(0.3),
-                              Colors.green.withOpacity(0.3),
-                              _successAnimation.value,
-                            )!,
+                        color: Color.lerp(
+                          Colors.blue.withOpacity(0.3),
+                          Colors.green.withOpacity(0.3),
+                          _successAnimation.value,
+                        )!.withOpacity(0.5),
                         blurRadius: 20 + (10 * _successAnimation.value),
                         spreadRadius: 5 + (5 * _successAnimation.value),
                       ),
@@ -732,12 +807,11 @@ Listen to an audio description:
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color:
-                          Color.lerp(
-                            Colors.blue.withOpacity(0.3),
-                            Colors.red.withOpacity(0.3),
-                            _failureAnimation.value,
-                          )!,
+                      color: Color.lerp(
+                        Colors.blue.withOpacity(0.3),
+                        Colors.red.withOpacity(0.3),
+                        _failureAnimation.value,
+                      )!.withOpacity(0.5),
                       blurRadius: 20 + (10 * _failureAnimation.value),
                       spreadRadius: 5 + (5 * _failureAnimation.value),
                     ),
@@ -756,34 +830,6 @@ Listen to an audio description:
             ),
           );
         },
-      ),
-    );
-  }
-
-  // Build AR overlay icon
-  Widget _buildAROverlayIcon(IconData icon, Color color, String emoji) {
-    return FadeTransition(
-      opacity: _successAnimation,
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            emoji,
-            style: const TextStyle(fontSize: 24, color: Colors.white),
-          ),
-        ),
       ),
     );
   }
@@ -962,80 +1008,25 @@ Listen to an audio description:
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-
               // Scrollable content
               Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Landmark name/title
-                      // Text(
-                      //   widget.landmarkName,
-                      //   style: const TextStyle(
-                      //     fontSize: 24,
-                      //     fontWeight: FontWeight.bold,
-                      //     color: AppColors.textPrimary,
-                      //   ),
-                      // ),
-
-                      // Description using MarkdownWidget
-                      MarkdownWidget(
-                        data: _currentMarkdownContent,
-                        padding: const EdgeInsets.only(top: 0),
-                        shrinkWrap: true,
-                        config: MarkdownConfig(
-                          configs: [
-                            const PConfig(
-                              textStyle: TextStyle(
-                                fontSize: 16,
-                                height: 1.5,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            H1Config(
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            H2Config(
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            LinkConfig(
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                            BlockquoteConfig(
-                              sideColor: AppColors.primary.withOpacity(0.5),
-                              textColor: AppColors.textSecondary.withOpacity(
-                                0.8,
-                              ),
-                              sideWith: 4.0,
-                              // adjust padding/margin if you like:
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                            ),                          
-                          ],
+                child:
+                    _currentActiveContent != null
+                        ? SingleChildScrollView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ), // Adjust padding
+                          child: _currentActiveContent!,
+                        )
+                        : Center(
+                          child: Text(
+                            'Select content type.',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(color: AppColors.textPrimary),
+                          ),
                         ),
-                      ),                      
-                      // Add some bottom padding for better scrolling experience
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -1044,84 +1035,85 @@ Listen to an audio description:
     );
   }
 
-  // Build a grid of photos
-  Widget _buildPhotoGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: widget.landmarkImages.length,
-      itemBuilder: (context, index) {
-        return _buildPhotoCard(widget.landmarkImages[index], index);
-      },
-    );
-  }
 
-  // Build individual photo card
-  Widget _buildPhotoCard(String imageUrl, int index) {
-    return GestureDetector(
-      onTap: () {
-        // Show full-screen image viewer
-        _showImageViewer(imageUrl, index);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                color: AppColors.lightGrey,
-                child: const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: AppColors.lightGrey,
-                child: const Icon(
-                  Icons.image_not_supported,
-                  color: AppColors.textSecondary,
-                  size: 40,
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
+  // Build a grid of photos (This seems to be an old unused function, can be removed if not called elsewhere)
+  // Widget _buildPhotoGrid() {
+  //   return GridView.builder(
+  //     shrinkWrap: true,
+  //     physics: const NeverScrollableScrollPhysics(),
+  //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //       crossAxisCount: 2,
+  //       crossAxisSpacing: 12,
+  //       mainAxisSpacing: 12,
+  //       childAspectRatio: 1.2,
+  //     ),
+  //     itemCount: widget.landmarkImages.length,
+  //     itemBuilder: (context, index) {
+  //       return _buildPhotoCard(widget.landmarkImages[index], index);
+  //     },
+  //   );
+  // }
 
-  // Show full-screen image viewer
-  void _showImageViewer(String imageUrl, int initialIndex) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder:
-            (context) => _FullScreenImageViewer(
-              images: widget.landmarkImages,
-              initialIndex: initialIndex,
-            ),
-      ),
-    );
-  }
+  // Build individual photo card (This seems to be an old unused function, can be removed if not called elsewhere)
+  // Widget _buildPhotoCard(String imageUrl, int index) {
+  //   return GestureDetector(
+  //     onTap: () {
+  //       // Show full-screen image viewer
+  //       _showImageViewer(imageUrl, index);
+  //     },
+  //     child: Container(
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(12),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: AppColors.cardShadow,
+  //             blurRadius: 4,
+  //             offset: const Offset(0, 2),
+  //           ),
+  //         ],
+  //       ),
+  //       child: ClipRRect(
+  //         borderRadius: BorderRadius.circular(12),
+  //         child: Image.network(
+  //           imageUrl,
+  //           fit: BoxFit.cover,
+  //           loadingBuilder: (context, child, loadingProgress) {
+  //             if (loadingProgress == null) return child;
+  //             return Container(
+  //               color: AppColors.lightGrey,
+  //               child: const Center(
+  //                 child: CircularProgressIndicator(color: AppColors.primary),
+  //               ),
+  //             );
+  //           },
+  //           errorBuilder: (context, error, stackTrace) {
+  //             return Container(
+  //               color: AppColors.lightGrey,
+  //               child: const Icon(
+  //                 Icons.image_not_supported,
+  //                 color: AppColors.textSecondary,
+  //                 size: 40,
+  //               ),
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // Show full-screen image viewer (This seems to be an old unused function, can be removed if not called elsewhere)
+  // void _showImageViewer(String imageUrl, int initialIndex) {
+  //   Navigator.of(context).push(
+  //     MaterialPageRoute(
+  //       builder:
+  //           (context) => _FullScreenImageViewer(
+  //             images: widget.landmarkImages,
+  //             initialIndex: initialIndex,
+  //           ),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -1172,7 +1164,8 @@ Listen to an audio description:
   }
 }
 
-// Full-screen image viewer widget
+// Full-screen image viewer widget (kept as it was part of the original code,
+// but not directly used by _updateDraggableSheetContent for 'image' type now)
 class _FullScreenImageViewer extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
