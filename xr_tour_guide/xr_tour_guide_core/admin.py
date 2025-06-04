@@ -5,7 +5,7 @@ from location_field.widgets import LocationWidget
 from location_field.models.plain import PlainLocationField
 
 class TourAdmin(ModelAdmin):
-    list_display = ('title', 'subtitle', 'description', 'place', 'coordinates')
+    fields = ('title', 'subtitle', 'description', 'place', 'coordinates')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user']
     search_fields = ('title', 'description')
