@@ -9,12 +9,10 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('', include('xr_tour_guide_core.urls')),
+    path('', include('xr_tour_guide_core.urls')),
     path('nested_admin/', include('nested_admin.urls')),
     path('accounts/', include('allauth.urls')),
     path('', include('xr_tour_guide_public.urls')),
-    # path('accounts/', include("django.contrib.auth.urls")),
-    # path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),   # login
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
