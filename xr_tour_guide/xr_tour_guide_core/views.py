@@ -6,6 +6,12 @@ from .serializers import TourSerializer
 from django.db.models import Q
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
+from django.http import StreamingHttpResponse, Http404, FileResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from storages.backends.s3boto3 import S3Boto3Storage
+import mimetypes
+from .models import MinioStorage, Waypoint
 
 @api_view(['GET'])
 def tour_list(request, category):
@@ -81,3 +87,31 @@ def delete_account(request):
 
     user.delete()
     return Response({"detail": "Account deleted successfully."}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stream_minio_resource(request, waypoint_id):
+    file_name = request.GET.get("file")
+    if not file_name:
+        return Http404("File name non fornito")
+
+    # file_path = f"{waypoint_id}/data/media/{file_name}"
+    # try:
+    #     instance = Waypoint.objects.get(id=waypoint_id)
+    # except:
+    #     return Http404("Waypoint non trovato")
+    file_path = f"8/default_image/help/{file_name}"
+    storage = MinioStorage()
+
+    if not storage.exists(file_path):
+        raise Http404("File non trovato")
+
+    file = storage.open(file_path, mode='rb')
+
+    content_type, _ = mimetypes.guess_type(file_name)
+    if content_type is None:
+        content_type = 'application/octet-stream'
+
+    response = StreamingHttpResponse(file, content_type=content_type)
+    response['Content-Disposition'] = f'inline; filename="{file_name}"'
+    return response

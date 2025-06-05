@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 import nested_admin
-from .views import tour_list, tour_details, profile_details, update_profile, delete_account, update_password
+from .views import tour_list, tour_details, profile_details, update_profile, delete_account, update_password, stream_minio_resource
 
 urlpatterns = [
     path('tour_list/<str:category>/', tour_list, name='tour_list'),
@@ -10,4 +10,5 @@ urlpatterns = [
     path('update_profile/', update_profile, name='update_profile'),
     path('delete_account/', delete_account, name='delete_account'),
     path('update_password/', update_password, name='update_password'),
+    path('stream_minio_resource/<int:waypoint_id>/', stream_minio_resource, name='stream_minio_resource'),
 ]
