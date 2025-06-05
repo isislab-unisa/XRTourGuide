@@ -34,8 +34,9 @@ class WaypointAdmin(nested_admin.NestedStackedInline):
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates')
+    list_display = ('title', 'creation_time', 'category', 'place')
     readonly_fields = ['user', 'creation_time']
-    list_filter = ['user']
+    list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
     date_hierarchy = 'creation_time'
     inlines = [WaypointAdmin]

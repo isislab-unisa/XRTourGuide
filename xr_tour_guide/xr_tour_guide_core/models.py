@@ -32,7 +32,7 @@ def upload_media_item(instance, file_name):
     storage.save(f"{poi_id}/data/media/{file_name}", file)
     
 def default_image(instance, file_name):
-    return f"{instance.cromo_poi.id}/default_image/{instance.tag}/{file_name}"
+    return f"{instance.waypoint.id}/default_image/{instance.tag}/{file_name}"
 
 class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
@@ -84,7 +84,12 @@ class Tour(models.Model):
     build_started_at = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
     creation_time = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.READY
+    )
+     
     class Meta:
         db_table = "Tour"
         verbose_name = "Tour"
