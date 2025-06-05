@@ -11,7 +11,8 @@ from django.contrib.auth import get_user_model
 dotenv.load_dotenv()
 
 def upload_to(instance, file_name):
-    poi_id = instance.cromo_view.cromo_poi.id
+    poi_id = instance.waypoint_view.waypoint.id
+    tag = instance.waypoint_view.waypoint.tag.replace(" ", "_")
     tag = instance.tag.replace(" ", "_")
     storage = MinioStorage()
     elements = storage.bucket.objects.filter(Prefix=f"{poi_id}/data/test/{tag}/")
@@ -24,6 +25,12 @@ def upload_to(instance, file_name):
     else:
         return f"{poi_id}/data/train/{tag}/{file_name}"
 
+def upload_media_item(instance, file_name):
+    poi_id = instance.waypoint.id
+    storage = MinioStorage()
+    file = ContentFile(instance.file.read())
+    storage.save(f"{poi_id}/data/media/{file_name}", file)
+    
 def default_image(instance, file_name):
     return f"{instance.cromo_poi.id}/default_image/{instance.tag}/{file_name}"
 
@@ -68,8 +75,8 @@ class Tour(models.Model):
     coordinates = PlainLocationField(zoom=7, null=True, blank=True)
     category = models.CharField(
         max_length=20,
-        choices=Status.choices,
-        default=Status.READY
+        choices=Category.choices,
+        default=Category.INSIDE,
     )
     description = models.TextField()
     objects = TourQuerySet.as_manager()
@@ -82,10 +89,10 @@ class Tour(models.Model):
         db_table = "Tour"
         verbose_name = "Tour"
         verbose_name_plural = "Tours"
-        permissions = [
-            ("can_create_cromo_poi", "Can create cromo_poi"),
-            ("can_view_cromo_poi", "Can view cromo_poi"),
-        ]
+        # permissions = [
+        #     ("can_create_cromo_poi", "Can create cromo_poi"),
+        #     ("can_view_cromo_poi", "Can view cromo_poi"),
+        # ]
         
     def __str__(self):
         return self.title
@@ -162,7 +169,7 @@ class WaypointViewImage(models.Model):
     
 class MediaItem(models.Model):
     type = models.CharField(max_length=20, blank=False, null=False)
-    item = models.FileField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
+    item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     waypoint = models.ForeignKey(Waypoint, on_delete=models.CASCADE, related_name='media_items')
     
 @receiver(post_save, sender=WaypointViewImage)
