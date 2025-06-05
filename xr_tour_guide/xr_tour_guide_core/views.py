@@ -112,6 +112,6 @@ def stream_minio_resource(request, waypoint_id):
     if content_type is None:
         content_type = 'application/octet-stream'
 
-    response = StreamingHttpResponse(file, content_type=content_type)
-    response['Content-Disposition'] = f'inline; filename="{file_name}"'
+    response = FileResponse(file, as_attachment=False, filename=file_name)
+    response['Content-Type'] = 'application/octet-stream'
     return response
