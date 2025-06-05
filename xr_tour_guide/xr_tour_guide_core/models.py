@@ -26,13 +26,13 @@ def upload_to(instance, file_name):
         return f"{poi_id}/data/train/{tag}/{file_name}"
 
 def upload_media_item(instance, file_name):
-    poi_id = instance.waypoint.id
+    poi_id = instance.waypoint.tour.id
     storage = MinioStorage()
     file = ContentFile(instance.file.read())
     storage.save(f"{poi_id}/data/media/{file_name}", file)
     
 def default_image(instance, file_name):
-    return f"{instance.waypoint.id}/default_image/{instance.tag}/{file_name}"
+    return f"{instance.waypoint.tour.id}/default_image/{instance.tag}/{file_name}"
 
 class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
