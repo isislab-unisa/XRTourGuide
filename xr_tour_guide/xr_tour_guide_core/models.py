@@ -11,8 +11,7 @@ from django.contrib.auth import get_user_model
 dotenv.load_dotenv()
 
 def upload_to(instance, file_name):
-    poi_id = instance.waypoint_view.waypoint.id
-    tag = instance.waypoint_view.waypoint.tag.replace(" ", "_")
+    poi_id = instance.tour.id
     tag = instance.tag.replace(" ", "_")
     storage = MinioStorage()
     elements = storage.bucket.objects.filter(Prefix=f"{poi_id}/data/test/{tag}/")
@@ -25,14 +24,29 @@ def upload_to(instance, file_name):
     else:
         return f"{poi_id}/data/train/{tag}/{file_name}"
 
-def upload_media_item(instance, file_name):
-    poi_id = instance.waypoint.tour.id
-    storage = MinioStorage()
-    file = ContentFile(instance.file.read())
-    storage.save(f"{poi_id}/data/media/{file_name}", file)
-    
-def default_image(instance, file_name):
-    return f"{instance.waypoint.tour.id}/default_image/{instance.tag}/{file_name}"
+def upload_media_item(instance, filename):
+    field_name = None
+    for f in instance._meta.fields:
+        if hasattr(instance, f.name) and getattr(instance, f.name, None):
+            if hasattr(getattr(instance, f.name), 'name') and getattr(instance, f.name).name == filename:
+                field_name = f.name
+                break
+
+    poi_id = instance.tour.id
+    subfolder = {
+        'pdf_item': 'pdf',
+        'readme_item': 'readme',
+        'video_item': 'video',
+        'audio_item': 'audio',
+    }.get(field_name, 'other')
+
+    return f"{poi_id}/{instance.id}/data/{subfolder}/{filename}"
+
+def default_image_waypoint(instance, file_name):
+    return f"{instance.tour.id}/{instance.id}/default_image/{file_name}"
+
+def default_image_tour(instance, file_name):
+    return f"{instance.id}/default_image/{file_name}"
 
 class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
@@ -146,12 +160,63 @@ class Waypoint(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
-    default_image = models.ImageField(upload_to=default_image, storage=MinioStorage(), null=True, blank=True)
+    default_image = models.ImageField(upload_to=default_image_waypoint, storage=MinioStorage(), null=True, blank=True)
     
     pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_files = {
+            'default_image': self.default_image,
+            'pdf_item': self.pdf_item,
+            'readme_item': self.readme_item,
+            'video_item': self.video_item,
+            'audio_item': self.audio_item,
+        }
+
+        super().save(*args, **kwargs)
+
+        if is_new:
+            updated_fields = []
+
+            def move_file(field_name, subfolder):
+                file_field = old_files[field_name]
+                if not file_field:
+                    return None
+                filename = os.path.basename(file_field.name)
+                old_path = file_field.name
+                new_path = f"{self.tour.id}/{self.id}/data/{subfolder}/{filename}"
+                file = file_field.file
+                file.open()
+                self._meta.get_field(field_name).storage.save(new_path, file)
+                setattr(self, field_name, new_path)
+                updated_fields.append(field_name)
+                if self._meta.get_field(field_name).storage.exists(old_path):
+                    self._meta.get_field(field_name).storage.delete(old_path)
+
+            if old_files['default_image']:
+                filename = os.path.basename(old_files['default_image'].name)
+                old_path = old_files['default_image'].name
+                new_path = f"{self.tour.id}/{self.id}/default_image/{filename}"
+                file = old_files['default_image'].file
+                file.open()
+                self.default_image.storage.save(new_path, file)
+                self.default_image = new_path
+                updated_fields.append('default_image')
+                if self.default_image.storage.exists(old_path):
+                    self.default_image.storage.delete(old_path)
+
+            move_file('pdf_item', 'pdf')
+            move_file('readme_item', 'readme')
+            move_file('video_item', 'video')
+            move_file('audio_item', 'audio')
+
+            if updated_fields:
+                super().save(update_fields=updated_fields)
+
 
     class Meta:
         db_table = "Waypoint"
@@ -163,7 +228,7 @@ class Waypoint(models.Model):
 
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
-    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
+    # image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
     
     def __str__(self):
         return f"Image for {self.cromo_view.tag}"
