@@ -6,7 +6,7 @@ import nested_admin
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfolTabularInline
-from .models import Tour, Waypoint, WaypointView, MediaItem, WaypointViewImage, Tag
+from .models import Tour, Waypoint, WaypointViewImage, Tag
 
 class UnfoldNestedStackedInline(nested_admin.NestedStackedInline, UnfoldStackedInline):
     pass
@@ -14,19 +14,13 @@ class UnfoldNestedStackedInline(nested_admin.NestedStackedInline, UnfoldStackedI
 class UnfoldNestedTabularInline(nested_admin.NestedTabularInline, UnfolTabularInline):
     pass
 
-class WaypointViewAdmin(UnfoldNestedTabularInline):
-    model = WaypointView
-    fields = ['tag', 'default_image']
-    extra = 1
-
-class WaypointAdmin(UnfoldNestedTabularInline):
+class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
-    fields = ['title', 'coordinates', 'description']
+    fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item', 'default_image', 'tag']
     extra = 1
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
     }
-    inlines = [WaypointViewAdmin]
 
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
@@ -95,5 +89,4 @@ class TagAdmin(ModelAdmin):
 
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Tour, TourAdmin)
-admin.site.register(MediaItem, MediaItemAdmin)
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)

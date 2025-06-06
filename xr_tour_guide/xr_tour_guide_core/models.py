@@ -142,6 +142,17 @@ class Waypoint(models.Model):
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints')
     description = models.TextField()
     model_path = models.CharField(max_length=200, blank=False, null=False)
+    
+    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    build_started_at = models.DateTimeField(null=True, blank=True)
+    default_image = models.ImageField(upload_to=default_image, storage=MinioStorage(), null=True, blank=True)
+    
+    pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
+    readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
+    video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
+    audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
+
     class Meta:
         db_table = "Waypoint"
         verbose_name = "Waypoint"
@@ -150,32 +161,16 @@ class Waypoint(models.Model):
     def __str__(self):
         return self.title
 
-class WaypointView(models.Model):
-    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
-    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    build_started_at = models.DateTimeField(null=True, blank=True)
-    default_image = models.ImageField(upload_to=default_image, storage=MinioStorage(), null=True, blank=True)
-    waypoint = models.ForeignKey(Waypoint, on_delete=models.CASCADE, related_name='views', null=True, blank=True)
-    
-    class Meta:
-        db_table = "WaypointView"
-        verbose_name = "WaypointView"
-        verbose_name_plural = "WaypointViews"
-        
-    def __str__(self):
-        return f"{self.tag}"
-
 class WaypointViewImage(models.Model):
-    waypoint_view = models.ForeignKey(WaypointView, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
+    waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
     image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
     
     def __str__(self):
         return f"Image for {self.cromo_view.tag}"
     
-class MediaItem(models.Model):
-    type = models.CharField(max_length=20, blank=False, null=False)
-    item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
-    waypoint = models.ForeignKey(Waypoint, on_delete=models.CASCADE, related_name='media_items')
+# class MediaItem(models.Model):
+#     type = models.CharField(max_length=20, blank=False, null=False)
+#     waypoint = models.ForeignKey(Waypoint, on_delete=models.CASCADE, related_name='media_items')
     
 @receiver(post_save, sender=WaypointViewImage)
 def sync_test_train_images(sender, instance, created, **kwargs):

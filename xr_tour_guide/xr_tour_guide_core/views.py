@@ -11,7 +11,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from storages.backends.s3boto3 import S3Boto3Storage
 import mimetypes
-from .models import MinioStorage, WaypointView, Waypoint, WaypointView
+from .models import MinioStorage, Waypoint
+from rest_framework.permissions import AllowAny
 
 @api_view(['GET'])
 def tour_list(request, category):
@@ -89,7 +90,8 @@ def delete_account(request):
     return Response({"detail": "Account deleted successfully."}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
+@permission_classes([AllowAny]) 
 def stream_minio_resource(request, waypoint_id):
     file_name = request.GET.get("file")
 
@@ -97,8 +99,8 @@ def stream_minio_resource(request, waypoint_id):
         return Response({"detail": "File name non fornito"}, status=400)
 
     try:
-        waypoint = WaypointView.objects.get(id=waypoint_id)
-    except WaypointView.DoesNotExist:
+        waypoint = Waypoint.objects.get(id=waypoint_id)
+    except Waypoint.DoesNotExist:
         return Response({"detail": "Waypoint non trovato"}, status=404) 
     
     file_path = f"{waypoint_id}/data/media/{file_name}"
