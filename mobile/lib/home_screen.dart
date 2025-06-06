@@ -537,7 +537,7 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
             Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (index == 1) {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => UserDetailScreen()),
+              MaterialPageRoute(builder: (context) => UserDetailScreen(isGuest: widget.isGuest)),
             );
           }
         },

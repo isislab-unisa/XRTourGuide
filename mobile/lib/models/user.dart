@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 class User {
+  final int id;
   final String name;
   final String surname;
   final String mail;
@@ -10,6 +11,7 @@ class User {
   int reviewCount = 0;
 
   User({
+    required this.id,
     required this.name,
     required this.surname,
     required this.mail,
@@ -21,6 +23,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
+      id: json['id'] as int,
       name: json['title'] as String,
       surname: json['subtitle'] as String,
       mail: json['description'] as String,

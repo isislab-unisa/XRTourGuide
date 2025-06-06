@@ -1,5 +1,5 @@
 class Tour {
-  final String id;
+  final int id;
   final String title;
   final String description;
   final String imagePath;
@@ -35,7 +35,7 @@ class Tour {
 
   factory Tour.fromJson(Map<String, dynamic> json) {
     return Tour(
-      id: json['id'] as String,
+      id: json['id'] as int,
       title: json['title'] as String,
       description: json['description'] as String,
       imagePath: json['imagePath'] as String,

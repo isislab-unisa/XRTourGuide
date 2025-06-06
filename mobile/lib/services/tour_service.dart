@@ -13,7 +13,7 @@ class TourService {
     // Mock data
     return [
       Tour(
-        id: 'tour_1',
+        id: 1,
         title: 'Montevergine',
         description:
             'Il Santuario di Montevergine è un importante complesso monastico mariano situato a circa 1.270 metri sul livello del mare, nel massiccio del Partenio, nel comune di Mercogliano (Avellino). Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei principali luoghi di pellegrinaggio del Sud Italia, con oltre un milione di visitatori ogni anno.',
@@ -35,7 +35,7 @@ class TourService {
         totViews: 1500,
       ),
       Tour(
-        id: 'tour_2',
+        id: 2,
         title: 'Acquedotto Romano',
         description: 'Discover the beauty of this amazing destination.',
         imagePath: 'assets/acquedotto.jpg',
@@ -113,12 +113,14 @@ class TourService {
     ];
   }
 
-  Future<List<Review>> getReviewByTour() async {
+  Future<List<Review>> getReviewByTour({int? tourId, int? userId, required int max}) async {
+    //TODO: Add logic for tour or user
+
     // Simulate network delay
     await Future.delayed(const Duration(seconds: 1));
 
     // Mock data
-    return [
+    List<Review> reviews = [
       Review(
         name: 'Giorgia',
         date: 'Oct 24, 2024',
@@ -151,7 +153,45 @@ class TourService {
         rating: 5.0,
         imageUrl: "",
       ),
+      Review(
+        name: 'Alice',
+        date: 'Oct 24, 2024',
+        comment:
+            'The tour was well-organized and the guide was knowledgeable. However, I wish we had more time at each location.',
+        rating: 4.7,
+        imageUrl: "",
+      ),
+      Review(
+        name: 'Luca',
+        date: 'Oct 24, 2024',
+        comment:
+            'An unforgettable experience! The views were stunning and the guide was very friendly.',
+        rating: 5.0,
+        imageUrl: "",
+      ),
+      Review(
+        name: 'Sara',
+        date: 'Oct 24, 2024',
+        comment:
+            'The tour was informative, but the pace was a bit too fast for my liking. I would have preferred more time to explore each site.',
+        rating: 3.8,
+        imageUrl: "",
+      ),
     ];
+
+    // Return only the first 'max' reviews
+    if (max > reviews.length) {
+      max = reviews.length; // Adjust max to the length of the list if out of bounds
+    }
+    if (max < 0) {
+      max = 0; // Ensure max is not negative
+    }
+    if (max == 0) {
+      //return all reviews if max is 0
+      return reviews.toList();
+    } else {
+      return reviews.take(max).toList();
+    }
   }
 
 
@@ -164,7 +204,7 @@ class TourService {
     // Mock data
     return [
       Tour(
-        id: 'tour_3',
+        id: 3,
         title: 'Cucina Tipica Irpina',
         description: 'Experience traditional Irpinian cuisine.',
         imagePath: 'assets/cibo_example.jpg',
@@ -207,6 +247,7 @@ class TourService {
 
     // Mock user data
     return User(
+      id: 1,
       name: 'Mario',
       surname: 'Rossi',
       mail: 'test@mail.com',

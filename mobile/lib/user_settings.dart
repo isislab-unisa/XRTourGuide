@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'models/app_colors.dart';
 import 'services/tour_service.dart';
 import 'models/user.dart';
-
+import 'main.dart'; // Import your main app file for navigation
 
 // Enum to track which profile screen is currently active
 enum ProfileScreenState {
@@ -43,9 +43,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     {"name": "Italiano", "code": "it_IT", "flag": "🇮🇹", "selected": false},
   ];
 
-  // Controllers for text fields
+  // Controllers for text fields (Personal Info)
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+
+  // NEW: Controllers for Change Password fields
+  final TextEditingController _oldPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmNewPasswordController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -68,13 +74,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           // Initialize text controllers with current values
           _nameController.text = _user!.name;
           _emailController.text = _user!.mail;
-
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoadingUserDetails = false;
+          // Set an error message if loading fails
+          // _error = 'Failed to load user details: $e'; // You can uncomment this if you want to display the error directly
         });
         _showError('Error loading user Details');
       }
@@ -87,13 +94,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-
-
   @override
   void dispose() {
     // Clean up controllers when the widget is disposed
     _nameController.dispose();
     _emailController.dispose();
+    _oldPasswordController.dispose(); // NEW: Dispose password controllers
+    _newPasswordController.dispose();
+    _confirmNewPasswordController.dispose();
     super.dispose();
   }
 
@@ -139,7 +147,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     //   MaterialPageRoute(builder: (context) => const TravelExplorerScreen()),
     // );
     Navigator.of(context).popUntil((route) => route.isFirst);
-
   }
 
   // Show logout confirmation bottom sheet
@@ -150,6 +157,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return _buildLogoutBottomSheet(context);
+      },
+    );
+  }
+
+  // NEW: Show Change Password bottom sheet
+  void _showChangePasswordSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows sheet to take full height if needed
+      backgroundColor: Colors.transparent, // For custom rounded corners
+      builder: (BuildContext context) {
+        return _buildChangePasswordSheet(context);
       },
     );
   }
@@ -185,13 +204,54 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  // NEW: Handle Change Password logic
+  void _changePassword() {
+    final oldPassword = _oldPasswordController.text;
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmNewPasswordController.text;
+
+    if (newPassword != confirmPassword) {
+      _showError('New password and confirmation do not match.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      // Example validation
+      _showError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    // TODO: Implement actual password change logic, e.g., API call
+    print('Attempting to change password:');
+    print('Old: $oldPassword, New: $newPassword');
+
+    Navigator.of(context).pop(); // Close the bottom sheet
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Password changed successfully!'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+
+    // Clear controllers after successful change
+    _oldPasswordController.clear();
+    _newPasswordController.clear();
+    _confirmNewPasswordController.clear();
+  }
+
   // Perform logout action
   void _logout(BuildContext context) {
     // In a real app, you would clear user session, tokens, etc.
     Navigator.of(context).pop(); // Close the bottom sheet
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const AuthFlowScreen(),
+      ),
+      (route) => false,
+    );                            
 
     // Navigate back to login or onboarding screen
-    // This is a placeholder - replace with your actual navigation logic
+    //TODO: Aggiungere anche rimozione dallo storage delláuth token
     print('User logged out');
   }
 
@@ -207,7 +267,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        elevation: 0,),
+        elevation: 0,
+        // No leading icon on the main profile screen if it's a root tab
+        // If it's pushed onto a stack, you might want a back button here
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -237,6 +300,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(50),
                                 child: Image.network(
+                                  // Placeholder image URL, replace with actual user avatar
                                   'https://randomuser.me/api/portraits/men/44.jpg',
                                   fit: BoxFit.cover,
                                 ),
@@ -330,7 +394,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
 
             // Bottom navigation bar
-            _buildBottomNavBar(context, 1), // 1 = Profile tab selected
+            // _buildBottomNavBar(context, 1), // 1 = Profile tab selected
           ],
         ),
       ),
@@ -546,7 +610,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             Expanded(
               child: ListView(
                 children: [
-                  // // Biometric ID toggle
+                  // // Biometric ID toggle (Commented out as in your original)
                   // _buildToggleSettingTile(
                   //   title: 'Biometric ID',
                   //   value: _biometricEnabled,
@@ -557,7 +621,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   //   },
                   // ),
 
-                  // // Face ID toggle
+                  // // Face ID toggle (Commented out as in your original)
                   // _buildToggleSettingTile(
                   //   title: 'Face ID',
                   //   value: _faceIdEnabled,
@@ -568,12 +632,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   //   },
                   // ),
 
-                  // Change Password option
+                  // Change Password option - NOW CALLS THE BOTTOM SHEET
                   _buildSettingTile(
                     title: 'Change Password',
                     onTap: () {
-                      // Navigate to change password screen
-                      print('Navigate to change password');
+                      _showChangePasswordSheet(
+                        context,
+                      ); // NEW: Call the change password sheet
                     },
                   ),
 
@@ -642,7 +707,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       ),
     );
   }
-
 
   // Build a setting tile with optional subtitle
   Widget _buildSettingTile({
@@ -1002,6 +1066,218 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  // NEW: Build the Change Password bottom sheet
+  Widget _buildChangePasswordSheet(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: SingleChildScrollView(
+        // Allow scrolling for keyboard
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Title
+            const Text(
+              'Change Password',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Old Password
+                  const Text(
+                    'Old Password',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _oldPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Enter old password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // New Password
+                  const Text(
+                    'New Password',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _newPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Enter new password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Confirm New Password
+                  const Text(
+                    'Confirm New Password',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _confirmNewPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Confirm new password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the sheet
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed:
+                              _changePassword, // Call password change logic
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red, // As per image
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'Change',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Build the bottom navigation bar
   Widget _buildBottomNavBar(BuildContext context, int selectedIndex) {
     return Container(
@@ -1019,7 +1295,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             // Navigate to Explore tab
             _navigateToExplore(context);
           } else {
-            // Already on Profile tab
+            // Already on Profile tab, or handle other tabs
+            // In a real app, you'd navigate to the respective root screen for each tab
           }
         },
         items: const [

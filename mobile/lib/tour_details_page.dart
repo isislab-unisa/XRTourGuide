@@ -11,10 +11,11 @@ import 'models/review.dart';
 import 'services/tour_service.dart';
 import 'camera_screen.dart'; // Import your camera screen
 import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
+import 'review_list.dart'; // Import your review list screen
 
 
 class TourDetailScreen extends StatefulWidget {
-  final String tourId;
+  final int tourId;
   final String tourName;
   final String location;
   final double rating;
@@ -81,7 +82,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
 
   List<Review> _reviews = [];
   bool _isLoadingReviews = true;
-  
+
+  double _userRating = 0.0;
+  final TextEditingController _reviewController = TextEditingController();
 
   late LocationPermission _permission;
   Position? _currentPosition;
@@ -142,7 +145,11 @@ class _TourDetailScreenState extends State<TourDetailScreen>
 
   Future<void> _loadReviews() async {
     try {
-      final reviews = await _tourService.getReviewByTour();
+      final reviews = await _tourService.getReviewByTour(
+        tourId: widget.tourId,
+        userId: 0, // Assuming 0 for guest users, adjust as needed
+        max: 3,
+      );
       if (mounted) {
         setState(() {
           _reviews = reviews;
@@ -625,50 +632,50 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                             const SizedBox(height: 24),
 
                             // Tour progress
-                            const Text(
-                              'Tour Progress',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Waypoint ${_selectedWaypointIndex + 1} of ${_waypoints.length}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
+                            // const Text(
+                            //   'Tour Progress',
+                            //   style: TextStyle(
+                            //     fontSize: 18,
+                            //     fontWeight: FontWeight.bold,
+                            //     color: AppColors.textPrimary,
+                            //   ),
+                            // ),
+                            // const SizedBox(height: 8),
+                            // Text(
+                            //   'Waypoint ${_selectedWaypointIndex + 1} of ${_waypoints.length}',
+                            //   style: const TextStyle(
+                            //     fontSize: 14,
+                            //     color: AppColors.textSecondary,
+                            //   ),
+                            // ),
+                            // const SizedBox(height: 8),
 
                             // Progress bar
-                            Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width:
-                                        MediaQuery.of(
-                                          context,
-                                        ).size.width *
-                                        (_selectedWaypointIndex + 1) /
-                                        _waypoints.length *
-                                        0.9, // Adjusted width calculation
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary,
-                                      borderRadius:
-                                          BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            // Container(
+                            //   height: 8,
+                            //   decoration: BoxDecoration(
+                            //     color: Colors.grey.shade200,
+                            //     borderRadius: BorderRadius.circular(4),
+                            //   ),
+                            //   child: Row(
+                            //     children: [
+                            //       Container(
+                            //         width:
+                            //             MediaQuery.of(
+                            //               context,
+                            //             ).size.width *
+                            //             (_selectedWaypointIndex + 1) /
+                            //             _waypoints.length *
+                            //             0.9, // Adjusted width calculation
+                            //         decoration: BoxDecoration(
+                            //           color: AppColors.primary,
+                            //           borderRadius:
+                            //               BorderRadius.circular(4),
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
 
                             const SizedBox(height: 24),
 
@@ -711,63 +718,83 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                               ),
                               const SizedBox(height: 24),
                             ],
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    () => _launchMapApp(selectedWaypoint.latitude, selectedWaypoint.longitude),
+                                icon: const Icon(Icons.navigation),
+                                label: const Text('Navigate to this Waypoint'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
 
                             // Navigation buttons
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed:
-                                      _selectedWaypointIndex > 0
-                                          ? () {
-                                            setState(() {
-                                              _selectedWaypointIndex--;
-                                              _centerMap(
-                                                LatLng(_waypoints[_selectedWaypointIndex]
-                                                    .latitude, _waypoints[_selectedWaypointIndex].longitude)
-                                              );
-                                            });
-                                          }
-                                          : null,
-                                  icon: const Icon(Icons.arrow_back),
-                                  label: const Text('Previous'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        Colors.grey.shade300,
-                                    disabledForegroundColor:
-                                        Colors.grey.shade500,
-                                  ),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed:
-                                      _selectedWaypointIndex <
-                                              _waypoints.length - 1
-                                          ? () {
-                                            setState(() {
-                                              _selectedWaypointIndex++;
-                                              _centerMap(
-                                                LatLng(_waypoints[_selectedWaypointIndex]
-                                                    .latitude, _waypoints[_selectedWaypointIndex].longitude)
-                                              );
-                                            });
-                                          }
-                                          : null,
-                                  icon: const Icon(Icons.arrow_forward),
-                                  label: const Text('Next'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        Colors.grey.shade300,
-                                    disabledForegroundColor:
-                                        Colors.grey.shade500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // Row(
+                            //   mainAxisAlignment:
+                            //       MainAxisAlignment.spaceBetween,
+                            //   children: [
+                            //     ElevatedButton.icon(
+                            //       onPressed:
+                            //           _selectedWaypointIndex > 0
+                            //               ? () {
+                            //                 setState(() {
+                            //                   _selectedWaypointIndex--;
+                            //                   _centerMap(
+                            //                     LatLng(_waypoints[_selectedWaypointIndex]
+                            //                         .latitude, _waypoints[_selectedWaypointIndex].longitude)
+                            //                   );
+                            //                 });
+                            //               }
+                            //               : null,
+                            //       icon: const Icon(Icons.arrow_back),
+                            //       label: const Text('Previous'),
+                            //       style: ElevatedButton.styleFrom(
+                            //         backgroundColor: AppColors.primary,
+                            //         foregroundColor: Colors.white,
+                            //         disabledBackgroundColor:
+                            //             Colors.grey.shade300,
+                            //         disabledForegroundColor:
+                            //             Colors.grey.shade500,
+                            //       ),
+                            //     ),
+                            //     ElevatedButton.icon(
+                            //       onPressed:
+                            //           _selectedWaypointIndex <
+                            //                   _waypoints.length - 1
+                            //               ? () {
+                            //                 setState(() {
+                            //                   _selectedWaypointIndex++;
+                            //                   _centerMap(
+                            //                     LatLng(_waypoints[_selectedWaypointIndex]
+                            //                         .latitude, _waypoints[_selectedWaypointIndex].longitude)
+                            //                   );
+                            //                 });
+                            //               }
+                            //               : null,
+                            //       icon: const Icon(Icons.arrow_forward),
+                            //       label: const Text('Next'),
+                            //       style: ElevatedButton.styleFrom(
+                            //         backgroundColor: AppColors.primary,
+                            //         foregroundColor: Colors.white,
+                            //         disabledBackgroundColor:
+                            //             Colors.grey.shade300,
+                            //         disabledForegroundColor:
+                            //             Colors.grey.shade500,
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
 
                             // Additional information
                                   ],
@@ -973,7 +1000,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                   color: AppColors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(width: 135),
+                              // const SizedBox(width: 135),
                             ],
                           ),
                           Row(
@@ -997,7 +1024,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       ),
                       if (widget.isGuest == false)
                         Padding(
-                          padding: const EdgeInsets.only(top: 20.0),
+                          padding: const EdgeInsets.only(top: 20.0, left: 60),
                           child: Center(
                             child: ElevatedButton(
                               onPressed: () {
@@ -1155,7 +1182,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                         const SizedBox(width: 70),
                         IconButton(
                           onPressed: () {
-                            // TODO: Create Review functionality
+                            _showLeaveReviewSheet();
                           },
                           icon: Icon(
                             Icons.add_circle,
@@ -1249,8 +1276,19 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        //TODO: Navigate to all review page
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ReviewListScreen(
+                                tourName: widget.tourName,
+                                tourId: widget.tourId,
+                                isTour: true,
+                                reviewCount: widget.reviewCount,
+                              ),
+                            ),
+                          );
+                        },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.primary),
                           shape: RoundedRectangleBorder(
@@ -1748,6 +1786,170 @@ class _TourDetailScreenState extends State<TourDetailScreen>
           ),
         ],
       ),
+    );
+  }
+
+void _showLeaveReviewSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows the sheet to be scrollable
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        // Use a StatefulBuilder to manage the state of the stars within the sheet
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Center(
+                      child: Text(
+                        'Leave a Review',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Star rating
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _userRating = index + 1.0;
+                            });
+                          },
+                          icon: Icon(
+                            index < _userRating
+                                ? Icons.star
+                                : Icons.star_border,
+                            color: Colors.amber,
+                            size: 55,
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Comments:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Comments text field
+                    Container(
+                      decoration: BoxDecoration(
+                        color:
+                            Colors.white, // Background color of the container
+                        borderRadius: BorderRadius.circular(
+                          10.0,
+                        ), // Optional: rounded corners for the container
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(
+                              0.5,
+                            ), // Color of the shadow
+                            spreadRadius:
+                                1, // How much the shadow should spread
+                            blurRadius: 3, // How blurry the shadow should be
+                            offset: Offset(0, 3), // Offset of the shadow (x, y)
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: _reviewController,
+                        maxLines: 5,
+                        decoration: InputDecoration(
+                          hintText: 'Tell us about your experience...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Action buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 12),
+                            textStyle: TextStyle(fontSize: 20),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context); // Close the sheet
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 25),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 12),
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            textStyle: const TextStyle(fontSize: 20),
+                          ),
+                          onPressed: () {
+                            // TODO: Implement your logic to send the review
+                            final rating = _userRating;
+                            final comment = _reviewController.text;
+
+                            print('Rating: $rating, Comment: $comment');
+
+                            // Here you would call your service to submit the review
+                            // e.g., _tourService.submitReview(widget.tourId, rating, comment);
+
+                            Navigator.pop(context); // Close the sheet
+
+                            // Optionally, show a confirmation message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Thank you for your review!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          },
+                          child: const Text('Send'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
