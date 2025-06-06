@@ -1,30 +1,27 @@
 from django.contrib import admin
-from .models import Tour, Waypoint, WaypointView, MediaItem, WaypointViewImage, Tag
-from unfold.admin import ModelAdmin
+from django import forms
 from location_field.widgets import LocationWidget
 from location_field.models.plain import PlainLocationField
 import nested_admin
-from django import forms
-from django import forms
+from unfold.admin import ModelAdmin
+from unfold.admin import StackedInline as UnfoldStackedInline
+from unfold.admin import TabularInline as UnfolTabularInline
+from .models import Tour, Waypoint, WaypointView, MediaItem, WaypointViewImage, Tag
 
-class WaypointViewForm(forms.ModelForm):
-    class Meta:
-        model = WaypointView
-        fields = ['tag', 'default_image']
+class UnfoldNestedStackedInline(nested_admin.NestedStackedInline, UnfoldStackedInline):
+    pass
 
-class WaypointForm(forms.ModelForm):
-    class Meta:
-        model = Waypoint
-        fields = ['title', 'coordinates', 'description']
+class UnfoldNestedTabularInline(nested_admin.NestedTabularInline, UnfolTabularInline):
+    pass
 
-class WaypointViewAdmin(nested_admin.NestedStackedInline):
+class WaypointViewAdmin(UnfoldNestedTabularInline):
     model = WaypointView
-    form = WaypointViewForm
+    fields = ['tag', 'default_image']
     extra = 1
 
-class WaypointAdmin(nested_admin.NestedStackedInline):
+class WaypointAdmin(UnfoldNestedTabularInline):
     model = Waypoint
-    form = WaypointForm
+    fields = ['title', 'coordinates', 'description']
     extra = 1
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
@@ -39,6 +36,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
     date_hierarchy = 'creation_time'
+
     inlines = [WaypointAdmin]
 
     formfield_overrides = {
@@ -63,7 +61,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
-        cromo_poi = form.instance
 
     def has_change_permission(self, request, obj=None):
         has_permission = super().has_change_permission(request, obj)
