@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from storages.backends.s3boto3 import S3Boto3Storage
 import mimetypes
 from .models import MinioStorage, Waypoint
+from rest_framework.permissions import AllowAny
 
 @api_view(['GET'])
 def tour_list(request, category):
@@ -89,22 +90,24 @@ def delete_account(request):
     return Response({"detail": "Account deleted successfully."}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
+@permission_classes([AllowAny]) 
 def stream_minio_resource(request, waypoint_id):
     file_name = request.GET.get("file")
-    if not file_name:
-        return Http404("File name non fornito")
 
-    # file_path = f"{waypoint_id}/data/media/{file_name}"
-    # try:
-    #     instance = Waypoint.objects.get(id=waypoint_id)
-    # except:
-    #     return Http404("Waypoint non trovato")
-    file_path = f"8/default_image/help/{file_name}"
+    if not file_name:
+        return Response({"detail": "File name non fornito"}, status=400)
+
+    try:
+        waypoint = Waypoint.objects.get(id=waypoint_id)
+    except Waypoint.DoesNotExist:
+        return Response({"detail": "Waypoint non trovato"}, status=404) 
+    
+    file_path = f"{waypoint_id}/data/media/{file_name}"
     storage = MinioStorage()
 
     if not storage.exists(file_path):
-        raise Http404("File non trovato")
+        return Response({"detail": "File non trovato"}, status=404)
 
     file = storage.open(file_path, mode='rb')
 
@@ -113,5 +116,5 @@ def stream_minio_resource(request, waypoint_id):
         content_type = 'application/octet-stream'
 
     response = FileResponse(file, as_attachment=False, filename=file_name)
-    response['Content-Type'] = 'application/octet-stream'
+    response['Content-Type'] = content_type
     return response
