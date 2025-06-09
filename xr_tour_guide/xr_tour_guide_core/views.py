@@ -13,23 +13,58 @@ from storages.backends.s3boto3 import S3Boto3Storage
 import mimetypes
 from .models import MinioStorage, Waypoint
 from rest_framework.permissions import AllowAny
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="List tours by category with optional search term",
+    manual_parameters=[
+        openapi.Parameter(
+            'searchTerm', openapi.IN_QUERY, 
+            description="Keyword to search in title, description, place or coordinates", 
+            type=openapi.TYPE_STRING
+        )
+    ],
+    responses={200: TourSerializer(many=True)}
+)
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def tour_list(request, category):
     searchTerm = request.GET.get('searchTerm', '')
     filters = Q(category__iexact=category)
     if searchTerm:
-        filters &=Q(nome__icontains=searchTerm) | Q(sottotitolo__icontains=searchTerm) | Q(descrizione__icontains=searchTerm) | Q(luogo__icontains=searchTerm) | Q(coordinate__icontains=searchTerm)
-    tours = Tour.objects.filter(filters)
+        filters &=Q(title__icontains=searchTerm) | Q(description__icontains=searchTerm) | Q(place__icontains=searchTerm) | Q(coordinates__icontains=searchTerm)
+    try:
+        tours = Tour.objects.filter(filters)
+    except Tour.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = TourSerializer(tours, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Retrieve details for a specific tour",
+    responses={
+        200: TourSerializer(),
+        404: openapi.Response(description="Tour not found")
+    }
+)
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def tour_details(request, pk):
-    tour = Tour.objects.get(pk=pk)
+    try:
+        tour = Tour.objects.get(pk=pk)
+    except Tour.DoesNotExist:
+        return Response({"detail": "Tour non trovato"}, status=status.HTTP_404_NOT_FOUND)
     serializer = TourSerializer(tour)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Retrieve the current authenticated user's profile",
+    responses={200: UserSerializer()}
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_details(request):
@@ -37,6 +72,19 @@ def profile_details(request):
     serializer = UserSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Update the current authenticated user's profile",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'firstName': openapi.Schema(type=openapi.TYPE_STRING),
+            'lastName': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING, format='email'),
+        }
+    ),
+    responses={200: openapi.Response(description="Profile updated successfully")}
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
@@ -55,6 +103,22 @@ def update_profile(request):
     user.save()
     return Response({"detail": "Profile updated successfully."}, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Update the user's password",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['oldPassword', 'newPassword'],
+        properties={
+            'oldPassword': openapi.Schema(type=openapi.TYPE_STRING),
+            'newPassword': openapi.Schema(type=openapi.TYPE_STRING),
+        }
+    ),
+    responses={
+        200: openapi.Response(description="Password updated successfully"),
+        400: openapi.Response(description="Old password is incorrect")
+    }
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_password(request):
@@ -69,14 +133,21 @@ def update_password(request):
     user.save()
     return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def forget_password(request):
-#     user = request.user
-#     user.set_unusable_password()
-#     user.save()
-#     return Response({"detail": "Password removed. Reset necessary via email."}, status=status.HTTP_200_OK)
-
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Delete the current user's account",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['password'],
+        properties={
+            'password': openapi.Schema(type=openapi.TYPE_STRING)
+        }
+    ),
+    responses={
+        200: openapi.Response(description="Account deleted successfully"),
+        400: openapi.Response(description="Password is incorrect")
+    }
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def delete_account(request):
@@ -89,6 +160,23 @@ def delete_account(request):
     user.delete()
     return Response({"detail": "Account deleted successfully."}, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Stream a specific file from MinIO storage for a waypoint",
+    manual_parameters=[
+        openapi.Parameter(
+            'file', openapi.IN_QUERY, 
+            description="Exact name of the file to stream (pdf/audio/video/readme/image)", 
+            type=openapi.TYPE_STRING,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(description="File streamed successfully"),
+        400: openapi.Response(description="File name not provided"),
+        404: openapi.Response(description="Waypoint or file not found")
+    }
+)
 @api_view(['GET'])
 @permission_classes([AllowAny]) 
 def stream_minio_resource(request, waypoint_id):
@@ -102,7 +190,19 @@ def stream_minio_resource(request, waypoint_id):
     except Waypoint.DoesNotExist:
         return Response({"detail": "Waypoint non trovato"}, status=404) 
     
-    file_path = f"{waypoint_id}/data/media/{file_name}"
+    if waypoint.pdf_item.name == file_name:
+        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/pdf/{file_name}"
+    elif waypoint.audio_item.name == file_name:
+        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/audio/{file_name}"
+    elif waypoint.video_item.name == file_name:
+        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/video/{file_name}"
+    elif waypoint.readme_item.name == file_name:
+        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/readme/{file_name}"
+    elif waypoint.default_image.name == file_name:
+        file_path = f"{waypoint.tour.id}/{waypoint_id}/default_image/{file_name}"
+    else:
+        return Response({"detail": "File non trovato"}, status=404)
+    
     storage = MinioStorage()
 
     if not storage.exists(file_path):
@@ -117,3 +217,22 @@ def stream_minio_resource(request, waypoint_id):
     response = FileResponse(file, as_attachment=False, filename=file_name)
     response['Content-Type'] = content_type
     return response
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Retrieve reviews for a specific tour",
+    responses={
+        200: openapi.Response(description="List of reviews (serialized)"),
+        404: openapi.Response(description="Tour not found")
+    }
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_reviews(request, tour_id):
+    try:
+        reviews = Tour.objects.get(id=tour_id).reviews_set.all()
+    except:
+        return Response({"detail": "Tour non trovato"}, status=status.HTTP_404_NOT_FOUND)
+    
+    serializer = TourSerializer(reviews, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

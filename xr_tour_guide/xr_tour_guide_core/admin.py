@@ -6,7 +6,7 @@ import nested_admin
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfolTabularInline
-from .models import Tour, Waypoint, WaypointViewImage, Tag
+from .models import Tour, Waypoint, WaypointViewImage, Tag, Review
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 
@@ -175,6 +175,9 @@ class WaypointViewImageAdmin(ModelAdmin):
 class TagAdmin(ModelAdmin):
     pass
 
+class ReviewAdmin(ModelAdmin):
+    pass
+admin.site.register(Review, ReviewAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Tour, TourAdmin)
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)

@@ -275,3 +275,9 @@ def sync_test_train_images(sender, instance, created, **kwargs):
             content = storage.open(path).read()
             storage.save(train_path, ContentFile(content))
 
+class Review(models.Model):
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField()
+    comment = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
