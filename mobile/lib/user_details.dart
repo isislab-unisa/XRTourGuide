@@ -4,7 +4,9 @@ import 'models/app_colors.dart';
 import 'services/tour_service.dart';
 import 'models/user.dart';
 import 'models/review.dart';
-import 'user_settings.dart';
+import 'user_settings.dart'; // Ensure this import is correct for UserProfileScreen
+import 'review_list.dart';
+import 'main.dart'; // Adjust import based on your project structure
 
 // Enum to track which profile screen is currently active
 enum ProfileScreenState {
@@ -16,7 +18,10 @@ enum ProfileScreenState {
 }
 
 class UserDetailScreen extends StatefulWidget {
-  const UserDetailScreen({Key? key}) : super(key: key);
+  // NEW: Add isGuest parameter to the constructor
+  final bool isGuest;
+  const UserDetailScreen({Key? key, this.isGuest = false})
+    : super(key: key); // Default to false
 
   @override
   State<UserDetailScreen> createState() => _UserDetailScreenState();
@@ -35,7 +40,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   List<Review> _reviews = [];
   bool _isLoadingReviews = true;
 
-
   // Controllers for text fields
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -43,17 +47,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Only load user data if not in guest mode
+    if (!widget.isGuest) {
+      _loadData();
+    }
   }
 
   Future<void> _loadData() async {
     // Load all data in parallel
-    await Future.wait([
-      _loadUserDetails(),
-      _loadUserReviews(),
-    ]);
+    await Future.wait([_loadUserDetails(), _loadUserReviews()]);
   }
-
 
   Future<void> _loadUserDetails() async {
     try {
@@ -93,7 +96,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     }
   }
 
-
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -110,9 +112,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   // Navigate to user settings
   void _navigateToUserSettings() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => UserProfileScreen()));
+    // Pass the isGuest status to UserProfileScreen if needed, currently not used
+    // This assumes UserProfileScreen can handle an isGuest parameter if it needs to adapt
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => UserProfileScreen(),
+      ),
+    );
   }
 
   // Navigate to home/explore screen
@@ -124,7 +130,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  // Build the main profile screen
+  // Build the main profile screen for a logged-in user
   Widget _buildMainProfileScreen(BuildContext context) {
     if (_isLoadingUserDetails || _user == null) {
       return const Scaffold(
@@ -218,7 +224,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               child: Row(
                                 children: [
                                   const SizedBox(width: 165),
-                                  Icon(
+                                  const Icon(
                                     Icons.location_city,
                                     color: AppColors.textSecondary,
                                   ),
@@ -229,14 +235,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                       fontSize: 14,
                                       color: AppColors.textSecondary,
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
                             const SizedBox(height: 10),
                             if (_user!.description.isNotEmpty)
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
@@ -251,7 +259,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                     ],
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 8),
                                       Text(
@@ -302,7 +311,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       //load the first two elements from _reviews
                       if (_isLoadingReviews)
                         const Center(child: CircularProgressIndicator())
-                      else ...[
+                      else if (_reviews.isNotEmpty) ...[
                         _buildReviewItem(
                           name: _reviews[0].name,
                           date: _reviews[0].date,
@@ -311,48 +320,64 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           imageUrl: _reviews[0].imageUrl,
                         ),
                         const SizedBox(height: 16),
-                        _buildReviewItem(
-                          name: _reviews[1].name,
-                          date: _reviews[1].date,
-                          rating: _reviews[1].rating,
-                          comment: _reviews[1].comment,
-                          imageUrl: _reviews[1].imageUrl,
-                        ),
+                        if (_reviews.length >
+                            1) // Only show the second review if it exists
+                          _buildReviewItem(
+                            name: _reviews[1].name,
+                            date: _reviews[1].date,
+                            rating: _reviews[1].rating,
+                            comment: _reviews[1].comment,
+                            imageUrl: _reviews[1].imageUrl,
+                          ),
                         const SizedBox(height: 16),
                       ],
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          //TODO: Navigate to all review page
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.primary),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                      if (_reviews
+                          .isNotEmpty) // Only show "More" button if there are reviews
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            //TODO: Navigate to all review page
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => ReviewListScreen(
+                                        isTour: false,
+                                        userId: _user!.id,
+                                        reviewCount: _user!.reviewCount,
+                                      ),
+                                ),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'More',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'More',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 20,
                                   color: AppColors.primary,
                                 ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 20,
-                                color: AppColors.primary,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -367,7 +392,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 icon: const Icon(
                   Icons.settings,
                   color: AppColors.primary,
-                  size: 30),
+                  size: 30,
+                ),
                 onPressed: () {
                   _navigateToUserSettings();
                 },
@@ -379,6 +405,137 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
   }
 
+  // Build the guest profile screen
+  Widget _buildGuestProfileScreen(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(backgroundColor: AppColors.background, elevation: 0),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Guest profile image
+                  Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(50),
+                          child: Icon(Icons.person, size: 100, color: AppColors.textSecondary)
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Guest', // As shown in profile_guest.jpg
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // TODO: Implement Log In navigation
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (context) => const AuthFlowScreen(),
+                                ),
+                                (route) => false,
+                              );                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
+                            child: const Text(
+                              'Log In', // As shown in profile_guest.jpg
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // SizedBox(
+                        //   width: double.infinity,
+                        //   height: 50,
+                        //   child: ElevatedButton(
+                        //     onPressed: () {
+                        //       // TODO: Implement Registrati navigation (Sign Up)
+                        //       print('Navigate to Registrati (Sign Up) screen');
+                        //     },
+                        //     style: ElevatedButton.styleFrom(
+                        //       backgroundColor: AppColors.primary,
+                        //       foregroundColor: Colors.white,
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(25),
+                        //       ),
+                        //     ),
+                        //     child: const Text(
+                        //       'Registrati', // As shown in profile_guest.jpg
+                        //       style: TextStyle(
+                        //         fontSize: 16,
+                        //         fontWeight: FontWeight.bold,
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _buildBottomNavBar(context, 1), // 1 = Profile tab selected
+          ],
+        ),
+      ),
+    );
+  }
 
   // Build the bottom navigation bar
   Widget _buildBottomNavBar(BuildContext context, int selectedIndex) {
@@ -397,7 +554,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             // Navigate to Explore tab
             _navigateToExplore(context);
           } else {
-            // Already on Profile tab
+            // Already on Profile tab, or handle other tabs
+            // In a real app, you'd navigate to the respective root screen for each tab
           }
         },
         items: const [
@@ -531,6 +689,11 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildMainProfileScreen(context);
+    // Conditional rendering based on isGuest
+    if (widget.isGuest) {
+      return _buildGuestProfileScreen(context);
+    } else {
+      return _buildMainProfileScreen(context);
+    }
   }
 }
