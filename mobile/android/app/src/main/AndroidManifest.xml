@@ -37,13 +37,14 @@
         android:protectionLevel="signature" />
     <uses-permission android:name="${applicationId}.permission.DOWNLOAD_COMPLETED" />
 
-
     <application
         android:label="xr_tour_guide"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="false"
         android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher"
-        tools:node="merge"> <activity
+        tools:node="merge"> 
+        <activity
             android:name="com.example.xr_tour_guide.MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
