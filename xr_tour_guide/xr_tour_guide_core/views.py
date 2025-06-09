@@ -90,7 +90,6 @@ def delete_account(request):
     return Response({"detail": "Account deleted successfully."}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 @permission_classes([AllowAny]) 
 def stream_minio_resource(request, waypoint_id):
     file_name = request.GET.get("file")

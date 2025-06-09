@@ -11,18 +11,18 @@ from django.contrib.auth import get_user_model
 dotenv.load_dotenv()
 
 def upload_to(instance, file_name):
-    poi_id = instance.tour.id
-    tag = instance.tag.replace(" ", "_")
+    poi_id = instance.waypoint.tour.id
+    tag = instance.waypoint.tag.name.replace(" ", "_")
     storage = MinioStorage()
-    elements = storage.bucket.objects.filter(Prefix=f"{poi_id}/data/test/{tag}/")
+    elements = storage.bucket.objects.filter(Prefix=f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/test/{tag}/")
     c = 0
     for k in elements:
         c += 1
     
     if c == 0:
-        return f"{poi_id}/data/test/{tag}/{file_name}"
+        return f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/test/{tag}/{file_name}"
     else:
-        return f"{poi_id}/data/train/{tag}/{file_name}"
+        return f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/test/{tag}/{file_name}"
 
 def upload_media_item(instance, filename):
     field_name = None
@@ -83,7 +83,7 @@ class TourQuerySet(models.QuerySet):
         super().delete(*args, **kwargs)
 
 class Tour(models.Model):
-    title = models.CharField(max_length=200, blank=False, null=False)
+    title = models.CharField(max_length=200, blank=False, null=False, unique=True)
     subtitle = models.CharField(max_length=200, blank=False, null=False)
     place = models.CharField(max_length=200, blank=False, null=False)
     coordinates = PlainLocationField(zoom=7, null=True, blank=True)
@@ -228,14 +228,10 @@ class Waypoint(models.Model):
 
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
-    # image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
+    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
     
     def __str__(self):
-        return f"Image for {self.cromo_view.tag}"
-    
-# class MediaItem(models.Model):
-#     type = models.CharField(max_length=20, blank=False, null=False)
-#     waypoint = models.ForeignKey(Waypoint, on_delete=models.CASCADE, related_name='media_items')
+        return f"Image for {self.waypoint.tag}"
     
 @receiver(post_save, sender=WaypointViewImage)
 def sync_test_train_images(sender, instance, created, **kwargs):
@@ -243,20 +239,19 @@ def sync_test_train_images(sender, instance, created, **kwargs):
         return
 
     storage = MinioStorage()
-    tour_id = instance.waypoint_view.waypoint.tour.pk
+    waypoint = instance.waypoint
 
-    all_images = WaypointViewImage.objects.filter(waypoint_view__waypoint__tour__pk=tour_id)
-    image_count = all_images.count()
-
+    all_images = WaypointViewImage.objects.filter(waypoint=waypoint).exclude(pk=instance.pk)
     for image in all_images:
-        path = image.image.name
         if "/test/" in image.image.name:
-            if image_count < 5:
-                train_path = path.replace("/test/", "/train/")
-                if not storage.exists(train_path):
-                    content = storage.open(path).read()
-                    storage.save(train_path, ContentFile(content))
-            else:
-                train_path = path.replace("/test/", "/train/")
-                if storage.exists(train_path):
-                    storage.delete(train_path)
+            storage.delete(image.image.name)
+
+    image_count = WaypointViewImage.objects.filter(waypoint=waypoint).count()
+
+    path = instance.image.name
+    if "/test/" in path and image_count < 5:
+        train_path = path.replace("/test/", "/train/")
+        if not storage.exists(train_path):
+            content = storage.open(path).read()
+            storage.save(train_path, ContentFile(content))
+
