@@ -274,8 +274,8 @@ class ActivateAccountView(APIView):
     def get(self, request, uidb64, token):
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
-            user = get_object_or_404(User, pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = get_object_or_404(get_user_model(), pk=uid)
+        except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
             return Response({'error': 'Link non valido'}, status=400)
 
         if default_token_generator.check_token(user, token):
