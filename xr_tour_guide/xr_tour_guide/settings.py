@@ -92,6 +92,9 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CACHES = {
     "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+    "redis": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://localhost:6379",
         "OPTIONS": {
@@ -100,6 +103,7 @@ CACHES = {
     }
 }
 
+AUTH_USER_MODEL = 'xr_tour_guide_core.CustomUser'
 
 ROOT_URLCONF = 'xr_tour_guide.urls'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760 * 10  # 10 GB
@@ -249,7 +253,7 @@ UNFOLD = {
                     {
                         "title": _("Users"),
                         "icon": "person",
-                        "link": reverse_lazy("admin:auth_user_changelist"),
+                        "link": reverse_lazy("admin:xr_tour_guide_core_customuser_changelist"),
                     },
                     {
                         "title": _("Groups"),

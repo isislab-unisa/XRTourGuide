@@ -7,6 +7,8 @@ import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 
 dotenv.load_dotenv()
 
@@ -47,6 +49,10 @@ def default_image_waypoint(instance, file_name):
 
 def default_image_tour(instance, file_name):
     return f"{instance.id}/default_image/{file_name}"
+
+class CustomUser(AbstractUser):
+    city = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
 
 class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")

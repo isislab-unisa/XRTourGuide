@@ -9,7 +9,16 @@ from unfold.admin import TabularInline as UnfolTabularInline
 from .models import Tour, Waypoint, WaypointViewImage, Tag, Review
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
+from .models import CustomUser
+from django.contrib.auth.admin import UserAdmin
 
+@admin.register(CustomUser)
+class CustomUserAdmin(UserAdmin):
+    model = CustomUser
+    # Se hai campi extra, aggiungili qui
+    fieldsets = UserAdmin.fieldsets + (
+        ('Informazioni aggiuntive', {'fields': ('city', 'description')}),
+    )
 class MultipleClearableFileInput(ClearableFileInput):
     def __init__(self, attrs=None):
         super().__init__(attrs)

@@ -15,6 +15,19 @@ from .models import MinioStorage, Waypoint
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from rest_framework import generics, status
+from rest_framework.response import Response
+from django.urls import reverse
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from .serializers import RegisterSerializer
+from django.contrib.auth import get_user_model
+
 
 @swagger_auto_schema(
     method='get',
@@ -236,3 +249,37 @@ def get_reviews(request, tour_id):
     
     serializer = TourSerializer(reviews, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+class RegisterView(generics.CreateAPIView):
+    queryset = get_user_model().objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        activation_link = self.request.build_absolute_uri(
+            reverse('activate-account', kwargs={'uidb64': uid, 'token': token})
+        )
+        send_mail(
+            subject='Activate your account',
+            message=f'Click here to activate the account: {activation_link}',
+            from_email=None,
+            recipient_list=[user.email]
+        )
+
+class ActivateAccountView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = get_object_or_404(User, pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Link non valido'}, status=400)
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({'message': 'Account attivato correttamente'}, status=200)
+        return Response({'error': 'Token non valido'}, status=400)
