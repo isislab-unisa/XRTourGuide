@@ -3,8 +3,15 @@ import 'package:xr_tour_guide/models/category.dart';
 import 'package:xr_tour_guide/models/waypoint.dart';
 import 'package:xr_tour_guide/models/review.dart';
 import "package:xr_tour_guide/models/user.dart";
+import 'package:dio/dio.dart';
+import 'secure_storage_service.dart';
+import 'auth_service.dart';
+import 'api_service.dart';
 
 class TourService {
+  // Instance of ApiService to handle API calls
+  final apiService = ApiService();
+
   // Simulate API call to get nearby tours
   Future<List<Tour>> getNearbyTours() async {
     // Simulate network delay
@@ -243,19 +250,46 @@ class TourService {
 
   Future<User> getUserDetails() async {
     // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
+    // await Future.delayed(const Duration(seconds: 1));
 
-    // Mock user data
-    return User(
-      id: 1,
-      name: 'Mario',
-      surname: 'Rossi',
-      mail: 'test@mail.com',
-      city: 'Avellino',
-      token: 'sample_token',
-      description: 'Appassionato di storia e cultura locale.',
-      reviewCount: 10,
-    );
+    // // Mock user data
+    // return User(
+    //   id: 1,
+    //   name: 'Mario',
+    //   surname: 'Rossi',
+    //   mail: 'test@mail.com',
+    //   city: 'Avellino',
+    //   token: 'sample_token',
+    //   description: 'Appassionato di storia e cultura locale.',
+    //   reviewCount: 10,
+    // );
+    // print("Token: $token");
+    // if (token == null) {
+    //   throw Exception('User not authenticated');
+    // }
+
+    try {
+      final response = await apiService.getProfileDetails();
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return User(
+          id: data['id'],
+          name: data['first_name'],
+          surname: data['last_name'],
+          mail: data['email'],
+          city: "Avellino",
+          token: "abc",
+          description: data['description'] ?? '',
+          reviewCount: data['review_count'] ?? 0,
+        );
+      } else {
+        throw Exception('Failed to load user details');
+      }
+    } catch (e) {
+      print("User Details Retrieval error: $e");
+      rethrow;
+    }
+    //   //TODO: Gestire errore 401 per token non riconosciuto
   }
 
   Future<List<Review>> getReviewByUser() async {
@@ -298,6 +332,8 @@ class TourService {
       ),
     ];
   }
+
+  
 
 
 }

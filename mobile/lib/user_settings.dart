@@ -4,6 +4,9 @@ import 'models/app_colors.dart';
 import 'services/tour_service.dart';
 import 'models/user.dart';
 import 'main.dart'; // Import your main app file for navigation
+import 'services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 
 // Enum to track which profile screen is currently active
 enum ProfileScreenState {
@@ -14,14 +17,19 @@ enum ProfileScreenState {
   helpSupport,
 }
 
-class UserProfileScreen extends StatefulWidget {
+// final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
+//   return AuthService();
+// });
+
+
+class UserProfileScreen extends ConsumerStatefulWidget {
   const UserProfileScreen({Key? key}) : super(key: key);
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
+  ConsumerState<UserProfileScreen> createState() => _UserProfileScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen> {
+class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   final TourService _tourService = TourService();
 
   // Current screen state - starts with main profile
@@ -240,18 +248,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   // Perform logout action
-  void _logout(BuildContext context) {
+  void _logout(BuildContext context) async {
+    final authService = ref.read(authServiceProvider);
+
     // In a real app, you would clear user session, tokens, etc.
     Navigator.of(context).pop(); // Close the bottom sheet
+    await authService.logout(); // Call the logout method from AuthService
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (context) => const AuthFlowScreen(),
+        builder: (context) => const AuthChecker(),
       ),
       (route) => false,
     );                            
-
     // Navigate back to login or onboarding screen
-    //TODO: Aggiungere anche rimozione dallo storage delláuth token
     print('User logged out');
   }
 

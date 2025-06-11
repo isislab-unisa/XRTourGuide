@@ -3,7 +3,11 @@ import 'package:flutter/services.dart';
 import 'models/app_colors.dart';
 import 'home_screen.dart';
 import 'package:flutter_downloader/flutter_downloader.dart'; // Import flutter_downloader
-
+import 'services/auth_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
@@ -12,6 +16,10 @@ void downloadCallback(String id, int status, int progress) {
   print('Download task ($id) is $status and progress is $progress');
   // You can implement custom logic here, like updating UI using isolates or state management.
 }
+
+// final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
+//   return AuthService();
+// });
 
 
 Future<void> main() async {
@@ -33,8 +41,12 @@ Future<void> main() async {
     ),
   );
 
-  runApp(const MyApp());
+
+  runApp(
+    const ProviderScope(child: MyApp()),
+  );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -60,21 +72,44 @@ class MyApp extends StatelessWidget {
           bodyLarge: TextStyle(color: AppColors.textSecondary),
         ),
       ),
-      home: const AuthFlowScreen(),
+      home: const AuthChecker(),
     );
+  }
+}
+
+class AuthChecker extends ConsumerWidget {
+  const AuthChecker({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authService = ref.watch(authServiceProvider);
+
+    switch (authService.authStatus) {
+      case AuthStatus.loading:
+        return const Center(child: CircularProgressIndicator());
+      case AuthStatus.authenticated:
+        return const TravelExplorerScreen(isGuest: false);
+      case AuthStatus.unauthenticated:
+        return const AuthFlowScreen();
+      case AuthStatus.registering:
+        return const AuthFlowScreen(registeredTemp: true,); // You can handle this state differently if needed
+    }
   }
 }
 
 enum AuthState { onboarding, login, register }
 
-class AuthFlowScreen extends StatefulWidget {
-  const AuthFlowScreen({Key? key}) : super(key: key);
+class AuthFlowScreen extends ConsumerStatefulWidget {
+  final bool registeredTemp;
+
+
+  const AuthFlowScreen({Key? key, this.registeredTemp = false}) : super(key: key);
 
   @override
-  State<AuthFlowScreen> createState() => _AuthFlowScreenState();
+  ConsumerState<AuthFlowScreen> createState() => _AuthFlowScreenState();
 }
 
-class _AuthFlowScreenState extends State<AuthFlowScreen> {
+class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
   AuthState currentState = AuthState.onboarding;
   bool _obscurePassword = true;
   bool _rememberMe = false;
@@ -82,13 +117,39 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
   // Controllers for form fields
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _surnameController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.registeredTemp) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registered successfully, now verify your email to login'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(bottom: 40, left: 16, right: 16),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      });  
+    } 
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _fullNameController.dispose();
+    _nameController.dispose();
+    _surnameController.dispose();
+    _cityController.dispose();
+    _descriptionController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
@@ -338,7 +399,7 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                                 ),
                               ),
                             ),
-                            onPressed: () {
+                            onPressed: () async {
                               print('Google login tapped');
                             },
                             context: context,
@@ -453,6 +514,9 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
   }
 
   Widget _buildLoginScreen() {
+
+    final authService = ref.read(authServiceProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -500,7 +564,7 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                     ),
                     SizedBox(height: screenHeight * 0.04),
                     _buildInputField(
-                      label: 'Email',
+                      label: 'Username',
                       controller: _emailController,
                       icon: Icons.email_outlined,
                       isEmail: true,
@@ -545,6 +609,7 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
+                              //TODO: Implement forgot password logic
                               print('Forgot password tapped');
                             },
                             child: const Text(
@@ -560,17 +625,25 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                     ),
                     _buildPrimaryButton(
                       text: 'Log In',
-                      onPressed: () {
-                        setState(() {
-                          // Simulate successful login and navigate to main page
-                          // TODO: Replace this with your actual navigation logic
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => TravelExplorerScreen(isGuest: false),
-                            ),
-                          );
-                        });
-                        // print('Login with: ${_emailController.text}');
+                      // onPressed: () {
+                      //   setState(() async {
+                      //     // Simulate successful login and navigate to main page
+                      //     // TODO: Replace this with your actual navigation logic
+                      //     // Navigator.of(context).pushReplacement(
+                      //     //   MaterialPageRoute(
+                      //     //     builder: (context) => TravelExplorerScreen(isGuest: false),
+                      //     //   ),
+                      //     // );
+                      //     print("UserLogin");
+                      //     await authService.login(_emailController.text, _passwordController.text);
+                      //   });
+                      // },
+                      onPressed: () async {
+                        print("UserLogin");
+                        await authService.login(
+                          _emailController.text,
+                          _passwordController.text,
+                        );
                       },
                       context: context,
                     ),
@@ -624,16 +697,16 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                           //TODO
                           onPressed: () => print('Facebook login'),
                         ),
-                        const SizedBox(width: 20),
-                        _buildSocialIconButton(
-                          icon: const Icon(
-                            Icons.apple,
-                            color: Colors.black,
-                            size: 28,
-                          ),
-                          //TODO
-                          onPressed: () => print('Apple login'),
-                        ),
+                        // const SizedBox(width: 20),
+                        // _buildSocialIconButton(
+                        //   icon: const Icon(
+                        //     Icons.apple,
+                        //     color: Colors.black,
+                        //     size: 28,
+                        //   ),
+                        //   //TODO
+                        //   onPressed: () => print('Apple login'),
+                        // ),
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.04),
@@ -693,6 +766,9 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
   }
 
   Widget _buildRegisterScreen() {
+
+    final authService = ref.read(authServiceProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -740,8 +816,22 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                     ),
                     SizedBox(height: screenHeight * 0.04),
                     _buildInputField(
-                      label: 'Full Name',
-                      controller: _fullNameController,
+                      label: 'Username',
+                      controller: _usernameController,
+                      icon: Icons.person_outline,
+                      context: context,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    _buildInputField(
+                      label: 'Name',
+                      controller: _nameController,
+                      icon: Icons.person_outline,
+                      context: context,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    _buildInputField(
+                      label: 'Surname',
+                      controller: _surnameController,
                       icon: Icons.person_outline,
                       context: context,
                     ),
@@ -754,6 +844,7 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                       context: context,
                     ),
                     SizedBox(height: screenHeight * 0.02),
+                    //TODO: Add password input field with validation
                     _buildInputField(
                       label: 'Password',
                       controller: _passwordController,
@@ -761,21 +852,43 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                       isPassword: true,
                       context: context,
                     ),
+                    SizedBox(height: screenHeight * 0.02),
+                    //TODO: Add city input field with city research functionality
+                    _buildInputField(
+                      label: 'City',
+                      controller: _cityController,
+                      icon: Icons.location_city_outlined,
+                      context: context,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    _buildInputField(
+                      label: 'Description',
+                      controller: _descriptionController,
+                      icon: Icons.description_outlined,
+                      context: context,
+                    ),
+
                     _buildPrimaryButton(
                       text: 'Sign Up',
                       onPressed: () {
                         setState(() {
                           // Simulate successful login and navigate to main page
                           // TODO: Replace this with your actual navigation logic
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => TravelExplorerScreen(isGuest: false),
-                            ),
+                          // Navigator.of(context).pushReplacement(
+                          //   MaterialPageRoute(
+                          //     builder: (context) => TravelExplorerScreen(isGuest: false),
+                          //   ),
+                          // );
+                          authService.register(
+                            _usernameController.text,
+                            _passwordController.text,
+                            _nameController.text,
+                            _surnameController.text,
+                            _emailController.text,
+                            _descriptionController.text,
+                            _cityController.text,
                           );
                         });
-                        // print(
-                        //   'Register with: ${_fullNameController.text}, ${_emailController.text}',
-                        // );
                       },
                       context: context,
                     ),
@@ -829,16 +942,16 @@ class _AuthFlowScreenState extends State<AuthFlowScreen> {
                           //TODO: Add Facebook register logic
                           onPressed: () => print('Facebook register'),
                         ),
-                        const SizedBox(width: 20),
-                        _buildSocialIconButton(
-                          icon: const Icon(
-                            Icons.apple,
-                            color: Colors.black,
-                            size: 28,
-                          ),
-                          //TODO: Add Apple register logic
-                          onPressed: () => print('Apple register'),
-                        ),
+                        // const SizedBox(width: 20),
+                        // _buildSocialIconButton(
+                        //   icon: const Icon(
+                        //     Icons.apple,
+                        //     color: Colors.black,
+                        //     size: 28,
+                        //   ),
+                        //   //TODO: Add Apple register logic
+                        //   onPressed: () => print('Apple register'),
+                        // ),
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.04),
