@@ -20,7 +20,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('tour_list/<str:category>/', tour_list, name='tour_list'),
+    path('tour_list/', tour_list, name='tour_list'),
     path('tour_details/<int:pk>/', tour_details, name='tour_details'),
     path('profile_details/', profile_details, name='profile_details'),
     path('update_profile/', update_profile, name='update_profile'),

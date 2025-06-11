@@ -1,9 +1,25 @@
 from rest_framework import serializers
-from .models import Tour, Review
-from django.contrib.auth.models import User
+from .models import Tour, Review, Waypoint, WaypointViewImage
 from django.contrib.auth import get_user_model
 
+class WaypointViewImageSerializer(serializers.ModelSerializer):
+    image_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WaypointViewImage
+        fields = '__all__'
+
+    def get_image_name(self, obj):
+        return obj.image.name if obj.image else None
+        
+class WaypointSerializer(serializers.ModelSerializer):
+    images = WaypointViewImageSerializer(many=True, read_only=True)
+    class Meta:
+        model = Waypoint
+        fields = '__all__'
+    
 class TourSerializer(serializers.ModelSerializer):
+    waypoints = WaypointSerializer(many=True, read_only=True)
     class Meta:
         model = Tour
         fields = '__all__'

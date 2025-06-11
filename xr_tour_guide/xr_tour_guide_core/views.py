@@ -1,7 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Tour
 from .serializers import TourSerializer
 from django.db.models import Q
 from .serializers import UserSerializer
@@ -11,7 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from storages.backends.s3boto3 import S3Boto3Storage
 import mimetypes
-from .models import MinioStorage, Waypoint
+from .models import MinioStorage, Waypoint, Tour, Review
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -43,15 +42,20 @@ from django.contrib.auth import get_user_model
 )
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def tour_list(request, category):
+def tour_list(request):
     searchTerm = request.GET.get('searchTerm', '')
-    filters = Q(category__iexact=category)
+    category = request.GET.get('category', '')
+    filters = Q()
+    if category:
+        filters &= Q(category__iexact=category)
     if searchTerm:
-        filters &=Q(title__icontains=searchTerm) | Q(description__icontains=searchTerm) | Q(place__icontains=searchTerm) | Q(coordinates__icontains=searchTerm)
-    try:
-        tours = Tour.objects.filter(filters)
-    except Tour.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        filters &= (
+            Q(title__icontains=searchTerm) | 
+            Q(description__icontains=searchTerm) | 
+            Q(place__icontains=searchTerm) | 
+            Q(coordinates__icontains=searchTerm)
+        )
+    tours = Tour.objects.filter(filters) or Tour.objects.all()
     serializer = TourSerializer(tours, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -197,7 +201,7 @@ def stream_minio_resource(request, waypoint_id):
 
     if not file_name:
         return Response({"detail": "File name non fornito"}, status=400)
-
+        
     try:
         waypoint = Waypoint.objects.get(id=waypoint_id)
     except Waypoint.DoesNotExist:
@@ -213,13 +217,15 @@ def stream_minio_resource(request, waypoint_id):
         file_path = f"{waypoint.tour.id}/{waypoint_id}/data/readme/{file_name}"
     elif waypoint.default_image.name == file_name:
         file_path = f"{waypoint.tour.id}/{waypoint_id}/default_image/{file_name}"
+    elif "test" or "train" in file_name:
+        file_path = file_name
     else:
-        return Response({"detail": "File non trovato"}, status=404)
+        return Response({"detail": "File non rovato"}, status=404)
     
     storage = MinioStorage()
 
     if not storage.exists(file_path):
-        return Response({"detail": "File non trovato"}, status=404)
+        return Response({"detail": f"File {file_name} non trovato"}, status=404)
 
     file = storage.open(file_path, mode='rb')
 
@@ -283,3 +289,35 @@ class ActivateAccountView(APIView):
             user.save()
             return Response({'message': 'Account attivato correttamente'}, status=200)
         return Response({'error': 'Token non valido'}, status=400)
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Create a new review for a specific tour",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['tour_id', 'rating', 'comment'],
+        properties={
+            'tour_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the tour'),
+            'rating': openapi.Schema(type=openapi.TYPE_NUMBER, format='float', description='Rating for the tour'),
+            'comment': openapi.Schema(type=openapi.TYPE_STRING, description='Review comment'),
+        },
+    ),
+    responses={
+        201: openapi.Response(description="Review created successfully"),
+        404: openapi.Response(description="Tour not found"),
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_review(request):
+    tour_id = request.data.get('tour_id')
+    rating = request.data.get('rating')
+    review_text = request.data.get('comment')
+
+    try:
+        tour = Tour.objects.get(id=tour_id)
+    except Tour.DoesNotExist:
+        return Response({"detail": "Tour not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    review = Review.objects.create(tour=tour, user=request.user, rating=rating, comment=review_text)
+    return Response({"detail": "Review created successfully"}, status=status.HTTP_201_CREATED)

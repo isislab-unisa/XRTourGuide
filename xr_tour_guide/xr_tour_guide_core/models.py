@@ -24,7 +24,7 @@ def upload_to(instance, file_name):
     if c == 0:
         return f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/test/{tag}/{file_name}"
     else:
-        return f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/test/{tag}/{file_name}"
+        return f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/train/{tag}/{file_name}"
 
 def upload_media_item(instance, filename):
     field_name = None
@@ -89,18 +89,19 @@ class TourQuerySet(models.QuerySet):
         super().delete(*args, **kwargs)
 
 class Tour(models.Model):
-    title = models.CharField(max_length=200, blank=False, null=False, unique=True)
-    subtitle = models.CharField(max_length=200, blank=False, null=False)
-    place = models.CharField(max_length=200, blank=False, null=False)
+    title = models.CharField(max_length=200, blank=True, null=True, unique=True)
+    subtitle = models.CharField(max_length=200, blank=True, null=True)
+    place = models.CharField(max_length=200, blank=True, null=True)
     coordinates = PlainLocationField(zoom=7, null=True, blank=True)
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
         default=Category.INSIDE,
     )
+    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=True, blank=True)
     description = models.TextField()
     objects = TourQuerySet.as_manager()
-    created_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
     creation_time = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -160,8 +161,8 @@ class Waypoint(models.Model):
     title = models.CharField(max_length=200, blank=False, null=False)
     coordinates = PlainLocationField(zoom=7, null=True, blank=True)
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints')
-    description = models.TextField()
-    model_path = models.CharField(max_length=200, blank=False, null=False)
+    description = models.TextField(blank=True, null=True)
+    model_path = models.CharField(max_length=200, blank=True, null=True)
     
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -259,27 +260,30 @@ class WaypointViewImage(models.Model):
     def __str__(self):
         return f"Image for {self.waypoint.tag}"
     
-@receiver(post_save, sender=WaypointViewImage)
-def sync_test_train_images(sender, instance, created, **kwargs):
-    if not instance.image:
-        return
+# @receiver(post_save, sender=WaypointViewImage)
+# def sync_test_train_images(sender, instance, created, **kwargs):
+#     if not instance.image:
+#         return
 
-    storage = MinioStorage()
-    waypoint = instance.waypoint
+#     storage = MinioStorage()
+#     waypoint = instance.waypoint
 
-    all_images = WaypointViewImage.objects.filter(waypoint=waypoint).exclude(pk=instance.pk)
-    for image in all_images:
-        if "/test/" in image.image.name:
-            storage.delete(image.image.name)
+#     all_images = WaypointViewImage.objects.filter(waypoint=waypoint).exclude(pk=instance.pk)
+#     for image in all_images:
+#         if "/test/" in image.image.name:
+#             storage.delete(image.image.name)
+#             image.delete()
 
-    image_count = WaypointViewImage.objects.filter(waypoint=waypoint).count()
+#     image_count = WaypointViewImage.objects.filter(waypoint=waypoint).count()
 
-    path = instance.image.name
-    if "/test/" in path and image_count < 5:
-        train_path = path.replace("/test/", "/train/")
-        if not storage.exists(train_path):
-            content = storage.open(path).read()
-            storage.save(train_path, ContentFile(content))
+#     path = instance.image.name
+#     if "/test/" in path and image_count < 5:
+#         train_path = path.replace("/test/", "/train/")
+#         if not storage.exists(train_path):
+#             content = storage.open(path).read()
+#             storage.save(train_path, ContentFile(content))
+#             instance.image.name = train_path
+#             instance.save()
 
 class Review(models.Model):
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews')
@@ -287,3 +291,4 @@ class Review(models.Model):
     rating = models.IntegerField()
     comment = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    last_edited = models.DateTimeField(auto_now=True)
