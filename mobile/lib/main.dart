@@ -86,8 +86,10 @@ class AuthChecker extends ConsumerWidget {
 
     switch (authService.authStatus) {
       case AuthStatus.loading:
-        return const Center(child: CircularProgressIndicator());
-      case AuthStatus.authenticated:
+        return const Scaffold(
+          backgroundColor: AppColors.background,
+          body: Center(child: CircularProgressIndicator()),
+        );      case AuthStatus.authenticated:
         return const TravelExplorerScreen(isGuest: false);
       case AuthStatus.unauthenticated:
         return const AuthFlowScreen();

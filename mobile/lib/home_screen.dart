@@ -406,15 +406,15 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Navigate to categories screen
-                      },
-                      child: Text(
-                        'See More',
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                    ),
+                    // TextButton(
+                    //   onPressed: () {
+                    //     // TODO: Navigate to categories screen
+                    //   },
+                    //   child: Text(
+                    //     'See More',
+                    //     style: TextStyle(color: AppColors.primary),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),

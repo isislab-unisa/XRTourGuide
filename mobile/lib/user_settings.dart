@@ -308,34 +308,37 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(50),
-                                child: Image.network(
-                                  // Placeholder image URL, replace with actual user avatar
-                                  'https://randomuser.me/api/portraits/men/44.jpg',
-                                  fit: BoxFit.cover,
+                                child: Container(
+                                  color: Colors.blue.shade100,
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 70,
+                                    color: AppColors.accent,
+                                  ),
                                 ),
                               ),
                             ),
                             // Camera icon for changing profile picture
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.primary,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
+                            // Positioned(
+                            //   bottom: 0,
+                            //   right: 0,
+                            //   child: Container(
+                            //     padding: const EdgeInsets.all(4),
+                            //     decoration: BoxDecoration(
+                            //       color: AppColors.background,
+                            //       shape: BoxShape.circle,
+                            //       border: Border.all(
+                            //         color: AppColors.primary,
+                            //         width: 2,
+                            //       ),
+                            //     ),
+                            //     child: const Icon(
+                            //       Icons.camera_alt,
+                            //       color: AppColors.primary,
+                            //       size: 20,
+                            //     ),
+                            //   ),
+                            // ),
                           ],
                         ),
                         const SizedBox(height: 16),

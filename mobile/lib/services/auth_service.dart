@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'secure_storage_service.dart';
 import 'package:dio/dio.dart';
+import 'api_service.dart';
 
 enum AuthStatus { authenticated, unauthenticated, loading, registering }
 
@@ -9,7 +10,9 @@ final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
   return AuthService();
 });
 
-final dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.149:80'));
+// final dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.149:80'));
+final apiService = ApiService();
+
 
 class AuthService extends ChangeNotifier {
   final SecureStorageService _storageService = SecureStorageService();
@@ -35,9 +38,12 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await dio.post('/api/token/', data: {'username': email, 'password': password});
+      // final response = await dio.post('/api/token/', data: {'username': email, 'password': password});
+      final response = await apiService.login(email, password);
       final accessToken = response.data['access'];
       final refreshToken = response.data['refresh'];
+
+      print("Refresh Token: $refreshToken");
 
       //TODO: Gestire errore 401 per username e o password sbagliati
 
@@ -58,12 +64,17 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      //TODO: Replace with actual API call
-      final response = await dio.post('/register/',
-       data: {'username': username, 'password': password, 'first_name': name, 'last_name': surname, 'email': mail, 'description': description, 'city': city});
-      // final accessToken = response.data['accessToken'];
-      // final refreshToken = response.data['refreshToken'];
-
+      // final response = await dio.post('/register/',
+      //  data: {'username': username, 'password': password, 'first_name': name, 'last_name': surname, 'email': mail, 'description': description, 'city': city});
+      final response = await apiService.register(
+        username,
+        password,
+        name,
+        surname,
+        mail,
+        description,
+        city,
+      );
       // Simulate a network request
       // await Future.delayed(const Duration(seconds: 1));
 

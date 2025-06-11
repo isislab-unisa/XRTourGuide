@@ -200,7 +200,8 @@ class _ARCameraScreenState extends State<ARCameraScreen>
   // Set the initial content for the draggable sheet
   void _setInitialContent() {
     setState(() {
-      _currentMarkdownContent = widget.landmarkDescription;
+      _currentMarkdownContent = """ 
+      """;
       _currentActiveContent = MarkdownWidget(
         data: _currentMarkdownContent,
         config: _buildMarkdownConfig(),
@@ -380,6 +381,15 @@ This is one of the key images for this landmark.
 
     if (recognitionSuccess) {
       setState(() {
+        _currentMarkdownContent = """
+# ${widget.landmarkName}
+""";
+        _currentActiveContent = MarkdownWidget(
+          data: _currentMarkdownContent,
+          config: _buildMarkdownConfig(),
+          padding: const EdgeInsets.only(top: 0),
+          shrinkWrap: true,
+        );
         _recognitionState = RecognitionState.success;
       });
 
