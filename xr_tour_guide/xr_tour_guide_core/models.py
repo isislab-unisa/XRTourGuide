@@ -14,17 +14,7 @@ dotenv.load_dotenv()
 
 def upload_to(instance, file_name):
     poi_id = instance.waypoint.tour.id
-    tag = instance.waypoint.tag.name.replace(" ", "_")
-    storage = MinioStorage()
-    elements = storage.bucket.objects.filter(Prefix=f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/test/{tag}/")
-    c = 0
-    for k in elements:
-        c += 1
-    
-    if c == 0:
-        return f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/test/{tag}/{file_name}"
-    else:
-        return f"{poi_id}/{instance.waypoint.id}/{instance.id}/data/train/{tag}/{file_name}"
+    return f"{poi_id}/{instance.waypoint.id}/data/img/{file_name}"
 
 def upload_media_item(instance, filename):
     field_name = None
@@ -58,16 +48,16 @@ class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
     custom_domain = False
     
-class Tag(models.Model):
-    name = models.CharField(max_length=64, null=False, blank=False, primary_key=True)
+# class Tag(models.Model):
+#     name = models.CharField(max_length=64, null=False, blank=False, primary_key=True)
     
-    class Meta:
-        db_table = "Tag"
-        verbose_name = "Tag"
-        verbose_name_plural = "Tag"
+#     class Meta:
+#         db_table = "Tag"
+#         verbose_name = "Tag"
+#         verbose_name_plural = "Tag"
         
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 class Status(models.TextChoices):
     READY = "READY", "Ready"
@@ -99,7 +89,7 @@ class Tour(models.Model):
         default=Category.INSIDE,
     )
     default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=True, blank=True)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     objects = TourQuerySet.as_manager()
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
@@ -164,7 +154,7 @@ class Waypoint(models.Model):
     description = models.TextField(blank=True, null=True)
     model_path = models.CharField(max_length=200, blank=True, null=True)
     
-    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
+    # tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
     default_image = models.ImageField(upload_to=default_image_waypoint, storage=MinioStorage(), null=True, blank=True)
@@ -237,28 +227,28 @@ class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
     image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
     
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        old_path = f"{self.waypoint.tour.id}/{self.waypoint.id}/None/data/test/{self.waypoint.tag.name.replace(" ", "_")}/"
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     is_new = self.pk is None
+    #     old_path = f"{self.waypoint.tour.id}/{self.waypoint.id}/None/data/test/{self.waypoint.tag.name.replace(" ", "_")}/"
+    #     super().save(*args, **kwargs)
 
-        if is_new and self.image and self.waypoint and self.waypoint.id:
-            poi_id = self.waypoint.tour.id
-            tag = self.waypoint.tag.name.replace(" ", "_") if self.waypoint.tag else "notag"
-            filename = os.path.basename(self.image.name)
-            new_path = f"{poi_id}/{self.waypoint.id}/data/test/{tag}/{filename}"
+    #     if is_new and self.image and self.waypoint and self.waypoint.id:
+    #         poi_id = self.waypoint.tour.id
+    #         tag = self.waypoint.tag.name.replace(" ", "_") if self.waypoint.tag else "notag"
+    #         filename = os.path.basename(self.image.name)
+    #         new_path = f"{poi_id}/{self.waypoint.id}/data/test/{tag}/{filename}"
 
-            file = self.image.file
-            file.open()
-            self.image.storage.save(new_path, file)
-            self.image = new_path
-            super().save(update_fields=["image"])
+    #         file = self.image.file
+    #         file.open()
+    #         self.image.storage.save(new_path, file)
+    #         self.image = new_path
+    #         super().save(update_fields=["image"])
 
-            if old_path and self.image.storage.exists(old_path):
-                self.image.storage.delete(old_path)
+    #         # if old_path and self.image.storage.exists(old_path):
+    #         self.image.storage.delete(old_path)
     
     def __str__(self):
-        return f"Image for {self.waypoint.tag}"
+        return f"Image for {self.waypoint.title}"
     
 # @receiver(post_save, sender=WaypointViewImage)
 # def sync_test_train_images(sender, instance, created, **kwargs):

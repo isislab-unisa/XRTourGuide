@@ -6,7 +6,7 @@ import nested_admin
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfolTabularInline
-from .models import Tour, Waypoint, WaypointViewImage, Tag, Review
+from .models import Tour, Waypoint, WaypointViewImage, Review
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from .models import CustomUser
@@ -87,7 +87,7 @@ class WaypointForm(forms.ModelForm):
 
     class Meta:
         model = Waypoint
-        fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item', 'default_image', 'tag']
+        fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item', 'default_image']
 
 class UnfoldNestedStackedInline(nested_admin.NestedStackedInline, UnfoldStackedInline):
     pass
@@ -97,7 +97,7 @@ class UnfoldNestedTabularInline(nested_admin.NestedTabularInline, UnfolTabularIn
 
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
-    # fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item', 'default_image', 'tag']
+    # fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item', 'default_image']
     form = WaypointForm
     extra = 1
     formfield_overrides = {
@@ -181,12 +181,8 @@ class MediaItemAdmin(ModelAdmin):
 class WaypointViewImageAdmin(ModelAdmin):
     pass
 
-class TagAdmin(ModelAdmin):
-    pass
-
 class ReviewAdmin(ModelAdmin):
     pass
 admin.site.register(Review, ReviewAdmin)
-admin.site.register(Tag, TagAdmin)
 admin.site.register(Tour, TourAdmin)
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)

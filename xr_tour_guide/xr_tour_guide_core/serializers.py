@@ -7,16 +7,41 @@ class WaypointViewImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WaypointViewImage
-        fields = '__all__'
+        fields = ['waypoint', 'image_name']
 
     def get_image_name(self, obj):
         return obj.image.name if obj.image else None
         
 class WaypointSerializer(serializers.ModelSerializer):
     images = WaypointViewImageSerializer(many=True, read_only=True)
+    pdf_name = serializers.SerializerMethodField()
+    readme_name = serializers.SerializerMethodField()
+    video_name = serializers.SerializerMethodField()
+    audio_name = serializers.SerializerMethodField()
+    default_image = serializers.SerializerMethodField()
+
     class Meta:
         model = Waypoint
-        fields = '__all__'
+        fields = [
+            'title', 'coordinates', 'tour', 'description', 'model_path',
+            'timestamp', 'build_started_at', 'images',
+            'pdf_name', 'readme_name', 'video_name', 'audio_name', 'default_image'
+        ]
+
+    def get_pdf_name(self, obj):
+        return obj.pdf_item.name if obj.pdf_item else None
+
+    def get_readme_name(self, obj):
+        return obj.readme_item.name if obj.readme_item else None
+
+    def get_video_name(self, obj):
+        return obj.video_item.name if obj.video_item else None
+
+    def get_audio_name(self, obj):
+        return obj.audio_item.name if obj.audio_item else None
+
+    def get_default_image(self, obj):
+        return obj.default_image.name if obj.default_image else None
     
 class TourSerializer(serializers.ModelSerializer):
     waypoints = WaypointSerializer(many=True, read_only=True)
