@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import TourSerializer
+from .serializers import TourSerializer, WaypointSerializer, ReviewSerializer, WaypointViewImageSerializer
 from django.db.models import Q
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -51,13 +51,41 @@ def tour_list(request):
     if searchTerm:
         filters &= (
             Q(title__icontains=searchTerm) | 
-            Q(description__icontains=searchTerm) | 
-            Q(place__icontains=searchTerm) | 
-            Q(coordinates__icontains=searchTerm)
+            Q(place__icontains=searchTerm)
         )
     tours = Tour.objects.filter(filters) or Tour.objects.all()
     serializer = TourSerializer(tours, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Retrieve details for a specific tour by ID",
+    responses={
+        200: TourSerializer(),
+        404: openapi.Response(description="Tour not found")
+    }
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tour_detail(request, tour_id):
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return Response({"detail": "Tour non trovato"}, status=status.HTTP_404_NOT_FOUND)
+    serializer = TourSerializer(tour)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tour_waypoints(request, tour_id):
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+        waypoints = tour.waypoints.all()
+    except Tour.DoesNotExist:
+        return Response({"detail": "Tour non trovato"}, status=status.HTTP_404_NOT_FOUND)
+    serializer = WaypointSerializer(waypoints, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @swagger_auto_schema(
     method='get',
@@ -98,6 +126,7 @@ def profile_details(request):
             'firstName': openapi.Schema(type=openapi.TYPE_STRING),
             'lastName': openapi.Schema(type=openapi.TYPE_STRING),
             'email': openapi.Schema(type=openapi.TYPE_STRING, format='email'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING),
         }
     ),
     responses={200: openapi.Response(description="Profile updated successfully")}
@@ -109,6 +138,7 @@ def update_profile(request):
     first_name = request.data.get('firstName', '').strip()
     last_name = request.data.get('lastName', '').strip()
     email = request.data.get('email', '').strip()
+    description = request.data.get('description', '').strip()
 
     if first_name:
         user.first_name = first_name
@@ -116,6 +146,8 @@ def update_profile(request):
         user.last_name = last_name
     if email:
         user.email = email
+    if user.description == description:
+        user.description = description
 
     user.save()
     return Response({"detail": "Profile updated successfully."}, status=status.HTTP_200_OK)
@@ -247,7 +279,7 @@ def stream_minio_resource(request, waypoint_id):
 )
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def get_reviews(request, tour_id):
+def get_reviews_by_tour_id(request, tour_id):
     try:
         reviews = Tour.objects.get(id=tour_id).reviews_set.all()
     except:
@@ -321,3 +353,38 @@ def create_review(request):
 
     review = Review.objects.create(tour=tour, user=request.user, rating=rating, comment=review_text)
     return Response({"detail": "Review created successfully"}, status=status.HTTP_201_CREATED)
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Retrieve all reviews made by the currently logged in user",
+    responses={
+        200: openapi.Response(description="List of reviews (serialized)"),
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_reviews_by_user(request):
+    reviews = Review.objects.filter(user=request.user)
+    serializer = ReviewSerializer(reviews, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Increment the view count for a specific tour",
+    responses={
+        200: openapi.Response(description="View count incremented successfully"),
+        404: openapi.Response(description="Tour not found"),
+    }
+)
+def increment_view_count(request, tour_id):
+    try:
+        tour = Tour.objects.get(id=tour_id)
+    except Tour.DoesNotExist:
+        return Response({"detail": "Tour not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    tour.view_count += 1
+    tour.save()
+
+    return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)

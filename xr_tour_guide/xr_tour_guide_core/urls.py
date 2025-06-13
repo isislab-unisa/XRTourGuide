@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
 import nested_admin
-from .views import tour_list, tour_details, profile_details, update_profile, delete_account, update_password, stream_minio_resource, get_reviews, RegisterView, ActivateAccountView
+from .views import tour_list, tour_details, profile_details, update_profile, delete_account, update_password, stream_minio_resource, get_reviews_by_tour_id, RegisterView, ActivateAccountView, tour_waypoints, tour_detail, create_review, get_reviews_by_user, increment_view_count
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -27,8 +27,13 @@ urlpatterns = [
     path('delete_account/', delete_account, name='delete_account'),
     path('update_password/', update_password, name='update_password'),
     path('stream_minio_resource/<int:waypoint_id>/', stream_minio_resource, name='stream_minio_resource'),
-    path('get_reviews/<int:tour_id>/', get_reviews, name='get_reviews'),
+    path('get_reviews_by_tour_id/<int:tour_id>/', get_reviews_by_tour_id, name='get_reviews_by_tour_id'),
     re_path(r'^docs/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
    path('register/', RegisterView.as_view(), name='register'),
    path('activate/<uidb64>/<token>/', ActivateAccountView.as_view(), name='activate-account'),
+   path('tour_waypoints/<int:tour_id>/', tour_waypoints, name='tour_waypoints'),
+   path('tour_detail/<int:tour_id>/', tour_detail, name='tour_detail'),
+   path('create_review/', create_review, name='create_review'),
+   path('get_reviews_by_user/', get_reviews_by_user, name='get_reviews_by_user'),
+   path('increment_view_count/<int:waypoint_id>/', increment_view_count, name='increment_view_count'),
 ]

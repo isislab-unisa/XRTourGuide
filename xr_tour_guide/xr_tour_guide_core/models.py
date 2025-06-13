@@ -100,6 +100,7 @@ class Tour(models.Model):
         choices=Status.choices,
         default=Status.READY
     )
+    counter_review = models.IntegerField(default=0)
      
     class Meta:
         db_table = "Tour"

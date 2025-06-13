@@ -14,18 +14,13 @@ class WaypointViewImageSerializer(serializers.ModelSerializer):
         
 class WaypointSerializer(serializers.ModelSerializer):
     images = WaypointViewImageSerializer(many=True, read_only=True)
-    pdf_name = serializers.SerializerMethodField()
-    readme_name = serializers.SerializerMethodField()
-    video_name = serializers.SerializerMethodField()
-    audio_name = serializers.SerializerMethodField()
     default_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Waypoint
         fields = [
-            'title', 'coordinates', 'tour', 'description', 'model_path',
-            'timestamp', 'build_started_at', 'images',
-            'pdf_name', 'readme_name', 'video_name', 'audio_name', 'default_image'
+            'title', 'coordinates', 'tour', 'description',
+            'images','default_image'
         ]
 
     def get_pdf_name(self, obj):
@@ -44,11 +39,18 @@ class WaypointSerializer(serializers.ModelSerializer):
         return obj.default_image.name if obj.default_image else None
     
 class TourSerializer(serializers.ModelSerializer):
-    waypoints = WaypointSerializer(many=True, read_only=True)
+    creation_time = serializers.SerializerMethodField()
+    user_name = serializers.SerializerMethodField()
     class Meta:
         model = Tour
-        fields = '__all__'
+        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'coordinates', 'default_image', 'creation_time', 'counter_review', 'user_name']
 
+    def get_creation_time(self, obj):
+        return obj.creation_time.strftime("%Y-%m-%d")
+    
+    def get_user_name(self, obj):
+        return obj.user.username
+    
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
