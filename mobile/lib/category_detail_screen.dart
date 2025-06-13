@@ -4,8 +4,10 @@ import 'package:xr_tour_guide/models/tour.dart';
 import 'models/app_colors.dart';
 import 'elements/travel_list_item_card.dart';
 import 'tour_details_page.dart';
+import 'services/tour_service.dart';
 
-class CategoryDetailScreen extends StatelessWidget {
+
+class CategoryDetailScreen extends StatefulWidget {
   final String categoryName;
   final List<Tour> tours;
   final bool isGuest;
@@ -18,8 +20,67 @@ class CategoryDetailScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
+}
+
+class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
+
+  final TourService _tourService = TourService();
+
+  List<Tour>? _categoriesTour;
+  bool _isLoading = true;
+
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // Load all data in parallel
+    await Future.wait([
+      _loadCategoryTours(),
+    ]);
+  }
+
+  Future<void> _loadCategoryTours() async {
+    try {
+      final tours = await _tourService.getToursByCategory(widget.categoryName);
+      if (mounted) {
+        setState(() {
+          _categoriesTour = tours;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showError('Error loading nearby tours');
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+
+
+
+  @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -49,7 +110,7 @@ class CategoryDetailScreen extends StatelessWidget {
               vertical: 10.0,
             ),
             child: Text(
-              '$categoryName ${tours.length} Risultati',
+              '${widget.categoryName} ${widget.tours.length} Risultati',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -62,9 +123,9 @@ class CategoryDetailScreen extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              itemCount: tours.length,
+              itemCount: _categoriesTour?.length,
               itemBuilder: (context, index) {
-                final tour = tours[index];
+                final tour = _categoriesTour![index];
                 return TravelListItemCard(
                   imagePath: tour.imagePath,
                   title: tour.title,
@@ -83,23 +144,7 @@ class CategoryDetailScreen extends StatelessWidget {
                         builder:
                             (context) => TourDetailScreen(
                               tourId: tour.id,
-                              tourName: tour.title,
-                              location: tour.location,
-                              rating: tour.rating,
-                              reviewCount: tour.reviewCount,
-                              images: [
-                                tour.imagePath,
-                                'assets/acquedotto.jpg',
-                                'assets/cibo_example.jpg',
-                              ],
-                              category: tour.subcategory,
-                              description: tour.description,
-                              creator: tour.creator,
-                              lastEdited: tour.lastEdited,
-                              totViews: tour.totViews.toString(),
-                              latitude: tour.latitude,
-                              longitude: tour.longitude,
-                              isGuest: isGuest,
+                              isGuest: widget.isGuest,
                             ),
                       ),
                     );

@@ -32,6 +32,8 @@ class UserProfileScreen extends ConsumerStatefulWidget {
 class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   final TourService _tourService = TourService();
 
+  final AuthService _authService = AuthService();
+
   // Current screen state - starts with main profile
   ProfileScreenState _currentScreen = ProfileScreenState.main;
 
@@ -52,7 +54,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   ];
 
   // Controllers for text fields (Personal Info)
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  
   final TextEditingController _emailController = TextEditingController();
 
   // NEW: Controllers for Change Password fields
@@ -80,8 +85,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           _user = userDetails;
           _isLoadingUserDetails = false;
           // Initialize text controllers with current values
-          _nameController.text = _user!.name;
+          _firstNameController.text = _user!.name;
+          _lastNameController.text = _user!.surname;
           _emailController.text = _user!.mail;
+          _descriptionController.text = _user?.description ?? '';
         });
       }
     } catch (e) {
@@ -105,7 +112,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   @override
   void dispose() {
     // Clean up controllers when the widget is disposed
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _descriptionController.dispose();
     _emailController.dispose();
     _oldPasswordController.dispose(); // NEW: Dispose password controllers
     _newPasswordController.dispose();
@@ -181,9 +190,51 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     );
   }
 
+  void _showDeleteAccountSheet(BuildContext context) async {
+    final result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return _buildDeleteAccountSheet(context);
+      },
+    );
+
+    if (result == true && mounted){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account deleted successfully!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      // Esegui logout o naviga alla schermata iniziale
+      _logout(context);
+    }
+
+  }
+
+void _handleBack(BuildContext context) {
+  if (_currentScreen == ProfileScreenState.main) {
+    Navigator.of(context).pop(true); // Torna alla schermata precedente
+  } else {
+    setState(() {
+      _currentScreen = ProfileScreenState.main; // Torna alla schermata principale del profilo
+    });
+  }
+}
+
   // Save personal info changes
-  void _savePersonalInfo() {
+  void _savePersonalInfo() async {
     //TODO: Implement actual save logic, e.g., API call to update user details
+      _authService.updateAccount(
+      _firstNameController.text,
+      _lastNameController.text,
+      _emailController.text,
+      _descriptionController.text,
+    );
+
+    await _loadUserDetails(); // Reload user details after saving
+
     setState(() {
       // _fullName = _nameController.text;
       // _email = _emailController.text;
@@ -232,6 +283,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     print('Attempting to change password:');
     print('Old: $oldPassword, New: $newPassword');
 
+    _authService.updatePassword(oldPassword, newPassword);
+
     Navigator.of(context).pop(); // Close the bottom sheet
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -277,6 +330,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => _handleBack(context),
+        ),
         // No leading icon on the main profile screen if it's a root tab
         // If it's pushed onto a stack, you might want a back button here
       ),
@@ -463,7 +520,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: _navigateToMainProfile,
+          onPressed: () => _handleBack(context),
         ),
         title: const Text(
           'Personal Info',
@@ -486,7 +543,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   children: [
                     // Full Name field
                     const Text(
-                      'Full Name',
+                      'First Name',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -495,9 +552,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     ),
                     const SizedBox(height: 8),
                     TextField(
-                      controller: _nameController,
+                      controller: _firstNameController,
                       decoration: InputDecoration(
-                        hintText: 'Enter your full name',
+                        hintText: 'Enter your first name',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
                           borderSide: const BorderSide(color: AppColors.border),
@@ -521,6 +578,44 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     ),
 
                     const SizedBox(height: 20),
+
+                    const Text(
+                      'Last Name',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _lastNameController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your last name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
 
                     // Email field
                     const Text(
@@ -562,10 +657,51 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 20),
+
+                    const Text(
+                      'Description',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _descriptionController,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'Enter a short description about yourself',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+
                   ],
                 ),
               ),
             ),
+
+
 
             // Save button
             Padding(
@@ -604,7 +740,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: _navigateToMainProfile,
+          onPressed: () => _handleBack(context),
         ),
         title: const Text(
           'Account & Security',
@@ -659,10 +795,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     title: 'Delete Account',
                     titleColor: Colors.red,
                     subtitle:
-                        'Permanently remove your account and data from Tripmate. Proceed with caution.',
+                        'Permanently remove your account and data from XRTourGuide. Proceed with caution.',
                     onTap: () {
+                      _showDeleteAccountSheet(context);
                       // Show delete account confirmation
-                      print('Show delete account confirmation');
                     },
                   ),
                 ],
@@ -781,7 +917,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: _navigateToMainProfile,
+          onPressed: () => _handleBack(context),
         ),
         title: const Text(
           'App Language',
@@ -898,7 +1034,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: _navigateToMainProfile,
+          onPressed: () => _handleBack(context),
         ),
         title: const Text(
           'Help & Support',
@@ -1074,6 +1210,144 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDeleteAccountSheet(BuildContext context) {
+  final TextEditingController _deletePasswordController = TextEditingController();
+
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Title
+            const Text(
+              'Delete Account',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.delete_forever, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Are you sure you want to permanently delete your account? This action cannot be undone.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Password field
+                  TextField(
+                    controller: _deletePasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password to confirm',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the sheet
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await _authService.deleteAccount(_deletePasswordController.text);
+                            Navigator.of(context).pop(true); // Close the sheet
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

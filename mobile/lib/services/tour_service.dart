@@ -15,6 +15,100 @@ class TourService {
   // Simulate API call to get nearby tours
   Future<List<Tour>> getNearbyTours() async {
     // Simulate network delay
+    // await Future.delayed(const Duration(seconds: 1));
+
+    // // Mock data
+    // return [
+    //   Tour(
+    //     id: 1,
+    //     title: 'Montevergine',
+    //     description:
+    //         'Il Santuario di Montevergine è un importante complesso monastico mariano situato a circa 1.270 metri sul livello del mare, nel massiccio del Partenio, nel comune di Mercogliano (Avellino). Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei principali luoghi di pellegrinaggio del Sud Italia, con oltre un milione di visitatori ogni anno.',
+    //     imagePath: 'assets/montevergine.jpg',
+    //     category: 'Natura',
+    //     subcategory: 'Montagna',
+    //     rating: 4.5,
+    //     reviewCount: 675,
+    //     images: [
+    //       'assets/montevergine.jpg',
+    //       'assets/acquedotto.jpg',
+    //       'assets/cibo_example.jpg',
+    //     ],
+    //     location: 'Avellino, Campania',
+    //     latitude: 40.9333,
+    //     longitude: 14.7167,
+    //     creator: 'TourGuide Team',
+    //     lastEdited: '2023-10-01',
+    //     totViews: 1500,
+    //   ),
+    //   Tour(
+    //     id: 2,
+    //     title: 'Acquedotto Romano',
+    //     description: 'Discover the beauty of this amazing destination.',
+    //     imagePath: 'assets/acquedotto.jpg',
+    //     category: 'Storia',
+    //     subcategory: 'Archeologia',
+    //     rating: 4.3,
+    //     reviewCount: 425,
+    //     images: [
+    //       'assets/acquedotto.jpg',
+    //       'assets/montevergine.jpg',
+    //       'assets/cibo_example.jpg',
+    //     ],
+    //     location: 'Avellino, Campania',
+    //     latitude: 40.9147,
+    //     longitude: 14.7927,
+    //     creator: 'TourGuide Team',
+    //     lastEdited: '2023-10-01',
+    //     totViews: 1200,
+    //   ),
+    // ];
+
+    try {
+      final response = await apiService.getNearbyTours();
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        return data.map((tour) => Tour.fromJson(tour)).toList();
+      } else {
+        throw Exception('Failed to load tours');
+      }
+    } catch (e) {
+      print("Nearby Tours Retrieval error: $e");
+      rethrow;
+    }
+  }
+
+    Future<Tour> getTourById(int tourId) async {
+    // Simulate network delay
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Mock data
+    return Tour(
+      id: 1,
+      title: 'Montevergine',
+      description:
+          'Il Santuario di Montevergine è un importante complesso monastico mariano situato a circa 1.270 metri sul livello del mare, nel massiccio del Partenio, nel comune di Mercogliano (Avellino). Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei principali luoghi di pellegrinaggio del Sud Italia, con oltre un milione di visitatori ogni anno.',
+      imagePath: 'assets/montevergine.jpg',
+      category: 'Natura',
+      subcategory: 'Montagna',
+      rating: 4.5,
+      reviewCount: 675,
+      images: [
+        'assets/montevergine.jpg',
+        'assets/acquedotto.jpg',
+        'assets/cibo_example.jpg',
+      ],
+      location: 'Avellino, Campania',
+      latitude: 40.9333,
+      longitude: 14.7167,
+      creator: 'TourGuide Team',
+      lastEdited: '2023-10-01',
+      totViews: 1500,
+    );
+  }
+
+  Future<List<Tour>> getToursByCategory(String category) async {
+    // Simulate network delay
     await Future.delayed(const Duration(seconds: 1));
 
     // Mock data
@@ -65,7 +159,25 @@ class TourService {
     ];
   }
 
-  Future<List<Waypoint>> getWaypointsByTour() async {
+
+  Future<List<Map<String, String>>> getToursBySearchTerm(String searchTerm) async {
+    // Simulate network delay
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (searchTerm.isEmpty) {
+      return [];
+    }
+    // Mock data
+    return [
+      {"id": "2", "title": "Acquedotto Romano"},
+      {"id": "1", "title": "Montevergine"},
+    ];
+  }
+
+
+
+
+  Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
   // Simulate network delay
     await Future.delayed(const Duration(seconds: 1));
 
@@ -241,56 +353,55 @@ class TourService {
 
     // Mock data
     return [
-      Category(name: 'Natura', image: 'assets/natura_categoria.jpg'),
-      Category(name: 'Città', image: 'assets/citta_categoria.jpg'),
-      Category(name: 'Cultura', image: 'assets/wine_category.jpg'),
-      Category(name: 'Cibo', image: 'assets/cibo_example.jpg'),
+      Category(name: 'Interior', image: 'assets/interior.jpg'),
+      Category(name: 'Exterior', image: 'assets/exterior.jpg'),
+      Category(name: 'Mixed', image: 'assets/int-exterior.jpg'),
     ];
   }
 
-  Future<User> getUserDetails() async {
-    // Simulate network delay
-    // await Future.delayed(const Duration(seconds: 1));
+Future<User> getUserDetails() async {
+  // Simulate network delay
+  // await Future.delayed(const Duration(seconds: 1));
 
-    // // Mock user data
-    // return User(
-    //   id: 1,
-    //   name: 'Mario',
-    //   surname: 'Rossi',
-    //   mail: 'test@mail.com',
-    //   city: 'Avellino',
-    //   token: 'sample_token',
-    //   description: 'Appassionato di storia e cultura locale.',
-    //   reviewCount: 10,
-    // );
-    // print("Token: $token");
-    // if (token == null) {
-    //   throw Exception('User not authenticated');
-    // }
+  // // Mock user data
+  // return User(
+  //   id: 1,
+  //   name: 'Mario',
+  //   surname: 'Rossi',
+  //   mail: 'test@mail.com',
+  //   city: 'Avellino',
+  //   token: 'sample_token',
+  //   description: 'Appassionato di storia e cultura locale.',
+  //   reviewCount: 10,
+  // );
+  // print("Token: $token");
+  // if (token == null) {
+  //   throw Exception('User not authenticated');
+  // }
 
-    try {
-      final response = await apiService.getProfileDetails();
-      if (response.statusCode == 200) {
-        final data = response.data;
-        return User(
-          id: data['id'],
-          name: data['first_name'],
-          surname: data['last_name'],
-          mail: data['email'],
-          city: "Avellino",
-          token: "abc",
-          description: data['description'] ?? '',
-          reviewCount: data['review_count'] ?? 0,
-        );
-      } else {
-        throw Exception('Failed to load user details');
-      }
-    } catch (e) {
-      print("User Details Retrieval error: $e");
-      rethrow;
+  try {
+    final response = await apiService.getProfileDetails();
+    if (response.statusCode == 200) {
+      final data = response.data;
+      return User(
+        id: data['id'],
+        name: data['first_name'],
+        surname: data['last_name'],
+        mail: data['email'],
+        city: "Avellino",
+        token: "abc",
+        description: data['description'] ?? '',
+        reviewCount: data['review_count'] ?? 0,
+      );
+    } else {
+      throw Exception('Failed to load user details');
     }
-    //   //TODO: Gestire errore 401 per token non riconosciuto
+  } catch (e) {
+    print("User Details Retrieval error: $e");
+    rethrow;
   }
+  //TODO: Gestire errore 401 per token non riconosciuto
+}
 
   Future<List<Review>> getReviewByUser() async {
     // Simulate network delay

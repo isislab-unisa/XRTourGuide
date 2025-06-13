@@ -10,7 +10,6 @@ final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
   return AuthService();
 });
 
-// final dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.149:80'));
 final apiService = ApiService();
 
 
@@ -18,6 +17,10 @@ class AuthService extends ChangeNotifier {
   final SecureStorageService _storageService = SecureStorageService();
   AuthStatus _authStatus = AuthStatus.loading;
   AuthStatus get authStatus => _authStatus;
+
+  String? _loginErrorMessage;
+  String? get loginErrorMessage=> _loginErrorMessage;
+
 
   AuthService() {
     _checkAuthStatus();
@@ -34,29 +37,34 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> login(String email, String password) async {
-    _authStatus = AuthStatus.loading;
-    notifyListeners();
+    // _authStatus = AuthStatus.loading;
+    // notifyListeners();
 
     try {
-      // final response = await dio.post('/api/token/', data: {'username': email, 'password': password});
       final response = await apiService.login(email, password);
+      if (response.statusCode == 401) {
+        // _authStatus = AuthStatus.unauthenticated;
+        _loginErrorMessage = "Username or password is incorrect";
+        // notifyListeners();
+        throw Exception(_loginErrorMessage);
+      }
+
       final accessToken = response.data['access'];
       final refreshToken = response.data['refresh'];
-
-      print("Refresh Token: $refreshToken");
-
-      //TODO: Gestire errore 401 per username e o password sbagliati
 
       await _storageService.saveTokens(
         accessToken: accessToken,
         refreshToken: refreshToken,
       );
       _authStatus = AuthStatus.authenticated;
+      notifyListeners();
     } catch (e) {
-      print("Login error: $e");
-      _authStatus = AuthStatus.unauthenticated;
+      print("Login Error: $e");
+      // _authStatus = AuthStatus.unauthenticated;
+      _loginErrorMessage ??= "An error occurred during login. Please try again.";
+      // notifyListeners();
+      rethrow;
     }
-    notifyListeners();
   }
 
   Future<void> register(String username, String password, String name, String surname, String mail, String description, String city) async {
@@ -85,6 +93,44 @@ class AuthService extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> deleteAccount(
+    String password,
+  ) async {
+
+    try {
+      final response = await apiService.deleteAccount(
+        password,
+      );
+      _authStatus = AuthStatus.unauthenticated;
+    } catch (e) {
+      print("Delete account error: $e");
+      _authStatus = AuthStatus.authenticated;
+    }
+    notifyListeners();
+  }
+
+  Future<void> updatePassword(String oldPassword, String newPassword) async {
+    try {
+      final response = await apiService.updatePassword(oldPassword, newPassword);
+    } catch (e) {
+      print("Change Password error: $e");
+    }
+  }
+
+  Future<void> updateAccount(String firstName, String lastName, String mail, String description) async {
+    try {
+      final response = await apiService.updateAccount(
+        firstName,
+        lastName,
+        mail,
+        description,
+      );
+    } catch (e) {
+      print("Update Account error: $e");
+    }
+  }
+
 
   Future<void> logout() async {
     _authStatus = AuthStatus.loading;

@@ -89,7 +89,8 @@ class AuthChecker extends ConsumerWidget {
         return const Scaffold(
           backgroundColor: AppColors.background,
           body: Center(child: CircularProgressIndicator()),
-        );      case AuthStatus.authenticated:
+        );      
+      case AuthStatus.authenticated:
         return const TravelExplorerScreen(isGuest: false);
       case AuthStatus.unauthenticated:
         return const AuthFlowScreen();
@@ -142,6 +143,13 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
       });  
     } 
   }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
 
   @override
   void dispose() {
@@ -627,25 +635,16 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                     ),
                     _buildPrimaryButton(
                       text: 'Log In',
-                      // onPressed: () {
-                      //   setState(() async {
-                      //     // Simulate successful login and navigate to main page
-                      //     // TODO: Replace this with your actual navigation logic
-                      //     // Navigator.of(context).pushReplacement(
-                      //     //   MaterialPageRoute(
-                      //     //     builder: (context) => TravelExplorerScreen(isGuest: false),
-                      //     //   ),
-                      //     // );
-                      //     print("UserLogin");
-                      //     await authService.login(_emailController.text, _passwordController.text);
-                      //   });
-                      // },
                       onPressed: () async {
                         print("UserLogin");
-                        await authService.login(
-                          _emailController.text,
-                          _passwordController.text,
-                        );
+                        try {
+                          await authService.login(
+                            _emailController.text,
+                            _passwordController.text,
+                          );
+                        } catch (e) {
+                          _showError(authService.loginErrorMessage ?? 'Login failed');
+                        }
                       },
                       context: context,
                     ),

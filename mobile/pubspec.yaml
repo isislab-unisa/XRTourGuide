@@ -109,6 +109,9 @@ flutter:
     - assets/icons/link.png
     - assets/icons/text.png
     - assets/icons/video.png
+    - assets/exterior.jpg
+    - assets/interior.jpg
+    - assets/int-exterior.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
