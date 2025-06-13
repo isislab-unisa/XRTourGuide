@@ -31,6 +31,7 @@ class Command(BaseCommand):
             self.stdout.write("Utente root già esistente")
 
         for tour_data in self.tours_data:
+            dummy_content = ContentFile(b"image content here", name=f"image_mammt.jpg")
             tour = Tour.objects.filter(title=tour_data["title"]).first()
             if not tour:
                 tour = Tour.objects.create(
@@ -40,8 +41,13 @@ class Command(BaseCommand):
                     category=tour_data["category"],
                     description="Descrizione di esempio",
                     user=user,
-                    coordinates="41.9028,12.4964"
+                    coordinates="41.9028,12.4964",
                 )
+                image_bytes = b"image content here"
+                image_file = ContentFile(image_bytes, name="dummy_image.jpg")
+                
+                tour.default_image.save("dummy_image.jpg", image_file)
+                tour.save()
                 self.stdout.write(self.style.SUCCESS(f"Creato tour: {tour.title}"))
             else:
                 self.stdout.write(f"Tour già esistente: {tour.title}")

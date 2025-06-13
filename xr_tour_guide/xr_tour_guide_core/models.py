@@ -132,12 +132,25 @@ class Tour(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        
+
         if is_new:
             super().save(*args, **kwargs)
 
-        folder_name = self.get_folder_name()
+        if self.default_image and "None" in self.default_image.name:
+            storage = MinioStorage()
+            old_path = self.default_image.name
+            filename = old_path.split("/")[-1]
+            new_path = f"{self.pk}/default_image/{filename}"
 
+            if storage.exists(old_path):
+                file_content = storage.open(old_path)
+                storage.save(f"{self.pk}/default_image/.keep", ContentFile(b""))
+                storage.save(new_path, file_content)
+                self.default_image.name = new_path
+                storage.delete(old_path)
+                super().save(update_fields=["default_image"])
+
+        folder_name = self.get_folder_name()
         storage = MinioStorage()
         keep_path = f"{folder_name}/.keep"
         if not storage.exists(keep_path):
@@ -145,7 +158,7 @@ class Tour(models.Model):
 
         if is_new:
             self.status = Status.READY
-        
+
         super().save(*args, **kwargs)
 
 class Waypoint(models.Model):

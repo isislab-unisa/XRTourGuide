@@ -41,10 +41,14 @@ class WaypointSerializer(serializers.ModelSerializer):
 class TourSerializer(serializers.ModelSerializer):
     creation_time = serializers.SerializerMethodField()
     user_name = serializers.SerializerMethodField()
+    default_img = serializers.SerializerMethodField()
     class Meta:
         model = Tour
-        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'coordinates', 'default_image', 'creation_time', 'counter_review', 'user_name', 'id']
+        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'coordinates', 'default_img', 'creation_time', 'counter_review', 'user_name', 'id']
 
+    def get_default_img(self, obj):
+        return obj.default_image.name if obj.default_image else None
+    
     def get_creation_time(self, obj):
         return obj.creation_time.strftime("%Y-%m-%d")
     
