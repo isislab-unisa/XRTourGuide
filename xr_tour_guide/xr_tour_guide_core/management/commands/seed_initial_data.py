@@ -1,66 +1,74 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from ...models import Tour, Waypoint, Tag, WaypointViewImage
 from django.core.files.base import ContentFile
-from django.utils import timezone
-import random
+from ...models import Tour, Waypoint, WaypointViewImage
 
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Seed initial root user, tours, waypoints and images'
+    help = 'Create one tour with its waypoints and images at a time'
+
+    tours_data = [
+        {"title": "Tour Outside 1", "subtitle": "Sub 1", "place": "Place A", "category": "OUTSIDE"},
+        {"title": "Tour Outside 2", "subtitle": "Sub 2", "place": "Place B", "category": "OUTSIDE"},
+        {"title": "Tour Inside 1", "subtitle": "Sub 3", "place": "Place C", "category": "INSIDE"},
+    ]
 
     def handle(self, *args, **kwargs):
-        if not User.objects.filter(username='root').exists():
-            user = User.objects.create_user(username='root', email='root@example.com', password='rootpass')
-            user.is_superuser = True
-            user.is_staff = True
+        user, created = User.objects.get_or_create(
+            username='root',
+            defaults={
+                'email': 'root@example.com',
+                'is_superuser': True,
+                'is_staff': True
+            }
+        )
+        if created:
+            user.set_password('rootpass')
             user.save()
             self.stdout.write(self.style.SUCCESS("Utente root creato e promosso a superuser"))
         else:
             self.stdout.write("Utente root già esistente")
 
-        tag, _ = Tag.objects.get_or_create(name="DefaultTag")
-
-        tours_data = [
-            {"title": "Tour Outside 1", "subtitle": "Sub 1", "place": "Place A", "category": "OUTSIDE"},
-            {"title": "Tour Outside 2", "subtitle": "Sub 2", "place": "Place B", "category": "OUTSIDE"},
-            {"title": "Tour Inside 1", "subtitle": "Sub 3", "place": "Place C", "category": "INSIDE"},
-        ]
-
-        for data in tours_data:
-            if not Tour.objects.filter(title=data["title"]).exists():
+        for tour_data in self.tours_data:
+            tour = Tour.objects.filter(title=tour_data["title"]).first()
+            if not tour:
                 tour = Tour.objects.create(
-                    title=data["title"],
-                    subtitle=data["subtitle"],
-                    place=data["place"],
-                    category=data["category"],
+                    title=tour_data["title"],
+                    subtitle=tour_data["subtitle"],
+                    place=tour_data["place"],
+                    category=tour_data["category"],
                     description="Descrizione di esempio",
-                    user=User.objects.get(username="root"),
+                    user=user,
                     coordinates="41.9028,12.4964"
                 )
-                self.stdout.write(f"Creato tour: {tour.title}")
+                self.stdout.write(self.style.SUCCESS(f"Creato tour: {tour.title}"))
+            else:
+                self.stdout.write(f"Tour già esistente: {tour.title}")
 
-                for j in range(2):
+            waypoints = Waypoint.objects.filter(tour=tour)
+            if waypoints.exists():
+                self.stdout.write(f"Waypoint già esistenti per tour {tour.title}")
+            else:
+                for idx_wp in range(2):
                     waypoint = Waypoint.objects.create(
-                        title=f"Waypoint {j+1} - {tour.title}",
+                        title=f"Waypoint {idx_wp + 1} - {tour.title}",
                         tour=tour,
                         coordinates="41.9028,12.4964",
-                        description=f"Descrizione waypoint {j+1}",
-                        model_path="model.obj",
-                        tag=tag
+                        description=f"Descrizione waypoint {idx_wp + 1}",
+                        model_path="model.obj"
                     )
                     self.stdout.write(f"  Creato waypoint: {waypoint.title}")
 
-                    for i in range(2):
-                        dummy_content = ContentFile(b"image content here", name=f"image_{j}_{i}.jpg")
-                        image = WaypointViewImage.objects.create(
-                            waypoint=waypoint,
-                        )
-                        image.image.save(f"dummy_image_{j}_{i}.jpg", dummy_content, save=True)
-                        self.stdout.write(f"    Immagine creata: {image.image.name}")
-            else:
-                self.stdout.write(f"Tour già esistente: {data['title']}")
+                    images = WaypointViewImage.objects.filter(waypoint=waypoint)
+                    if images.exists():
+                        self.stdout.write(f"    Immagini già presenti per waypoint {waypoint.title}")
+                    else:
+                        for idx_img in range(2):
+                            dummy_content = ContentFile(b"image content here", name=f"image_{idx_wp}_{idx_img}.jpg")
+                            image = WaypointViewImage(waypoint=waypoint)
+                            image.save()
+                            image.image.save(f"dummy_image_{idx_wp}_{idx_img}.jpg", dummy_content)
+                            image.save()
+                            self.stdout.write(f"    Immagine creata: {image.image.name}")
 
-                # for waypoint in Tour.objects.get(title=data["title"]).waypoint_set.all():
-                #     self.stdout.write(f"  Waypoint esistente: {waypoint.title}")    
