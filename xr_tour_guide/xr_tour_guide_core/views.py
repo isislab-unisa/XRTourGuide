@@ -370,14 +370,14 @@ def get_reviews_by_user(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@swagger_auto_schema(
-    method='post',
-    operation_summary="Increment the view count for a specific tour",
-    responses={
-        200: openapi.Response(description="View count incremented successfully"),
-        404: openapi.Response(description="Tour not found"),
-    }
-)
+# @swagger_auto_schema(
+#     method='post',
+#     operation_summary="Increment the view count for a specific tour",
+#     responses={
+#         200: openapi.Response(description="View count incremented successfully"),
+#         404: openapi.Response(description="Tour not found"),
+#     }
+# )
 def increment_view_count(request, tour_id):
     try:
         tour = Tour.objects.get(id=tour_id)

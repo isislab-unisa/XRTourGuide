@@ -43,7 +43,7 @@ class TourSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
     class Meta:
         model = Tour
-        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'coordinates', 'default_image', 'creation_time', 'counter_review', 'user_name']
+        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'coordinates', 'default_image', 'creation_time', 'counter_review', 'user_name', 'id']
 
     def get_creation_time(self, obj):
         return obj.creation_time.strftime("%Y-%m-%d")
