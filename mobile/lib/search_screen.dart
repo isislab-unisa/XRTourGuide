@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'models/app_colors.dart';
+import 'services/tour_service.dart';
+import 'tour_details_page.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  final bool isGuest;
+  const SearchScreen({Key? key, required this.isGuest}) : super(key: key);
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -11,6 +14,9 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen>
     with SingleTickerProviderStateMixin {
+
+  final TourService _tourService = TourService();
+
   // Controller for the search text field
   final TextEditingController _searchController = TextEditingController();
 
@@ -21,116 +27,15 @@ class _SearchScreenState extends State<SearchScreen>
   late Animation<double> _searchBarAnimation;
   late Animation<double> _contentAnimation;
 
-  //TODO : 
-  // List of popular destinations with their icons and descriptions
-  final List<Map<String, String>> _popularDestinations = [
-    {'name': 'Nearby', 'description': '', 'icon': 'assets/icons/nearby.png'},
-    {'name': 'Europe', 'description': '', 'icon': 'assets/icons/europe.png'},
-    {
-      'name': 'Paris',
-      'description': 'City of arts',
-      'icon': 'assets/icons/paris.png',
-    },
-    {
-      'name': 'Rome',
-      'description': 'History lives here',
-      'icon': 'assets/icons/rome.png',
-    },
-    {
-      'name': 'Rio De Janeiro',
-      'description': 'Joy shines here',
-      'icon': 'assets/icons/rio.png',
-    },
-    {
-      'name': 'Dubai',
-      'description': 'Dream rise here',
-      'icon': 'assets/icons/dubai.png',
-    },
-    {
-      'name': 'London',
-      'description': 'City of culture',
-      'icon': 'assets/icons/london.png',
-    },
-    {
-      'name': 'Beijing',
-      'description': 'Lives in tradition',
-      'icon': 'assets/icons/beijing.png',
-    },
-    {
-      'name': 'Sydney',
-      'description': 'Vibes soar here',
-      'icon': 'assets/icons/sydney.png',
-    },
-    {
-      'name': 'Amsterdam',
-      'description': 'City of Flowers',
-      'icon': 'assets/icons/amsterdam.png',
-    },
-    {
-      'name': 'Berlin',
-      'description': 'City of arts',
-      'icon': 'assets/icons/berlin.png',
-    },
-    {
-      'name': 'Ankara',
-      'description': 'City of arts',
-      'icon': 'assets/icons/ankara.png',
-    },
-    {
-      'name': 'Pisa',
-      'description': 'City of arts',
-      'icon': 'assets/icons/pisa.png',
-    },
-    {
-      'name': 'Washington',
-      'description': 'City of arts',
-      'icon': 'assets/icons/washington.png',
-    },
-    {
-      'name': 'Malaysia',
-      'description': 'Family friendly',
-      'icon': 'assets/icons/malaysia.png',
-    },
-    {
-      'name': 'Barcelona',
-      'description': 'City of arts',
-      'icon': 'assets/icons/barcelona.png',
-    },
-    {
-      'name': 'Florence',
-      'description': 'City of arts',
-      'icon': 'assets/icons/florence.png',
-    },
-    {
-      'name': 'Delhi',
-      'description': 'City of color',
-      'icon': 'assets/icons/delhi.png',
-    },
-    {
-      'name': 'Dhaka',
-      'description': 'City of arts',
-      'icon': 'assets/icons/dhaka.png',
-    },
-    {
-      'name': 'Istanbul',
-      'description': 'City of arts',
-      'icon': 'assets/icons/istanbul.png',
-    },
-    {
-      'name': 'Egypt',
-      'description': 'City of arts',
-      'icon': 'assets/icons/egypt.png',
-    },
-    {
-      'name': 'Japan',
-      'description': 'City of arts',
-      'icon': 'assets/icons/japan.png',
-    },
-  ];
+  late List<Map<String, String>> _filteredDestinations;
+  bool _isLoading = true;
+
 
   @override
   void initState() {
     super.initState();
+    // Initialize filtered destinations with an empty list
+    _filteredDestinations = [];
 
     // Initialize animation controller with duration
     _animationController = AnimationController(
@@ -152,6 +57,43 @@ class _SearchScreenState extends State<SearchScreen>
     // Start the animation when the screen is built
     _animationController.forward();
   }
+
+  Future<void> _loadData() async {
+    // Load all data in parallel
+    await Future.wait([_loadSearchResults("")]);
+  }
+
+
+  Future<void> _loadSearchResults(String searchTerm) async {
+    try {
+      final tours = await _tourService.getToursBySearchTerm(searchTerm);
+      if (mounted) {
+        setState(() {
+          _filteredDestinations = tours;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showError('Error loading nearby tours');
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  void _onSearchChanged(String value) {
+    // Update the search results based on the input
+    _loadSearchResults(value);
+  }
+
 
   @override
   void dispose() {
@@ -274,7 +216,9 @@ class _SearchScreenState extends State<SearchScreen>
                       ),
                       onChanged: (value) {
                         // Refresh UI when text changes to show/hide clear button
-                        setState(() {});
+                        //TODO: Implement search logic here
+                        _onSearchChanged(value);
+                        // setState(() {});
                       },
                     ),
                   ),
@@ -293,19 +237,27 @@ class _SearchScreenState extends State<SearchScreen>
                   child: FadeTransition(
                     opacity: _contentAnimation,
                     child: ListView.builder(
-                      itemCount: _popularDestinations.length,
+                      itemCount: _filteredDestinations.length,
                       itemBuilder: (context, index) {
-                        final destination = _popularDestinations[index];
+                        final destination = _filteredDestinations[index];
                         return _buildDestinationItem(
-                          destination['name']!,
-                          destination['description']!,
-                          destination['icon']!,
+                          destination['title']!,
+                          int.parse(destination['id']!),
                           onTap: () {
                             // Handle destination selection
                             print(
                               'Selected destination: ${destination['name']}',
                             );
-                            // TODO: Navigate to destination details or search results
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => TourDetailScreen(
+                                      tourId: int.parse(destination['id']!),
+                                      isGuest: widget.isGuest,
+                                    ),
+                              ),
+                            );
                           },
                         );
                       },
@@ -323,8 +275,7 @@ class _SearchScreenState extends State<SearchScreen>
   // Helper method to build each destination item
   Widget _buildDestinationItem(
     String name,
-    String description,
-    String iconPath, {
+    int id,{
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -346,18 +297,10 @@ class _SearchScreenState extends State<SearchScreen>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                // Use a placeholder icon if the asset is not available
-                child: Image.asset(
-                  iconPath,
-                  width: 24,
-                  height: 24,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.location_city,
-                      color: AppColors.textSecondary.withOpacity(0.7),
-                      size: 24,
-                    );
-                  },
+                child: Icon(
+                  Icons.location_city,
+                  color: AppColors.textSecondary.withOpacity(0.7),
+                  size: 24,
                 ),
               ),
             ),
@@ -377,14 +320,14 @@ class _SearchScreenState extends State<SearchScreen>
                     ),
                   ),
                   // Show description if available
-                  if (description.isNotEmpty)
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary.withOpacity(0.7),
-                      ),
-                    ),
+                  // if (description.isNotEmpty)
+                  //   Text(
+                  //     description,
+                  //     style: TextStyle(
+                  //       fontSize: 14,
+                  //       color: AppColors.textSecondary.withOpacity(0.7),
+                  //     ),
+                  //   ),
                 ],
               ),
             ),

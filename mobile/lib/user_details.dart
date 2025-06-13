@@ -111,22 +111,21 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   // Navigate to user settings
-  void _navigateToUserSettings() {
-    // Pass the isGuest status to UserProfileScreen if needed, currently not used
-    // This assumes UserProfileScreen can handle an isGuest parameter if it needs to adapt
-    Navigator.of(context).push(
+  void _navigateToUserSettings() async {
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => UserProfileScreen(),
       ),
     );
+    if (result == true) {
+      // If the user updated their profile, reload the data
+      _loadData();
+      setState(() {});
+    }
   }
 
   // Navigate to home/explore screen
   void _navigateToExplore(BuildContext context) {
-    // Navigate to TravelExplorerScreen
-    // Navigator.of(context).pushReplacement(
-    //   MaterialPageRoute(builder: (context) => const TravelExplorerScreen()),
-    // );
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 

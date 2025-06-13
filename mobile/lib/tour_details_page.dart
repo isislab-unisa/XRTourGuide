@@ -8,6 +8,7 @@ import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'models/app_colors.dart';
 import "models/waypoint.dart";
 import 'models/review.dart';
+import 'models/tour.dart';
 import 'services/tour_service.dart';
 import 'camera_screen.dart'; // Import your camera screen
 import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
@@ -16,35 +17,35 @@ import 'review_list.dart'; // Import your review list screen
 
 class TourDetailScreen extends StatefulWidget {
   final int tourId;
-  final String tourName;
-  final String location;
-  final double rating;
-  final int reviewCount;
-  final List<String> images;
-  final String category;
-  final String description;
-  final String creator;
-  final String lastEdited;
-  final String totViews;
-  final double latitude;
-  final double longitude;
+  // final String tourName;
+  // final String location;
+  // final double rating;
+  // final int reviewCount;
+  // final List<String> images;
+  // final String category;
+  // final String description;
+  // final String creator;
+  // final String lastEdited;
+  // final String totViews;
+  // final double latitude;
+  // final double longitude;
   final bool isGuest;
 
   const TourDetailScreen({
     Key? key,
     required this.tourId,
-    required this.tourName,
-    required this.location,
-    required this.rating,
-    required this.reviewCount,
-    required this.images,
-    required this.category,
-    required this.description,
-    required this.creator,
-    required this.lastEdited,
-    required this.totViews,
-    required this.latitude,
-    required this.longitude,
+    // required this.tourName,
+    // required this.location,
+    // required this.rating,
+    // required this.reviewCount,
+    // required this.images,
+    // required this.category,
+    // required this.description,
+    // required this.creator,
+    // required this.lastEdited,
+    // required this.totViews,
+    // required this.latitude,
+    // required this.longitude,
     required this.isGuest,
   }) : super(key: key);
 
@@ -75,6 +76,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
   late DraggableScrollableController _sheetController;
   double _sheetMinSize = 0.15; // Initial height ratio
   double _sheetMaxSize = 0.4; // Maximum height ratio (This will be adjusted in the Itinerario view)
+
+  Tour? _tourDetails;
+  bool _isLoadingTourDetails = true;
 
   // Define your waypoints with coordinates
   List<Waypoint> _waypoints = [];
@@ -114,15 +118,34 @@ class _TourDetailScreenState extends State<TourDetailScreen>
   Future<void> _loadData() async {
     // Load all data in parallel
     await Future.wait([
+      _loadTourDetails(),
       _loadWaypoints(),
       _loadReviews(),
     ]);
   }
 
+  Future<void> _loadTourDetails() async{
+    try {
+      final tour = await _tourService.getTourById(widget.tourId);
+      if (mounted) {
+        setState(() {
+          _tourDetails = tour;
+          _isLoadingTourDetails = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingTourDetails = false;
+        });
+        _showError('Error loading tour details');
+      }
+    }
+  }
 
   Future<void> _loadWaypoints() async {
     try {
-      final waypoints = await _tourService.getWaypointsByTour();
+      final waypoints = await _tourService.getWaypointsByTour(widget.tourId);
       if (mounted) {
         setState(() {
           _waypoints = waypoints;
@@ -341,7 +364,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
-        widget.images.length,
+        _tourDetails!.images.length,
         (index) => Container(
           width: 8,
           height: 8,
@@ -362,6 +385,13 @@ class _TourDetailScreenState extends State<TourDetailScreen>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+
+     if (_isLoadingTourDetails || _isLoadingWaypoints) {
+      return Scaffold(
+        appBar: AppBar(backgroundColor: Colors.white, toolbarHeight: 0.1),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     // Conditionally render the content based on the selected tab
     Widget mainContent;
@@ -824,7 +854,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   width: double.infinity,
                   child: PageView.builder(
                     controller: _pageController,
-                    itemCount: widget.images.length,
+                    itemCount: _tourDetails?.images.length,
                     onPageChanged: (index) {
                       setState(() {
                         _currentImageIndex = index;
@@ -832,7 +862,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     },
                     itemBuilder: (context, index) {
                       return Image.asset(
-                        widget.images[index],
+                        _tourDetails!.images[index],
                         fit: BoxFit.cover,
                       );
                     },
@@ -888,7 +918,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      '${_currentImageIndex + 1}/${widget.images.length}',
+                      '${_currentImageIndex + 1}/${_tourDetails?.images.length}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -916,7 +946,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   Row(
                     children: [
                       Text(
-                        "Created by ${widget.creator}",
+                        "Created by ${_tourDetails?.creator}",
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -925,7 +955,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       ),
                       SizedBox(width: 80),
                       Text(
-                        "Last edited: ${widget.lastEdited}",
+                        "Last edited: ${_tourDetails?.lastEdited}",
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -943,13 +973,13 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                           Row(
                             children: [
                               ...List.generate(5, (index) {
-                                if (index < widget.rating.floor()) {
+                                if (index < _tourDetails!.rating.floor()) {
                                   return const Icon(
                                     Icons.star,
                                     color: Colors.amber,
                                     size: 18,
                                   );
-                                } else if (index < widget.rating) {
+                                } else if (index < _tourDetails!.rating) {
                                   return const Icon(
                                     Icons.star_half,
                                     color: Colors.amber,
@@ -965,7 +995,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                               }),
                               const SizedBox(width: 8),
                               Text(
-                                '${widget.rating} (${widget.reviewCount.toString()})',
+                                '${_tourDetails!.rating} (${_tourDetails!.reviewCount.toString()})',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -980,7 +1010,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                 color: AppColors.textSecondary,
                               ),
                               Text(
-                                widget.totViews.toString(),
+                                _tourDetails!.totViews.toString(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -993,7 +1023,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                           Row(
                             children: [ 
                               Text(
-                                widget.tourName,
+                                _tourDetails!.title,
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -1012,7 +1042,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                widget.location,
+                                _tourDetails!.location,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: AppColors.textSecondary,
@@ -1090,7 +1120,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     },
                   ),
                   SizedBox(width: 10),
-                  if (widget.category != "Interno" && widget.category != "Cibo")
+                  if (_tourDetails!.category != "Interno" && _tourDetails!.category != "Cibo")
                     _buildNavTab(
                       icon: Icons.map_outlined,
                       label: 'Mappa',
@@ -1143,7 +1173,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        widget.description,
+                        _tourDetails!.description,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -1173,7 +1203,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '(${widget.reviewCount})',
+                          '(${_tourDetails!.reviewCount})',
                           style: const TextStyle(
                             fontSize: 16,
                             color: AppColors.textSecondary,
@@ -1197,7 +1227,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          widget.rating.toString(),
+                          _tourDetails!.rating.toString(),
                           style: const TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
@@ -1240,7 +1270,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                 ],
                               ),
                               Text(
-                                'Based on ${widget.reviewCount} Reviews',
+                                'Based on ${_tourDetails!.reviewCount} Reviews',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: AppColors.textSecondary,
@@ -1281,10 +1311,10 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                             context,
                             MaterialPageRoute(
                               builder: (context) => ReviewListScreen(
-                                tourName: widget.tourName,
+                                tourName: _tourDetails!.title,
                                 tourId: widget.tourId,
                                 isTour: true,
-                                reviewCount: widget.reviewCount,
+                                reviewCount: _tourDetails!.reviewCount,
                               ),
                             ),
                           );
@@ -1321,7 +1351,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                 ),
               ),
             ] else if (_selectedTab == 'Itinerario') ...[
-              if (widget.category != "Interno" && widget.category != "Cibo")
+              if (_tourDetails!.category != "Interno" && _tourDetails!.category != "Cibo")
                 // Interactive Map view using flutter_map
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -1411,7 +1441,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   subtitle: waypoint.subtitle,
                   description: waypoint.description,
                   images: waypoint.images,
-                  tourCategory: widget.category,
+                  tourCategory: _tourDetails!.category,
                   latitude: waypoint.latitude,
                   longitude: waypoint.longitude,
                 );

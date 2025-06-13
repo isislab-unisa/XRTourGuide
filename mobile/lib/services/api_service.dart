@@ -7,16 +7,17 @@ class ApiService {
   final SecureStorageService _storageService = SecureStorageService();
   final AuthService _authService = AuthService();
 
-  ApiService() : _dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.148:80')) {
+  final excludedPaths = [
+  '/api/token/',
+  '/api/token/refresh/',
+  '/register/',
+  ];
+
+
+  ApiService() : _dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.146:80')) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-
-          final excludedPaths = [
-            '/api/token/',
-            '/api/token/refresh/',
-            '/register/',
-          ];
 
           print("Request: ${options.method} ${options.path}");
 
@@ -31,6 +32,10 @@ class ApiService {
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
+          if (excludedPaths.any((path) => e.requestOptions.path.startsWith(path))) {
+              return handler.next(e); // Salta il refresh per questi endpoint
+          }
+
           print("Error Refresh: ${e.message}");
           if (e.response?.statusCode == 401) {
             final newAccessToken = await _refreshToken();
@@ -86,10 +91,14 @@ class ApiService {
   }
 
   Future<Response> login(String email, String password) async {
+    //TODO Vedere come criptare la password durante la chiamata
     try {
       final response = await dio.post(
         '/api/token/',
         data: {'username': email, 'password': password},
+        options: Options(
+          validateStatus: (status) => status == 200 || status == 401, // Allow 401 for invalid credentials
+        ),
       );
       return response;
     } catch (e) {
@@ -99,6 +108,7 @@ class ApiService {
   }
 
   Future<Response> register(String username, String password, String name, String surname, String mail, String description, String city) async {
+    //TODO Vedere come criptare la password durante la chiamata
     try {
       final response = await dio.post(
         '/register/',
@@ -118,6 +128,69 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<Response> updateAccount(String name, String surname, String mail, String description) async {
+    try {
+      final response = await dio.post(
+        '/update_profile/',
+        data: {
+          'firstName': name,
+          'lastName': surname,
+          'description': description,
+          'email': mail,
+        },
+      );
+      return response;
+    } catch (e) {
+      print('Failed to update profile: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<Response> updatePassword(String oldPassword, String newPassword) async {
+    //TODO Vedere come criptare la password durante la chiamata
+    try {
+      final response = await dio.post(
+        '/update_password/',
+        data: {
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+        },
+      );
+      return response;
+    } catch (e) {
+      print('Failed to update password: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> deleteAccount(String password) async {
+    //TODO Vedere come criptare la password durante la chiamata
+    try {
+      final response = await dio.post(
+        '/delete_account/',
+        data: {
+          'password': password,
+        },
+      );
+      return response;
+    } catch (e) {
+      print('Failed to delete profile: $e');
+      rethrow;
+    }
+  }
+  
+  Future<Response> getNearbyTours() async {
+    try {
+      final response = await dio.get('/tour_list/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
 
 
 }
