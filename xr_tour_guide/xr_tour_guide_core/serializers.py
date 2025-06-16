@@ -52,7 +52,7 @@ class TourSerializer(serializers.ModelSerializer):
     l_edited = serializers.SerializerMethodField()
     class Meta:
         model = Tour
-        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'l_edited']
+        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'l_edited', 'rating']
 
 
     def get_last_edited(self, obj):
