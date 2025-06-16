@@ -59,7 +59,6 @@ class TourSerializer(serializers.ModelSerializer):
         return obj.last_edited.strftime("%Y-%m-%d")
     
     def get_rating(self, obj):
-        if obj.reviews is None:
             return 0.0
         
     def get_lat(self, obj):
