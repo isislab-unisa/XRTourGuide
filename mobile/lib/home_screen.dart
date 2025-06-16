@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'main.dart';
 import 'models/app_colors.dart';
 import 'elements/travel_list_item_card.dart';
 import 'tour_details_page.dart';
@@ -9,6 +9,7 @@ import 'user_details.dart';
 import 'models/tour.dart';
 import 'models/category.dart';
 import 'services/tour_service.dart';
+import 'package:flutter/widgets.dart';
 
 class TravelExplorerScreen extends StatefulWidget {
   final bool isGuest;
@@ -19,7 +20,7 @@ class TravelExplorerScreen extends StatefulWidget {
   State<TravelExplorerScreen> createState() => _TravelExplorerScreenState();
 }
 
-class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
+class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteAware {
   final TourService _tourService = TourService();
 
   // State variables for data
@@ -36,6 +37,24 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    _loadData(); // Reload data when returning to this screen
+    super.didPopNext();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -345,6 +364,7 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
                                       right: 15.0,
                                     ),
                                     child: TravelListItemCard(
+                                      tourId: tour.id,
                                       imagePath: tour.imagePath,
                                       title: tour.title,
                                       description: tour.description,
@@ -474,6 +494,7 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
                                       right: 15.0,
                                     ),
                                     child: TravelListItemCard(
+                                      tourId: tour.id,
                                       imagePath: tour.imagePath,
                                       title: tour.title,
                                       description: tour.description,

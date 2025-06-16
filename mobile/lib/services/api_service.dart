@@ -14,7 +14,7 @@ class ApiService {
   ];
 
 
-  ApiService() : _dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.146:80')) {
+  ApiService() : _dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.147:80')) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -187,6 +187,87 @@ class ApiService {
       return response;
     } catch (e) {
       print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> getTourDetails(int tourId) async {
+    try {
+      final response = await dio.get('/tour_details/$tourId/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour details: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> getTourReviews(int tourId) async {
+    try {
+      final response = await dio.get('/get_reviews_by_tour_id/$tourId/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour reviews: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> getUserReviews() async {
+    try {
+      final response = await dio.get('/get_reviews_by_user');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour reviews: $e');
+      rethrow;
+    }
+  }
+
+
+
+  Future<Response> getTourWaypoints(int tourId) async {
+    try {
+      final response = await dio.get('/tour_waypoints/$tourId');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> incrementTourViews(int waypointId) async {
+    try {
+      final response = await dio.post('/increment_view_count/',
+      data: {
+        'tour_id': waypointId,
+      });
+      return response;
+    } catch (e) {
+      print('Failed to incvrement tour views: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> leaveReview(int tourId, double rating, String comment) async {
+    try {
+      final response = await dio.post('/create_review/',
+      data: {
+        'tour_id': tourId, 
+        'rating': rating, 
+        'comment': comment
+      });
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<Response> streamMinioResource(int tourId) async {
+    try {
+      final response = await dio.get('/tour_details/$tourId/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour details: $e');
       rethrow;
     }
   }

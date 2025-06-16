@@ -1,25 +1,25 @@
 class Review {
-  final String name;
+  final int id;
   final String date;
   final String comment;
   final double rating;
-  final String imageUrl;
+  final String user;
 
   Review({
-    required this.name,
+    required this.id,
     required this.date,
     required this.comment,
     required this.rating,
-    required this.imageUrl,
+    required this.user,
   });
 
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
-      name: json['title'] as String,
-      date: json['subtitle'] as String,
-      comment: json['description'] as String,
-      rating: (json['latitude'] as num).toDouble(),
-      imageUrl: json['category'] as String,
+      id: json['id'] as int,
+      date: json['creation_date'] as String,
+      comment: json['comment'] as String,
+      rating: (json['rating'] as num).toDouble(),
+      user: json['user_name'] as String,
     );
   }
 }

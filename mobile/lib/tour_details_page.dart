@@ -10,6 +10,7 @@ import "models/waypoint.dart";
 import 'models/review.dart';
 import 'models/tour.dart';
 import 'services/tour_service.dart';
+import 'services/api_service.dart';
 import 'camera_screen.dart'; // Import your camera screen
 import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 import 'review_list.dart'; // Import your review list screen
@@ -57,6 +58,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     with TickerProviderStateMixin {
 
   final TourService _tourService = TourService();
+  final ApiService _apiService = ApiService();
 
   String _selectedTab = 'About';
   late List<bool> _expandedWaypoints;
@@ -98,6 +100,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     super.initState();
     _loadData();
     _checkLocationPermission();
+    _incrementViewCount();
     _pageController = PageController();
 
     // Initialize animation controllers
@@ -122,6 +125,14 @@ class _TourDetailScreenState extends State<TourDetailScreen>
       _loadWaypoints(),
       _loadReviews(),
     ]);
+  }
+
+  Future<void> _incrementViewCount() async {
+    try {
+      await _apiService.incrementTourViews(widget.tourId);
+    } catch (e) {
+      print('Error incrementing view count: $e');
+    }
   }
 
   Future<void> _loadTourDetails() async{
@@ -364,7 +375,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
-        _tourDetails!.images.length,
+        // _tourDetails!.images.length,
+        1,
         (index) => Container(
           width: 8,
           height: 8,
@@ -534,6 +546,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
             builder: (context, scrollController) {
               final selectedWaypoint =
                   _waypoints[_selectedWaypointIndexMappa];
+              
 
               return Container(
                 decoration: const BoxDecoration(
@@ -575,10 +588,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                   borderRadius: BorderRadius.circular(
                                     12,
                                   ),
-                                  child: Image.asset(
-                                    selectedWaypoint.images.isNotEmpty
-                                        ? selectedWaypoint.images[0]
-                                        : 'assets/montevergine.jpg', // Fallback image
+                                  child: Image.network(
+                                    "http://172.16.15.147:80/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
                                     width: 80,
                                     height: 80,
                                     fit: BoxFit.cover,
@@ -601,7 +612,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                         ),
                                       ),
                                       Text(
-                                        selectedWaypoint.subtitle,
+                                        selectedWaypoint.title,
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -734,9 +745,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                       child: ClipRRect(
                                         borderRadius:
                                             BorderRadius.circular(12),
-                                        child: Image.asset(
-                                          selectedWaypoint
-                                              .images[index],
+                                        child: Image.network(
+                                          "http://172.16.15.147:80/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
                                           width: 250,
                                           height: 200,
                                           fit: BoxFit.cover,
@@ -854,15 +864,17 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   width: double.infinity,
                   child: PageView.builder(
                     controller: _pageController,
-                    itemCount: _tourDetails?.images.length,
+                    // itemCount: _tourDetails?.images.length,
+                    itemCount: 1,
                     onPageChanged: (index) {
                       setState(() {
                         _currentImageIndex = index;
                       });
                     },
                     itemBuilder: (context, index) {
-                      return Image.asset(
-                        _tourDetails!.images[index],
+                      return Image.network(
+                        // _tourDetails!.imagePath,
+                        "http://172.16.15.147:80/stream_minio_resource/?tour=${_tourDetails!.id}",
                         fit: BoxFit.cover,
                       );
                     },
@@ -918,7 +930,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      '${_currentImageIndex + 1}/${_tourDetails?.images.length}',
+                      // '${_currentImageIndex + 1}/${_tourDetails?.images.length}',
+                      '${_currentImageIndex + 1}/1',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -953,7 +966,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      SizedBox(width: 80),
+                      const Spacer(),
                       Text(
                         "Last edited: ${_tourDetails?.lastEdited}",
                         style: const TextStyle(
@@ -966,6 +979,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   ),
 
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start, // Ensures items align at the top
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -995,7 +1009,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                               }),
                               const SizedBox(width: 8),
                               Text(
-                                '${_tourDetails!.rating} (${_tourDetails!.reviewCount.toString()})',
+                                '${_tourDetails!.rating.toStringAsFixed(1).toString()} (${_tourDetails!.reviewCount.toString()})',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -1052,9 +1066,12 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                           ),
                         ],
                       ),
+
+                      const Spacer(),
+
                       if (widget.isGuest == false)
                         Padding(
-                          padding: const EdgeInsets.only(top: 20.0, left: 60),
+                          padding: const EdgeInsets.only(top: 20.0),
                           child: Center(
                             child: ElevatedButton(
                               onPressed: () {
@@ -1209,10 +1226,10 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(width: 70),
+                        const Spacer(),
                         IconButton(
                           onPressed: () {
-                            _showLeaveReviewSheet();
+                            _showLeaveReviewSheet(_tourDetails!.id);
                           },
                           icon: Icon(
                             Icons.add_circle,
@@ -1227,7 +1244,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          _tourDetails!.rating.toString(),
+                          _tourDetails!.rating.toStringAsFixed(1).toString(),
                           style: const TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
@@ -1285,24 +1302,37 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     //load the first two elements from _reviews
                     if (_isLoadingReviews)
                       const Center(child: CircularProgressIndicator())
-                    else ...[
-                      _buildReviewItem(
-                        name: _reviews[0].name,
-                        date: _reviews[0].date,
-                        rating: _reviews[0].rating,
-                        comment: _reviews[0].comment,
-                        imageUrl: _reviews[0].imageUrl,
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: _reviews.length,
+                        itemBuilder: (context, index) {
+                          return _buildReviewItem(
+                            name: _reviews[index].user,
+                            date: _reviews[index].date,
+                            rating: _reviews[index].rating,
+                            comment: _reviews[index].comment,
+                          );
+                        },
                       ),
                       const SizedBox(height: 16),
-                      _buildReviewItem(
-                        name: _reviews[1].name,
-                        date: _reviews[1].date,
-                        rating: _reviews[1].rating,
-                        comment: _reviews[1].comment,
-                        imageUrl: _reviews[1].imageUrl,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                    //  ...[
+                    //   _buildReviewItem(
+                    //     name: _reviews[0].user,
+                    //     date: _reviews[0].date,
+                    //     rating: _reviews[0].rating,
+                    //     comment: _reviews[0].comment,
+                    //   ),
+                    //   const SizedBox(height: 16),
+                    //   _buildReviewItem(
+                    //     name: _reviews[1].user,
+                    //     date: _reviews[1].date,
+                    //     rating: _reviews[1].rating,
+                    //     comment: _reviews[1].comment,
+                    //   ),
+                    //   const SizedBox(height: 16),
+                    // ],
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
@@ -1436,6 +1466,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                 int index = entry.key;
                 Waypoint waypoint = entry.value;
                 return _buildWaypointItem(
+                  waypointIndex: waypoint.id,
                   index: index,
                   title: waypoint.title,
                   subtitle: waypoint.subtitle,
@@ -1511,6 +1542,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
   }
 
   Widget _buildWaypointItem({
+    required int waypointIndex,
     required int index,
     required String title,
     required String subtitle,
@@ -1591,7 +1623,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       // Waypoint name with secondary color
                       Expanded(
                         child: Text(
-                          subtitle, // Using subtitle for waypoint name
+                          title, // Using subtitle for waypoint name
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -1659,8 +1691,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                 padding: const EdgeInsets.only(right: 8.0),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8.0),
-                                  child: Image.asset(
-                                    images[imageIndex],
+                                  child: Image.network(
+                                    //TODO: image from network
+                                    "http://172.16.15.147:80/stream_minio_resource/?waypoint=${waypointIndex}&file=${images[imageIndex]}",
                                     height: 100,
                                     width: 150,
                                     fit: BoxFit.cover,
@@ -1775,7 +1808,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     const Icon(Icons.star, color: Colors.amber, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      rating.toString(),
+                      rating.toStringAsFixed(1).toString(),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -1819,7 +1852,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     );
   }
 
-void _showLeaveReviewSheet() {
+void _showLeaveReviewSheet(int tourId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Allows the sheet to be scrollable
@@ -1949,14 +1982,11 @@ void _showLeaveReviewSheet() {
                             textStyle: const TextStyle(fontSize: 20),
                           ),
                           onPressed: () {
-                            // TODO: Implement your logic to send the review
                             final rating = _userRating;
                             final comment = _reviewController.text;
 
-                            print('Rating: $rating, Comment: $comment');
-
-                            // Here you would call your service to submit the review
-                            // e.g., _tourService.submitReview(widget.tourId, rating, comment);
+                            _apiService.leaveReview(tourId, rating, comment);
+                            _loadData();
 
                             Navigator.pop(context); // Close the sheet
 

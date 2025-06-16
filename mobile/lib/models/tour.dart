@@ -4,10 +4,9 @@ class Tour {
   final String description;
   final String imagePath;
   final String category;
-  final String subcategory;
   final double rating;
   final int reviewCount;
-  final List<String> images;
+  // final List<String> images;
   final String location;
   final double latitude;
   final double longitude;
@@ -21,10 +20,9 @@ class Tour {
     required this.description,
     required this.imagePath,
     required this.category,
-    required this.subcategory,
     required this.rating,
     required this.reviewCount,
-    required this.images,
+    // required this.images,
     required this.location,
     required this.latitude,
     required this.longitude,
@@ -38,18 +36,17 @@ class Tour {
       id: json['id'] as int,
       title: json['title'] as String,
       description: json['description'] as String,
-      imagePath: json['imagePath'] as String,
+      imagePath: json['default_img'] as String,
       category: json['category'] as String,
-      subcategory: json['subcategory'] as String,
       rating: (json['rating'] as num).toDouble(),
-      reviewCount: json['reviewCount'] as int,
-      images: List<String>.from(json['images'] as List),
-      location: json['location'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      creator: json['creator'] as String,
-      lastEdited: json['lastEdited'] as String,
-      totViews: json['totViews'] as int,
+      reviewCount: json['rating_counter'] as int,
+      // images: List<String>.from(json['images'] as List),
+      location: json['place'] as String,
+      latitude: (json['lat'] as num).toDouble(),
+      longitude: (json['lon'] as num).toDouble(),
+      creator: json['user_name'] as String,
+      lastEdited: json['l_edited'] as String, //da rivedere
+      totViews: json['tot_view'] as int,
     );
   }
 }

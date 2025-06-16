@@ -21,6 +21,7 @@ void downloadCallback(String id, int status, int progress) {
 //   return AuthService();
 // });
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'XR Tour Guide',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [routeObserver],
       theme: ThemeData(
         primarySwatch: Colors.blue,
         primaryColor: AppColors.primary,

@@ -79,7 +79,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Future<void> _loadUserReviews() async {
     try {
-      final reviews = await _tourService.getReviewByUser();
+      final reviews = await _tourService.getReviewByUser(3);
       if (mounted) {
         setState(() {
           _reviews = reviews;
@@ -314,28 +314,22 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       //load the first two elements from _reviews
                       if (_isLoadingReviews)
                         const Center(child: CircularProgressIndicator())
-                      else if (_reviews.isNotEmpty) ...[
-                        _buildReviewItem(
-                          name: _reviews[0].name,
-                          date: _reviews[0].date,
-                          rating: _reviews[0].rating,
-                          comment: _reviews[0].comment,
-                          imageUrl: _reviews[0].imageUrl,
+                      else if (_reviews.isNotEmpty)
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: _reviews.length,
+                          itemBuilder: (context, index) {
+                            return _buildReviewItem(
+                              name: _reviews[index].user,
+                              date: _reviews[index].date,
+                              rating: _reviews[index].rating,
+                              comment: _reviews[index].comment,
+                            );
+                          },
                         ),
                         const SizedBox(height: 16),
-                        if (_reviews.length >
-                            1) // Only show the second review if it exists
-                          _buildReviewItem(
-                            name: _reviews[1].name,
-                            date: _reviews[1].date,
-                            rating: _reviews[1].rating,
-                            comment: _reviews[1].comment,
-                            imageUrl: _reviews[1].imageUrl,
-                          ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (_reviews
-                          .isNotEmpty) // Only show "More" button if there are reviews
+                      if (_reviews.isNotEmpty) // Only show "More" button if there are reviews
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
