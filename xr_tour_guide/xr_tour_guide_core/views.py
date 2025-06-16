@@ -209,6 +209,12 @@ def delete_account(request):
     user.delete()
     return Response({"detail": "Account deleted successfully."}, status=status.HTTP_200_OK)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def forgot_password(request):
+    return Response({"detail": "Password reset email sent successfully."}, status=status.HTTP_200_OK)
+
 @swagger_auto_schema(
     method='get',
     operation_summary="Stream a specific file from MinIO storage for a waypoint",

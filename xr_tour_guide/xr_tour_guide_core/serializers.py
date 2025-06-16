@@ -56,15 +56,15 @@ class TourSerializer(serializers.ModelSerializer):
         fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'l_edited', 'rating', 'rating_counter']
 
 
-    def get_rating_counter(self, obj): #todo
+    def get_rating_counter(self, obj):
         if len(obj.reviews.all()) == 0:
             return 0.0
         return len(obj.reviews.all())
 
-    def get_l_edited(self, obj): #todo
+    def get_l_edited(self, obj):
         return obj.last_edited.strftime("%Y-%m-%d")
     
-    def get_rating(self, obj): #todo
+    def get_rating(self, obj):
         if len(obj.reviews.all()) == 0:
             return 0.0
         return sum([review.rating for review in obj.reviews.all()]) / len(obj.reviews.all())
