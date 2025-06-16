@@ -67,7 +67,7 @@ class TourSerializer(serializers.ModelSerializer):
     def get_rating(self, obj):
         if len(obj.reviews.all()) == 0:
             return 0.0
-        return sum([review.rating for review in obj.reviews.all()]) / len(obj.reviews.all())
+        return float(sum([review.rating for review in obj.reviews.all()])) / float(len(obj.reviews.all()))
 
         
     def get_lat(self, obj):

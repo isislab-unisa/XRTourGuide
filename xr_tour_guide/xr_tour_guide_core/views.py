@@ -263,20 +263,20 @@ def stream_minio_resource(request):
         return Response({"detail": "Waypoint non trovato"}, status=404) 
     
     if waypoint.pdf_item.name == file_name:
-        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/pdf/{file_name}"
+        file_path = file_name
     elif waypoint.audio_item.name == file_name:
-        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/audio/{file_name}"
+        file_path = file_name
     elif waypoint.video_item.name == file_name:
-        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/video/{file_name}"
+        file_path = file_name
     elif waypoint.readme_item.name == file_name:
-        file_path = f"{waypoint.tour.id}/{waypoint_id}/data/readme/{file_name}"
+        file_path = file_name
     elif "img" in file_name:
         file_path = file_name
     else:
         return Response({"detail": "File non rovato"}, status=404)
 
     if not storage.exists(file_path):
-        return Response({"detail": f"File {file_name} non trovato"}, status=404)
+        return Response({"detail": f"File {file_name}, aaaaaaaaaaa, {waypoint.pdf_item.name}, aaaaaaaaaaaaaa, {file_path} non trovato"}, status=404)
 
     file = storage.open(file_path, mode='rb')
 
