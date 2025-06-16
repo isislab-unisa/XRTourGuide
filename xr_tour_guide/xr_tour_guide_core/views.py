@@ -262,14 +262,14 @@ def stream_minio_resource(request):
     except Waypoint.DoesNotExist:
         return Response({"detail": "Waypoint non trovato"}, status=404) 
     
-    if waypoint.pdf_item.name == file_name:
-        file_path = file_name
-    elif waypoint.audio_item.name == file_name:
-        file_path = file_name
-    elif waypoint.video_item.name == file_name:
-        file_path = file_name
-    elif waypoint.readme_item.name == file_name:
-        file_path = file_name
+    if "pdf" == file_name:
+        file_path = waypoint.pdf_item.name
+    elif "audio" == file_name:
+        file_path = waypoint.audio_item.name
+    elif "video" == file_name:
+        file_path = waypoint.video_item.name
+    elif "readme" == file_name:
+        file_path = waypoint.readme_item.name
     elif "img" in file_name:
         file_path = file_name
     else:
