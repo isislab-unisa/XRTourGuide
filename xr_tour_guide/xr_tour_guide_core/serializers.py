@@ -55,7 +55,7 @@ class TourSerializer(serializers.ModelSerializer):
         fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'l_edited', 'rating']
 
 
-    def get_last_edited(self, obj):
+    def get_l_edited(self, obj):
         return obj.last_edited.strftime("%Y-%m-%d")
     
     def ratin(self, obj):
