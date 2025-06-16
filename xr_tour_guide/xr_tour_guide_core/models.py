@@ -171,7 +171,7 @@ class Waypoint(models.Model):
     # tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
-    default_image = models.ImageField(upload_to=default_image_waypoint, storage=MinioStorage(), null=True, blank=True)
+    # default_image = models.ImageField(upload_to=default_image_waypoint, storage=MinioStorage(), null=True, blank=True)
     
     pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
@@ -181,7 +181,7 @@ class Waypoint(models.Model):
     def save(self, *args, **kwargs):
         is_new = self.pk is None
         old_files = {
-            'default_image': self.default_image,
+            # 'default_image': self.default_image,
             'pdf_item': self.pdf_item,
             'readme_item': self.readme_item,
             'video_item': self.video_item,
@@ -208,17 +208,17 @@ class Waypoint(models.Model):
                 if self._meta.get_field(field_name).storage.exists(old_path):
                     self._meta.get_field(field_name).storage.delete(old_path)
 
-            if old_files['default_image']:
-                filename = os.path.basename(old_files['default_image'].name)
-                old_path = old_files['default_image'].name
-                new_path = f"{self.tour.id}/{self.id}/default_image/{filename}"
-                file = old_files['default_image'].file
-                file.open()
-                self.default_image.storage.save(new_path, file)
-                self.default_image = new_path
-                updated_fields.append('default_image')
-                if self.default_image.storage.exists(old_path):
-                    self.default_image.storage.delete(old_path)
+            # if old_files['default_image']:
+            #     filename = os.path.basename(old_files['default_image'].name)
+            #     old_path = old_files['default_image'].name
+            #     new_path = f"{self.tour.id}/{self.id}/default_image/{filename}"
+            #     file = old_files['default_image'].file
+            #     file.open()
+            #     self.default_image.storage.save(new_path, file)
+            #     self.default_image = new_path
+            #     updated_fields.append('default_image')
+            #     if self.default_image.storage.exists(old_path):
+            #         self.default_image.storage.delete(old_path)
 
             move_file('pdf_item', 'pdf')
             move_file('readme_item', 'readme')

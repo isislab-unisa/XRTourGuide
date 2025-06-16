@@ -15,7 +15,6 @@ from django.contrib.auth.admin import UserAdmin
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    # Se hai campi extra, aggiungili qui
     fieldsets = UserAdmin.fieldsets + (
         ('Informazioni aggiuntive', {'fields': ('city', 'description')}),
     )
@@ -87,17 +86,16 @@ class WaypointForm(forms.ModelForm):
 
     class Meta:
         model = Waypoint
-        fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item', 'default_image']
+        fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item']
 
-class UnfoldNestedStackedInline(nested_admin.NestedStackedInline, UnfoldStackedInline):
+class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedInline):
     pass
 
-class UnfoldNestedTabularInline(nested_admin.NestedTabularInline, UnfolTabularInline):
+class UnfoldNestedTabularInline(UnfoldStackedInline, nested_admin.NestedTabularInline):
     pass
 
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
-    # fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item', 'default_image']
     form = WaypointForm
     extra = 1
     formfield_overrides = {

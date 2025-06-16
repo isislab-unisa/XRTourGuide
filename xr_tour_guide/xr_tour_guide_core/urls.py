@@ -26,7 +26,7 @@ urlpatterns = [
    path('update_profile/', update_profile, name='update_profile'),
    path('delete_account/', delete_account, name='delete_account'),
    path('update_password/', update_password, name='update_password'),
-   path('stream_minio_resource/<int:waypoint_id>/', stream_minio_resource, name='stream_minio_resource'),
+   path('stream_minio_resource/', stream_minio_resource, name='stream_minio_resource'),
    path('get_reviews_by_tour_id/<int:tour_id>/', get_reviews_by_tour_id, name='get_reviews_by_tour_id'),
    re_path(r'^docs/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
    path('register/', RegisterView.as_view(), name='register'),

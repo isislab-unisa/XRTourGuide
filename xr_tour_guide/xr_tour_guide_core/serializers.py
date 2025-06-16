@@ -14,15 +14,22 @@ class WaypointViewImageSerializer(serializers.ModelSerializer):
         
 class WaypointSerializer(serializers.ModelSerializer):
     images = WaypointViewImageSerializer(many=True, read_only=True)
-    default_image = serializers.SerializerMethodField()
+    lat = serializers.SerializerMethodField()
+    lon = serializers.SerializerMethodField()
 
     class Meta:
         model = Waypoint
         fields = [
             'title', 'coordinates', 'tour', 'description',
-            'images','default_image'
+            'images', 'lat', 'lon'
         ]
 
+    def get_lat(self, obj):
+        return obj.coordinates.split(',')[0]
+    
+    def get_lon(self, obj):
+        return obj.coordinates.split(',')[1]
+    
     def get_pdf_name(self, obj):
         return obj.pdf_item.name if obj.pdf_item else None
 
@@ -34,18 +41,23 @@ class WaypointSerializer(serializers.ModelSerializer):
 
     def get_audio_name(self, obj):
         return obj.audio_item.name if obj.audio_item else None
-
-    def get_default_image(self, obj):
-        return obj.default_image.name if obj.default_image else None
     
 class TourSerializer(serializers.ModelSerializer):
     creation_time = serializers.SerializerMethodField()
     user_name = serializers.SerializerMethodField()
     default_img = serializers.SerializerMethodField()
+    lat = serializers.SerializerMethodField()
+    lon = serializers.SerializerMethodField()
     class Meta:
         model = Tour
-        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'coordinates', 'default_img', 'creation_time', 'counter_review', 'user_name', 'id']
+        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'counter_review', 'user_name', 'id']
 
+    def get_lat(self, obj):
+        return obj.coordinates.split(',')[0]
+    
+    def get_lon(self, obj):
+        return obj.coordinates.split(',')[1]
+    
     def get_default_img(self, obj):
         return obj.default_image.name if obj.default_image else None
     

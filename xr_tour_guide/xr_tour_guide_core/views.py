@@ -228,9 +228,25 @@ def delete_account(request):
 )
 @api_view(['GET'])
 @permission_classes([AllowAny]) 
-def stream_minio_resource(request, waypoint_id):
+def stream_minio_resource(request):
+    storage = MinioStorage()
+    tour_id = request.GET.get("tour")
+    waypoint_id = request.GET.get("waypoint")
     file_name = request.GET.get("file")
 
+    try:
+        if tour_id and waypoint_id is None:
+            tour = Tour.objects.get(id=tour_id)
+            file = storage.open(tour.default_image.name, mode='rb')
+            content_type, _ = mimetypes.guess_type(tour.default_image.name)
+            if content_type is None:
+                content_type = 'application/octet-stream'
+
+            response = FileResponse(file, as_attachment=False, filename=file_name)
+            response['Content-Type'] = content_type
+            return response
+    except Exception as e:
+        return Response({"detail": tour.default_image.name}, status=404)
     if not file_name:
         return Response({"detail": "File name non fornito"}, status=400)
         
@@ -247,14 +263,10 @@ def stream_minio_resource(request, waypoint_id):
         file_path = f"{waypoint.tour.id}/{waypoint_id}/data/video/{file_name}"
     elif waypoint.readme_item.name == file_name:
         file_path = f"{waypoint.tour.id}/{waypoint_id}/data/readme/{file_name}"
-    elif waypoint.default_image.name == file_name:
-        file_path = f"{waypoint.tour.id}/{waypoint_id}/default_image/{file_name}"
-    elif "test" or "train" in file_name:
+    elif "img" in file_name:
         file_path = file_name
     else:
         return Response({"detail": "File non rovato"}, status=404)
-    
-    storage = MinioStorage()
 
     if not storage.exists(file_path):
         return Response({"detail": f"File {file_name} non trovato"}, status=404)
