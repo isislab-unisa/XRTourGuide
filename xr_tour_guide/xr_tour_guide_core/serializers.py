@@ -50,10 +50,14 @@ class TourSerializer(serializers.ModelSerializer):
     lon = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
     l_edited = serializers.SerializerMethodField()
+    rating_counter = serializers.SerializerMethodField()
     class Meta:
         model = Tour
-        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'l_edited', 'rating']
+        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'l_edited', 'rating', 'rating_counter']
 
+
+    def get_rating_counter(self, obj):
+        return 0
 
     def get_l_edited(self, obj):
         return obj.last_edited.strftime("%Y-%m-%d")
