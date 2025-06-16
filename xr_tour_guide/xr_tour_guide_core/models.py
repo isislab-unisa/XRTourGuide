@@ -100,7 +100,8 @@ class Tour(models.Model):
         choices=Status.choices,
         default=Status.READY
     )
-    counter_review = models.IntegerField(default=0)
+    tot_view = models.IntegerField(default=0)
+    last_edited = models.DateTimeField(auto_now=True, null=True, blank=True)
      
     class Meta:
         db_table = "Tour"

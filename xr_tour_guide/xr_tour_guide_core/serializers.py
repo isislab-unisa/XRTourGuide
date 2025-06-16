@@ -21,7 +21,7 @@ class WaypointSerializer(serializers.ModelSerializer):
         model = Waypoint
         fields = [
             'title', 'coordinates', 'tour', 'description',
-            'images', 'lat', 'lon'
+            'images', 'lat', 'lon', 'tot_view', 'last_edited',
         ]
 
     def get_lat(self, obj):
