@@ -58,7 +58,7 @@ class TourSerializer(serializers.ModelSerializer):
 
     def get_rating_counter(self, obj):
         if len(obj.reviews.all()) == 0:
-            return 0.0
+            return 0
         return len(obj.reviews.all())
 
     def get_l_edited(self, obj):
