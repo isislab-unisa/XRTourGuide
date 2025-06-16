@@ -21,7 +21,7 @@ class WaypointSerializer(serializers.ModelSerializer):
         model = Waypoint
         fields = [
             'title', 'coordinates', 'tour', 'description',
-            'images', 'lat', 'lon', 'tot_view', 'last_edited',
+            'images', 'lat', 'lon',
         ]
 
     def get_lat(self, obj):
@@ -50,7 +50,7 @@ class TourSerializer(serializers.ModelSerializer):
     lon = serializers.SerializerMethodField()
     class Meta:
         model = Tour
-        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'counter_review', 'user_name', 'id']
+        fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'last_edited']
 
     def get_lat(self, obj):
         return obj.coordinates.split(',')[0]
