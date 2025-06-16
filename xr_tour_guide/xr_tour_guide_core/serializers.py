@@ -25,10 +25,10 @@ class WaypointSerializer(serializers.ModelSerializer):
         ]
 
     def get_lat(self, obj):
-        return obj.coordinates.split(',')[0]
+        return float(obj.coordinates.split(',')[0])
     
     def get_lon(self, obj):
-        return obj.coordinates.split(',')[1]
+        return float(obj.coordinates.split(',')[1])
     
     def get_pdf_name(self, obj):
         return obj.pdf_item.name if obj.pdf_item else None
