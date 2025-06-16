@@ -58,15 +58,15 @@ class TourSerializer(serializers.ModelSerializer):
     def get_l_edited(self, obj):
         return obj.last_edited.strftime("%Y-%m-%d")
     
-    def ratin(self, obj):
+    def get_rating(self, obj):
         if obj.reviews is None:
-            return 0
+            return 0.0
         
     def get_lat(self, obj):
-        return obj.coordinates.split(',')[0]
+        return float(obj.coordinates.split(',')[0])
     
     def get_lon(self, obj):
-        return obj.coordinates.split(',')[1]
+        return float(obj.coordinates.split(',')[1])
     
     def get_default_img(self, obj):
         return obj.default_image.name if obj.default_image else None
