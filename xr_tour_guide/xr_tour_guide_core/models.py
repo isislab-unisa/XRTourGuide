@@ -43,6 +43,7 @@ def default_image_tour(instance, file_name):
 class CustomUser(AbstractUser):
     city = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
+    email = models.EmailField(unique=True)
 
 class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")

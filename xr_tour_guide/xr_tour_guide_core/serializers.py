@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Tour, Review, Waypoint, WaypointViewImage
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 class WaypointViewImageSerializer(serializers.ModelSerializer):
     image_name = serializers.SerializerMethodField()
@@ -110,6 +111,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = ['username', 'email', 'password', 'first_name', 'last_name', 'city', 'description']
 
+    def validate_email(self, value):
+        if get_user_model().objects.filter(email=value).exists():
+            raise serializers.ValidationError("Questo indirizzo email è già in uso.")
+        return value
+    
     def create(self, validated_data):
         user = get_user_model().objects.create_user(
             username=validated_data['username'],
@@ -122,4 +128,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             is_active=False,
             is_staff = True
         )
+        
+        try:
+            user_group = Group.objects.get(name="User")
+            user.groups.add(user_group)
+        except Group.DoesNotExist:
+            raise serializers.ValidationError("Il gruppo 'User' non esiste.")
+        
         return user
