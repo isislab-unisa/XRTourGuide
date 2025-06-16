@@ -280,7 +280,7 @@ def stream_minio_resource(request):
 
     file = storage.open(file_path, mode='rb')
 
-    content_type, _ = mimetypes.guess_type(file_name)
+    content_type, _ = mimetypes.guess_type(file_path)
     if content_type is None:
         content_type = 'application/octet-stream'
 
