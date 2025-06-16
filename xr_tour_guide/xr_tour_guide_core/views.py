@@ -247,6 +247,7 @@ def stream_minio_resource(request):
             return response
     except Exception as e:
         return Response({"detail": tour.default_image.name}, status=404)
+    
     if not file_name:
         return Response({"detail": "File name non fornito"}, status=400)
         

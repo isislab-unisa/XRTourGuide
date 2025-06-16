@@ -21,7 +21,7 @@ class WaypointSerializer(serializers.ModelSerializer):
         model = Waypoint
         fields = [
             'title', 'coordinates', 'tour', 'description',
-            'images', 'lat', 'lon',
+            'images', 'lat', 'lon', 'id'
         ]
 
     def get_lat(self, obj):
@@ -56,13 +56,13 @@ class TourSerializer(serializers.ModelSerializer):
         fields = ['title', 'subtitle', 'place', 'category', 'description', 'user', 'lat', 'lon', 'default_img', 'creation_time', 'user_name', 'id', 'tot_view', 'l_edited', 'rating', 'rating_counter']
 
 
-    def get_rating_counter(self, obj):
+    def get_rating_counter(self, obj): #todo
         return 0
 
-    def get_l_edited(self, obj):
+    def get_l_edited(self, obj): #todo
         return obj.last_edited.strftime("%Y-%m-%d")
     
-    def get_rating(self, obj):
+    def get_rating(self, obj): #todo
             return 0.0
         
     def get_lat(self, obj):
