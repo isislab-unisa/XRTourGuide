@@ -71,8 +71,7 @@ class WaypointForm(forms.ModelForm):
     )
 
     def clean_uploaded_images(self):
-        field_name = self.add_prefix('uploaded_images')
-        return self.files.getlist(field_name)
+        return self.files.getlist('uploaded_images') if hasattr(self.files, 'getlist') else []
     
     def save(self, commit=True):
         instance = super().save(commit=commit)
@@ -102,6 +101,12 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         PlainLocationField: {"widget": LocationWidget},
     }
     
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     if request.user.is_superuser:
+    #         return qs
+    #     return qs.filter(user=request.user)
+    
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
 
@@ -120,7 +125,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image')
-    list_display = ('title', 'creation_time', 'category', 'place')
+    list_display = ('title', 'creation_time', 'category', 'place', 'user')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
