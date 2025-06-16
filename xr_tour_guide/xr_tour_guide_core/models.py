@@ -296,4 +296,3 @@ class Review(models.Model):
     rating = models.IntegerField()
     comment = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    last_edited = models.DateTimeField(auto_now=True)

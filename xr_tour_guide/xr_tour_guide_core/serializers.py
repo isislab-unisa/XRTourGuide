@@ -91,9 +91,17 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'city', 'description']
 
 class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    creation_date = serializers.SerializerMethodField()
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ['tour', 'user', 'rating', 'comment', 'user_name', 'creation_date', 'id']
+    
+    def get_user_name(self, obj):
+        return obj.user.username
+    
+    def get_creation_date(self, obj):
+        return obj.timestamp.strftime("%Y-%m-%d")
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
