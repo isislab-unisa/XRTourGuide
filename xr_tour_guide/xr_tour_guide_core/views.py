@@ -294,11 +294,13 @@ def stream_minio_resource(request):
 @permission_classes([AllowAny])
 def get_reviews_by_tour_id(request, tour_id):
     try:
-        reviews = Tour.objects.get(id=tour_id).reviews_set.all()
+        tour = Tour.objects.get(id=tour_id)
     except:
         return Response({"detail": "Tour non trovato"}, status=status.HTTP_404_NOT_FOUND)
     
-    serializer = TourSerializer(reviews, many=True)
+    reviews = tour.reviews.all()
+    
+    serializer = ReviewSerializer(reviews, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RegisterView(generics.CreateAPIView):
