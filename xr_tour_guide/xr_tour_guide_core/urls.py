@@ -35,5 +35,5 @@ urlpatterns = [
    path('tour_detail/<int:tour_id>/', tour_detail, name='tour_detail'),
    path('create_review/', create_review, name='create_review'),
    path('get_reviews_by_user/', get_reviews_by_user, name='get_reviews_by_user'),
-   path('increment_view_count/<int:waypoint_id>/', increment_view_count, name='increment_view_count'),
+   path('increment_view_count/', increment_view_count, name='increment_view_count'),
 ]

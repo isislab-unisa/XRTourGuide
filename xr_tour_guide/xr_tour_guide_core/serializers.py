@@ -57,13 +57,18 @@ class TourSerializer(serializers.ModelSerializer):
 
 
     def get_rating_counter(self, obj): #todo
-        return 0
+        if len(obj.reviews.all()) == 0:
+            return 0.0
+        return len(obj.reviews.all())
 
     def get_l_edited(self, obj): #todo
         return obj.last_edited.strftime("%Y-%m-%d")
     
     def get_rating(self, obj): #todo
+        if len(obj.reviews.all()) == 0:
             return 0.0
+        return sum([review.rating for review in obj.reviews.all()]) / len(obj.reviews.all())
+
         
     def get_lat(self, obj):
         return float(obj.coordinates.split(',')[0])

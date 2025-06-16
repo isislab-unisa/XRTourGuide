@@ -381,23 +381,21 @@ def get_reviews_by_user(request):
     serializer = ReviewSerializer(reviews, many=True)
     return Response(serializer.data)
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
-# @swagger_auto_schema(
-#     method='post',
-#     operation_summary="Increment the view count for a specific tour",
-#     responses={
-#         200: openapi.Response(description="View count incremented successfully"),
-#         404: openapi.Response(description="Tour not found"),
-#     }
-# )
-def increment_view_count(request, tour_id):
+@swagger_auto_schema(
+    operation_summary="Increment the view count for a specific tour",
+    responses={200: openapi.Response(description="Tour updated successfully")}
+)
+def increment_view_count(request):
+    tour_id = request.data.get('tour_id')
     try:
         tour = Tour.objects.get(id=tour_id)
     except Tour.DoesNotExist:
         return Response({"detail": "Tour not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    tour.view_count += 1
+    tour.tot_view += 1
     tour.save()
 
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
