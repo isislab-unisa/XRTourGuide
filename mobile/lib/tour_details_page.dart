@@ -18,35 +18,11 @@ import 'review_list.dart'; // Import your review list screen
 
 class TourDetailScreen extends StatefulWidget {
   final int tourId;
-  // final String tourName;
-  // final String location;
-  // final double rating;
-  // final int reviewCount;
-  // final List<String> images;
-  // final String category;
-  // final String description;
-  // final String creator;
-  // final String lastEdited;
-  // final String totViews;
-  // final double latitude;
-  // final double longitude;
   final bool isGuest;
 
   const TourDetailScreen({
     Key? key,
     required this.tourId,
-    // required this.tourName,
-    // required this.location,
-    // required this.rating,
-    // required this.reviewCount,
-    // required this.images,
-    // required this.category,
-    // required this.description,
-    // required this.creator,
-    // required this.lastEdited,
-    // required this.totViews,
-    // required this.latitude,
-    // required this.longitude,
     required this.isGuest,
   }) : super(key: key);
 
@@ -520,9 +496,11 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                 child: IconButton(
                   icon: const Icon(Icons.camera_alt, color: Colors.white, size: 28,),
                   onPressed: () {
+                    //Initialize the inference module for the tour
+                    // _apiService.initializeInferenceModule(widget.tourId);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ARCameraScreen()),
+                      MaterialPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId)),
                     );
                   },
                 ),
@@ -589,7 +567,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                     12,
                                   ),
                                   child: Image.network(
-                                    "http://172.16.15.147:80/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                    "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
                                     width: 80,
                                     height: 80,
                                     fit: BoxFit.cover,
@@ -746,7 +724,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                         borderRadius:
                                             BorderRadius.circular(12),
                                         child: Image.network(
-                                          "http://172.16.15.147:80/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
+                                          "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
                                           width: 250,
                                           height: 200,
                                           fit: BoxFit.cover,
@@ -874,7 +852,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     itemBuilder: (context, index) {
                       return Image.network(
                         // _tourDetails!.imagePath,
-                        "http://172.16.15.147:80/stream_minio_resource/?tour=${_tourDetails!.id}",
+                        "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
                         fit: BoxFit.cover,
                       );
                     },
@@ -1079,7 +1057,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ARCameraScreen(),
+                                    builder: (context) => ARCameraScreen(tourId: widget.tourId),
                                   ),
                                 );
                                 print('Activate AR Guide');
@@ -1693,7 +1671,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                                   borderRadius: BorderRadius.circular(8.0),
                                   child: Image.network(
                                     //TODO: image from network
-                                    "http://172.16.15.147:80/stream_minio_resource/?waypoint=${waypointIndex}&file=${images[imageIndex]}",
+                                    "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${waypointIndex}&file=${images[imageIndex]}",
                                     height: 100,
                                     width: 150,
                                     fit: BoxFit.cover,
@@ -1836,17 +1814,17 @@ class _TourDetailScreenState extends State<TourDetailScreen>
           const SizedBox(height: 8),
 
           // Read more button
-          GestureDetector(
-            onTap: () {},
-            child: const Text(
-              'Read more',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () {},
+          //   child: const Text(
+          //     'Read more',
+          //     style: TextStyle(
+          //       fontSize: 14,
+          //       fontWeight: FontWeight.bold,
+          //       color: AppColors.primary,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

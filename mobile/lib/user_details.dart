@@ -145,143 +145,137 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             Column(
               children: [
                 // Profile header with image, name and email
-                Expanded(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      // Profile image and info
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 30),
-                        child: Column(
+                SizedBox(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 30),
+                    child: Column(
+                      children: [
+                        // Profile image with camera icon
+                        Stack(
                           children: [
-                            // Profile image with camera icon
-                            Stack(
-                              children: [
-                                // Profile image with border
-                                Container(
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(50),
-                                    child: Container(
-                                      color: Colors.blue.shade100,
-                                      child: const Icon(
-                                        Icons.person,
-                                        size: 70,
-                                        color: AppColors.accent,
-                                      )
-                                    ),
-                                  ),
+                            // Profile image with border
+                            Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 2,
                                 ),
-                                // // Camera icon for changing profile picture
-                                // Positioned(
-                                //   bottom: 0,
-                                //   right: 0,
-                                //   child: Container(
-                                //     padding: const EdgeInsets.all(4),
-                                //     decoration: BoxDecoration(
-                                //       color: AppColors.background,
-                                //       shape: BoxShape.circle,
-                                //       border: Border.all(
-                                //         color: AppColors.primary,
-                                //         width: 2,
-                                //       ),
-                                //     ),
-                                //     child: const Icon(
-                                //       Icons.camera_alt,
-                                //       color: AppColors.primary,
-                                //       size: 20,
-                                //     ),
-                                //   ),
-                                // ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            // User name
-                            Text(
-                              '${_user!.name} ${_user!.surname}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(50),
+                                child: Container(
+                                  color: Colors.blue.shade100,
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 70,
+                                    color: AppColors.accent,
+                                  )
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            // User email
-                            Text(
-                              _user!.mail,
-                              style: const TextStyle(
-                                fontSize: 14,
+                            // // Camera icon for changing profile picture
+                            // Positioned(
+                            //   bottom: 0,
+                            //   right: 0,
+                            //   child: Container(
+                            //     padding: const EdgeInsets.all(4),
+                            //     decoration: BoxDecoration(
+                            //       color: AppColors.background,
+                            //       shape: BoxShape.circle,
+                            //       border: Border.all(
+                            //         color: AppColors.primary,
+                            //         width: 2,
+                            //       ),
+                            //     ),
+                            //     child: const Icon(
+                            //       Icons.camera_alt,
+                            //       color: AppColors.primary,
+                            //       size: 20,
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // User name
+                        Text(
+                          '${_user!.name} ${_user!.surname}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // User email
+                        Text(
+                          _user!.mail,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Center(
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 165),
+                              const Icon(
+                                Icons.location_city,
                                 color: AppColors.textSecondary,
                               ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _user!.city,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        if (_user!.description.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
                             ),
-                            const SizedBox(height: 4),
-                            Center(
-                              child: Row(
-                                children: [
-                                  const SizedBox(width: 165),
-                                  const Icon(
-                                    Icons.location_city,
-                                    color: AppColors.textSecondary,
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  const SizedBox(width: 4),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 8),
                                   Text(
-                                    _user!.city,
+                                    _user!.description,
                                     style: const TextStyle(
                                       fontSize: 14,
                                       color: AppColors.textSecondary,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            if (_user!.description.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        _user!.description,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.textSecondary,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 Padding(
@@ -312,74 +306,86 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       // const SizedBox(height: 4),
                       const SizedBox(height: 16),
                       //load the first two elements from _reviews
-                      if (_isLoadingReviews)
-                        const Center(child: CircularProgressIndicator())
-                      else if (_reviews.isNotEmpty)
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: _reviews.length,
-                          itemBuilder: (context, index) {
-                            return _buildReviewItem(
-                              name: _reviews[index].user,
-                              date: _reviews[index].date,
-                              rating: _reviews[index].rating,
-                              comment: _reviews[index].comment,
+                    if (_isLoadingReviews)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_reviews.isNotEmpty) ...[
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: _reviews.length,
+                        itemBuilder: (context, index) {
+                          return _buildReviewItem(
+                            name: _reviews[index].user,
+                            date: _reviews[index].date,
+                            rating: _reviews[index].rating,
+                            comment: _reviews[index].comment,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          //TODO: Navigate to all review page
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => ReviewListScreen(
+                                      isTour: false,
+                                      userId: _user!.id,
+                                      reviewCount: _user!.reviewCount,
+                                    ),
+                              ),
                             );
                           },
-                        ),
-                        const SizedBox(height: 16),
-                      if (_reviews.isNotEmpty) // Only show "More" button if there are reviews
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            //TODO: Navigate to all review page
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => ReviewListScreen(
-                                        isTour: false,
-                                        userId: _user!.id,
-                                        reviewCount: _user!.reviewCount,
-                                      ),
-                                ),
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppColors.primary),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'More',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                                SizedBox(width: 4),
-                                Icon(
-                                  Icons.keyboard_arrow_down,
-                                  size: 20,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'More',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                   color: AppColors.primary,
                                 ),
-                              ],
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 20,
+                                color: AppColors.primary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Center(
+                          child: Text(
+                            "You still haven't reviewed anything",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ),
-                    ],
+                      ),
+                    ], ],
                   ),
                 ),
-                // Bottom navigation bar
-                _buildBottomNavBar(context, 1), // 1 = Profile tab selected
+                // // Bottom navigation bar
+                // _buildBottomNavBar(context, 1), // 1 = Profile tab selected
               ],
             ),
             Positioned(
@@ -399,6 +405,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: _buildBottomNavBar(context, 1),
     );
   }
 
@@ -668,17 +675,17 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           const SizedBox(height: 8),
 
           // Read more button
-          GestureDetector(
-            onTap: () {},
-            child: const Text(
-              'Read more',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () {},
+          //   child: const Text(
+          //     'Read more',
+          //     style: TextStyle(
+          //       fontSize: 14,
+          //       fontWeight: FontWeight.bold,
+          //       color: AppColors.primary,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

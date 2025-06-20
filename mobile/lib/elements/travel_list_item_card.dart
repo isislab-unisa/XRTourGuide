@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/app_colors.dart';
+import '../services/api_service.dart';
 
 class TravelListItemCard extends StatelessWidget {
   final String imagePath; // Path to the image asset
@@ -68,7 +69,7 @@ class TravelListItemCard extends StatelessWidget {
                     ), // Rounded top corners for the image
                     child: Image.network(
                       // imagePath, // Use the imagePath parameter
-                      "http://172.16.15.147:80/stream_minio_resource/?tour=${tourId!}",
+                      "${ApiService.basicUrl}/stream_minio_resource/?tour=${tourId!}",
                       fit:
                           BoxFit
                               .cover, // Cover the available space, potentially cropping

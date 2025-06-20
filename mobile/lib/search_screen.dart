@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'models/app_colors.dart';
 import 'services/tour_service.dart';
 import 'tour_details_page.dart';
+import 'models/tour.dart';
 
 class SearchScreen extends StatefulWidget {
   final bool isGuest;
@@ -27,7 +28,7 @@ class _SearchScreenState extends State<SearchScreen>
   late Animation<double> _searchBarAnimation;
   late Animation<double> _contentAnimation;
 
-  late List<Map<String, String>> _filteredDestinations;
+  late List<Tour> _filteredDestinations;
   bool _isLoading = true;
 
 
@@ -241,19 +242,19 @@ class _SearchScreenState extends State<SearchScreen>
                       itemBuilder: (context, index) {
                         final destination = _filteredDestinations[index];
                         return _buildDestinationItem(
-                          destination['title']!,
-                          int.parse(destination['id']!),
+                          destination.title,
+                          destination.id,
                           onTap: () {
                             // Handle destination selection
                             print(
-                              'Selected destination: ${destination['name']}',
+                              'Selected destination: ${destination.title}',
                             );
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder:
                                     (context) => TourDetailScreen(
-                                      tourId: int.parse(destination['id']!),
+                                      tourId: destination.id,
                                       isGuest: widget.isGuest,
                                     ),
                               ),

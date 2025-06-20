@@ -44,62 +44,36 @@ class TourService {
   }
 
   Future<List<Tour>> getToursByCategory(String category) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Mock data
-    return [
-      Tour(
-        id: 1,
-        title: 'Montevergine',
-        description:
-            'Il Santuario di Montevergine è un importante complesso monastico mariano situato a circa 1.270 metri sul livello del mare, nel massiccio del Partenio, nel comune di Mercogliano (Avellino). Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei principali luoghi di pellegrinaggio del Sud Italia, con oltre un milione di visitatori ogni anno.',
-        imagePath: 'assets/montevergine.jpg',
-        category: 'Natura',
-        rating: 4.5,
-        reviewCount: 675,
-        location: 'Avellino, Campania',
-        latitude: 40.9333,
-        longitude: 14.7167,
-        creator: 'TourGuide Team',
-        lastEdited: '2023-10-01',
-        totViews: 1500,
-      ),
-      Tour(
-        id: 2,
-        title: 'Acquedotto Romano',
-        description: 'Discover the beauty of this amazing destination.',
-        imagePath: 'assets/acquedotto.jpg',
-        category: 'Storia',
-        rating: 4.3,
-        reviewCount: 425,
-        location: 'Avellino, Campania',
-        latitude: 40.9147,
-        longitude: 14.7927,
-        creator: 'TourGuide Team',
-        lastEdited: '2023-10-01',
-        totViews: 1200,
-      ),
-    ];
-  }
-
-
-  Future<List<Map<String, String>>> getToursBySearchTerm(String searchTerm) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (searchTerm.isEmpty) {
-      return [];
+    try {
+      final response = await apiService.getTourByCategory(category.toLowerCase());
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        return data.map((tour) => Tour.fromJson(tour)).toList();
+      } else {
+        throw Exception('Failed to load tours');
+      }
+    } catch (e) {
+      print("Nearby Tours Retrieval error: $e");
+      rethrow;
     }
-    // Mock data
-    return [
-      {"id": "2", "title": "Acquedotto Romano"},
-      {"id": "1", "title": "Montevergine"},
-    ];
   }
 
-
-
+  Future<List<Tour>> getToursBySearchTerm(String searchTerm) async {
+    try {
+      final response = await apiService.getTourBySearchTerm(
+        searchTerm.toLowerCase(),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        return data.map((tour) => Tour.fromJson(tour)).toList();
+      } else {
+        throw Exception('Failed to load tours');
+      }
+    } catch (e) {
+      print("Nearby Tours Retrieval error: $e");
+      rethrow;
+    }
+  }
 
   Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
     try {
@@ -180,9 +154,9 @@ class TourService {
 
     // Mock data
     return [
-      Category(name: 'Interior', image: 'assets/interior.jpg'),
-      Category(name: 'Exterior', image: 'assets/exterior.jpg'),
-      Category(name: 'Mixed', image: 'assets/int-exterior.jpg'),
+      Category(name: 'INSIDE', image: 'assets/interior.jpg'),
+      Category(name: 'OUTSIDE', image: 'assets/exterior.jpg'),
+      Category(name: 'MIXED', image: 'assets/int-exterior.jpg'),
     ];
   }
 
@@ -241,7 +215,6 @@ Future<User> getUserDetails() async {
     } else {
       return reviews.take(max).toList();
     }
-
   }
 
 

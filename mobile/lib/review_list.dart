@@ -192,17 +192,17 @@ class _ReviewListScreenState extends State<ReviewListScreen> {
           const SizedBox(height: 8),
 
           // Read more button
-          GestureDetector(
-            onTap: () {},
-            child: const Text(
-              'Read more',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () {},
+          //   child: const Text(
+          //     'Read more',
+          //     style: TextStyle(
+          //       fontSize: 14,
+          //       fontWeight: FontWeight.bold,
+          //       color: AppColors.primary,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

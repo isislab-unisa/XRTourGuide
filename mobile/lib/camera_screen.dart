@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:markdown_widget/markdown_widget.dart'; // Keep this for text/link/image
 import 'dart:async';
 import 'dart:math';
+import 'services/api_service.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -35,9 +38,11 @@ class ARCameraScreen extends StatefulWidget {
   final List<String> landmarkImages;
   final double latitude;
   final double longitude;
+  final int tourId;
 
   const ARCameraScreen({
     Key? key,
+    required this.tourId,
     this.landmarkName = "Santuario di Montevergine",
     this.landmarkDescription = """
 # Santuario di Montevergine
@@ -112,6 +117,8 @@ class _ARCameraScreenState extends State<ARCameraScreen>
 
   // Manual animation progress for AR overlays
   double _arOverlayProgress = 0.0;
+
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
@@ -213,8 +220,11 @@ class _ARCameraScreenState extends State<ARCameraScreen>
 
   // Update draggable sheet content based on type
   void _updateDraggableSheetContent(String type) {
+    //Aggiungere un parametro content che verra'popolato da una chiamata api
     // This will hold the content that goes into the _currentActiveContent
     Widget? contentToDisplay;
+
+    // final response = _apiService.loadResource(widget.tourId, type);
 
     switch (type) {
       case 'text':
@@ -365,11 +375,19 @@ This is one of the key images for this landmark.
       _recognitionState = RecognitionState.scanning;
     });
 
+    //Camera feed
+    // final XFile file = await _cameraController!.takePicture();
+    // final bytes = await file.readAsBytes();
+    // final String base64Image = base64Encode(bytes);
+
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
     // Simulate recognition process (replace with actual ML/AR logic)
-    await Future.delayed(const Duration(seconds: 3));
+    // await Future.delayed(const Duration(seconds: 3));
+    // final response = await _apiService.inference(
+    //   base64Image, // Replace with actual base64 image string
+    // );
 
     // Stop pulse animation
     _pulseAnimationController.stop();
@@ -401,6 +419,7 @@ This is one of the key images for this landmark.
       _startAROverlayAnimation();
 
       // Auto-reset after 30 seconds for testing
+      //TODO Decidere su un tempo di reset automatico oppurew implementare un pulsante
       Timer(const Duration(seconds: 30), () {
         if (mounted) {
           _resetRecognition();

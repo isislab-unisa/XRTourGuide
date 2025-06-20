@@ -26,7 +26,9 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteA
   // State variables for data
   List<Tour>? _nearbyTours;
   List<Tour>? _cookingTours;
-  List<Category>? _categories;
+  List<Category>? _categories = [];
+
+  // INSIDE, OUTSIDE, THINGS, MIXED
 
   // Loading states
   bool _isLoadingNearby = true;
@@ -177,7 +179,8 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteA
             ),
             Center(
               child: Text(
-                category.name,
+                category.name[0].toUpperCase() +
+                    category.name.substring(1).toLowerCase(),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

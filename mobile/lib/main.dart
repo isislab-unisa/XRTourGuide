@@ -875,13 +875,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       text: 'Sign Up',
                       onPressed: () {
                         setState(() {
-                          // Simulate successful login and navigate to main page
-                          // TODO: Replace this with your actual navigation logic
-                          // Navigator.of(context).pushReplacement(
-                          //   MaterialPageRoute(
-                          //     builder: (context) => TravelExplorerScreen(isGuest: false),
-                          //   ),
-                          // );
                           authService.register(
                             _usernameController.text,
                             _passwordController.text,

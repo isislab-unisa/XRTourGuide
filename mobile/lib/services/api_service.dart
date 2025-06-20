@@ -13,8 +13,9 @@ class ApiService {
   '/register/',
   ];
 
+  static const String basicUrl = 'http://172.16.15.155:80';
 
-  ApiService() : _dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.147:80')) {
+  ApiService() : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -191,6 +192,28 @@ class ApiService {
     }
   }
 
+  Future<Response> getTourBySearchTerm(String searchTerm) async {
+    try {
+      final response = await dio.get("/tour_list/?searchTerm=$searchTerm");
+      return response;
+    } catch (e) {
+      print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<Response> getTourByCategory(String category) async {
+    try {
+      final response = await dio.get("/tour_list/?category=$category");
+      return response;
+    } catch (e) {
+      print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
+
   Future<Response> getTourDetails(int tourId) async {
     try {
       final response = await dio.get('/tour_details/$tourId/');
@@ -271,6 +294,37 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<Response> initializeInferenceModule(int tourId) async {
+    try {
+      final response = await dio.get('/tour_categories/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> inference(String imageBase64) async {
+    try {
+      final response = await dio.get('/tour_categories/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+    
+    Future<Response> loadResource(int tourId, String resourceType) async {
+    try {
+      final response = await dio.get('/tour_categories/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
 
 
 
