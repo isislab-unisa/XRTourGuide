@@ -11,7 +11,7 @@ import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:markdown_widget/markdown_widget.dart'; // Keep this for text/link/image
 import 'dart:async';
 import 'dart:math';
-import 'services/api_service.dart';
+import 'services/tour_service.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -118,7 +118,7 @@ class _ARCameraScreenState extends State<ARCameraScreen>
   // Manual animation progress for AR overlays
   double _arOverlayProgress = 0.0;
 
-  final ApiService _apiService = ApiService();
+  final TourService _tourService = TourService();
 
   @override
   void initState() {
@@ -219,12 +219,18 @@ class _ARCameraScreenState extends State<ARCameraScreen>
   }
 
   // Update draggable sheet content based on type
-  void _updateDraggableSheetContent(String type) {
+  void _updateDraggableSheetContent(String type, int waypointId) {
     //Aggiungere un parametro content che verra'popolato da una chiamata api
     // This will hold the content that goes into the _currentActiveContent
     Widget? contentToDisplay;
+    Map<String, dynamic> content;
 
-    // final response = _apiService.loadResource(widget.tourId, type);
+    // try {
+    //   final response =_tourService..getResourceByWaypointAndType(waypointId, type);
+    //   content = response as Map<String, dynamic>;
+    // } catch (e) {
+    //   type = 'error';
+    // }
 
     switch (type) {
       case 'text':
@@ -285,7 +291,7 @@ This is one of the key images for this landmark.
               'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Replace with your audio URL
         );
         break;
-      default:
+      case 'error':
         contentToDisplay = Center(
           child: Text(
             'No content available for "$type".',
@@ -628,7 +634,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Text Info icon tapped!');
-          _updateDraggableSheetContent('text');
+          _updateDraggableSheetContent('text', 1);
         },
       }, // Top
       {
@@ -639,7 +645,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Link Info icon tapped!');
-          _updateDraggableSheetContent('link');
+          _updateDraggableSheetContent('link', 1);
         },
       }, // Top-right
       {
@@ -650,7 +656,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Image Info icon tapped!');
-          _updateDraggableSheetContent('image');
+          _updateDraggableSheetContent('image', 1);
         },
       }, // Bottom-right
       {
@@ -661,7 +667,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Video Info icon tapped!');
-          _updateDraggableSheetContent('video');
+          _updateDraggableSheetContent('video', 1);
         },
       }, // Bottom
       {
@@ -672,7 +678,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Doc Info icon tapped!');
-          _updateDraggableSheetContent('document');
+          _updateDraggableSheetContent('document', 1);
         },
       }, // Bottom-left
       {
@@ -683,7 +689,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Audio Info icon tapped!');
-          _updateDraggableSheetContent('audio');
+          _updateDraggableSheetContent('audio', 1);
         },
       }, // Top-left
     ];

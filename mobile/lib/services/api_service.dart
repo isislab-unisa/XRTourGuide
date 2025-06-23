@@ -13,7 +13,7 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.155:80';
+  static const String basicUrl = 'http://172.16.15.157:80';
 
   ApiService() : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
@@ -39,7 +39,16 @@ class ApiService {
 
           print("Error Refresh: ${e.message}");
           if (e.response?.statusCode == 401) {
-            final newAccessToken = await _refreshToken();
+            String? newAccessToken = "";
+            try {
+              newAccessToken = await _refreshToken();
+            }catch (refreshError) {
+              print("Refresh Token Error: $refreshError");
+              // If refresh fails, log the user out
+              await _storageService.deleteAllTokens();
+              await _authService.logout();
+              return handler.reject(e); // Reject the error after logout
+            }
             if (newAccessToken != null) {
               e.requestOptions.headers['Authorization'] =
                   'Bearer $newAccessToken';
@@ -284,17 +293,6 @@ class ApiService {
     }
   }
 
-
-  Future<Response> streamMinioResource(int tourId) async {
-    try {
-      final response = await dio.get('/tour_details/$tourId/');
-      return response;
-    } catch (e) {
-      print('Failed to fetch tour details: $e');
-      rethrow;
-    }
-  }
-
   Future<Response> initializeInferenceModule(int tourId) async {
     try {
       final response = await dio.get('/tour_categories/');
@@ -315,7 +313,7 @@ class ApiService {
     }
   }
     
-    Future<Response> loadResource(int tourId, String resourceType) async {
+    Future<Response> loadResource(int waypointId, String resourceType) async {
     try {
       final response = await dio.get('/tour_categories/');
       return response;

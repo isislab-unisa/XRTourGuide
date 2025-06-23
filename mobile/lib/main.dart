@@ -25,6 +25,11 @@ final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<v
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
+
+await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
   await FlutterDownloader.initialize(
     debug: true, // Set to false in production for less console output
     ignoreSsl: false, // Set to true if you need to ignore SSL verification (not recommended for production)

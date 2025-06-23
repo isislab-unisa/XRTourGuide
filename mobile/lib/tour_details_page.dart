@@ -1453,6 +1453,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   tourCategory: _tourDetails!.category,
                   latitude: waypoint.latitude,
                   longitude: waypoint.longitude,
+                  subWaypoints: waypoint.subWaypoints,
                 );
               }).toList(),
             ],
@@ -1529,6 +1530,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     required String tourCategory,
     required double latitude,
     required double longitude,
+    List<Waypoint>? subWaypoints,
+    int? parentIndex,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -1587,7 +1590,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                         ),
                         child: Center(
                           child: Text(
-                            '${index + 1}',
+                            tourCategory != "nested" ? '${index + 1}' : '${parentIndex! + 1}.${index + 1}',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -1700,6 +1703,32 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                         ),
                       ),
                     ),
+                    // Sub-waypoints (if any) devono avere indici secondari
+                    if (subWaypoints != null && subWaypoints.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 24.0, top: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children:
+                              subWaypoints.asMap().entries.map((entry) {
+                                int subIndex = entry.key;
+                                Waypoint sub = entry.value;
+                                return _buildWaypointItem(
+                                  waypointIndex: sub.id,
+                                  index: subIndex,
+                                  title: sub.title,
+                                  subtitle: sub.subtitle,
+                                  description: sub.description,
+                                  images: sub.images,
+                                  tourCategory: "nested",
+                                  latitude: sub.latitude,
+                                  longitude: sub.longitude,
+                                  subWaypoints: sub.subWaypoints,
+                                  parentIndex: index
+                                );
+                              }).toList(),                        
+                        ),
+                      ),
                   ],
                 ),
               ),

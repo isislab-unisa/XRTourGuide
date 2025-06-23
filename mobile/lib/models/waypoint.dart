@@ -7,6 +7,7 @@ class Waypoint {
   final double longitude;
   final List<String> images;
   final String category;
+  final List<Waypoint>? subWaypoints;
 
   Waypoint({
     required this.id,
@@ -17,6 +18,7 @@ class Waypoint {
     required this.longitude,
     required this.images,
     required this.category,
+    this.subWaypoints,
   });
 
   factory Waypoint.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,9 @@ class Waypoint {
       images: imagesJson!.map((img) => img["image_name"] as String).toList(),
       // images: [],
       category: json['category'] != null ? json['category'] as String : "Generale",
+      subWaypoints: json["sub_waypoints"] != null ? (json['sub_waypoints'] as List<dynamic>?)
+          ?.map((sub) => Waypoint.fromJson(sub as Map<String, dynamic>))
+          .toList() : null,
     );
   }
 }

@@ -45,7 +45,7 @@ class TourService {
 
   Future<List<Tour>> getToursByCategory(String category) async {
     try {
-      final response = await apiService.getTourByCategory(category.toLowerCase());
+      final response = await apiService.getTourByCategory(category);
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
@@ -120,33 +120,6 @@ class TourService {
     }
   }
 
-
-
-  // Simulate API call to get cooking tours
-  Future<List<Tour>> getCookingTours() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Mock data
-    return [
-      Tour(
-        id: 3,
-        title: 'Cucina Tipica Irpina',
-        description: 'Experience traditional Irpinian cuisine.',
-        imagePath: 'assets/cibo_example.jpg',
-        category: 'Cibo',
-        rating: 4.8,
-        reviewCount: 312,
-        location: 'Avellino, Campania',
-        latitude: 40.9147,
-        longitude: 14.7927,
-        creator: 'TourGuide Team',
-        lastEdited: '2023-10-01',
-        totViews: 800,
-      ),
-    ];
-  }
-
   // Simulate API call to get categories
   Future<List<Category>> getCategories() async {
     // Simulate network delay
@@ -216,6 +189,24 @@ Future<User> getUserDetails() async {
       return reviews.take(max).toList();
     }
   }
+
+  Future<Map<String, dynamic>> getResourceByWaypointAndType(int waypointId, String type) async {
+    Map<String, dynamic> resource = {};
+    try {
+      final response = await apiService.loadResource(waypointId, type);
+      if (response.statusCode == 200) {
+        resource = response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to load resource of type $type for waypoint $waypointId');
+      }
+    } catch (e) {
+      print("Resource Retrieval error: $e");
+      rethrow;
+    }
+
+    return resource;
+  }
+
 
 
 }
