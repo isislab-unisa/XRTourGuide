@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import TourSerializer, WaypointSerializer, ReviewSerializer, WaypointViewImageSerializer
+from .serializers import TourSerializer, WaypointSerializer, ReviewSerializer, WaypointViewImageSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
 from django.db.models import Q
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -26,6 +26,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from .serializers import RegisterSerializer
 from django.contrib.auth import get_user_model
+from django.shortcuts import render, redirect
+from django.views import View
 
 
 @swagger_auto_schema(
@@ -407,3 +409,44 @@ def increment_view_count(request):
     tour.save()
 
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
+
+@permission_classes([AllowAny])
+class PasswordResetView(generics.GenericAPIView):
+    serializer_class = PasswordResetSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Email sent with instructions to reset the password."})
+
+@permission_classes([AllowAny])
+class PasswordResetConfirmView(generics.GenericAPIView):
+    serializer_class = PasswordResetConfirmSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Password updated successfully."})
+
+class PasswordResetConfirmPage(View):
+    def get(self, request, uidb64, token):
+        context = {'uidb64': uidb64, 'token': token}
+        return render(request, 'password_reset_confirm.html', context)
+
+class PasswordResetConfirmSubmit(View):
+    def post(self, request, uidb64, token):
+        new_password = request.POST.get('new_password')
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = get_user_model().objects.get(pk=uid)
+        except Exception:
+            return render(request, 'password_reset_confirm.html', {'error': 'Link non valido', 'uidb64': uidb64, 'token': token})
+
+        if not default_token_generator.check_token(user, token):
+            return render(request, 'password_reset_confirm.html', {'error': 'Token scaduto o non valido', 'uidb64': uidb64, 'token': token})
+
+        user.set_password(new_password)
+        user.save()
+        return redirect('/')

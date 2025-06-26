@@ -181,6 +181,8 @@ class Waypoint(models.Model):
     audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     
     def save(self, *args, **kwargs):
+        if self.tour and self.tour.category == Category.INSIDE:
+            self.coordinates = self.tour.coordinates
         is_new = self.pk is None
         old_files = {
             # 'default_image': self.default_image,

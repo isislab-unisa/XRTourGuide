@@ -2,6 +2,14 @@ from rest_framework import serializers
 from .models import Tour, Review, Waypoint, WaypointViewImage
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.urls import reverse
 
 class WaypointViewImageSerializer(serializers.ModelSerializer):
     image_name = serializers.SerializerMethodField()
@@ -87,9 +95,13 @@ class TourSerializer(serializers.ModelSerializer):
         return obj.user.username
     
 class UserSerializer(serializers.ModelSerializer):
+    reviewCount = serializers.SerializerMethodField()
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'city', 'description']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'city', 'description', 'reviewCount']
+    
+    def get_reviewCount(self, obj):
+        return len(obj.reviews.all())
 
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
@@ -136,3 +148,51 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Il gruppo 'User' non esiste.")
         
         return user
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not get_user_model().objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email non trovata.")
+        return value
+
+    def save(self):
+        email = self.validated_data['email']
+        user = get_user_model().objects.get(email=email)
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_link = self.context['request'].build_absolute_uri(
+            reverse('reset-password-confirm-page', kwargs={'uidb64': uid, 'token': token})
+        )
+
+        subject = "Password Reset Request"
+        message = f"Clicca sul link per resettare la tua password: {reset_link}"
+        
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uidb64 = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
+
+    def validate(self, attrs):
+        try:
+            uid = urlsafe_base64_decode(attrs['uidb64']).decode()
+            user = get_user_model().objects.get(pk=uid)
+        except Exception:
+            raise serializers.ValidationError("Link non valido.")
+
+        if not default_token_generator.check_token(user, attrs['token']):
+            raise serializers.ValidationError("Token non valido o scaduto.")
+
+        attrs['user'] = user
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.validated_data['user']
+        new_password = self.validated_data['new_password']
+        user.set_password(new_password)
+        user.save()
