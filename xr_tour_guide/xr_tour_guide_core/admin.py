@@ -101,11 +101,11 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         PlainLocationField: {"widget": LocationWidget},
     }
     
-    # def get_queryset(self, request):
-    #     qs = super().get_queryset(request)
-    #     if request.user.is_superuser:
-    #         return qs
-    #     return qs.filter(user=request.user)
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(user=request.user)
     
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)

@@ -232,11 +232,11 @@ UNFOLD = {
     
     "SIDEBAR": {
         "show_search": True,
-        "show_all_applications": True,
+        "show_all_applications": lambda request: request.user.is_superuser,
         "navigation": [
             {
-                "separator": False,  # Top border
-                "collapsible": False,  # Collapsible group of links
+                "separator": False,
+                "collapsible": False,
                 "items": [
                     {
                         "title": _("Dashboard"),
@@ -245,23 +245,24 @@ UNFOLD = {
                     },
                 ],
             },
-            {
-                "title": _("Users & Groups"),
-                "separator": False,
-                "collapsible": True,
-                "items": [
-                    {
-                        "title": _("Users"),
-                        "icon": "person",
-                        "link": reverse_lazy("admin:xr_tour_guide_core_customuser_changelist"),
-                    },
-                    {
-                        "title": _("Groups"),
-                        "icon": "group",
-                        "link": reverse_lazy("admin:auth_group_changelist"),
-                    },
-                ],
-            },
+        #    {
+        #         "title": _("Users & Groups"),
+        #         "permissions": ["auth.view_user"],
+        #         "separator": False,
+        #         "collapsible": True,
+        #         "items": [
+        #             {
+        #                 "title": _("Users"),
+        #                 "icon": "person",
+        #                 "link": reverse_lazy("admin:xr_tour_guide_core_customuser_changelist"),
+        #             },
+        #             {
+        #                 "title": _("Groups"),
+        #                 "icon": "group",
+        #                 "link": reverse_lazy("admin:auth_group_changelist"),
+        #             },
+        #         ],
+        #     },
             {
                 "title": _("xr_tour_guide"),
                 "separator": False,
@@ -269,7 +270,7 @@ UNFOLD = {
                 "items": [
                     {
                         "title": _("Tour"),
-                        "icon": "book",
+                        "icon": "map",
                         "link": reverse_lazy("admin:xr_tour_guide_core_tour_changelist"),
                     },
                 ],
