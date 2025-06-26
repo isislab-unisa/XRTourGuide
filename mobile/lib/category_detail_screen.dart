@@ -127,13 +127,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               itemBuilder: (context, index) {
                 final tour = _categoriesTour![index];
                 return TravelListItemCard(
+                  tourId: tour.id,
                   imagePath: tour.imagePath,
                   title: tour.title,
                   description: tour.description,
                   cardWidth: screenWidth - 40, // Full width minus padding
                   fullWidth: true,
                   imageHeight: 180,
-                  category: tour.subcategory,
+                  category: tour.category,
                   rating: tour.rating,
                   reviewCount: tour.reviewCount,
                   // isFavorite: tour['isFavorite'] ?? false,

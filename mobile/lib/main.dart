@@ -21,9 +21,15 @@ void downloadCallback(String id, int status, int progress) {
 //   return AuthService();
 // });
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
+
+await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
   await FlutterDownloader.initialize(
     debug: true, // Set to false in production for less console output
     ignoreSsl: false, // Set to true if you need to ignore SSL verification (not recommended for production)
@@ -56,6 +62,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'XR Tour Guide',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [routeObserver],
       theme: ThemeData(
         primarySwatch: Colors.blue,
         primaryColor: AppColors.primary,
@@ -873,13 +880,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       text: 'Sign Up',
                       onPressed: () {
                         setState(() {
-                          // Simulate successful login and navigate to main page
-                          // TODO: Replace this with your actual navigation logic
-                          // Navigator.of(context).pushReplacement(
-                          //   MaterialPageRoute(
-                          //     builder: (context) => TravelExplorerScreen(isGuest: false),
-                          //   ),
-                          // );
                           authService.register(
                             _usernameController.text,
                             _passwordController.text,

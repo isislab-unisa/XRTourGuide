@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/app_colors.dart';
+import '../services/api_service.dart';
 
 class TravelListItemCard extends StatelessWidget {
   final String imagePath; // Path to the image asset
@@ -17,10 +18,12 @@ class TravelListItemCard extends StatelessWidget {
   final String? creator;
   final String? lastEdited;
   final String? totViews;
+  final int? tourId;
 
 
   const TravelListItemCard({
     Key? key,
+    required this.tourId,
     required this.imagePath,
     required this.title,
     required this.description,
@@ -64,8 +67,9 @@ class TravelListItemCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(10.0),
                     ), // Rounded top corners for the image
-                    child: Image.asset(
-                      imagePath, // Use the imagePath parameter
+                    child: Image.network(
+                      // imagePath, // Use the imagePath parameter
+                      "${ApiService.basicUrl}/stream_minio_resource/?tour=${tourId!}",
                       fit:
                           BoxFit
                               .cover, // Cover the available space, potentially cropping
@@ -116,7 +120,7 @@ class TravelListItemCard extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        '$rating',
+                                        '${rating!.toStringAsFixed(1).toString()}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,

@@ -29,8 +29,7 @@ class _ReviewListScreenState extends State<ReviewListScreen> {
 
   List<Review> _reviews = [];
   bool _isLoadingReviews = true;
-  String?
-  _error; // Renamed from _error to _errorMessage for clarity with _showError
+  String? _error; // Renamed from _error to _errorMessage for clarity with _showError
 
   @override
   void initState() {
@@ -50,12 +49,19 @@ class _ReviewListScreenState extends State<ReviewListScreen> {
   }
 
   Future<void> _loadReviews() async {
+    List<Review> reviews;
     try {
-      final reviews = await _tourService.getReviewByTour(
-        tourId: widget.tourId ?? 0,
-        userId: widget.userId ?? 0,
-        max: widget.reviewCount
-      ); // Use reviewCount or default to 10 
+      if (widget.isTour) {
+        reviews = await _tourService.getReviewByTour(
+          tourId: widget.tourId ?? 0,
+          userId: widget.userId ?? 0,
+          max: widget.reviewCount,
+        ); // Use reviewCount or default to 10 
+      }else {
+        reviews = await _tourService.getReviewByUser(
+          widget.reviewCount,
+        ); // Use reviewCount or default to 10
+      }
       if (mounted) {
         setState(() {
           _reviews = reviews;
@@ -186,17 +192,17 @@ class _ReviewListScreenState extends State<ReviewListScreen> {
           const SizedBox(height: 8),
 
           // Read more button
-          GestureDetector(
-            onTap: () {},
-            child: const Text(
-              'Read more',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () {},
+          //   child: const Text(
+          //     'Read more',
+          //     style: TextStyle(
+          //       fontSize: 14,
+          //       fontWeight: FontWeight.bold,
+          //       color: AppColors.primary,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -269,11 +275,10 @@ class _ReviewListScreenState extends State<ReviewListScreen> {
                 itemBuilder: (context, index) {
                   final review = _reviews[index];
                   return _buildReviewItem(
-                    name: review.name,
+                    name: review.user,
                     date: review.date,
                     rating: review.rating,
                     comment: review.comment, // Use 'comment' field
-                    imageUrl: "",
                   );
                 },
                 separatorBuilder: (context, index) => const SizedBox(height: 16),

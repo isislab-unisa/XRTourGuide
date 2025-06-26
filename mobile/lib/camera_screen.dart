@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:markdown_widget/markdown_widget.dart'; // Keep this for text/link/image
 import 'dart:async';
 import 'dart:math';
+import 'services/tour_service.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -35,9 +38,11 @@ class ARCameraScreen extends StatefulWidget {
   final List<String> landmarkImages;
   final double latitude;
   final double longitude;
+  final int tourId;
 
   const ARCameraScreen({
     Key? key,
+    required this.tourId,
     this.landmarkName = "Santuario di Montevergine",
     this.landmarkDescription = """
 # Santuario di Montevergine
@@ -112,6 +117,8 @@ class _ARCameraScreenState extends State<ARCameraScreen>
 
   // Manual animation progress for AR overlays
   double _arOverlayProgress = 0.0;
+
+  final TourService _tourService = TourService();
 
   @override
   void initState() {
@@ -212,9 +219,18 @@ class _ARCameraScreenState extends State<ARCameraScreen>
   }
 
   // Update draggable sheet content based on type
-  void _updateDraggableSheetContent(String type) {
+  void _updateDraggableSheetContent(String type, int waypointId) {
+    //Aggiungere un parametro content che verra'popolato da una chiamata api
     // This will hold the content that goes into the _currentActiveContent
     Widget? contentToDisplay;
+    Map<String, dynamic> content;
+
+    // try {
+    //   final response =_tourService..getResourceByWaypointAndType(waypointId, type);
+    //   content = response as Map<String, dynamic>;
+    // } catch (e) {
+    //   type = 'error';
+    // }
 
     switch (type) {
       case 'text':
@@ -275,7 +291,7 @@ This is one of the key images for this landmark.
               'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Replace with your audio URL
         );
         break;
-      default:
+      case 'error':
         contentToDisplay = Center(
           child: Text(
             'No content available for "$type".',
@@ -365,11 +381,19 @@ This is one of the key images for this landmark.
       _recognitionState = RecognitionState.scanning;
     });
 
+    //Camera feed
+    // final XFile file = await _cameraController!.takePicture();
+    // final bytes = await file.readAsBytes();
+    // final String base64Image = base64Encode(bytes);
+
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
     // Simulate recognition process (replace with actual ML/AR logic)
-    await Future.delayed(const Duration(seconds: 3));
+    // await Future.delayed(const Duration(seconds: 3));
+    // final response = await _apiService.inference(
+    //   base64Image, // Replace with actual base64 image string
+    // );
 
     // Stop pulse animation
     _pulseAnimationController.stop();
@@ -401,6 +425,7 @@ This is one of the key images for this landmark.
       _startAROverlayAnimation();
 
       // Auto-reset after 30 seconds for testing
+      //TODO Decidere su un tempo di reset automatico oppurew implementare un pulsante
       Timer(const Duration(seconds: 30), () {
         if (mounted) {
           _resetRecognition();
@@ -609,7 +634,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Text Info icon tapped!');
-          _updateDraggableSheetContent('text');
+          _updateDraggableSheetContent('text', 1);
         },
       }, // Top
       {
@@ -620,7 +645,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Link Info icon tapped!');
-          _updateDraggableSheetContent('link');
+          _updateDraggableSheetContent('link', 1);
         },
       }, // Top-right
       {
@@ -631,7 +656,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Image Info icon tapped!');
-          _updateDraggableSheetContent('image');
+          _updateDraggableSheetContent('image', 1);
         },
       }, // Bottom-right
       {
@@ -642,7 +667,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Video Info icon tapped!');
-          _updateDraggableSheetContent('video');
+          _updateDraggableSheetContent('video', 1);
         },
       }, // Bottom
       {
@@ -653,7 +678,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Doc Info icon tapped!');
-          _updateDraggableSheetContent('document');
+          _updateDraggableSheetContent('document', 1);
         },
       }, // Bottom-left
       {
@@ -664,7 +689,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Audio Info icon tapped!');
-          _updateDraggableSheetContent('audio');
+          _updateDraggableSheetContent('audio', 1);
         },
       }, // Top-left
     ];

@@ -13,8 +13,9 @@ class ApiService {
   '/register/',
   ];
 
+  static const String basicUrl = 'http://172.16.15.157:80';
 
-  ApiService() : _dio = Dio(BaseOptions(baseUrl: 'http://172.16.15.146:80')) {
+  ApiService() : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -38,7 +39,16 @@ class ApiService {
 
           print("Error Refresh: ${e.message}");
           if (e.response?.statusCode == 401) {
-            final newAccessToken = await _refreshToken();
+            String? newAccessToken = "";
+            try {
+              newAccessToken = await _refreshToken();
+            }catch (refreshError) {
+              print("Refresh Token Error: $refreshError");
+              // If refresh fails, log the user out
+              await _storageService.deleteAllTokens();
+              await _authService.logout();
+              return handler.reject(e); // Reject the error after logout
+            }
             if (newAccessToken != null) {
               e.requestOptions.headers['Authorization'] =
                   'Bearer $newAccessToken';
@@ -190,6 +200,129 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<Response> getTourBySearchTerm(String searchTerm) async {
+    try {
+      final response = await dio.get("/tour_list/?searchTerm=$searchTerm");
+      return response;
+    } catch (e) {
+      print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<Response> getTourByCategory(String category) async {
+    try {
+      final response = await dio.get("/tour_list/?category=$category");
+      return response;
+    } catch (e) {
+      print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<Response> getTourDetails(int tourId) async {
+    try {
+      final response = await dio.get('/tour_details/$tourId/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour details: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> getTourReviews(int tourId) async {
+    try {
+      final response = await dio.get('/get_reviews_by_tour_id/$tourId/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour reviews: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> getUserReviews() async {
+    try {
+      final response = await dio.get('/get_reviews_by_user');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour reviews: $e');
+      rethrow;
+    }
+  }
+
+
+
+  Future<Response> getTourWaypoints(int tourId) async {
+    try {
+      final response = await dio.get('/tour_waypoints/$tourId');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> incrementTourViews(int waypointId) async {
+    try {
+      final response = await dio.post('/increment_view_count/',
+      data: {
+        'tour_id': waypointId,
+      });
+      return response;
+    } catch (e) {
+      print('Failed to incvrement tour views: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> leaveReview(int tourId, double rating, String comment) async {
+    try {
+      final response = await dio.post('/create_review/',
+      data: {
+        'tour_id': tourId, 
+        'rating': rating, 
+        'comment': comment
+      });
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> initializeInferenceModule(int tourId) async {
+    try {
+      final response = await dio.get('/tour_categories/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> inference(String imageBase64) async {
+    try {
+      final response = await dio.get('/tour_categories/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+    
+    Future<Response> loadResource(int waypointId, String resourceType) async {
+    try {
+      final response = await dio.get('/tour_categories/');
+      return response;
+    } catch (e) {
+      print('Failed to fetch tour categories: $e');
+      rethrow;
+    }
+  }
+
 
 
 

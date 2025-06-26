@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'main.dart';
 import 'models/app_colors.dart';
 import 'elements/travel_list_item_card.dart';
 import 'tour_details_page.dart';
@@ -9,6 +9,7 @@ import 'user_details.dart';
 import 'models/tour.dart';
 import 'models/category.dart';
 import 'services/tour_service.dart';
+import 'package:flutter/widgets.dart';
 
 class TravelExplorerScreen extends StatefulWidget {
   final bool isGuest;
@@ -19,13 +20,15 @@ class TravelExplorerScreen extends StatefulWidget {
   State<TravelExplorerScreen> createState() => _TravelExplorerScreenState();
 }
 
-class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
+class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteAware {
   final TourService _tourService = TourService();
 
   // State variables for data
   List<Tour>? _nearbyTours;
   List<Tour>? _cookingTours;
-  List<Category>? _categories;
+  List<Category>? _categories = [];
+
+  // INSIDE, OUTSIDE, THINGS, MIXED
 
   // Loading states
   bool _isLoadingNearby = true;
@@ -38,11 +41,29 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
     _loadData();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    _loadData(); // Reload data when returning to this screen
+    super.didPopNext();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     // Load all data in parallel
     await Future.wait([
       _loadNearbyTours(),
-      _loadCookingTours(),
+      // _loadCookingTours(),
       _loadCategories(),
     ]);
   }
@@ -66,24 +87,24 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
     }
   }
 
-  Future<void> _loadCookingTours() async {
-    try {
-      final tours = await _tourService.getCookingTours();
-      if (mounted) {
-        setState(() {
-          _cookingTours = tours;
-          _isLoadingCooking = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingCooking = false;
-        });
-        _showError('Error loading cooking tours');
-      }
-    }
-  }
+  // Future<void> _loadCookingTours() async {
+  //   try {
+  //     final tours = await _tourService.getCookingTours();
+  //     if (mounted) {
+  //       setState(() {
+  //         _cookingTours = tours;
+  //         _isLoadingCooking = false;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoadingCooking = false;
+  //       });
+  //       _showError('Error loading cooking tours');
+  //     }
+  //   }
+  // }
 
   Future<void> _loadCategories() async {
     try {
@@ -158,7 +179,8 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
             ),
             Center(
               child: Text(
-                category.name,
+                category.name[0].toUpperCase() +
+                    category.name.substring(1).toLowerCase(),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -345,6 +367,7 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
                                       right: 15.0,
                                     ),
                                     child: TravelListItemCard(
+                                      tourId: tour.id,
                                       imagePath: tour.imagePath,
                                       title: tour.title,
                                       description: tour.description,
@@ -439,81 +462,70 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> {
               ),
 
               // Cooking Tours Section
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0,
-                        vertical: 10.0,
-                      ),
-                      child: Text(
-                        'Cooking Tours around you',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: screenHeight * 0.3,
-                      child:
-                          _isLoadingCooking
-                              ? const Center(child: CircularProgressIndicator())
-                              : ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _cookingTours?.length ?? 0,
-                                itemBuilder: (context, index) {
-                                  final tour = _cookingTours![index];
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      left: index == 0 ? 20.0 : 0.0,
-                                      right: 15.0,
-                                    ),
-                                    child: TravelListItemCard(
-                                      imagePath: tour.imagePath,
-                                      title: tour.title,
-                                      description: tour.description,
-                                      cardWidth: screenWidth * 0.6,
-                                      imageHeight: 180,
-                                      category: tour.category,
-                                      rating: tour.rating,
-                                      reviewCount: tour.reviewCount,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) => TourDetailScreen(
-                                                  tourId: tour.id,
-                                                  // tourName: tour.title,
-                                                  // location: tour.location,
-                                                  // rating: tour.rating,
-                                                  // reviewCount: tour.reviewCount,
-                                                  // images: tour.images,
-                                                  // category: tour.category,
-                                                  // description: tour.description,
-                                                  // creator: tour.creator,
-                                                  // lastEdited: tour.lastEdited,
-                                                  // totViews: tour.totViews.toString(),
-                                                  // latitude: tour.latitude,
-                                                  // longitude: tour.longitude,
-                                                  isGuest: widget.isGuest,
-                                                ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                    ),
-                  ],
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(vertical: 10.0),
+              //   child: Column(
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     children: [
+              //       Padding(
+              //         padding: const EdgeInsets.symmetric(
+              //           horizontal: 20.0,
+              //           vertical: 10.0,
+              //         ),
+              //         child: Text(
+              //           'Cooking Tours around you',
+              //           style: TextStyle(
+              //             fontSize: 20,
+              //             fontWeight: FontWeight.bold,
+              //             color: AppColors.textPrimary,
+              //           ),
+              //         ),
+              //       ),
+              //       SizedBox(
+              //         height: screenHeight * 0.3,
+              //         child:
+              //             _isLoadingCooking
+              //                 ? const Center(child: CircularProgressIndicator())
+              //                 : ListView.builder(
+              //                   scrollDirection: Axis.horizontal,
+              //                   itemCount: _cookingTours?.length ?? 0,
+              //                   itemBuilder: (context, index) {
+              //                     final tour = _cookingTours![index];
+              //                     return Padding(
+              //                       padding: EdgeInsets.only(
+              //                         left: index == 0 ? 20.0 : 0.0,
+              //                         right: 15.0,
+              //                       ),
+              //                       child: TravelListItemCard(
+              //                         tourId: tour.id,
+              //                         imagePath: tour.imagePath,
+              //                         title: tour.title,
+              //                         description: tour.description,
+              //                         cardWidth: screenWidth * 0.6,
+              //                         imageHeight: 180,
+              //                         category: tour.category,
+              //                         rating: tour.rating,
+              //                         reviewCount: tour.reviewCount,
+              //                         onTap: () {
+              //                           Navigator.push(
+              //                             context,
+              //                             MaterialPageRoute(
+              //                               builder:
+              //                                   (context) => TourDetailScreen(
+              //                                     tourId: tour.id,
+              //                                     isGuest: widget.isGuest,
+              //                                   ),
+              //                             ),
+              //                           );
+              //                         },
+              //                       ),
+              //                     );
+              //                   },
+              //                 ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
 
               SizedBox(height: 20),
             ],
