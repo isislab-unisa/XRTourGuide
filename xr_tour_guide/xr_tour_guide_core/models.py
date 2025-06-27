@@ -72,6 +72,7 @@ class Category(models.TextChoices):
     INSIDE = "INSIDE", "Inside"
     OUTSIDE = "OUTSIDE", "Outside"
     THING = "THING", "Thing"
+    MIXED = "MIXED", "Mixed"
         
 class TourQuerySet(models.QuerySet):
     def delete(self, *args, **kwargs):
@@ -103,16 +104,13 @@ class Tour(models.Model):
     )
     tot_view = models.IntegerField(default=0)
     last_edited = models.DateTimeField(auto_now=True, null=True, blank=True)
+    sub_tours = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='parent_tours')
      
     class Meta:
         db_table = "Tour"
         verbose_name = "Tour"
         verbose_name_plural = "Tours"
-        # permissions = [
-        #     ("can_create_cromo_poi", "Can create cromo_poi"),
-        #     ("can_view_cromo_poi", "Can view cromo_poi"),
-        # ]
-        
+                
     def __str__(self):
         return self.title
     

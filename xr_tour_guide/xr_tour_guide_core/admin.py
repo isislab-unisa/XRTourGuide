@@ -124,7 +124,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
 
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
-    fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image')
+    fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours')
     list_display = ('title', 'creation_time', 'category', 'place', 'user')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
