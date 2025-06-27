@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from storages.backends.s3boto3 import S3Boto3Storage
 import mimetypes
-from .models import MinioStorage, Waypoint, Tour, Review
+from .models import MinioStorage, Waypoint, Tour, Review, Category
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -83,10 +83,26 @@ def tour_waypoints(request, tour_id):
     try:
         tour = Tour.objects.get(pk=tour_id)
         waypoints = tour.waypoints.all()
+        sub_tour_data = None
+        if tour.category == Category.MIXED:
+            sub_tour = tour.sub_tours.all()
+            sub_tour_data = []
+            for st in sub_tour:
+                st_waypoints = st.waypoints.all()
+                st_serializer = WaypointSerializer(st_waypoints, many=True)
+                st_data = {
+                    'sub_tour': TourSerializer(st).data,
+                    'waypoints': st_serializer.data
+                }
+                sub_tour_data.append(st_data)
     except Tour.DoesNotExist:
         return Response({"detail": "Tour non trovato"}, status=status.HTTP_404_NOT_FOUND)
     serializer = WaypointSerializer(waypoints, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    data = {
+        'waypoints': serializer.data,
+        'sub_tours': sub_tour_data
+    }
+    return Response(data, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
