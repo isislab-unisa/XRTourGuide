@@ -123,6 +123,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
   AuthState currentState = AuthState.onboarding;
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  final AuthService _authService = AuthService();
 
   // Controllers for form fields
   final TextEditingController _emailController = TextEditingController();
@@ -433,18 +434,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             },
                             context: context,
                           ),
-                          // _buildSocialButton(
-                          //   text: 'Continue With Apple',
-                          //   icon: const Icon(
-                          //     Icons.apple,
-                          //     color: Colors.black,
-                          //     size: 24,
-                          //   ),
-                          //   onPressed: () {
-                          //     print('Apple login tapped');
-                          //   },
-                          //   context: context,
-                          // ),
                           const SizedBox(height: 20),
                           Container(
                             margin: EdgeInsets.symmetric(
@@ -530,6 +519,200 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
     );
   }
 
+  Widget _buildResetPasswordSheet(BuildContext context) {
+    final TextEditingController _resetPasswordController =
+        TextEditingController();
+
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Title
+            const Text(
+              'Reset Password',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.password, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _resetPasswordController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your mail to send reset link',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the sheet
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            try {
+                              final response = await _authService.resetPassword(
+                                _resetPasswordController.text,
+                              );
+                              Navigator.of(context).pop(); // Close the sheet
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      response.data['message'] ?? 'Password reset link sent successfully',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.only(
+                                      bottom: 40,
+                                      left: 16,
+                                      right: 16,
+                                    ),
+                                    duration: const Duration(seconds: 5),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              Navigator.of(context).pop(); // Close the sheet
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      e.toString(),
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.only(
+                                      bottom: 40,
+                                      left: 16,
+                                      right: 16,
+                                    ),
+                                    duration: const Duration(seconds: 5),
+                                  ),
+                                );
+                              }
+                            }
+                            await _authService.resetPassword(
+                              _resetPasswordController.text,
+                            );
+                            Navigator.of(context).pop(true); // Close the sheet
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'Recover',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountSheet(BuildContext context) async {
+    final result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return _buildResetPasswordSheet(context);
+      },
+    );
+
+    // if (result == true && mounted) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text('Account deleted successfully!'),
+    //       backgroundColor: Colors.red,
+    //     ),
+    //   );
+    // }
+  }
+
+
+
   Widget _buildLoginScreen() {
 
     final authService = ref.read(authServiceProvider);
@@ -604,30 +787,25 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: _rememberMe,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
-                                activeColor: AppColors.primary,
-                                checkColor: Colors.white,
-                              ),
-                              const Text(
-                                'Ricordami',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
+                          // Row(
+                          //   children: [
+                          //     Checkbox(
+                          //       value: _rememberMe,
+                          //       onChanged: (value) {
+                          //         setState(() {
+                          //           _rememberMe = value ?? false;
+                          //         });
+                          //       },
+                          //       activeColor: AppColors.primary,
+                          //       checkColor: Colors.white,
+                          //     ),
+                          //   ],
+                          // ),
                           GestureDetector(
                             onTap: () {
                               //TODO: Implement forgot password logic
                               print('Forgot password tapped');
+                              _showDeleteAccountSheet(context);
                             },
                             child: const Text(
                               'Dimenticata La Password?',

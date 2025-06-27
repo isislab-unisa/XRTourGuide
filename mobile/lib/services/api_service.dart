@@ -13,7 +13,7 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.157:80';
+  static const String basicUrl = 'http://172.16.15.154:80';
 
   ApiService() : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
@@ -171,6 +171,21 @@ class ApiService {
       return response;
     } catch (e) {
       print('Failed to update password: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> resetPassword(String email) async {
+    try {
+      final response = await dio.post(
+        '/forgot-password/',
+        data: {
+          'email': email,
+        },
+      );
+      return response;
+    } catch (e) {
+      print('Failed to reset password: $e');
       rethrow;
     }
   }

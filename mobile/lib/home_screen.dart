@@ -87,25 +87,6 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteA
     }
   }
 
-  // Future<void> _loadCookingTours() async {
-  //   try {
-  //     final tours = await _tourService.getCookingTours();
-  //     if (mounted) {
-  //       setState(() {
-  //         _cookingTours = tours;
-  //         _isLoadingCooking = false;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     if (mounted) {
-  //       setState(() {
-  //         _isLoadingCooking = false;
-  //       });
-  //       _showError('Error loading cooking tours');
-  //     }
-  //   }
-  // }
-
   Future<void> _loadCategories() async {
     try {
       final categories = await _tourService.getCategories();
@@ -343,7 +324,7 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteA
                         vertical: 10.0,
                       ),
                       child: Text(
-                        'Tours around you',
+                        'Recent Tours',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

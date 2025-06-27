@@ -131,8 +131,20 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<Response> resetPassword(String email) async {
+    try {
+      final response = await apiService.resetPassword(email);
+      return response;
+      // Handle response if needed
+    } catch (e) {
+      print("Reset Password error: $e");
+      rethrow;
+    }
+  }
+
 
   Future<void> logout() async {
+    print("LogOut Called");
     _authStatus = AuthStatus.loading;
     notifyListeners();
 
