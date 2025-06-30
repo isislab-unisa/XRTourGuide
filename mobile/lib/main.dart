@@ -123,7 +123,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
   AuthState currentState = AuthState.onboarding;
   bool _obscurePassword = true;
   bool _rememberMe = false;
-  final AuthService _authService = AuthService();
+  late AuthService _authService;
 
   // Controllers for form fields
   final TextEditingController _emailController = TextEditingController();
@@ -137,6 +137,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
   @override
   void initState() {
     super.initState();
+    _authService = ref.read(authServiceProvider);
     if (widget.registeredTemp) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -496,7 +497,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       onPressed: () {
                         setState(() {
                           //navigate to main page as guest
-                          // TODO: Replace this with your actual navigation logic
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder:

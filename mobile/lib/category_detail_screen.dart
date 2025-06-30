@@ -5,9 +5,10 @@ import 'models/app_colors.dart';
 import 'elements/travel_list_item_card.dart';
 import 'tour_details_page.dart';
 import 'services/tour_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
-class CategoryDetailScreen extends StatefulWidget {
+class CategoryDetailScreen extends ConsumerStatefulWidget {
   final String categoryName;
   final List<Tour> tours;
   final bool isGuest;
@@ -20,18 +21,19 @@ class CategoryDetailScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
+  ConsumerState<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
 }
 
-class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
+class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
 
-  final TourService _tourService = TourService();
+  late TourService _tourService;
 
   List<Tour>? _categoriesTour;
   bool _isLoading = true;
 
   void initState() {
     super.initState();
+    _tourService = ref.read(tourServiceProvider);
     _loadData();
   }
 

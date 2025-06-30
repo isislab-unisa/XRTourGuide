@@ -7,13 +7,17 @@ import 'api_service.dart';
 enum AuthStatus { authenticated, unauthenticated, loading, registering }
 
 final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
-  return AuthService();
+  return AuthService(ref);
 });
 
-final apiService = ApiService();
+final apiServiceProvider = Provider<ApiService>((ref) {
+  return ApiService(ref);
+});
 
 
 class AuthService extends ChangeNotifier {
+  final Ref ref;
+  late final ApiService apiService;
   final SecureStorageService _storageService = SecureStorageService();
   AuthStatus _authStatus = AuthStatus.loading;
   AuthStatus get authStatus => _authStatus;
@@ -22,7 +26,8 @@ class AuthService extends ChangeNotifier {
   String? get loginErrorMessage=> _loginErrorMessage;
 
 
-  AuthService() {
+  AuthService(this.ref) {
+    apiService = ref.read(apiServiceProvider);
     _checkAuthStatus();
   }
 
@@ -144,7 +149,7 @@ class AuthService extends ChangeNotifier {
 
 
   Future<void> logout() async {
-    print("LogOut Called");
+    print("Logout Called");
     _authStatus = AuthStatus.loading;
     notifyListeners();
 

@@ -30,9 +30,9 @@ class UserProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
-  final TourService _tourService = TourService();
+  late TourService _tourService;
 
-  final AuthService _authService = AuthService();
+  late AuthService _authService;
 
   // Current screen state - starts with main profile
   ProfileScreenState _currentScreen = ProfileScreenState.main;
@@ -69,6 +69,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _authService = ref.read(authServiceProvider);
+    _tourService = ref.read(tourServiceProvider);
     _loadData();
   }
 

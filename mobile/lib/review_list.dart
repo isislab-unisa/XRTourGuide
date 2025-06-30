@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '/models/app_colors.dart'; // Adjust path as needed
 import '/models/review.dart'; // Adjust path as needed
 import '/services/tour_service.dart'; // Adjust path as needed
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod for state management
 
 
-class ReviewListScreen extends StatefulWidget {
+class ReviewListScreen extends ConsumerStatefulWidget {
   final int? tourId;
   final int? userId;
   final int reviewCount;
@@ -21,11 +22,11 @@ class ReviewListScreen extends StatefulWidget {
   });
 
   @override
-  _ReviewListScreenState createState() => _ReviewListScreenState();
+  ConsumerState<ReviewListScreen> createState() => _ReviewListScreenState();
 }
 
-class _ReviewListScreenState extends State<ReviewListScreen> {
-  final TourService _tourService = TourService();
+class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
+  late TourService _tourService;
 
   List<Review> _reviews = [];
   bool _isLoadingReviews = true;
@@ -34,6 +35,7 @@ class _ReviewListScreenState extends State<ReviewListScreen> {
   @override
   void initState() {
     super.initState();
+    _tourService = ref.read(tourServiceProvider);
     _loadData();
   }
 

@@ -10,18 +10,19 @@ import 'models/tour.dart';
 import 'models/category.dart';
 import 'services/tour_service.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class TravelExplorerScreen extends StatefulWidget {
+class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
 
   const TravelExplorerScreen({Key? key, required this.isGuest}) : super(key: key);
 
   @override
-  State<TravelExplorerScreen> createState() => _TravelExplorerScreenState();
+  ConsumerState<TravelExplorerScreen> createState() => _TravelExplorerScreenState();
 }
 
-class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteAware {
-  final TourService _tourService = TourService();
+class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> with RouteAware {
+  late TourService _tourService;
 
   // State variables for data
   List<Tour>? _nearbyTours;
@@ -38,6 +39,7 @@ class _TravelExplorerScreenState extends State<TravelExplorerScreen> with RouteA
   @override
   void initState() {
     super.initState();
+    _tourService = ref.read(tourServiceProvider);
     _loadData();
   }
 

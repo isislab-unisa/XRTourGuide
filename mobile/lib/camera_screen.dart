@@ -12,6 +12,7 @@ import 'package:markdown_widget/markdown_widget.dart'; // Keep this for text/lin
 import 'dart:async';
 import 'dart:math';
 import 'services/tour_service.dart';
+import "package:flutter_riverpod/flutter_riverpod.dart";
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -31,7 +32,7 @@ String _currentMarkdownContent = "";
 // This new variable will hold the actual Widget to display in the sheet
 Widget? _currentActiveContent;
 
-class ARCameraScreen extends StatefulWidget {
+class ARCameraScreen extends ConsumerStatefulWidget {
   // Landmark data passed to the screen
   final String landmarkName;
   final String landmarkDescription;
@@ -79,10 +80,10 @@ Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei prin
   }) : super(key: key);
 
   @override
-  State<ARCameraScreen> createState() => _ARCameraScreenState();
+  ConsumerState<ARCameraScreen> createState() => _ARCameraScreenState();
 }
 
-class _ARCameraScreenState extends State<ARCameraScreen>
+class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     with TickerProviderStateMixin {
   // Camera controller
   CameraController? _cameraController;
@@ -118,11 +119,12 @@ class _ARCameraScreenState extends State<ARCameraScreen>
   // Manual animation progress for AR overlays
   double _arOverlayProgress = 0.0;
 
-  final TourService _tourService = TourService();
+  late TourService _tourService;
 
   @override
   void initState() {
     super.initState();
+    _tourService = ref.read(tourServiceProvider);
     _initializeCamera();
     _getCurrentLocation();
     _initializeAnimations();
@@ -426,11 +428,11 @@ This is one of the key images for this landmark.
 
       // Auto-reset after 30 seconds for testing
       //TODO Decidere su un tempo di reset automatico oppurew implementare un pulsante
-      Timer(const Duration(seconds: 30), () {
-        if (mounted) {
-          _resetRecognition();
-        }
-      });
+      // Timer(const Duration(seconds: 30), () {
+      //   if (mounted) {
+      //     _resetRecognition();
+      //   }
+      // });
     } else {
       setState(() {
         _recognitionState = RecognitionState.failure;
@@ -471,17 +473,23 @@ This is one of the key images for this landmark.
   void _resetRecognition() async {
     // Reset manual AR overlay progress
     _arOverlayProgress = 0.0;
+    const closingDuration = Duration(milliseconds: 300);
+
 
     // Animate out current state
     if (_recognitionState == RecognitionState.success) {
+      _successAnimationController.duration = closingDuration;
       await _successAnimationController.reverse();
+      _successAnimationController.duration = const Duration(milliseconds: 1200);
     } else if (_recognitionState == RecognitionState.failure) {
+      _failureAnimationController.duration = closingDuration;
       await _failureAnimationController.reverse();
+      _failureAnimationController.duration = const Duration(milliseconds: 800);
     }
 
     _sheetController.animateTo(
       _initialSheetSize,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 100),
       curve: Curves.easeInOut,
     );
 
@@ -692,6 +700,17 @@ This is one of the key images for this landmark.
           _updateDraggableSheetContent('audio', 1);
         },
       }, // Top-left
+      {
+        'angle': -2 * pi / 1.01,
+        'assetPath': 'assets/icons/back_icon.png',
+        'delay': 0.2,
+        'label': 'Close',
+        'isVisible': true, // Initially hidden"
+        'onTapAction': () {
+          print('Close icon tapped!');
+          _resetRecognition();
+        },
+      }, // Right
     ];
 
     return Stack(
@@ -745,8 +764,11 @@ This is one of the key images for this landmark.
         // AR overlay elements positioned around the center
         ...arElementsData.map((elementData) {
           final double angle = elementData['angle'];
-          final double x = centerX + arIconRadius * cos(angle);
-          final double y = centerY + arIconRadius * sin(angle);
+          final double radiusMultiplier = elementData["label"] == 'Close'
+              ? 1.15 // Close icon is closer to the center
+              : 1.0; // Other icons are at full radius
+          final double x = centerX + arIconRadius * radiusMultiplier * cos(angle);
+          final double y = centerY + arIconRadius * radiusMultiplier * sin(angle);
 
           return Positioned(
             left:
@@ -754,6 +776,7 @@ This is one of the key images for this landmark.
             top:
                 y - (iconSize / 2), // Adjust for icon's own height to center it
             child: _buildSimpleAROverlay(
+              label: elementData['label'],
               delay: elementData['delay'],
               isVisible: elementData['isVisible'],
               assetPath: elementData['assetPath'],
@@ -767,6 +790,7 @@ This is one of the key images for this landmark.
   }
 
   Widget _buildSimpleAROverlay({
+    required String label, // Label for the AR overlay
     required double delay,
     required String assetPath, // Path to your custom icon in the assets folder
     required bool isVisible, // Controls if the overlay is shown
@@ -777,6 +801,11 @@ This is one of the key images for this landmark.
     if (!isVisible) {
       return const SizedBox.shrink();
     }
+
+    if (label == 'Close') {
+      // Special case for the close icon
+      iconSize = 50.0;
+      }
 
     // Animation logic based on _arOverlayProgress (from your state) and individual delay
     // Ensure _arOverlayProgress is accessible here, typically from your State class

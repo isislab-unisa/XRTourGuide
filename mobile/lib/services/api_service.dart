@@ -1,11 +1,16 @@
 import 'package:dio/dio.dart';
 import 'secure_storage_service.dart';
 import 'auth_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 
 class ApiService {
   final Dio _dio;
   final SecureStorageService _storageService = SecureStorageService();
-  final AuthService _authService = AuthService();
+  final Ref ref;
+  // final AuthService _authService = AuthService();
+
 
   final excludedPaths = [
   '/api/token/',
@@ -13,9 +18,9 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.154:80';
+  static const String basicUrl = 'http://172.16.15.156:80';
 
-  ApiService() : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
+  ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -45,8 +50,8 @@ class ApiService {
             }catch (refreshError) {
               print("Refresh Token Error: $refreshError");
               // If refresh fails, log the user out
-              await _storageService.deleteAllTokens();
-              await _authService.logout();
+              // await _storageService.deleteAllTokens();
+              await ref.read(authServiceProvider).logout();
               return handler.reject(e); // Reject the error after logout
             }
             if (newAccessToken != null) {
@@ -82,8 +87,6 @@ class ApiService {
       return newAccessToken;
     } catch (e) {
       // If refresh fails, log the user out
-      await _storageService.deleteAllTokens();
-      await _authService.logout();
       return null;
     }
   }

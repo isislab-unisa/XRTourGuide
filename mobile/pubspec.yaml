@@ -59,6 +59,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   dio: ^5.8.0+1
   webview_flutter: ^4.13.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
@@ -109,6 +110,7 @@ flutter:
     - assets/icons/link.png
     - assets/icons/text.png
     - assets/icons/video.png
+    - assets/icons/back_icon.png
     - assets/exterior.jpg
     - assets/interior.jpg
     - assets/int-exterior.jpg

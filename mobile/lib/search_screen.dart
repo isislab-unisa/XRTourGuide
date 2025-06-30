@@ -4,19 +4,20 @@ import 'models/app_colors.dart';
 import 'services/tour_service.dart';
 import 'tour_details_page.dart';
 import 'models/tour.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   final bool isGuest;
   const SearchScreen({Key? key, required this.isGuest}) : super(key: key);
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen>
+class _SearchScreenState extends ConsumerState<SearchScreen>
     with SingleTickerProviderStateMixin {
 
-  final TourService _tourService = TourService();
+  late TourService _tourService;
 
   // Controller for the search text field
   final TextEditingController _searchController = TextEditingController();
@@ -35,6 +36,7 @@ class _SearchScreenState extends State<SearchScreen>
   @override
   void initState() {
     super.initState();
+    _tourService = ref.read(tourServiceProvider);
     // Initialize filtered destinations with an empty list
     _filteredDestinations = [];
 

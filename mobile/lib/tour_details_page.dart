@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+import 'package:xr_tour_guide/services/auth_service.dart';
 import 'models/app_colors.dart';
 import "models/waypoint.dart";
 import 'models/review.dart';
@@ -14,9 +15,10 @@ import 'services/api_service.dart';
 import 'camera_screen.dart'; // Import your camera screen
 import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 import 'review_list.dart'; // Import your review list screen
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
-class TourDetailScreen extends StatefulWidget {
+class TourDetailScreen extends ConsumerStatefulWidget {
   final int tourId;
   final bool isGuest;
 
@@ -27,14 +29,14 @@ class TourDetailScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<TourDetailScreen> createState() => _TourDetailScreenState();
+  ConsumerState<TourDetailScreen> createState() => _TourDetailScreenState();
 }
 
-class _TourDetailScreenState extends State<TourDetailScreen>
+class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     with TickerProviderStateMixin {
 
-  final TourService _tourService = TourService();
-  final ApiService _apiService = ApiService();
+  late TourService _tourService;
+  late ApiService _apiService;
 
   String _selectedTab = 'About';
   late List<bool> _expandedWaypoints;
@@ -74,6 +76,8 @@ class _TourDetailScreenState extends State<TourDetailScreen>
   @override
   void initState() {
     super.initState();
+    _tourService = ref.read(tourServiceProvider);
+    _apiService = ref.read(apiServiceProvider);
     _loadData();
     _checkLocationPermission();
     _incrementViewCount();
@@ -148,7 +152,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
         setState(() {
           _isLoadingWaypoints = false;
         });
-        _showError('Error loading nearby tours');
+        _showError('Error loading waypoints');
       }
     }
   }
@@ -171,7 +175,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
         setState(() {
           _isLoadingReviews = false;
         });
-        _showError('Error loading nearby tours');
+        _showError('Error loading reviews');
       }
     }
   }

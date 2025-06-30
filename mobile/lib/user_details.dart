@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'models/app_colors.dart';
 import 'services/tour_service.dart';
 import 'models/user.dart';
@@ -17,18 +18,18 @@ enum ProfileScreenState {
   helpSupport,
 }
 
-class UserDetailScreen extends StatefulWidget {
+class UserDetailScreen extends ConsumerStatefulWidget {
   // NEW: Add isGuest parameter to the constructor
   final bool isGuest;
   const UserDetailScreen({Key? key, this.isGuest = false})
     : super(key: key); // Default to false
 
   @override
-  State<UserDetailScreen> createState() => _UserDetailScreenState();
+  ConsumerState<UserDetailScreen> createState() => _UserDetailScreenState();
 }
 
-class _UserDetailScreenState extends State<UserDetailScreen> {
-  final TourService _tourService = TourService();
+class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
+  late TourService _tourService;
 
   // Current screen state - starts with main profile
   ProfileScreenState _currentScreen = ProfileScreenState.main;
@@ -47,6 +48,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _tourService = ref.read(tourServiceProvider);
     // Only load user data if not in guest mode
     if (!widget.isGuest) {
       _loadData();

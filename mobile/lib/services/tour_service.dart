@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:xr_tour_guide/models/tour.dart';
 import 'package:xr_tour_guide/models/category.dart';
 import 'package:xr_tour_guide/models/waypoint.dart';
@@ -8,9 +9,15 @@ import 'secure_storage_service.dart';
 import 'auth_service.dart';
 import 'api_service.dart';
 
+final tourServiceProvider = Provider<TourService>((ref) {
+  final apiService = ref.read(apiServiceProvider);
+  return TourService(apiService);
+});
+
 class TourService {
   // Instance of ApiService to handle API calls
-  final apiService = ApiService();
+  final ApiService apiService;
+  TourService(this.apiService);
 
   // Simulate API call to get nearby tours
   Future<List<Tour>> getNearbyTours() async {
@@ -53,7 +60,7 @@ class TourService {
         throw Exception('Failed to load tours');
       }
     } catch (e) {
-      print("Nearby Tours Retrieval error: $e");
+      print("Tours By category Retrieval error: $e");
       rethrow;
     }
   }
@@ -79,8 +86,9 @@ class TourService {
     try {
       final response = await apiService.getTourWaypoints(tourId);
       if (response.statusCode == 200) {
-        final data = response.data as List;
-        return data.map((waypoint) => Waypoint.fromJson(waypoint)).toList();
+        final data = response.data;
+        final waypointData = data["waypoints"] as List;
+        return waypointData.map((waypoint) => Waypoint.fromJson(waypoint)).toList();
       } else {
         throw Exception('Failed to load tour waypoints');
       }
