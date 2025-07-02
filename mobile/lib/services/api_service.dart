@@ -18,7 +18,7 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.156:80';
+  static const String basicUrl = 'http://172.16.15.163:80';
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
@@ -71,7 +71,10 @@ class ApiService {
   Future<String?> _refreshToken() async {
     try {
       final refreshToken = await _storageService.getRefreshToken();
-      if (refreshToken == null) return null;
+      if (refreshToken == null) {
+        await ref.read(authServiceProvider).logout();
+        return null; // No refresh token available, user should be logged out
+      }
 
       final response = await _dio.post(
         '/api/token/refresh/',
@@ -87,6 +90,8 @@ class ApiService {
       return newAccessToken;
     } catch (e) {
       // If refresh fails, log the user out
+      print("Refresh Token Error: $e");
+      await ref.read(authServiceProvider).logout();
       return null;
     }
   }

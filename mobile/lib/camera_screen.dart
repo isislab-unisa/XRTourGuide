@@ -12,6 +12,7 @@ import 'package:markdown_widget/markdown_widget.dart'; // Keep this for text/lin
 import 'dart:async';
 import 'dart:math';
 import 'services/tour_service.dart';
+import 'models/waypoint.dart';
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 // New imports for media players/viewers
@@ -75,8 +76,8 @@ Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei prin
       'https://picsum.photos/300/200?random=2',
       'https://picsum.photos/300/200?random=3',
     ],
-    this.latitude = 40.9333,
-    this.longitude = 14.7167,
+    required this.latitude,
+    required this.longitude,
   }) : super(key: key);
 
   @override
@@ -120,6 +121,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   double _arOverlayProgress = 0.0;
 
   late TourService _tourService;
+
+  List<Waypoint> _waypoints = [];
+  bool _isLoadingWaypoints = true;
 
   @override
   void initState() {
@@ -206,9 +210,38 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     );
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+
+  Future<void> _getTourWaypoints() async{
+    try {
+      final waypoints = _tourService.getWaypointsByTour(widget.tourId);
+      waypoints.then((value) {
+        if (mounted) {
+          setState(() {
+            _waypoints = value;
+            _isLoadingWaypoints = false;
+          });
+        }
+      });
+    } catch (e) {
+      if (mounted){
+        setState(() {
+          _isLoadingWaypoints = false;
+        });
+      }
+      _showError('Failed to load waypoints: $e');
+    }
+  }
+
   // Set the initial content for the draggable sheet
   void _setInitialContent() {
     setState(() {
+      _getTourWaypoints();
       _currentMarkdownContent = """ 
       """;
       _currentActiveContent = MarkdownWidget(
@@ -934,16 +967,16 @@ This is one of the key images for this landmark.
   }
 
   // Build the mini map in top right using flutter_map
-  Widget _buildMiniMap(BuildContext context) {
+Widget _buildMiniMap(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final mapSize = screenWidth * 0.35; // 35% of screen width
+    final mapSize = screenWidth * 0.35;
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + 16,
       right: 16,
       child: Container(
         width: mapSize,
-        height: mapSize * 0.7, // Rectangular aspect ratio
+        height: mapSize * 0.7,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
@@ -956,87 +989,162 @@ This is one of the key images for this landmark.
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              // Center on the landmark location
-              initialCenter: LatLng(widget.latitude, widget.longitude),
-              // More zoomed in than the detail screen (16.0 vs 13.0)
-              initialZoom: 13.0,
-              // Disable interactions for mini-map
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.none, // Disable all interactions
-              ),
-            ),
-            children: [
-              // Base map layer
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.app',
-              ),
-
-              // Current location marker (if available)
-              if (_currentPosition != null)
-                CurrentLocationLayer(
-                  style: LocationMarkerStyle(
-                    marker: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.6),
-                        shape: BoxShape.circle,
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: const Center(
-                        child: Icon(
-                          Icons.person_pin_circle,
-                          color: Colors.white,
-                          size: 12,
-                        ),
+          child:
+              _isLoadingWaypoints
+                  ? Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 2,
                       ),
                     ),
-                    markerSize: const Size.square(24), // Smaller for mini-map
-                    accuracyCircleColor: AppColors.primary.withOpacity(0.2),
-                    headingSectorColor: AppColors.primary.withOpacity(0.6),
-                  ),
-                ),
-
-              // Landmark marker
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: LatLng(widget.latitude, widget.longitude),
-                    width: 30, // Smaller marker for mini-map
-                    height: 30,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.8),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.location_on,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  )
+                  : _buildMapContent(context),
         ),
       ),
     );
   }
 
+  Widget _buildMapContent(BuildContext context) {
+    // Ora che i waypoint sono caricati, calcola quelli vicini
+    List<Waypoint> nearbyWaypoints = [];
+
+    if (_currentPosition != null && _waypoints.isNotEmpty) {
+      // Calcola le distanze per tutti i waypoint
+      List<Map<String, dynamic>> waypointsWithDistance =
+          _waypoints.map((waypoint) {
+            final distance =
+                Geolocator.distanceBetween(
+                  _currentPosition!.latitude,
+                  _currentPosition!.longitude,
+                  waypoint.latitude,
+                  waypoint.longitude,
+                ) /
+                1000; // Converti da metri a km
+
+            return {'waypoint': waypoint, 'distance': distance};
+          }).toList();
+
+      // Ordina per distanza (dal più vicino al più lontano)
+      waypointsWithDistance.sort(
+        (a, b) => a['distance'].compareTo(b['distance']),
+      );
+
+      // Prendi solo i primi 5 waypoint più vicini
+      nearbyWaypoints =
+          waypointsWithDistance
+              .take(5)
+              .map((item) => item['waypoint'] as Waypoint)
+              .toList();
+    } else if (_waypoints.isNotEmpty) {
+      // Se non hai posizione corrente, mostra i primi 5 waypoint
+      nearbyWaypoints = _waypoints.take(5).toList();
+    }
+
+    // Calcola il centro della mappa
+    LatLng mapCenter;
+    if (_currentPosition != null) {
+      mapCenter = LatLng(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+    } else if (nearbyWaypoints.isNotEmpty) {
+      // Calcola il centro medio dei waypoint
+      double avgLat =
+          nearbyWaypoints.map((w) => w.latitude).reduce((a, b) => a + b) /
+          nearbyWaypoints.length;
+      double avgLng =
+          nearbyWaypoints.map((w) => w.longitude).reduce((a, b) => a + b) /
+          nearbyWaypoints.length;
+      mapCenter = LatLng(avgLat, avgLng);
+    } else {
+      // Fallback: usa le coordinate del landmark originale
+      mapCenter = LatLng(widget.latitude, widget.longitude);
+    }
+
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: mapCenter,
+        initialZoom: 12.0,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.none,
+        ),
+      ),
+      children: [
+        // Base map layer
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.isislab.xrtourguide',
+        ),
+
+        // Current location marker (se disponibile)
+        if (_currentPosition != null)
+          CurrentLocationLayer(
+            style: LocationMarkerStyle(
+              marker: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.6),
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(4),
+                child: const Center(
+                  child: Icon(
+                    Icons.person_pin_circle,
+                    color: Colors.white,
+                    size: 12,
+                  ),
+                ),
+              ),
+              markerSize: const Size.square(24),
+              accuracyCircleColor: AppColors.primary.withOpacity(0.2),
+              headingSectorColor: AppColors.primary.withOpacity(0.6),
+            ),
+          ),
+
+        // Waypoint markers (solo se ci sono waypoint caricati)
+        if (nearbyWaypoints.isNotEmpty)
+          MarkerLayer(
+            markers:
+                nearbyWaypoints.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final waypoint = entry.value;
+
+                  return Marker(
+                    point: LatLng(waypoint.latitude, waypoint.longitude),
+                    width: 28,
+                    height: 28,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.8),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+          ),
+      ],
+    );
+  }
   // Build the draggable bottom sheet with landmark information
   Widget _buildDraggableSheet(BuildContext context) {
     return DraggableScrollableSheet(

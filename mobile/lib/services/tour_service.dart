@@ -151,10 +151,10 @@ Future<User> getUserDetails() async {
         name: data['first_name'],
         surname: data['last_name'],
         mail: data['email'],
-        city: "Avellino",
+        city: data['city'] ?? '',
         token: "abc",
         description: data['description'] ?? '',
-        reviewCount: data['review_count'] ?? 0,
+        reviewCount: data['reviewCount'] ?? 0,
       );
     } else {
       throw Exception('Failed to load user details');

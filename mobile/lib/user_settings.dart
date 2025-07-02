@@ -309,12 +309,12 @@ void _handleBack(BuildContext context) {
     // In a real app, you would clear user session, tokens, etc.
     Navigator.of(context).pop(); // Close the bottom sheet
     await authService.logout(); // Call the logout method from AuthService
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => const AuthChecker(),
-      ),
-      (route) => false,
-    );                            
+    // Navigator.of(context).pushAndRemoveUntil(
+    //   MaterialPageRoute(
+    //     builder: (context) => const AuthChecker(),
+    //   ),
+    //   (route) => false,
+    // );                            
     // Navigate back to login or onboarding screen
     print('User logged out');
   }

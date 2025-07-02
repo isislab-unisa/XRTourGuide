@@ -504,7 +504,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                     // _apiService.initializeInferenceModule(widget.tourId);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId)),
+                      MaterialPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude)),
                     );
                   },
                 ),
@@ -1061,7 +1061,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ARCameraScreen(tourId: widget.tourId),
+                                    builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude),
                                   ),
                                 );
                                 print('Activate AR Guide');
@@ -1363,7 +1363,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                 ),
               ),
             ] else if (_selectedTab == 'Itinerario') ...[
-              if (_tourDetails!.category != "Interno" && _tourDetails!.category != "Cibo")
+              if (_tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
                 // Interactive Map view using flutter_map
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -1560,9 +1560,16 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
               child: InkWell(
                 onTap: () {
                   setState(() {
+
+                    for (int i = 0; i < _expandedWaypoints.length; i++) {
+                      if (i != index) {
+                        _expandedWaypoints[i] = false; // Collapse other waypoints
+                      }
+                    }
+
                     _expandedWaypoints[index] = !_expandedWaypoints[index];
                     _selectedWaypointIndex = index;
-                    if (_selectedTab == 'Itinerario' && (tourCategory != "Interno" && tourCategory != "Cibo")) {
+                    if (_selectedTab == 'Itinerario' && (tourCategory != "INSIDE" && tourCategory != "Cibo")) {
                       // Center map on waypoint when expanded in Mappa tab
                       _centerMap(LatLng(_waypoints[index].latitude, _waypoints[index].longitude));
                     }
