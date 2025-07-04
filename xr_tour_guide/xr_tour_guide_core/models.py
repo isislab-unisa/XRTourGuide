@@ -81,16 +81,16 @@ class TourQuerySet(models.QuerySet):
         super().delete(*args, **kwargs)
 
 class Tour(models.Model):
-    title = models.CharField(max_length=200, blank=True, null=True, unique=True)
+    title = models.CharField(max_length=200, blank=False, null=False, unique=True)
     subtitle = models.CharField(max_length=200, blank=True, null=True)
-    place = models.CharField(max_length=200, blank=True, null=True)
+    place = models.CharField(max_length=200, blank=False, null=False)
     coordinates = PlainLocationField(zoom=7, null=True, blank=True)
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
         default=Category.INSIDE,
     )
-    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=True, blank=True)
+    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False)
     description = models.TextField(null=True, blank=True)
     objects = TourQuerySet.as_manager()
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -118,16 +118,20 @@ class Tour(models.Model):
         return f"{self.pk}"
     
     def delete(self, *args, **kwargs):
+        for sub_tour in self.sub_tours.all():
+            sub_tour.delete()
+
         folder_name = self.get_folder_name() + "/"
         storage = MinioStorage()
         elements = storage.bucket.objects.filter(Prefix=folder_name)
         try:
             for k in elements:
                 k.delete()
-        except:
+        except Exception:
             objects = list(storage.bucket.objects.all())
             object_keys = [obj.key for obj in objects]
             raise Exception(f"La cartella {folder_name} non esiste. Oggetti presenti: {object_keys}")
+
         super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):

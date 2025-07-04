@@ -69,6 +69,13 @@ class WaypointForm(forms.ModelForm):
         label='Views',
         widget=MultipleClearableFileInput()
     )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'coordinates' in self.fields:
+            old_classes = self.fields['coordinates'].widget.attrs.get('class', '')
+            new_classes = f"{old_classes} waypoint-coordinates-field".strip()
+            self.fields['coordinates'].widget.attrs['class'] = new_classes
 
     def clean_uploaded_images(self):
         field_name = self.add_prefix('uploaded_images')
@@ -133,6 +140,9 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     date_hierarchy = 'creation_time'
 
     inlines = [WaypointAdmin]
+
+    class Media:
+        js = ['https://code.jquery.com/jquery-3.6.0.min.js', 'admin/js/hide_waypoint_coordinates.js']
 
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
