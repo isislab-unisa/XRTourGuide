@@ -47,16 +47,18 @@ from django.views import View
 def tour_list(request):
     searchTerm = request.GET.get('searchTerm', '')
     category = request.GET.get('category', '')
-    filters = Q()
+
+    queryset = Tour.objects.filter(parent_tours__isnull=True)
+
     if category:
-        filters &= Q(category__iexact=category)
+        queryset = queryset.filter(category__iexact=category)
     if searchTerm:
-        filters &= (
-            Q(title__icontains=searchTerm) | 
+        queryset = queryset.filter(
+            Q(title__icontains=searchTerm) |
             Q(place__icontains=searchTerm)
         )
-    tours = Tour.objects.filter(filters) or Tour.objects.all()
-    serializer = TourSerializer(tours, many=True)
+
+    serializer = TourSerializer(queryset, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(

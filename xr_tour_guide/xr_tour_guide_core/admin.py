@@ -140,9 +140,15 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+        qs = qs.filter(parent_tours__isnull=True)
         if request.user.is_superuser:
             return qs
         return qs.filter(user=request.user)
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "sub_tours":
+            kwargs["queryset"] = Tour.objects.filter(category='INSIDE')
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -187,6 +193,7 @@ class WaypointViewImageAdmin(ModelAdmin):
 
 class ReviewAdmin(ModelAdmin):
     pass
+
 admin.site.register(Review, ReviewAdmin)
 admin.site.register(Tour, TourAdmin)
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
