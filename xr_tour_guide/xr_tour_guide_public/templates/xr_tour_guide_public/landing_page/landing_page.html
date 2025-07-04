@@ -41,20 +41,15 @@
         margin-bottom: 40px;
     }
 
-    .card-deck {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 30px;
-    }
-
     .location-card {
-        flex: 1 1 300px;
         border: none;
         border-radius: 10px;
         overflow: hidden;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     .location-card:hover {
@@ -101,35 +96,50 @@
 
 <section class="gallery">
     <h2>Discover Southern Italy</h2>
-    <div class="card-deck">
-
-        <div class="location-card card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/Positano_Amalfi_Coast.jpg" alt="Costiera Amalfitana">
-            <div class="card-body">
-                <h5 class="card-title">Costiera Amalfitana</h5>
-                <p class="card-text">One of the most breathtaking coastlines in the world, with dramatic cliffs, charming villages, and Mediterranean flair.</p>
+    <div class="row">
+        {% if tours %}
+            {% for tour in tours %}
+            <div class="col-md-4 mb-4">
+                <div class="location-card card">
+                    <img src="{% url 'stream_minio_resource' %}?tour={{ tour.id }}&file={{ tour.default_image.name|urlencode }}" alt="{{ tour.title }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ tour.title }}</h5>
+                        <p class="card-text">{{ tour.description|default:"No description available." }}</p>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <div class="location-card card">
-            <img src="https://www.italybyevents.com/wp-content/uploads/2015/11/Palinuro-Cilento-Campania-Italy.jpg" alt="Cilento - Palinuro">
-            <div class="card-body">
-                <h5 class="card-title">Cilento - Palinuro</h5>
-                <p class="card-text">Crystal-clear waters, hidden caves, and natural beauty define the Cilento coast — a UNESCO World Heritage Site.</p>
+            {% endfor %}
+        {% else %}
+            <div class="col-md-4 mb-4">
+                <div class="location-card card">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/Positano_Amalfi_Coast.jpg" alt="Costiera Amalfitana">
+                    <div class="card-body">
+                        <h5 class="card-title">Costiera Amalfitana</h5>
+                        <p class="card-text">One of the most breathtaking coastlines in the world, with dramatic cliffs, charming villages, and Mediterranean flair.</p>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <div class="location-card card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/13/Paestum_Temple_Italy.jpg" alt="Paestum - Templi Greci">
-            <div class="card-body">
-                <h5 class="card-title">Paestum - Temples</h5>
-                <p class="card-text">Walk among the best-preserved ancient Greek temples in Italy, immersed in history and timeless architecture.</p>
+            <div class="col-md-4 mb-4">
+                <div class="location-card card">
+                    <img src="https://www.italybyevents.com/wp-content/uploads/2015/11/Palinuro-Cilento-Campania-Italy.jpg" alt="Cilento - Palinuro">
+                    <div class="card-body">
+                        <h5 class="card-title">Cilento - Palinuro</h5>
+                        <p class="card-text">Crystal-clear waters, hidden caves, and natural beauty define the Cilento coast — a UNESCO World Heritage Site.</p>
+                    </div>
+                </div>
             </div>
-        </div>
-
+            <div class="col-md-4 mb-4">
+                <div class="location-card card">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/13/Paestum_Temple_Italy.jpg" alt="Paestum - Templi Greci">
+                    <div class="card-body">
+                        <h5 class="card-title">Paestum - Temples</h5>
+                        <p class="card-text">Walk among the best-preserved ancient Greek temples in Italy, immersed in history and timeless architecture.</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </section>
-
 
 <section class="cta">
     <h3 class="mb-4">Start your journey with XR-Tour Guide</h3>
