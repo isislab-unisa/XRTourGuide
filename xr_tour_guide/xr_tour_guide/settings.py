@@ -273,6 +273,7 @@ UNFOLD = {
                 "title": _("xr_tour_guide"),
                 "separator": False,
                 "collapsible": True,
+                "default_open": True,
                 "items": [
                     {
                         "title": _("Tour"),

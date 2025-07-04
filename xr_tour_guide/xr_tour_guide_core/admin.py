@@ -130,6 +130,22 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                     for uploaded_file in uploaded_files:
                         WaypointViewImage.objects.create(waypoint=waypoint, image=uploaded_file)
 
+from django import forms
+
+class TourForm(forms.ModelForm):
+    class Meta:
+        model = Tour
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        if request and "_popup" in request.GET:
+            self.fields['category'].initial = 'INSIDE'
+            self.fields['category'].disabled = True
+
+
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours')
@@ -138,12 +154,22 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
     date_hierarchy = 'creation_time'
+    form = TourForm
 
     inlines = [WaypointAdmin]
 
     class Media:
         js = ['https://code.jquery.com/jquery-3.6.0.min.js', 'admin/js/hide_waypoint_coordinates.js']
 
+    def get_form(self, request, obj=None, **kwargs):
+        Form = super().get_form(request, obj, **kwargs)
+
+        def form_wrapper(*args, **kw):
+            kw["request"] = request
+            return Form(*args, **kw)
+
+        return form_wrapper
+    
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
     }
