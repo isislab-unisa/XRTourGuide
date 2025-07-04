@@ -32,8 +32,14 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 DEBUG = False
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = ['https://xrtwinscape.di.unisa.it']
+CORS_ORIGIN_ALLOW = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "*"
+]
 
 INSTALLED_APPS = [
     'rest_framework',
