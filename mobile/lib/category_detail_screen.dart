@@ -112,7 +112,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
               vertical: 10.0,
             ),
             child: Text(
-              '${widget.categoryName} ${widget.tours.length} Risultati',
+              '${widget.categoryName} ${_categoriesTour?.length} Risultati',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
