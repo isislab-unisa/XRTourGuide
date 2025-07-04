@@ -34,11 +34,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = False
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-CSRF_TRUSTED_ORIGINS = ['https://xrtwinscape.di.unisa.it']
+CSRF_TRUSTED_ORIGINS = ['https://xrtourguide.di.unisa.it']
 CORS_ORIGIN_ALLOW = True
 
 ALLOWED_HOSTS = [
-    "*"
+    "*", "xrtourguide.di.unisa.it", "www.xrtourguide.di.unisa.it"
 ]
 
 INSTALLED_APPS = [
