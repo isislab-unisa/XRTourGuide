@@ -26,7 +26,7 @@ final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<v
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
 
-await SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
 
@@ -719,6 +719,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -736,189 +737,197 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
 
           return SafeArea(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Accedi Al Tuo Account',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: isTablet ? 400 : double.infinity,
-                      child: const Text(
-                        'Welcome back! Please log in to your account to continue where you left off.',
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Accedi Al Tuo Account',
                         style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.textSecondary,
-                          height: 1.5,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    _buildInputField(
-                      label: 'Username',
-                      controller: _emailController,
-                      icon: Icons.email_outlined,
-                      isEmail: true,
-                      context: context,
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    _buildInputField(
-                      label: 'Password',
-                      controller: _passwordController,
-                      icon: Icons.lock_outline,
-                      isPassword: true,
-                      context: context,
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      width: isTablet ? 400 : double.infinity,
-                      margin: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Row(
-                          //   children: [
-                          //     Checkbox(
-                          //       value: _rememberMe,
-                          //       onChanged: (value) {
-                          //         setState(() {
-                          //           _rememberMe = value ?? false;
-                          //         });
-                          //       },
-                          //       activeColor: AppColors.primary,
-                          //       checkColor: Colors.white,
-                          //     ),
-                          //   ],
-                          // ),
-                          GestureDetector(
-                            onTap: () {
-                              //TODO: Implement forgot password logic
-                              print('Forgot password tapped');
-                              _showDeleteAccountSheet(context);
-                            },
-                            child: const Text(
-                              'Dimenticata La Password?',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: isTablet ? 400 : double.infinity,
+                        child: const Text(
+                          'Welcome back! Please log in to your account to continue where you left off.',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    _buildPrimaryButton(
-                      text: 'Log In',
-                      onPressed: () async {
-                        print("UserLogin");
-                        try {
-                          await authService.login(
-                            _emailController.text,
-                            _passwordController.text,
-                          );
-                        } catch (e) {
-                          _showError(authService.loginErrorMessage ?? 'Login failed');
-                        }
-                      },
-                      context: context,
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      width: isTablet ? 400 : double.infinity,
-                      margin: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
+                      SizedBox(height: screenHeight * 0.04),
+                      _buildInputField(
+                        label: 'Username',
+                        controller: _emailController,
+                        icon: Icons.email_outlined,
+                        isEmail: true,
+                        context: context,
                       ),
-                      child: const Row(
-                        children: [
-                          Expanded(child: Divider(color: AppColors.divider)),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'or',
-                              style: TextStyle(color: AppColors.textSecondary),
-                            ),
-                          ),
-                          Expanded(child: Divider(color: AppColors.divider)),
-                        ],
+                      SizedBox(height: screenHeight * 0.02),
+                      _buildInputField(
+                        label: 'Password',
+                        controller: _passwordController,
+                        icon: Icons.lock_outline,
+                        isPassword: true,
+                        context: context,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildSocialIconButton(
-                          icon: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage(
-                                  'https://developers.google.com/identity/images/g-logo.png',
+                      const SizedBox(height: 16),
+                      Container(
+                        width: isTablet ? 400 : double.infinity,
+                        margin: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Row(
+                            //   children: [
+                            //     Checkbox(
+                            //       value: _rememberMe,
+                            //       onChanged: (value) {
+                            //         setState(() {
+                            //           _rememberMe = value ?? false;
+                            //         });
+                            //       },
+                            //       activeColor: AppColors.primary,
+                            //       checkColor: Colors.white,
+                            //     ),
+                            //   ],
+                            // ),
+                            GestureDetector(
+                              onTap: () {
+                                //TODO: Implement forgot password logic
+                                print('Forgot password tapped');
+                                _showDeleteAccountSheet(context);
+                              },
+                              child: const Text(
+                                'Dimenticata La Password?',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                fit: BoxFit.contain,
                               ),
                             ),
-                          ),
-                          //TODO
-                          onPressed: () => print('Google login'),
+                          ],
                         ),
-                        const SizedBox(width: 20),
-                        _buildSocialIconButton(
-                          icon: const Icon(
-                            Icons.facebook,
-                            color: Colors.blue,
-                            size: 28,
-                          ),
-                          //TODO
-                          onPressed: () => print('Facebook login'),
+                      ),
+                      _buildPrimaryButton(
+                        text: 'Log In',
+                        onPressed: () async {
+                          print("UserLogin");
+                          try {
+                            await authService.login(
+                              _emailController.text,
+                              _passwordController.text,
+                            );
+                          } catch (e) {
+                            _showError(authService.loginErrorMessage ?? 'Login failed');
+                          }
+                        },
+                        context: context,
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        width: isTablet ? 400 : double.infinity,
+                        margin: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
                         ),
-                        // const SizedBox(width: 20),
-                        // _buildSocialIconButton(
-                        //   icon: const Icon(
-                        //     Icons.apple,
-                        //     color: Colors.black,
-                        //     size: 28,
-                        //   ),
-                        //   //TODO
-                        //   onPressed: () => print('Apple login'),
-                        // ),
-                      ],
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    Center(
-                      child: Row(
+                        child: const Row(
+                          children: [
+                            Expanded(child: Divider(color: AppColors.divider)),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'or',
+                                style: TextStyle(color: AppColors.textSecondary),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: AppColors.divider)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            'Non ha un account? ',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                          GestureDetector(
-                            onTap: _navigateToRegister,
-                            child: const Text(
-                              'Registrati',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
+                          _buildSocialIconButton(
+                            icon: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: const BoxDecoration(
+                                image: DecorationImage(
+                                  image: NetworkImage(
+                                    'https://developers.google.com/identity/images/g-logo.png',
+                                  ),
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
+                            //TODO
+                            onPressed: () => print('Google login'),
                           ),
+                          const SizedBox(width: 20),
+                          _buildSocialIconButton(
+                            icon: const Icon(
+                              Icons.facebook,
+                              color: Colors.blue,
+                              size: 28,
+                            ),
+                            //TODO
+                            onPressed: () => print('Facebook login'),
+                          ),
+                          // const SizedBox(width: 20),
+                          // _buildSocialIconButton(
+                          //   icon: const Icon(
+                          //     Icons.apple,
+                          //     color: Colors.black,
+                          //     size: 28,
+                          //   ),
+                          //   //TODO
+                          //   onPressed: () => print('Apple login'),
+                          // ),
                         ],
                       ),
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                  ],
+                      SizedBox(height: screenHeight * 0.04),
+                      Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Non ha un account? ',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                            GestureDetector(
+                              onTap: _navigateToRegister,
+                              child: const Text(
+                                'Registrati',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.04),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -957,6 +966,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
