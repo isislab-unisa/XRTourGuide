@@ -146,8 +146,8 @@ services:
       --email ${EMAIL_CERTBOT}
       --agree-tos
       --no-eff-email
-      -d xrtwinscape.di.unisa.it
-      -d xrtwinscape.di.unisa.it"
+      -d xrtourguide.di.unisa.it
+      -d xrtourguide.di.unisa.it"
   
   certbot-renew:
     image: certbot/certbot
