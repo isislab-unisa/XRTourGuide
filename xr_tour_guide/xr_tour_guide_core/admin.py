@@ -71,7 +71,8 @@ class WaypointForm(forms.ModelForm):
     )
 
     def clean_uploaded_images(self):
-        return self.files.getlist('uploaded_images') if hasattr(self.files, 'getlist') else []
+        field_name = self.add_prefix('uploaded_images')
+        return self.files.getlist(field_name)
     
     def save(self, commit=True):
         instance = super().save(commit=commit)

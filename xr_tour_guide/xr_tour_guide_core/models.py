@@ -34,8 +34,8 @@ def upload_media_item(instance, filename):
 
     return f"{poi_id}/{instance.id}/data/{subfolder}/{filename}"
 
-def default_image_waypoint(instance, file_name):
-    return f"{instance.tour.id}/{instance.id}/default_image/{file_name}"
+# def default_image_waypoint(instance, file_name):
+#     return f"{instance.tour.id}/{instance.id}/default_image/{file_name}"
 
 def default_image_tour(instance, file_name):
     return f"{instance.id}/default_image/{file_name}"
