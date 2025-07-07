@@ -3,7 +3,7 @@ from django.urls import path, include, re_path
 import nested_admin
 from .views import tour_list, tour_details, profile_details, update_profile, delete_account, update_password, stream_minio_resource, \
    get_reviews_by_tour_id, RegisterView, ActivateAccountView, tour_waypoints, tour_detail, create_review, get_reviews_by_user, increment_view_count, \
-   PasswordResetView, PasswordResetConfirmView, PasswordResetConfirmSubmit, PasswordResetConfirmPage
+   PasswordResetView, PasswordResetConfirmView, PasswordResetConfirmSubmit, PasswordResetConfirmPage, build, complete_build
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -41,4 +41,6 @@ urlpatterns = [
    path('forgot-password/', PasswordResetView.as_view(), name='forgot-password'),
    path('reset-password-confirm/<uidb64>/<token>/', PasswordResetConfirmPage.as_view(), name='reset-password-confirm-page'),
    path('reset-password-confirm/<uidb64>/<token>/submit/', PasswordResetConfirmSubmit.as_view(), name='reset-password-confirm-submit'),
+   path("build/", build, name="build"),
+   path("complete_build/", complete_build, name="complete_build"),
 ]

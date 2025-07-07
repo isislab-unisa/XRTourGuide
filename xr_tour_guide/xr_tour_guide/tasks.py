@@ -1,6 +1,6 @@
 import requests
 from celery import shared_task
-from cromo_core.models import Tour, MinioStorage, Status
+from xr_tour_guide_core.models import Tour, MinioStorage, Status
 from django.core.mail import send_mail
 import os
 import json
@@ -11,6 +11,7 @@ from redis.lock import Lock
 from dotenv import load_dotenv
 from django.utils import timezone
 from datetime import timedelta
+from django.core.files.base import ContentFile
 
 load_dotenv()
 
@@ -39,26 +40,45 @@ def call_api_and_save(self, tour_id):
         
         print("Lock acquisito, procedo con la build...")
         try:
+            storage = MinioStorage()
+            if not storage.exists(f"{tour.pk}/data/"):
+                storage.save(f"{tour.pk}/data/train/.keep", ContentFile(b""))
+                storage.save(f"{tour.pk}/data/test/.keep", ContentFile(b""))
+            waypoints = tour.waypoints.all()
+            for waypoint in waypoints:
+                images = waypoint.images.all()
+                num_img = len(images)
+                if num_img < 5:
+                    for image in images:
+                        storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
+                    storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split("/")[-1]}", images[0].image)
+                else:
+                    train = int(num_img * 0.8)
+                    test = num_img - train
+                    for image in images[:train]:
+                        storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
+                    for image in images[-test:]:
+                        storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
+                        
+        except Exception as e:
+            print(f"Errore nella creazione delle cartelle per il train e test: {e}")
+        try:
             payload = {
                 "poi_name": tour.title,
                 "poi_id": str(tour),
                 "data_url": f"{tour_id}",
-                "waypoint_list": [tour.waypoints],
             }
 
-            url = f"http://ai_training:8090/train_model"
-            headers = {"Content-type": "application/json"}
-            response = requests.post(url, headers=headers, json=payload)
-            
+            try:
+                url = f"http://ai_training:8090/train_model"
+                headers = {"Content-type": "application/json"}
+                response = requests.post(url, headers=headers, json=payload)
+            except Exception as e:  
+                print(f"Errore nella chiamata API: {e}")
+                               
             print("Response status code:", response.status_code)
             print(response)
             
-            # Simulazione della build
-            # print("Simulazione build in corso...")
-            
-            # response = requests.Response()
-            # response.status_code = 200
-
             if response.status_code == 200:
                 tour.status = Status.BUILDING
                 tour.build_started_at = timezone.now()
