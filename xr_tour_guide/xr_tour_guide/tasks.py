@@ -49,9 +49,10 @@ def call_api_and_save(self, tour_id):
                 images = waypoint.images.all()
                 num_img = len(images)
                 if num_img < 5:
-                    for image in images:
+                    for i, image in enumerate(images):
                         storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
-                    storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split("/")[-1]}", images[0].image)
+                        if i == 1:
+                            storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
                 else:
                     train = int(num_img * 0.8)
                     test = num_img - train
@@ -65,14 +66,14 @@ def call_api_and_save(self, tour_id):
         try:
             payload = {
                 "poi_name": tour.title,
-                "poi_id": str(tour),
+                "poi_id": str(tour.id),
                 "data_url": f"{tour_id}",
             }
 
             try:
                 url = f"http://ai_training:8090/train_model"
                 headers = {"Content-type": "application/json"}
-                response = requests.post(url, headers=headers, json=payload)
+                response = requests.post(url, headers=headers, json=payload, verify=False)
             except Exception as e:  
                 print(f"Errore nella chiamata API: {e}")
                                
