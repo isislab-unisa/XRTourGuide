@@ -4,40 +4,54 @@
 {% block title %}Log In{% endblock %}
 
 {% block registration_content %}
-    <div class="card rounded-4 border-0 shadow-lg">
-        <div class="card-body">
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow rounded-4 border-0" style="max-width: 400px; width: 100%;">
+        <div class="card-body p-4">
+            <h2 class="card-title text-center mb-3">Log In</h2>
+            <p class="text-center text-muted mb-4">Enter your username and password</p>
 
-        <p class="lead">Enter username and password!</p>
-        <form class="mb-3 mt-md-4" method="post">
-            {% csrf_token %}
-            {% for field in form %}
-                <div class="mb-3">
-                    <input class="form-control" type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" placeholder="{{ field.label }}">
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-floating mb-3">
+                        <input 
+                            type="{{ field.field.widget.input_type }}" 
+                            name="{{ field.name }}" 
+                            id="{{ field.id_for_label }}" 
+                            placeholder="{{ field.label }}" 
+                            class="form-control {% if field.errors %}is-invalid{% endif %}">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {% if field.errors %}
+                            <div class="invalid-feedback">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                {% for error in form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+                <div class="d-flex justify-content-end mb-3">
+                    <a class="text-decoration-none" href="#">Forgot password?</a>
                 </div>
-            {% endfor %}
-            <p class="small">
-                <a class="text-primary" href="#">Forgot password?</a>
-            </p>
+
+                <div class="d-grid mb-3">
+                    <button class="btn btn-primary btn-lg" type="submit">Log in</button>
+                </div>
+            </form>
+
+            <div class="text-center text-muted mb-3">or</div>
+
             <div class="d-grid">
-                <button class="btn btn-primary" type="submit">Log in</button>
+                <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger btn-lg">
+                    <i class="bi bi-google me-2"></i> Log in with Google
+                </a>
             </div>
-        </form>
-
-        {% for error in form.non_field_errors %}
-            <div class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
-        {% endfor %}
-
-        <hr class="my-4">
-
-        <!-- Login con Google -->
-        <div class="d-grid">
-            <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger">
-                <i class="bi bi-google me-2"></i> Login con Google
-            </a>
-        </div>
-
         </div>
     </div>
+</div>
 {% endblock %}

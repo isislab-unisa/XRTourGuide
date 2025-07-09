@@ -1,3 +1,6 @@
+import base64
+import shutil
+import uuid
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -5,7 +8,7 @@ from .serializers import TourSerializer, WaypointSerializer, ReviewSerializer, W
 from django.db.models import Q
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from django.http import StreamingHttpResponse, Http404, FileResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, Http404, FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -28,7 +31,9 @@ from .serializers import RegisterSerializer
 from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
 from django.views import View
-
+from xr_tour_guide.tasks import call_api_and_save
+import os
+from inference.run_inference import run_inference_subproc
 
 @swagger_auto_schema(
     method='get',
@@ -468,3 +473,111 @@ class PasswordResetConfirmSubmit(View):
         user.set_password(new_password)
         user.save()
         return redirect('/')
+
+@permission_classes([AllowAny])
+@api_view(['POST'])
+def build(request):
+    tour_id = int(request.POST.get('tour_id'))
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist as e:
+        print(f"This tour: {tour_id} does not exist")
+    # if tour.status == "READY":
+    tour.status = "ENQUEUED"
+    tour.save()
+    call_api_and_save.apply_async(args=[tour.id], queue='api_tasks')
+    # else:
+    #     return JsonResponse({"message": "Tour already built"}, status=400)
+    return JsonResponse({"message": "Build started"}, status=200)
+
+@permission_classes([IsAuthenticated])
+@api_view(['POST'])
+def complete_build(request):
+    print(f"Request data: {request.POST.get("tour_id")}")
+    tour_title = request.data.get('tour_name')
+    tour_id =request.data.get('tour_id')
+    model_url = request.data.get('model_url')
+    status = request.data.get('status')
+    
+    if status == "COMPLETED":
+        try:
+            Tour = Tour.objects.get(pk=int(tour_id))
+            Tour.model_path = model_url
+            Tour.status = "BUILT"
+            Tour.save()
+        except Tour.DoesNotExist:
+            return JsonResponse({"error": "Cromo POI not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": f"Error saving Cromo POI: {str(e)}"}, status=500)
+        send_mail(
+            'Build completata',
+            f"Lezione {Tour.title} buildata.",
+            os.environ.get('EMAIL_HOST_USER'),
+            [Tour.user.email],
+            fail_silently=False,
+        )
+        return JsonResponse({"message": "Build completata"}, status=200)
+    else:
+        Tour = Tour.objects.get(pk=tour_id)
+        Tour.status = "FAILED"
+        Tour.save()
+        
+        send_mail(
+            'Build fallita',
+            f"Build Fallita {Tour.title}.",
+            os.environ.get('EMAIL_HOST_USER'),
+            [Tour.user.email],
+            fail_silently=False,
+        )
+        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def load_model(request, tour_id):
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+    storage = MinioStorage()
+    if not os.path.exists(f"model_{tour_id}.pth") and storage.exists(f"{tour_id}/model.pth"):
+        model_file = storage.open(f"/models/{tour_id}/model.pth")
+        with open(f"model_{tour_id}.pth", 'wb') as f:
+            for chunk in model_file.chunks():
+                f.write(chunk)
+    else:
+        return JsonResponse({"error": "Model not found"}, status=404)
+    return JsonResponse({"message": "Model loaded"}, status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def load_model(request):
+    tour_id = request.data.get('tour_id')
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+    
+    img_base_64 = request.data.get('img')
+    input_image = base64.b64decode(img_base_64)
+    
+    #SAVE IMAGE LOCALLY
+    unique_id = str(uuid.uuid4())
+    data_path = os.path.join("/data", tour_id, unique_id)
+    os.makedirs(data_path, exist_ok=True)
+    image_path = os.path.join(data_path, "input_image.jpg")
+    with open(image_path, "wb") as f:
+        f.write(input_image)
+    print("DATA DOWNLOADED")
+    
+    #RUN INFERENCE
+    result = run_inference_subproc(
+        input_dir=os.path.join(data_path, "input_image.jpg"),
+        model_path=os.path.join(f"models/{tour_id}/model.pth", "model.pth"),
+    )
+    
+    print("INFERENCE DONE")
+    
+    shutil.rmtree(data_path, ignore_errors=True)
+
+    return JsonResponse({"result": result}, status=200)
+        
