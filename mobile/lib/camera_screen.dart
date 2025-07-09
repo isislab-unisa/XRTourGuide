@@ -14,6 +14,8 @@ import 'dart:math';
 import 'services/tour_service.dart';
 import 'models/waypoint.dart';
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:easy_localization/easy_localization.dart";
+
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';

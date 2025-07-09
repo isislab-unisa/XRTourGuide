@@ -18,7 +18,7 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.157:80';
+  static const String basicUrl = 'http://172.16.15.163:80';
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
@@ -326,7 +326,7 @@ class ApiService {
     }
   }
 
-  Future<Response> inference(String imageBase64) async {
+  Future<Response> inference(String imageBase64, int tourId) async {
     try {
       final response = await dio.get('/tour_categories/');
       return response;

@@ -16,6 +16,8 @@ import 'camera_screen.dart'; // Import your camera screen
 import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 import 'review_list.dart'; // Import your review list screen
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:easy_localization/easy_localization.dart";
+
 
 
 class TourDetailScreen extends ConsumerStatefulWidget {
@@ -634,8 +636,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Description section
-                            const Text(
-                              'Description',
+                            Text(
+                              'description'.tr(),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -704,8 +706,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
                             // Photos section
                             if (selectedWaypoint.images.isNotEmpty) ...[
-                              const Text(
-                                'Photos',
+                              Text(
+                                'photos'.tr(),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -747,7 +749,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 onPressed:
                                     () => _launchMapApp(selectedWaypoint.latitude, selectedWaypoint.longitude),
                                 icon: const Icon(Icons.navigation),
-                                label: const Text('Navigate to this Waypoint'),
+                                label: Text('navigate_to_waypoint'.tr()),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -941,7 +943,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   Row(
                     children: [
                       Text(
-                        "Created by ${_tourDetails?.creator}",
+                        "created_by".tr(namedArgs: {'creator': _tourDetails?.creator ?? ''}),
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -950,7 +952,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                       ),
                       const Spacer(),
                       Text(
-                        "Last edited: ${_tourDetails?.lastEdited}",
+                        "last_edited".tr(namedArgs: {'date': _tourDetails?.lastEdited ?? ''}),
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -1099,7 +1101,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                 children: [
                   _buildNavTab(
                     icon: Icons.info_outline,
-                    label: 'About',
+                    label: 'about_tab'.tr(),
                     isSelected: _selectedTab == 'About',
                     onTap: () {
                       setState(() {
@@ -1110,7 +1112,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   SizedBox(width: 10),
                   _buildNavTab(
                     icon: Icons.route_outlined,
-                    label: 'Itinerario',
+                    label: 'itinerary_tab'.tr(),
                     isSelected: _selectedTab == 'Itinerario',
                     onTap: () {
                       setState(() {
@@ -1122,7 +1124,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   if (_tourDetails!.category != "Interno" && _tourDetails!.category != "Cibo")
                     _buildNavTab(
                       icon: Icons.map_outlined,
-                      label: 'Mappa',
+                      label: 'map_tab'.tr(),
                       // buttonColor: Color.fromARGB(255, 255, 191, 0),
                       // buttonColor: Color.fromARGB(255, 195, 247, 58),
                       buttonColor: Color.fromARGB(255, 178, 237, 197),
@@ -1162,8 +1164,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Tour Highlights:',
+                      Text(
+                        'tour_highlights'.tr(),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1192,8 +1194,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'Verified Reviews',
+                        Text(
+                          'verified_reviews'.tr(),
                           style: TextStyle(
                             fontSize: 23,
                             fontWeight: FontWeight.bold,
@@ -1269,7 +1271,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 ],
                               ),
                               Text(
-                                'Based on ${_tourDetails!.reviewCount} Reviews',
+                                'based_on_reviews'.tr(namedArgs: {'count': '${_tourDetails!.reviewCount}'}),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: AppColors.textSecondary,
@@ -1601,7 +1603,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                         ),
                         child: Center(
                           child: Text(
-                            tourCategory != "nested" ? '${index + 1}' : '${parentIndex! + 1}.${index + 1}',
+                            tourCategory != "MIXED" ? '${index + 1}' : '${parentIndex! + 1}.${index + 1}',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -1703,7 +1705,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                       child: ElevatedButton.icon(
                         onPressed: () => _launchMapApp(latitude, longitude),
                         icon: const Icon(Icons.navigation),
-                        label: const Text('Navigate to this Waypoint'),
+                        label: Text('navigate_to_waypoint'.tr()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -1731,7 +1733,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                   subtitle: sub.subtitle,
                                   description: sub.description,
                                   images: sub.images,
-                                  tourCategory: "nested",
+                                  tourCategory: "MIXED",
                                   latitude: sub.latitude,
                                   longitude: sub.longitude,
                                   subWaypoints: sub.subWaypoints,
@@ -1904,9 +1906,9 @@ void _showLeaveReviewSheet(int tourId) {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Leave a Review',
+                        'leave_review'.tr(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -1935,8 +1937,8 @@ void _showLeaveReviewSheet(int tourId) {
                       }),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Comments:',
+                    Text(
+                      'comments'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1967,7 +1969,7 @@ void _showLeaveReviewSheet(int tourId) {
                         controller: _reviewController,
                         maxLines: 5,
                         decoration: InputDecoration(
-                          hintText: 'Tell us about your experience...',
+                          hintText: 'comment_hint'.tr(),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -1988,7 +1990,7 @@ void _showLeaveReviewSheet(int tourId) {
                           onPressed: () {
                             Navigator.pop(context); // Close the sheet
                           },
-                          child: const Text('Cancel'),
+                          child: Text('cancel'.tr()),
                         ),
                         const SizedBox(width: 25),
                         TextButton(
@@ -2010,13 +2012,13 @@ void _showLeaveReviewSheet(int tourId) {
 
                             // Optionally, show a confirmation message
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Thank you for your review!'),
+                              SnackBar(
+                                content: Text('review_success'.tr()),
                                 backgroundColor: Colors.green,
                               ),
                             );
                           },
-                          child: const Text('Send'),
+                          child: Text('send'.tr()),
                         ),
                       ],
                     ),

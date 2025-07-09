@@ -60,6 +60,7 @@ dependencies:
   dio: ^5.8.0+1
   webview_flutter: ^4.13.0
   shared_preferences: ^2.2.2
+  easy_localization: ^3.0.3
 
 dev_dependencies:
   flutter_test:
@@ -108,6 +109,7 @@ flutter:
     - assets/exterior.jpg
     - assets/interior.jpg
     - assets/int-exterior.jpg
+    - assets/translations/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

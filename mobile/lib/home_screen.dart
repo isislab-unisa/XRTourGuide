@@ -11,6 +11,8 @@ import 'models/category.dart';
 import 'services/tour_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:easy_localization/easy_localization.dart";
+
 
 class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
@@ -84,7 +86,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
         setState(() {
           _isLoadingNearby = false;
         });
-        _showError('Error loading nearby tours');
+        _showError('error_loading_tours'.tr());
       }
     }
   }
@@ -103,7 +105,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
         setState(() {
           _isLoadingCategories = false;
         });
-        _showError('Error loading categories');
+        _showError('error_loading_categories'.tr());
       }
     }
   }
@@ -301,7 +303,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
                           Icon(Icons.search, color: AppColors.textSecondary),
                           const SizedBox(width: 12),
                           Text(
-                            'What do you want to see?',
+                            'search_bar_hint'.tr(),
                             style: TextStyle(
                               color: AppColors.textSecondary.withOpacity(0.7),
                               fontSize: 16,
@@ -326,7 +328,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
                         vertical: 10.0,
                       ),
                       child: Text(
-                        'Recent Tours',
+                        'recent_tours'.tr(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -405,7 +407,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Categories',
+                      'categories'.tr(),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -516,11 +518,11 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Explore'),
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'explore_nav'.tr()),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
-            label: 'Profile',
+            label: 'profile_nav'.tr(),
           ),
         ],
         currentIndex: 0,

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
+import "package:easy_localization/easy_localization.dart";
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
@@ -25,6 +26,8 @@ final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<v
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
+
+  await EasyLocalization.ensureInitialized();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -49,7 +52,15 @@ Future<void> main() async {
 
 
   runApp(
-    const ProviderScope(child: MyApp()),
+    EasyLocalization(
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('it', 'IT'),
+      ],
+      path: 'assets/translations', // Path to your translation files
+      fallbackLocale: const Locale('en', 'US'),
+      child: const ProviderScope(child: MyApp()),
+    ),
   );
 }
 
@@ -60,7 +71,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'XR Tour Guide',
+      title: "app_name".tr(),
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
       theme: ThemeData(
@@ -141,8 +155,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
     if (widget.registeredTemp) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registered successfully, now verify your email to login'),
+          SnackBar(
+            content: Text('register_success_message'.tr()),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             margin: EdgeInsets.only(bottom: 40, left: 16, right: 16),
@@ -380,8 +394,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            'Iniziamo!',
+                          Text(
+                            'onboarding_title'.tr(),
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -393,8 +407,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             padding: EdgeInsets.symmetric(
                               horizontal: isTablet ? 80 : 40,
                             ),
-                            child: const Text(
-                              'Welcome to your journey! We\'re thrilled to have you here.',
+                            child: Text(
+                              'onboarding_subtitle'.tr(),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -405,7 +419,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                           ),
                           SizedBox(height: screenHeight * 0.08),
                           _buildSocialButton(
-                            text: 'Continue With Google',
+                            text: 'google_log'.tr(),
                             icon: Container(
                               width: 20,
                               height: 20,
@@ -424,7 +438,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             context: context,
                           ),
                           _buildSocialButton(
-                            text: 'Continue With Facebook',
+                            text: 'facebook_log'.tr(),
                             icon: const Icon(
                               Icons.facebook,
                               color: Colors.blue,
@@ -442,7 +456,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                   isTablet ? (screenWidth - 400) / 2 : 20,
                             ),
                             width: isTablet ? 400 : double.infinity,
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Expanded(
                                   child: Divider(color: AppColors.divider),
@@ -450,7 +464,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
-                                    'or',
+                                    'or'.tr(),
                                     style: TextStyle(
                                       color: AppColors.textSecondary,
                                     ),
@@ -463,7 +477,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             ),
                           ),
                           _buildPrimaryButton(
-                            text: 'Log In',
+                            text: 'login'.tr(),
                             onPressed: _navigateToLogin,
                             context: context,
                           ),
@@ -475,14 +489,14 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            'Non ha un account? ',
+                          Text(
+                            'no_account'.tr(),
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
                           GestureDetector(
                             onTap: _navigateToRegister,
-                            child: const Text(
-                              'Registrati',
+                            child: Text(
+                              'register'.tr(),
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
@@ -493,7 +507,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       ),
                     ),
                     _buildPrimaryButton(
-                      text: 'Guest Log In',
+                      text: 'guest_login'.tr(),
                       onPressed: () {
                         setState(() {
                           //navigate to main page as guest
@@ -550,8 +564,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
             ),
             const SizedBox(height: 20),
             // Title
-            const Text(
-              'Reset Password',
+            Text(
+              'password_reset'.tr(),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -569,7 +583,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                   TextField(
                     controller: _resetPasswordController,
                     decoration: InputDecoration(
-                      hintText: 'Enter your mail to send reset link',
+                      hintText: 'password_reset_desc'.tr(),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
                         borderSide: const BorderSide(color: AppColors.border),
@@ -606,8 +620,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text(
-                            'Cancel',
+                          child: Text(
+                            'cancel'.tr(),
                             style: TextStyle(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w500,
@@ -628,7 +642,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      response.data['message'] ?? 'Password reset link sent successfully',
+                                      response.data['message'] ?? 'password_reset_success'.tr(),
                                     ),
                                     backgroundColor: Colors.green,
                                     behavior: SnackBarBehavior.floating,
@@ -674,8 +688,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text(
-                            'Recover',
+                          child: Text(
+                            'recover'.tr(),
                             style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ),
@@ -750,8 +764,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
-                      const Text(
-                        'Accedi Al Tuo Account',
+                      Text(
+                        'login_title'.tr(),
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -761,8 +775,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       const SizedBox(height: 8),
                       SizedBox(
                         width: isTablet ? 400 : double.infinity,
-                        child: const Text(
-                          'Welcome back! Please log in to your account to continue where you left off.',
+                        child: Text(
+                          'login_subtitle'.tr(),
                           style: TextStyle(
                             fontSize: 16,
                             color: AppColors.textSecondary,
@@ -811,12 +825,11 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             // ),
                             GestureDetector(
                               onTap: () {
-                                //TODO: Implement forgot password logic
                                 print('Forgot password tapped');
                                 _showDeleteAccountSheet(context);
                               },
-                              child: const Text(
-                                'Dimenticata La Password?',
+                              child: Text(
+                                'forgot_password'.tr(),
                                 style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w500,
@@ -827,7 +840,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                         ),
                       ),
                       _buildPrimaryButton(
-                        text: 'Log In',
+                        text: 'login'.tr(),
                         onPressed: () async {
                           print("UserLogin");
                           try {
@@ -847,13 +860,13 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                         margin: EdgeInsets.symmetric(
                           horizontal: horizontalPadding,
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Expanded(child: Divider(color: AppColors.divider)),
                             Padding(
                               padding: EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
-                                'or',
+                                'or'.tr(),
                                 style: TextStyle(color: AppColors.textSecondary),
                               ),
                             ),
@@ -908,14 +921,14 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              'Non ha un account? ',
+                            Text(
+                              'no_account'.tr(),
                               style: TextStyle(color: AppColors.textSecondary),
                             ),
                             GestureDetector(
                               onTap: _navigateToRegister,
-                              child: const Text(
-                                'Registrati',
+                              child: Text(
+                                'register'.tr(),
                                 style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w600,
@@ -990,8 +1003,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
-                    const Text(
-                      'Crea Il Tuo Account',
+                    Text(
+                      'create_account_title'.tr(),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -1001,8 +1014,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                     const SizedBox(height: 8),
                     SizedBox(
                       width: isTablet ? 400 : double.infinity,
-                      child: const Text(
-                        'Please fill in your details to create your account and enjoy our services.',
+                      child: Text(
+                        'create_account_subtitle'.tr(),
                         style: TextStyle(
                           fontSize: 16,
                           color: AppColors.textSecondary,
@@ -1019,21 +1032,21 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     _buildInputField(
-                      label: 'Name',
+                      label: 'name'.tr(),
                       controller: _nameController,
                       icon: Icons.person_outline,
                       context: context,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     _buildInputField(
-                      label: 'Surname',
+                      label: 'surname'.tr(),
                       controller: _surnameController,
                       icon: Icons.person_outline,
                       context: context,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     _buildInputField(
-                      label: 'Email',
+                      label: 'email'.tr(),
                       controller: _emailController,
                       icon: Icons.email_outlined,
                       isEmail: true,
@@ -1051,21 +1064,21 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     //TODO: Add city input field with city research functionality
                     _buildInputField(
-                      label: 'City',
+                      label: 'city'.tr(),
                       controller: _cityController,
                       icon: Icons.location_city_outlined,
                       context: context,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     _buildInputField(
-                      label: 'Description',
+                      label: 'description'.tr(),
                       controller: _descriptionController,
                       icon: Icons.description_outlined,
                       context: context,
                     ),
 
                     _buildPrimaryButton(
-                      text: 'Sign Up',
+                      text: 'register'.tr(),
                       onPressed: () {
                         setState(() {
                           authService.register(
@@ -1148,14 +1161,14 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            'Hai già un account? ',
+                          Text(
+                            'already_have_account'.tr(),
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
                           GestureDetector(
                             onTap: _navigateToLogin,
-                            child: const Text(
-                              'Accedi',
+                            child: Text(
+                              'login'.tr(),
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,

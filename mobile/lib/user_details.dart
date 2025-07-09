@@ -8,6 +8,8 @@ import 'models/review.dart';
 import 'user_settings.dart'; // Ensure this import is correct for UserProfileScreen
 import 'review_list.dart';
 import 'main.dart'; // Adjust import based on your project structure
+import "package:easy_localization/easy_localization.dart";
+
 
 // Enum to track which profile screen is currently active
 enum ProfileScreenState {
@@ -287,8 +289,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                     children: [
                       Row(
                         children: [
-                          const Text(
-                            'Your Reviews',
+                          Text(
+                            'your_reviews'.tr(),
                             style: TextStyle(
                               fontSize: 23,
                               fontWeight: FontWeight.bold,
@@ -349,11 +351,11 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'More',
+                                'more'.tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -371,11 +373,11 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                         ),
                       ),
                     ] else ...[
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 24.0),
                         child: Center(
                           child: Text(
-                            "You still haven't reviewed anything",
+                            "no_reviews".tr(),
                             style: TextStyle(
                               fontSize: 16,
                               color: AppColors.textSecondary,
@@ -464,8 +466,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Guest', // As shown in profile_guest.jpg
+                  Text(
+                    'guest'.tr(), // As shown in profile_guest.jpg
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -496,8 +498,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                                 borderRadius: BorderRadius.circular(25),
                               ),
                             ),
-                            child: const Text(
-                              'Log In', // As shown in profile_guest.jpg
+                            child: Text(
+                              'login'.tr(), // As shown in profile_guest.jpg
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -564,9 +566,9 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
             // In a real app, you'd navigate to the respective root screen for each tab
           }
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Explore'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'explore_nav'.tr()),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'profile_nav'.tr()),
         ],
       ),
     );
