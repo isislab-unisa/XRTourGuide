@@ -25,3 +25,9 @@ django-celery-beat
 django-multiupload
 django-allauth
 cryptography
+
+# requirements for inference
+torch==2.7.0
+torchvision==0.22.0
+pillow==11.0.0
+numpy==2.2.5

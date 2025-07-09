@@ -1,3 +1,6 @@
+import base64
+import shutil
+import uuid
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -5,7 +8,7 @@ from .serializers import TourSerializer, WaypointSerializer, ReviewSerializer, W
 from django.db.models import Q
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from django.http import JsonResponse, StreamingHttpResponse, Http404, FileResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, Http404, FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -30,6 +33,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from xr_tour_guide.tasks import call_api_and_save
 import os
+from inference.run_inference import run_inference_subproc
 
 @swagger_auto_schema(
     method='get',
@@ -526,3 +530,54 @@ def complete_build(request):
             fail_silently=False,
         )
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def load_model(request, tour_id):
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+    storage = MinioStorage()
+    if not os.path.exists(f"model_{tour_id}.pth") and storage.exists(f"{tour_id}/model.pth"):
+        model_file = storage.open(f"/models/{tour_id}/model.pth")
+        with open(f"model_{tour_id}.pth", 'wb') as f:
+            for chunk in model_file.chunks():
+                f.write(chunk)
+    else:
+        return JsonResponse({"error": "Model not found"}, status=404)
+    return JsonResponse({"message": "Model loaded"}, status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def load_model(request):
+    tour_id = request.data.get('tour_id')
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+    
+    img_base_64 = request.data.get('img')
+    input_image = base64.b64decode(img_base_64)
+    
+    #SAVE IMAGE LOCALLY
+    unique_id = str(uuid.uuid4())
+    data_path = os.path.join("/data", tour_id, unique_id)
+    os.makedirs(data_path, exist_ok=True)
+    image_path = os.path.join(data_path, "input_image.jpg")
+    with open(image_path, "wb") as f:
+        f.write(input_image)
+    print("DATA DOWNLOADED")
+    
+    #RUN INFERENCE
+    result = run_inference_subproc(
+        input_dir=os.path.join(data_path, "input_image.jpg"),
+        model_path=os.path.join(f"models/{tour_id}/model.pth", "model.pth"),
+    )
+    
+    print("INFERENCE DONE")
+    
+    shutil.rmtree(data_path, ignore_errors=True)
+
+    return JsonResponse({"result": result}, status=200)
+        
