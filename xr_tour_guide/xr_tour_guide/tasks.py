@@ -44,6 +44,24 @@ def call_api_and_save(self, tour_id):
             if not storage.exists(f"{tour.pk}/data/"):
                 storage.save(f"{tour.pk}/data/train/.keep", ContentFile(b""))
                 storage.save(f"{tour.pk}/data/test/.keep", ContentFile(b""))
+                
+            for subtours in tour.sub_tours.all():
+                waipoints = subtours.waypoints.all()
+                for waypoint in waipoints:
+                    num_img = len(waypoint.images.all())
+                    if num_img < 5:
+                        for i, image in enumerate(waypoint.images.all()):
+                            storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
+                            if i == 1:
+                                storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
+                    else:
+                        train = int(num_img * 0.8)
+                        test = num_img - train
+                        for image in waypoint.images.all()[:train]:
+                            storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
+                        for image in waypoint.images.all()[train:]:
+                            storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
+                            
             waypoints = tour.waypoints.all()
             for waypoint in waypoints:
                 images = waypoint.images.all()
@@ -58,7 +76,7 @@ def call_api_and_save(self, tour_id):
                     test = num_img - train
                     for image in images[:train]:
                         storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
-                    for image in images[-test:]:
+                    for image in images[train:]:
                         storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
                         
         except Exception as e:
