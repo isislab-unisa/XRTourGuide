@@ -82,13 +82,49 @@ class TourService {
     }
   }
 
-  Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
+Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
     try {
       final response = await apiService.getTourWaypoints(tourId);
       if (response.statusCode == 200) {
         final data = response.data;
         final waypointData = data["waypoints"] as List;
-        return waypointData.map((waypoint) => Waypoint.fromJson(waypoint)).toList();
+
+        // Waypoints principali del tour
+        List<Waypoint> allWaypoints =
+            waypointData
+                .map((waypoint) => Waypoint.fromJson(waypoint))
+                .toList();
+
+        // Se ci sono sub-tours, aggiungi i loro waypoints come sub-waypoints
+        if (data.containsKey('sub_tours') && data['sub_tours'] != null) {
+          final subTours = data['sub_tours'] as List;
+
+          for (var subTour in subTours) {
+            final subWaypointData = subTour['waypoints'] as List;
+            final subWaypoints =
+                subWaypointData
+                    .map((waypoint) => Waypoint.fromJson(waypoint))
+                    .toList();
+
+            // Crea un waypoint principale per il sub-tour
+            final subTourInfo = subTour['sub_tour'];
+            final subTourWaypoint = Waypoint(
+              id: subTourInfo['id'],
+              title: subTourInfo['title'],
+              subtitle: subTourInfo['description'] ?? '',
+              description: subTourInfo['description'] ?? '',
+              latitude: subTourInfo['lat']?.toDouble() ?? 0.0,
+              longitude: subTourInfo['lon']?.toDouble() ?? 0.0,
+              images: [], // Sub-tour principale non ha immagini
+              category: subTourInfo['category'] ?? 'MIXED',
+              subWaypoints: subWaypoints, // Aggiungi i sub-waypoints qui
+            );
+
+            allWaypoints.add(subTourWaypoint);
+          }
+        }
+
+        return allWaypoints;
       } else {
         throw Exception('Failed to load tour waypoints');
       }
@@ -97,7 +133,6 @@ class TourService {
       rethrow;
     }
   }
-
   Future<List<Review>> getReviewByTour({int? tourId, int? userId, required int max}) async {
     List<Review> reviews = [];
     try {

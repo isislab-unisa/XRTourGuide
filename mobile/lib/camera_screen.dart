@@ -221,15 +221,19 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   Future<void> _getTourWaypoints() async{
     try {
-      final waypoints = _tourService.getWaypointsByTour(widget.tourId);
-      waypoints.then((value) {
-        if (mounted) {
-          setState(() {
-            _waypoints = value;
-            _isLoadingWaypoints = false;
-          });
-        }
-      });
+      final waypoints = await _tourService.getWaypointsByTour(widget.tourId);
+      if (mounted) {
+        setState(() {
+          _waypoints = [];
+          for (var waypoint in waypoints) {
+            _waypoints.add(waypoint);
+            if (waypoint.subWaypoints != null){
+              _waypoints.addAll(waypoint.subWaypoints!);
+            }
+          }
+          _isLoadingWaypoints = false;
+        });
+      }
     } catch (e) {
       if (mounted){
         setState(() {

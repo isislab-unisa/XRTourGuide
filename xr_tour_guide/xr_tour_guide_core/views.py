@@ -1,3 +1,7 @@
+import os
+import sys
+# sys.path.append(os.path.join(os.path.dirname(__file__), 'inference'))
+
 import base64
 import shutil
 import uuid
@@ -32,8 +36,8 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
 from django.views import View
 from xr_tour_guide.tasks import call_api_and_save
-import os
-from inference.run_inference import run_inference_subproc
+# from inference.run_inference import run_inference_subproc
+from .inference.run_inference import run_inference_subproc
 
 @swagger_auto_schema(
     method='get',
