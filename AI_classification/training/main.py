@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -75,7 +76,7 @@ def download_minio_folder(prefix: str, local_dir: str, s3_client):
             "list_objects_v2"
         )  # Handles pagination :contentReference[oaicite:3]{index=3}
         for page in paginator.paginate(Bucket=os.getenv("AWS_STORAGE_BUCKET_NAME"), Prefix=prefix):
-            print(f"Page: {page}")
+            print(f"Page: {page}", flush=True)
             for obj in page.get("Contents", []):
                 print(f"Object: {obj}")
                 key = obj["Key"]
@@ -92,9 +93,9 @@ def download_minio_folder(prefix: str, local_dir: str, s3_client):
 
                 # Download the object to the local path
                 s3_client.download_file(os.getenv("AWS_STORAGE_BUCKET_NAME"), key, local_path)
-                print(f"Downloaded {key} → {local_path}")
+                print(f"Downloaded {key} → {local_path}", flush=True)
     except Exception as e:
-        print(f"Error downloading folder from S3: {e}")
+        print(f"Error downloading folder from S3: {e}", flush=True)
         return None
         
     return local_dir
@@ -105,11 +106,11 @@ def read_s3_file(file_name):
         response = s3.get_object(
             Bucket=os.getenv("AWS_STORAGE_BUCKET_NAME"), Key=video_key
         )
-        print("RESPONSE:" + str(response))
+        print("RESPONSE:" + str(response), flush=True)
         data = response["Body"].read()
         return data, video_key
     except Exception as e:
-        print(f"Error reading file from S3: {e}")
+        print(f"Error reading file from S3: {e}", flush=True)
         return None
 
 
@@ -121,9 +122,9 @@ def write_s3_file(file_path, remote_path):
             os.getenv("AWS_STORAGE_BUCKET_NAME"),
             remote_path,
         )
-        print(f"File {remote_path} written to S3")
+        print(f"File {remote_path} written to S3", flush=True)
     except Exception as e:
-        print(f"Error writing file {file_path} to S3: {e}")
+        print(f"Error writing file {file_path} to S3: {e}", flush=True)
 
 
 def run_training_subproc(
@@ -146,16 +147,16 @@ def run_training_subproc(
         if num_epochs != 25:
             cmd.append("--num-epochs")
             cmd.append(str(num_epochs))
-        print("Running command:", " ".join(cmd))
+        print("Running command:", " ".join(cmd), flush=True)
 
         subprocess.run(cmd, check=True)
         return
     except Exception as e:
-        print(f"Training failed: {e}")
+        print(f"Training failed: {e}", flush=True)
 
 
 def run_train(request: Request, view_dir: str, data_path: str):
-    print("Content of directory:", os.listdir(data_path))
+    print("Content of directory:", os.listdir(data_path), flush=True)
     try:
         # RUN THE FULL PIPELINE
         result = run_training_subproc(
@@ -165,12 +166,12 @@ def run_train(request: Request, view_dir: str, data_path: str):
             run_name=request.poi_name,
         )
         
-        if result is None:
-            raise Exception("Training failed")
+        # if result is None:
+        #     raise Exception("Training failed")
 
         model_path = os.path.join(view_dir ,f"model.pth")
         report_path = os.path.join(view_dir, f"probability_table.csv")
-        print("AAAAAAAA", model_path, report_path)
+        print("AAAAAAAA", model_path, report_path, flush=True)
         
         # LOAD ON MINIO
         write_s3_file(
@@ -184,7 +185,7 @@ def run_train(request: Request, view_dir: str, data_path: str):
         
         # DELETE FOLDER
         shutil.rmtree(view_dir, ignore_errors=True)
-        print("Folder deleted")
+        print("Folder deleted", flush=True)
 
         # print("Running full pipeline...")
         # time.sleep(5)  # Simulate processing time
@@ -230,10 +231,13 @@ def run_train(request: Request, view_dir: str, data_path: str):
             )
             print("Callback response:", response.status_code, response.text, flush=True)
         except requests.RequestException as e:
-            print(f"Error sending callback: {e}")
+            print(f"Error sending callback: {e}", flush=True)
 
     except Exception as e:
         print(f"Error processing full pipeline: {e}", flush=True)
+        stacktrace = traceback.format_exc()
+        print(f"Full stacktrace:\n{stacktrace}")
+        
         callback_payload = {
             "poi_id": int(request.poi_id),
             "poi_name": request.poi_name,
@@ -265,9 +269,9 @@ def run_train(request: Request, view_dir: str, data_path: str):
                 json=callback_payload,
                 headers=headers,
             )
-            print("Callback response:", response.status_code, response.text)
+            print("Callback response:", response.status_code, response.text, flush=True)
         except requests.RequestException as e:
-            print(f"Error sending callback: {e}")
+            print(f"Error sending callback: {e}", flush=True)
 
 @app.get("/")
 async def read_root():
@@ -291,7 +295,7 @@ async def train_model(request: Request) -> Response:
                 detail="Data failed to download",
                 error_code=1003,
             )
-        print("DATA DOWNLOADED")
+        print("DATA DOWNLOADED", flush=True)
             
         worker_thread = threading.Thread(
             target=run_train,
