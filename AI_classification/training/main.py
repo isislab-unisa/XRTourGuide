@@ -169,8 +169,8 @@ def run_train(request: Request, view_dir: str, data_path: str):
         # if result is None:
         #     raise Exception("Training failed")
 
-        model_path = os.path.join(view_dir ,f"model.pth")
-        report_path = os.path.join(view_dir, f"probability_table.csv")
+        model_path = os.path.join(view_dir , request.poi_name, f"model.pth")
+        report_path = os.path.join(view_dir, request.poi_name, f"probability_table.csv")
         print("AAAAAAAA", model_path, report_path, flush=True)
         
         # LOAD ON MINIO
