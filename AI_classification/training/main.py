@@ -18,7 +18,7 @@ import dotenv
 dotenv.load_dotenv()
 
 MINIO_ENDPOINT = "http://minio:9000"
-CALLBACK_ENDPOINT = "http://web:8001/complete_build"
+CALLBACK_ENDPOINT = "http://web:8001/complete_build/"
 TOKEN_REQUEST_ENDPOINT = "http://web:8001/api/token/"
 
 
