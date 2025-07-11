@@ -184,8 +184,8 @@ def run_train(request: Request, view_dir: str, data_path: str):
         
         
         # DELETE FOLDER
-        shutil.rmtree(view_dir, ignore_errors=True)
-        print("Folder deleted", flush=True)
+        # shutil.rmtree(view_dir, ignore_errors=True)
+        # print("Folder deleted", flush=True)
 
         # print("Running full pipeline...")
         # time.sleep(5)  # Simulate processing time
@@ -284,9 +284,11 @@ async def train_model(request: Request) -> Response:
         print(f"REQUEST: {request}")
 
         # CREATE A DIRECTORY FOR THE LESSON
-        view_dir = f"/data/{request.poi_id}"
-        os.makedirs(view_dir, exist_ok=True)
-        
+        try:
+            view_dir = f"/data/{request.poi_id}"
+            os.makedirs(view_dir, exist_ok=True)
+        except Exception as e:
+            print(f"Error creating directory: {e}", flush=True)
         # RETRIEVE THE DATA FROM MINIO        
         local_data_path = download_minio_folder(request.data_url, view_dir, s3)
         if local_data_path is None:

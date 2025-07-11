@@ -497,60 +497,43 @@ def build(request):
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
 def complete_build(request):
-    print(f"Request data: {request.POST.get("tour_id")}")
-    tour_title = request.data.get('tour_name')
-    tour_id =request.data.get('tour_id')
+    print(f"Request data: {request.POST.get("poi_id")}")
+    tour_title = request.data.get('poi_name')
+    tour_id =request.data.get('poi_id')
     model_url = request.data.get('model_url')
     status = request.data.get('status')
     
     if status == "COMPLETED":
         try:
-            Tour = Tour.objects.get(pk=int(tour_id))
-            Tour.model_path = model_url
-            Tour.status = "BUILT"
-            Tour.save()
+            tour = Tour.objects.get(pk=int(tour_id))
+            tour.model_path = model_url
+            tour.status = "BUILT"
+            tour.save()
         except Tour.DoesNotExist:
             return JsonResponse({"error": "Cromo POI not found"}, status=404)
         except Exception as e:
             return JsonResponse({"error": f"Error saving Cromo POI: {str(e)}"}, status=500)
         send_mail(
             'Build completata',
-            f"Lezione {Tour.title} buildata.",
+            f"Lezione {tour.title} buildata.",
             os.environ.get('EMAIL_HOST_USER'),
-            [Tour.user.email],
+            [tour.user.email],
             fail_silently=False,
         )
         return JsonResponse({"message": "Build completata"}, status=200)
     else:
-        Tour = Tour.objects.get(pk=tour_id)
-        Tour.status = "FAILED"
-        Tour.save()
+        tour = Tour.objects.get(pk=tour_id)
+        tour.status = "FAILED"
+        tour.save()
         
         send_mail(
             'Build fallita',
-            f"Build Fallita {Tour.title}.",
+            f"Build Fallita {tour.title}.",
             os.environ.get('EMAIL_HOST_USER'),
-            [Tour.user.email],
+            [tour.user.email],
             fail_silently=False,
         )
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def load_model(request, tour_id):
-    try:
-        tour = Tour.objects.get(pk=tour_id)
-    except Tour.DoesNotExist:
-        return JsonResponse({"error": "Cromo POI not found"}, status=404)
-    storage = MinioStorage()
-    if not os.path.exists(f"model_{tour_id}.pth") and storage.exists(f"{tour_id}/model.pth"):
-        model_file = storage.open(f"/models/{tour_id}/model.pth")
-        with open(f"model_{tour_id}.pth", 'wb') as f:
-            for chunk in model_file.chunks():
-                f.write(chunk)
-    else:
-        return JsonResponse({"error": "Model not found"}, status=404)
-    return JsonResponse({"message": "Model loaded"}, status=200)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
