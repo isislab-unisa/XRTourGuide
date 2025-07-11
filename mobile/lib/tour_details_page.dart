@@ -16,6 +16,8 @@ import 'camera_screen.dart'; // Import your camera screen
 import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 import 'review_list.dart'; // Import your review list screen
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:easy_localization/easy_localization.dart";
+
 
 
 class TourDetailScreen extends ConsumerStatefulWidget {
@@ -40,6 +42,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
   String _selectedTab = 'About';
   late List<bool> _expandedWaypoints;
+  Map<int, List<bool>> _expandedSubWaypoints = {};
   int _currentImageIndex = 0;
   late PageController _pageController;
   final MapController _mapController = MapController();
@@ -134,23 +137,64 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     }
   }
 
-  Future<void> _loadWaypoints() async {
+  // Future<void> _loadWaypoints() async {
+  //   try {
+  //     final waypoints = await _tourService.getWaypointsByTour(widget.tourId);
+  //     if (mounted) {
+  //       setState(() {
+  //         _waypoints = waypoints;
+  //         _isLoadingWaypoints = false;
+  //         _expandedWaypoints = List.generate(
+  //           _waypoints.length,
+  //           (index) => index == 0,
+  //         );
+  //       });
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoadingWaypoints = false;
+  //       });
+  //       _showError('Error loading waypoints');
+  //     }
+  //   }
+  // }
+
+Future<void> _loadWaypoints() async {
     try {
       final waypoints = await _tourService.getWaypointsByTour(widget.tourId);
       if (mounted) {
         setState(() {
           _waypoints = waypoints;
           _isLoadingWaypoints = false;
+
+          // Inizializza _expandedWaypoints solo per i waypoints principali
           _expandedWaypoints = List.generate(
             _waypoints.length,
             (index) => index == 0,
           );
+
+          // Inizializza _expandedSubWaypoints per ogni waypoint che ha sub-waypoints
+          _expandedSubWaypoints.clear();
+          for (int i = 0; i < _waypoints.length; i++) {
+            if (_waypoints[i].subWaypoints != null &&
+                _waypoints[i].subWaypoints!.isNotEmpty) {
+              _expandedSubWaypoints[i] = List.generate(
+                _waypoints[i].subWaypoints!.length,
+                (subIndex) =>
+                    false, // Tutti i sub-waypoints inizialmente chiusi
+              );
+            }
+          }
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoadingWaypoints = false;
+          _waypoints = [];
+          _expandedWaypoints = [];
+          _expandedSubWaypoints.clear();
         });
         _showError('Error loading waypoints');
       }
@@ -408,8 +452,16 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
               TileLayer(
                 urlTemplate:
                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.app',
+                userAgentPackageName: 'com.xr_tour_guide.app',
               ),
+              // TileLayer(
+              //   urlTemplate:
+              //       'https://{s}.tile.openstreetmap.it/osm/{z}/{x}/{y}.png',
+              //   subdomains: const ['a', 'b', 'c'],
+              //   userAgentPackageName: 'com.xr_tour_guide.app',
+              //   maxZoom: 19,
+              //   minZoom: 1,
+              // ),
 
               // Waypoint markers
               MarkerLayer(
@@ -567,15 +619,49 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                               children: [
                                 // Waypoint image
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    12,
-                                  ),
-                                  child: Image.network(
-                                    "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
-                                    width: 80,
-                                    height: 80,
-                                    fit: BoxFit.cover,
-                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child:
+                                      selectedWaypoint.images.isNotEmpty
+                                          ? Image.network(
+                                            "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                            width: 80,
+                                            height: 80,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) {
+                                              return Container(
+                                                width: 80,
+                                                height: 80,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade300,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                  color: Colors.grey.shade600,
+                                                  size: 30,
+                                                ),
+                                              );
+                                            },
+                                          )
+                                          : Container(
+                                            width: 80,
+                                            height: 80,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade300,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Icon(
+                                              Icons.image,
+                                              color: Colors.grey.shade600,
+                                              size: 30,
+                                            ),
+                                          ),
                                 ),
                                 const SizedBox(width: 16),
 
@@ -634,8 +720,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Description section
-                            const Text(
-                              'Description',
+                            Text(
+                              'description'.tr(),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -704,8 +790,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
                             // Photos section
                             if (selectedWaypoint.images.isNotEmpty) ...[
-                              const Text(
-                                'Photos',
+                              Text(
+                                'photos'.tr(),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -724,15 +810,71 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                       padding: const EdgeInsets.only(
                                         right: 12,
                                       ),
+                                      // child: ClipRRect(
+                                      //   borderRadius:
+                                      //       BorderRadius.circular(12),
+                                      //   child: Image.network(
+                                      //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
+                                      //     width: 250,
+                                      //     height: 200,
+                                      //     fit: BoxFit.cover,
+                                      //   ),
+                                      // ),
                                       child: ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                        child: Image.network(
-                                          "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
-                                          width: 250,
-                                          height: 200,
-                                          fit: BoxFit.cover,
-                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        child:
+                                            selectedWaypoint.images.isNotEmpty
+                                                ? Image.network(
+                                                  "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                                  width: 80,
+                                                  height: 80,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) {
+                                                    return Container(
+                                                      width: 80,
+                                                      height: 80,
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            Colors
+                                                                .grey
+                                                                .shade300,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              12,
+                                                            ),
+                                                      ),
+                                                      child: Icon(
+                                                        Icons
+                                                            .image_not_supported,
+                                                        color:
+                                                            Colors
+                                                                .grey
+                                                                .shade600,
+                                                        size: 30,
+                                                      ),
+                                                    );
+                                                  },
+                                                )
+                                                : Container(
+                                                  width: 80,
+                                                  height: 80,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey.shade300,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.image,
+                                                    color: Colors.grey.shade600,
+                                                    size: 30,
+                                                  ),
+                                                ),
                                       ),
                                     );
                                   },
@@ -747,7 +889,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 onPressed:
                                     () => _launchMapApp(selectedWaypoint.latitude, selectedWaypoint.longitude),
                                 icon: const Icon(Icons.navigation),
-                                label: const Text('Navigate to this Waypoint'),
+                                label: Text('navigate_to_waypoint'.tr()),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -941,7 +1083,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   Row(
                     children: [
                       Text(
-                        "Created by ${_tourDetails?.creator}",
+                        "created_by".tr(namedArgs: {'creator': _tourDetails?.creator ?? ''}),
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -950,7 +1092,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                       ),
                       const Spacer(),
                       Text(
-                        "Last edited: ${_tourDetails?.lastEdited}",
+                        "last_edited_by".tr(namedArgs: {'date': _tourDetails?.lastEdited ?? ''}),
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -1099,7 +1241,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                 children: [
                   _buildNavTab(
                     icon: Icons.info_outline,
-                    label: 'About',
+                    label: 'about_tab'.tr(),
                     isSelected: _selectedTab == 'About',
                     onTap: () {
                       setState(() {
@@ -1110,7 +1252,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   SizedBox(width: 10),
                   _buildNavTab(
                     icon: Icons.route_outlined,
-                    label: 'Itinerario',
+                    label: 'itinerary_tab'.tr(),
                     isSelected: _selectedTab == 'Itinerario',
                     onTap: () {
                       setState(() {
@@ -1122,7 +1264,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   if (_tourDetails!.category != "Interno" && _tourDetails!.category != "Cibo")
                     _buildNavTab(
                       icon: Icons.map_outlined,
-                      label: 'Mappa',
+                      label: 'map_tab'.tr(),
                       // buttonColor: Color.fromARGB(255, 255, 191, 0),
                       // buttonColor: Color.fromARGB(255, 195, 247, 58),
                       buttonColor: Color.fromARGB(255, 178, 237, 197),
@@ -1162,8 +1304,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Tour Highlights:',
+                      Text(
+                        'tour_highlights'.tr(),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1192,8 +1334,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'Verified Reviews',
+                        Text(
+                          'verified_reviews'.tr(),
                           style: TextStyle(
                             fontSize: 23,
                             fontWeight: FontWeight.bold,
@@ -1269,7 +1411,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 ],
                               ),
                               Text(
-                                'Based on ${_tourDetails!.reviewCount} Reviews',
+                                'based_on_reviews'.tr(namedArgs: {'count': '${_tourDetails!.reviewCount}'}),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: AppColors.textSecondary,
@@ -1397,6 +1539,14 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                             userAgentPackageName: 'com.example.app',
                           ),
+                          // TileLayer(
+                          //   urlTemplate:
+                          //       'https://{s}.tile.openstreetmap.it/osm/{z}/{x}/{y}.png',
+                          //   subdomains: const ['a', 'b', 'c'],
+                          //   userAgentPackageName: 'com.xr_tour_guide.app',
+                          //   maxZoom: 19,
+                          //   minZoom: 1,
+                          // ),
 
                           // Current location marker
                           if (_currentPosition != null)
@@ -1444,22 +1594,54 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                 ),
 
               // Waypoints list
-              ..._waypoints.asMap().entries.map((entry) {
+              // ..._waypoints.asMap().entries.map((entry) {
+              //   int index = entry.key;
+              //   Waypoint waypoint = entry.value;
+              //   return _buildWaypointItem(
+              //     waypointIndex: waypoint.id,
+              //     index: index,
+              //     title: waypoint.title,
+              //     subtitle: waypoint.subtitle,
+              //     description: waypoint.description,
+              //     images: waypoint.images,
+              //     tourCategory: _tourDetails!.category,
+              //     latitude: waypoint.latitude,
+              //     longitude: waypoint.longitude,
+              //     subWaypoints: waypoint.subWaypoints,
+              //   );
+              // }).toList(),
+
+              if (_waypoints.isNotEmpty) ...[
+              ..._waypoints.asMap().entries.expand((entry) {
                 int index = entry.key;
                 Waypoint waypoint = entry.value;
-                return _buildWaypointItem(
-                  waypointIndex: waypoint.id,
-                  index: index,
-                  title: waypoint.title,
-                  subtitle: waypoint.subtitle,
-                  description: waypoint.description,
-                  images: waypoint.images,
-                  tourCategory: _tourDetails!.category,
-                  latitude: waypoint.latitude,
-                  longitude: waypoint.longitude,
-                  subWaypoints: waypoint.subWaypoints,
+
+                List<Widget> waypointWidgets = [];
+
+                // Aggiungi il waypoint principale
+                waypointWidgets.add(
+                  _buildWaypointItem(
+                    waypointIndex: waypoint.id,
+                    index: index,
+                    title: waypoint.title,
+                    subtitle: waypoint.subtitle,
+                    description: waypoint.description,
+                    images: waypoint.images,
+                    tourCategory: _tourDetails?.category ?? 'MIXED',
+                    latitude: waypoint.latitude,
+                    longitude: waypoint.longitude,
+                    subWaypoints: waypoint.subWaypoints,
+                    isSubWaypoint: false,
+                  ),
                 );
+
+                return waypointWidgets;
               }).toList(),
+            ] else
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('No waypoints available'),
+              ),
             ],
 
             // Add space at the bottom for non-Itinerario tabs
@@ -1524,7 +1706,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     );
   }
 
-  Widget _buildWaypointItem({
+Widget _buildWaypointItem({
     required int waypointIndex,
     required int index,
     required String title,
@@ -1536,45 +1718,106 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     required double longitude,
     List<Waypoint>? subWaypoints,
     int? parentIndex,
+    bool isSubWaypoint = false,
   }) {
+
+    // Determina se questo item è espanso
+    bool isExpanded;
+    if (isSubWaypoint && parentIndex != null) {
+      // Per sub-waypoints, controlla nella mappa _expandedSubWaypoints
+      isExpanded = _expandedSubWaypoints[parentIndex]?[index] ?? false;
+    } else {
+      // Per waypoints principali, usa _expandedWaypoints
+      isExpanded =
+          index < _expandedWaypoints.length ? _expandedWaypoints[index] : false;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         children: [
-          // Waypoint header with 3D effect
+          // Waypoint header
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            margin: EdgeInsets.symmetric(
+              horizontal:
+                  isSubWaypoint ? 32.0 : 16.0, // Indentazione per sub-waypoints
+              vertical: 4.0,
+            ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isSubWaypoint ? Colors.grey.shade50 : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              border:
+                  isSubWaypoint
+                      ? Border.all(color: Colors.grey.shade200)
+                      : null,
+              boxShadow:
+                  isSubWaypoint
+                      ? []
+                      : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
             ),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
                   setState(() {
+                    if (isSubWaypoint && parentIndex != null) {
+                      // Logica per sub-waypoints: chiudi solo gli altri sub-waypoints dello stesso parent
+                      if (_expandedSubWaypoints[parentIndex] != null) {
+                        for (
+                          int i = 0;
+                          i < _expandedSubWaypoints[parentIndex]!.length;
+                          i++
+                        ) {
+                          if (i != index) {
+                            _expandedSubWaypoints[parentIndex]![i] = false;
+                          }
+                        }
+                        _expandedSubWaypoints[parentIndex]![index] =
+                            !_expandedSubWaypoints[parentIndex]![index];
+                      }
+                      // NON centrare la mappa per i sub-waypoints
+                    } else {
+                      // Logica per waypoints principali: chiudi tutti gli altri waypoints principali
+                      if (index >= 0 && index < _expandedWaypoints.length) {
+                        for (int i = 0; i < _expandedWaypoints.length; i++) {
+                          if (i != index) {
+                            _expandedWaypoints[i] = false;
+                            // Chiudi anche tutti i sub-waypoints quando si chiude un waypoint principale
+                            if (_expandedSubWaypoints[i] != null) {
+                              for (
+                                int j = 0;
+                                j < _expandedSubWaypoints[i]!.length;
+                                j++
+                              ) {
+                                _expandedSubWaypoints[i]![j] = false;
+                              }
+                            }
+                          }
+                        }
+                        _expandedWaypoints[index] = !_expandedWaypoints[index];
+                        _selectedWaypointIndex = index;
 
-                    for (int i = 0; i < _expandedWaypoints.length; i++) {
-                      if (i != index) {
-                        _expandedWaypoints[i] = false; // Collapse other waypoints
+                        // Centra la mappa SOLO per waypoints principali
+                        if (index < _waypoints.length &&
+                            _selectedTab == 'Itinerario' &&
+                            (tourCategory != "INSIDE" &&
+                                tourCategory != "Cibo")) {
+                          _centerMap(
+                            LatLng(
+                              _waypoints[index].latitude,
+                              _waypoints[index].longitude,
+                            ),
+                          );
+                        }
                       }
                     }
-
-                    _expandedWaypoints[index] = !_expandedWaypoints[index];
-                    _selectedWaypointIndex = index;
-                    if (_selectedTab == 'Itinerario' && (tourCategory != "INSIDE" && tourCategory != "Cibo")) {
-                      // Center map on waypoint when expanded in Mappa tab
-                      _centerMap(LatLng(_waypoints[index].latitude, _waypoints[index].longitude));
-                    }
-                  });
-                },
+                  });                },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -1583,12 +1826,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                   ),
                   child: Row(
                     children: [
-                      // Waypoint number with primary color
+                      // Waypoint number con logica degli indici corretta
                       Container(
-                        width: 28,
-                        height: 28,
+                        width: isSubWaypoint ? 24 : 28,
+                        height: isSubWaypoint ? 24 : 28,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color:
+                              isSubWaypoint
+                                  ? AppColors.primary.withOpacity(0.7)
+                                  : AppColors.primary,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.5),
                           boxShadow: [
@@ -1601,23 +1847,26 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                         ),
                         child: Center(
                           child: Text(
-                            tourCategory != "nested" ? '${index + 1}' : '${parentIndex! + 1}.${index + 1}',
+                            // Logica corretta per gli indici
+                            isSubWaypoint
+                                ? '${(parentIndex ?? 0) + 1}.${index + 1}' // Sub-waypoint: 2.1, 2.2, etc.
+                                : '${index + 1}', // Waypoint principale: 1, 2, 3, etc.
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              fontSize: isSubWaypoint ? 10 : 12,
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 16),
 
-                      // Waypoint name with secondary color
+                      // Waypoint name
                       Expanded(
                         child: Text(
-                          title, // Using subtitle for waypoint name
-                          style: const TextStyle(
-                            fontSize: 16,
+                          title,
+                          style: TextStyle(
+                            fontSize: isSubWaypoint ? 14 : 16,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                           ),
@@ -1626,11 +1875,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
                       // Expand/collapse icon
                       Icon(
-                        _expandedWaypoints[index]
+                        (isExpanded)
                             ? Icons.keyboard_arrow_up
                             : Icons.keyboard_arrow_down,
                         color: AppColors.textSecondary,
-                        size: 24,
+                        size: isSubWaypoint ? 20 : 24,
                       ),
                     ],
                   ),
@@ -1639,20 +1888,32 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
             ),
           ),
 
-          // Waypoint content (expanded) with 3D effect
-          if (_expandedWaypoints[index])
+          // Waypoint content (expanded)
+          if (isExpanded)
             Container(
-              margin: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 8.0),
+              margin: EdgeInsets.fromLTRB(
+                isSubWaypoint ? 32.0 : 16.0,
+                0,
+                isSubWaypoint ? 32.0 : 16.0,
+                8.0,
+              ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isSubWaypoint ? Colors.grey.shade50 : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border:
+                    isSubWaypoint
+                        ? Border.all(color: Colors.grey.shade200)
+                        : null,
+                boxShadow:
+                    isSubWaypoint
+                        ? []
+                        : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -1684,11 +1945,26 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8.0),
                                   child: Image.network(
-                                    //TODO: image from network
                                     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${waypointIndex}&file=${images[imageIndex]}",
                                     height: 100,
                                     width: 150,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: 100,
+                                        width: 150,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius: BorderRadius.circular(
+                                            8.0,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                               );
@@ -1696,54 +1972,148 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           ),
                         ),
                       ),
-                    // Navigate button
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _launchMapApp(latitude, longitude),
-                        icon: const Icon(Icons.navigation),
-                        label: const Text('Navigate to this Waypoint'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+
+                    // Navigate button - SOLO per waypoints principali
+                    if (!isSubWaypoint) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _launchMapApp(latitude, longitude),
+                          icon: const Icon(Icons.navigation),
+                          label: Text('navigate_to_waypoint'.tr()),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    // Sub-waypoints (if any) devono avere indici secondari
-                    if (subWaypoints != null && subWaypoints.isNotEmpty)
+                    ],
+
+                    // Sub-waypoints SOLO per waypoints principali
+                    if (!isSubWaypoint &&
+                        subWaypoints != null &&
+                        subWaypoints.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(left: 24.0, top: 8.0),
+                        padding: const EdgeInsets.only(top: 16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children:
-                              subWaypoints.asMap().entries.map((entry) {
-                                int subIndex = entry.key;
-                                Waypoint sub = entry.value;
-                                return _buildWaypointItem(
-                                  waypointIndex: sub.id,
-                                  index: subIndex,
-                                  title: sub.title,
-                                  subtitle: sub.subtitle,
-                                  description: sub.description,
-                                  images: sub.images,
-                                  tourCategory: "nested",
-                                  latitude: sub.latitude,
-                                  longitude: sub.longitude,
-                                  subWaypoints: sub.subWaypoints,
-                                  parentIndex: index
-                                );
-                              }).toList(),                        
+                          children: [
+                            Text(
+                              'Sub-locations',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // Renderizza i sub-waypoints come waypoint items separati
+                            ...subWaypoints.asMap().entries.map((entry) {
+                              int subIndex = entry.key;
+                              Waypoint sub = entry.value;
+                              return _buildWaypointItem(
+                                waypointIndex: sub.id,
+                                index: subIndex,
+                                title: sub.title,
+                                subtitle: sub.subtitle,
+                                description: sub.description,
+                                images: sub.images,
+                                tourCategory: tourCategory,
+                                latitude: sub.latitude,
+                                longitude: sub.longitude,
+                                parentIndex:
+                                    index, // Passa l'indice del waypoint principale
+                                isSubWaypoint:
+                                    true, // Identifica come sub-waypoint
+                              );
+                            }).toList(),
+                          ],
                         ),
                       ),
                   ],
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubWaypointItem({
+    required Waypoint subWaypoint,
+    required int parentIndex,
+    required int subIndex,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(left: 16.0, top: 8.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          // Numero sub-waypoint
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.7),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '${parentIndex + 1}.${subIndex + 1}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Contenuto sub-waypoint
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subWaypoint.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if (subWaypoint.description.isNotEmpty)
+                  Text(
+                    subWaypoint.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          // Bottone navigazione
+          IconButton(
+            onPressed: () => _launchMapApp(subWaypoint.latitude, subWaypoint.longitude),
+            icon: Icon(
+              Icons.navigation,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
         ],
       ),
     );
@@ -1904,9 +2274,9 @@ void _showLeaveReviewSheet(int tourId) {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Leave a Review',
+                        'leave_review'.tr(),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -1935,8 +2305,8 @@ void _showLeaveReviewSheet(int tourId) {
                       }),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Comments:',
+                    Text(
+                      'comments'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1967,7 +2337,7 @@ void _showLeaveReviewSheet(int tourId) {
                         controller: _reviewController,
                         maxLines: 5,
                         decoration: InputDecoration(
-                          hintText: 'Tell us about your experience...',
+                          hintText: 'comment_hint'.tr(),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -1988,7 +2358,7 @@ void _showLeaveReviewSheet(int tourId) {
                           onPressed: () {
                             Navigator.pop(context); // Close the sheet
                           },
-                          child: const Text('Cancel'),
+                          child: Text('cancel'.tr()),
                         ),
                         const SizedBox(width: 25),
                         TextButton(
@@ -2010,13 +2380,13 @@ void _showLeaveReviewSheet(int tourId) {
 
                             // Optionally, show a confirmation message
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Thank you for your review!'),
+                              SnackBar(
+                                content: Text('review_success'.tr()),
                                 backgroundColor: Colors.green,
                               ),
                             );
                           },
-                          child: const Text('Send'),
+                          child: Text('send'.tr()),
                         ),
                       ],
                     ),

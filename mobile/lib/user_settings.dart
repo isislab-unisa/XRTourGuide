@@ -6,6 +6,7 @@ import 'models/user.dart';
 import 'main.dart'; // Import your main app file for navigation
 import 'services/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -47,10 +48,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
   // Language settings
   //TODO : Implement language selection logic
-  String _selectedLanguage = "English(US)";
   final List<Map<String, dynamic>> _availableLanguages = [
-    {"name": "English(US)", "code": "en_US", "flag": "🇺🇸", "selected": true},
-    {"name": "Italiano", "code": "it_IT", "flag": "🇮🇹", "selected": false},
+    {"name": "English(US)", "locale": const Locale('en', 'US'), "flag": "🇺🇸", "selected": false},
+    {"name": "Italiano", "locale": const Locale('it', 'IT'), "flag": "🇮🇹", "selected": true},
   ];
 
   // Controllers for text fields (Personal Info)
@@ -204,8 +204,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
     if (result == true && mounted){
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account deleted successfully!'),
+        SnackBar(
+          content: Text('delete_account_success'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -244,22 +244,26 @@ void _handleBack(BuildContext context) {
     });
     // Show a snackbar to confirm changes
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Personal information updated'),
+      SnackBar(
+        content: Text('personal_info_update_success'.tr()),
         backgroundColor: AppColors.success,
       ),
     );
   }
 
   // Save language selection
-  void _saveLanguageSelection() {
+  void _saveLanguageSelection(Locale selectedLocale) {
+
+    context.setLocale(selectedLocale);
+
     setState(() {
       _currentScreen = ProfileScreenState.main;
     });
+
     // Show a snackbar to confirm changes
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Language updated'),
+      SnackBar(
+        content: Text('language_updated'.tr()),
         backgroundColor: AppColors.success,
       ),
     );
@@ -272,16 +276,15 @@ void _handleBack(BuildContext context) {
     final confirmPassword = _confirmNewPasswordController.text;
 
     if (newPassword != confirmPassword) {
-      _showError('New password and confirmation do not match.');
+      _showError('new_password_mismatch'.tr());
       return;
     }
     if (newPassword.length < 6) {
       // Example validation
-      _showError('New password must be at least 6 characters long.');
+      _showError('new_password_min_length');
       return;
     }
 
-    // TODO: Implement actual password change logic, e.g., API call
     print('Attempting to change password:');
     print('Old: $oldPassword, New: $newPassword');
 
@@ -290,8 +293,8 @@ void _handleBack(BuildContext context) {
     Navigator.of(context).pop(); // Close the bottom sheet
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Password changed successfully!'),
+      SnackBar(
+        content: Text('password_update_success'.tr()),
         backgroundColor: AppColors.success,
       ),
     );
@@ -426,28 +429,28 @@ void _handleBack(BuildContext context) {
                   // Menu items
                   // Personal Info
                   _buildMenuItemTile(
-                    title: 'Personal Info',
+                    title: 'personal_info_title'.tr(),
                     icon: Icons.person_outline,
                     onTap: _navigateToPersonalInfo,
                   ),
 
                   // Account & Security
                   _buildMenuItemTile(
-                    title: 'Account & Security',
+                    title: 'account_security_title'.tr(),
                     icon: Icons.security,
                     onTap: _navigateToAccountSecurity,
                   ),
 
                   // App Language
                   _buildMenuItemTile(
-                    title: 'App Language',
+                    title: 'app_language_title'.tr(),
                     icon: Icons.language,
                     onTap: _navigateToAppLanguage,
                   ),
 
                   // Help & Support
                   _buildMenuItemTile(
-                    title: 'Help & Support',
+                    title: 'help_support_title'.tr(),
                     icon: Icons.help_outline,
                     onTap: _navigateToHelpSupport,
                   ),
@@ -524,8 +527,8 @@ void _handleBack(BuildContext context) {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => _handleBack(context),
         ),
-        title: const Text(
-          'Personal Info',
+        title: Text(
+          'personal_info_title'.tr(),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -544,8 +547,8 @@ void _handleBack(BuildContext context) {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Full Name field
-                    const Text(
-                      'First Name',
+                    Text(
+                      'name'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -556,7 +559,7 @@ void _handleBack(BuildContext context) {
                     TextField(
                       controller: _firstNameController,
                       decoration: InputDecoration(
-                        hintText: 'Enter your first name',
+                        hintText: 'name_hint',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
                           borderSide: const BorderSide(color: AppColors.border),
@@ -581,8 +584,8 @@ void _handleBack(BuildContext context) {
 
                     const SizedBox(height: 20),
 
-                    const Text(
-                      'Last Name',
+                    Text(
+                      'surname'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -593,7 +596,7 @@ void _handleBack(BuildContext context) {
                     TextField(
                       controller: _lastNameController,
                       decoration: InputDecoration(
-                        hintText: 'Enter your last name',
+                        hintText: 'surname_hint'.tr(),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
                           borderSide: const BorderSide(color: AppColors.border),
@@ -620,8 +623,8 @@ void _handleBack(BuildContext context) {
 
 
                     // Email field
-                    const Text(
-                      'Email',
+                    Text(
+                      'email'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -633,7 +636,7 @@ void _handleBack(BuildContext context) {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'Enter your email',
+                        hintText: 'mail_hint'.tr(),
                         prefixIcon: const Icon(
                           Icons.email_outlined,
                           color: AppColors.textSecondary,
@@ -661,8 +664,8 @@ void _handleBack(BuildContext context) {
                     ),
                     const SizedBox(height: 20),
 
-                    const Text(
-                      'Description',
+                    Text(
+                      'description'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -675,7 +678,7 @@ void _handleBack(BuildContext context) {
                       minLines: 3,
                       maxLines: 5,
                       decoration: InputDecoration(
-                        hintText: 'Enter a short description about yourself',
+                        hintText: 'description_hint'.tr(),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
                           borderSide: const BorderSide(color: AppColors.border),
@@ -720,8 +723,8 @@ void _handleBack(BuildContext context) {
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: const Text(
-                    'Save',
+                  child: Text(
+                    'save'.tr(),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -744,8 +747,8 @@ void _handleBack(BuildContext context) {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => _handleBack(context),
         ),
-        title: const Text(
-          'Account & Security',
+        title: Text(
+          'account_security_title',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -784,7 +787,7 @@ void _handleBack(BuildContext context) {
 
                   // Change Password option - NOW CALLS THE BOTTOM SHEET
                   _buildSettingTile(
-                    title: 'Change Password',
+                    title: 'change_password'.tr(),
                     onTap: () {
                       _showChangePasswordSheet(
                         context,
@@ -794,10 +797,10 @@ void _handleBack(BuildContext context) {
 
                   // Delete Account option - with red text
                   _buildSettingTile(
-                    title: 'Delete Account',
+                    title: 'delete_account_title'.tr(),
                     titleColor: Colors.red,
                     subtitle:
-                        'Permanently remove your account and data from XRTourGuide. Proceed with caution.',
+                        'delete_account_subtitle'.tr(),
                     onTap: () {
                       _showDeleteAccountSheet(context);
                       // Show delete account confirmation
@@ -921,8 +924,8 @@ void _handleBack(BuildContext context) {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => _handleBack(context),
         ),
-        title: const Text(
-          'App Language',
+        title: Text(
+          'language'.tr(),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -939,12 +942,13 @@ void _handleBack(BuildContext context) {
                 itemCount: _availableLanguages.length,
                 itemBuilder: (context, index) {
                   final language = _availableLanguages[index];
-                  final isSelected = language["name"] == _selectedLanguage;
+                  final languageLocale = language["locale"] as Locale;
+                  final isSelected = context.locale == languageLocale; 
 
                   return InkWell(
                     onTap: () {
                       setState(() {
-                        _selectedLanguage = language["name"];
+                        _saveLanguageSelection(languageLocale);
                       });
                     },
                     child: Container(
@@ -998,29 +1002,6 @@ void _handleBack(BuildContext context) {
                 },
               ),
             ),
-
-            // Save button
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _saveLanguageSelection,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
-                  child: const Text(
-                    'Save',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -1039,7 +1020,7 @@ void _handleBack(BuildContext context) {
           onPressed: () => _handleBack(context),
         ),
         title: const Text(
-          'Help & Support',
+          'help_support_title',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -1149,8 +1130,8 @@ void _handleBack(BuildContext context) {
 
           const SizedBox(height: 20),
 
-          const Text(
-            'Are you sure you want to Logout?',
+          Text(
+            'logout_confirm'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -1178,8 +1159,8 @@ void _handleBack(BuildContext context) {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text(
-                      'Cancel',
+                    child: Text(
+                      'cancel'.tr(),
                       style: TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
@@ -1202,8 +1183,8 @@ void _handleBack(BuildContext context) {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text(
-                      'Yes, Logout',
+                    child: Text(
+                      'logout_confirm_yes'.tr(),
                       style: TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ),
@@ -1246,8 +1227,8 @@ void _handleBack(BuildContext context) {
             ),
             const SizedBox(height: 20),
             // Title
-            const Text(
-              'Delete Account',
+            Text(
+              'delete_account_title'.tr(),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -1262,8 +1243,8 @@ void _handleBack(BuildContext context) {
                 children: [
                   const Icon(Icons.delete_forever, color: Colors.red, size: 48),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Are you sure you want to permanently delete your account? This action cannot be undone.',
+                  Text(
+                    'delete_account_confirm'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -1276,7 +1257,7 @@ void _handleBack(BuildContext context) {
                     controller: _deletePasswordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: 'Enter your password to confirm',
+                      hintText: 'delete_account_password'.tr(),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
                         borderSide: const BorderSide(color: AppColors.border),
@@ -1313,8 +1294,8 @@ void _handleBack(BuildContext context) {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text(
-                            'Cancel',
+                          child: Text(
+                            'cancel'.tr(),
                             style: TextStyle(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w500,
@@ -1337,8 +1318,8 @@ void _handleBack(BuildContext context) {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text(
-                            'Delete',
+                          child: Text(
+                            'delete_account_confirm_yes'.tr(),
                             style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ),
@@ -1384,8 +1365,8 @@ void _handleBack(BuildContext context) {
             ),
             const SizedBox(height: 20),
             // Title
-            const Text(
-              'Change Password',
+            Text(
+              'change_password'.tr(),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -1399,8 +1380,8 @@ void _handleBack(BuildContext context) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Old Password
-                  const Text(
-                    'Old Password',
+                  Text(
+                    'old_password',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -1412,7 +1393,7 @@ void _handleBack(BuildContext context) {
                     controller: _oldPasswordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: 'Enter old password',
+                      hintText: 'old_password_hint',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
                         borderSide: const BorderSide(color: AppColors.border),
@@ -1437,8 +1418,8 @@ void _handleBack(BuildContext context) {
                   const SizedBox(height: 20),
 
                   // New Password
-                  const Text(
-                    'New Password',
+                  Text(
+                    'new_password'.tr(),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -1450,7 +1431,7 @@ void _handleBack(BuildContext context) {
                     controller: _newPasswordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: 'Enter new password',
+                      hintText: 'new_password_hint'.tr(),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
                         borderSide: const BorderSide(color: AppColors.border),
@@ -1475,8 +1456,8 @@ void _handleBack(BuildContext context) {
                   const SizedBox(height: 20),
 
                   // Confirm New Password
-                  const Text(
-                    'Confirm New Password',
+                  Text(
+                    'confirm_new_password'.tr(),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -1488,7 +1469,7 @@ void _handleBack(BuildContext context) {
                     controller: _confirmNewPasswordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: 'Confirm new password',
+                      hintText: 'confirm_new_password'.tr(),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
                         borderSide: const BorderSide(color: AppColors.border),
@@ -1527,8 +1508,8 @@ void _handleBack(BuildContext context) {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text(
-                            'Cancel',
+                          child: Text(
+                            'cancel'.tr(),
                             style: TextStyle(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w500,
@@ -1549,8 +1530,8 @@ void _handleBack(BuildContext context) {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text(
-                            'Change',
+                          child: Text(
+                            'change'.tr(),
                             style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ),

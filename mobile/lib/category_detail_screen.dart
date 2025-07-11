@@ -6,6 +6,8 @@ import 'elements/travel_list_item_card.dart';
 import 'tour_details_page.dart';
 import 'services/tour_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:easy_localization/easy_localization.dart";
+
 
 
 class CategoryDetailScreen extends ConsumerStatefulWidget {
@@ -58,7 +60,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
         setState(() {
           _isLoading = false;
         });
-        _showError('Error loading nearby tours');
+        _showError('error_loading_tours'.tr());
       }
     }
   }
@@ -112,7 +114,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
               vertical: 10.0,
             ),
             child: Text(
-              '${widget.categoryName} ${_categoriesTour?.length} Risultati',
+              'category_results'.tr(namedArgs: {'category': widget.categoryName, 'count': '${_categoriesTour?.length ?? 0}'}),
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

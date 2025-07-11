@@ -5,6 +5,8 @@ import 'services/tour_service.dart';
 import 'tour_details_page.dart';
 import 'models/tour.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:easy_localization/easy_localization.dart";
+
 
 class SearchScreen extends ConsumerStatefulWidget {
   final bool isGuest;
@@ -81,7 +83,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
         setState(() {
           _isLoading = false;
         });
-        _showError('Error loading nearby tours');
+        _showError('error_loading_tours'.tr());
       }
     }
   }
@@ -139,8 +141,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
         // Center title with animation
         title: FadeTransition(
           opacity: _searchBarAnimation,
-          child: const Text(
-            'Search',
+          child: Text(
+            'search'.tr(),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
@@ -187,7 +189,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                       // Auto focus when screen opens
                       autofocus: true,
                       decoration: InputDecoration(
-                        hintText: 'Search destinations',
+                        hintText: 'search_hint'.tr(),
                         hintStyle: TextStyle(
                           color: AppColors.textSecondary.withOpacity(0.7),
                           fontSize: 16,

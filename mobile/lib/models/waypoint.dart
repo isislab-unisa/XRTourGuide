@@ -38,4 +38,14 @@ class Waypoint {
           .toList() : null,
     );
   }
+
+  List<Waypoint> getAllWaypoints() {
+    List<Waypoint> allWaypoints = [this];
+    if (subWaypoints != null) {
+      for (var subWaypoint in subWaypoints!) {
+        allWaypoints.addAll(subWaypoint.getAllWaypoints());
+      }
+    }
+    return allWaypoints;
+  }
 }

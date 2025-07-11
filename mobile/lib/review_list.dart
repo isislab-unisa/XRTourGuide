@@ -4,6 +4,8 @@ import '/models/app_colors.dart'; // Adjust path as needed
 import '/models/review.dart'; // Adjust path as needed
 import '/services/tour_service.dart'; // Adjust path as needed
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod for state management
+import "package:easy_localization/easy_localization.dart";
+
 
 
 class ReviewListScreen extends ConsumerStatefulWidget {
@@ -77,7 +79,7 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
           _error =
               'Error loading reviews: ${e.toString()}'; // Set error message in state
         });
-        _showError('Error loading reviews. Please try again.'); // Show SnackBar
+        _showError('error_loading_reviews'.tr()); // Show SnackBar
       }
     }
   }
@@ -238,7 +240,7 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
                 ),
                 SizedBox(width: 8),
               Text(
-                '${_reviews.length} Review', // Display dynamic count
+                "num_reviews".tr(namedArgs: {'count': '${_reviews.length}'}),
                 style: TextStyle(color: Colors.grey[600], fontSize: 16),
               ),
             ],
@@ -263,14 +265,14 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
                       SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: _loadData, // Retry loading all data
-                        child: Text('Retry'),
+                        child: Text('retry'.tr()),
                       ),
                     ],
                   ),
                 ),
               )
               : _reviews.isEmpty
-              ? Center(child: Text('No reviews available.'))
+              ? Center(child: Text('no_reviews'.tr()))
               : ListView.separated(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
                 itemCount: _reviews.length,
