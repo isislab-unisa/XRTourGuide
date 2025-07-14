@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchvision import transforms, models
 from PIL import Image
 import argparse
-
+import traceback
 
 def load_checkpoint(checkpoint_path: str, device: torch.device):
     """
@@ -11,6 +11,7 @@ def load_checkpoint(checkpoint_path: str, device: torch.device):
       - 'state_dict': model weights
       - 'class_names': list of class labels
     """
+    print(f"Loading checkpoint from {checkpoint_path}", flush=True)
     checkpoint = torch.load(checkpoint_path, map_location=device)
     class_names = checkpoint["class_names"]
     state_dict = checkpoint["model_state_dict"]
@@ -95,13 +96,20 @@ def main():
     else:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # Load checkpoint and model
-    state_dict, class_names = load_checkpoint(args.checkpoint, device)
-    model = build_model(len(class_names), state_dict, device)
+    try:
+        # Load checkpoint and model
+        state_dict, class_names = load_checkpoint(args.checkpoint, device)
+        model = build_model(len(class_names), state_dict, device)
 
-    # Preprocess and predict
-    img_t = preprocess_image(args.image_path)
-    preds = predict(model, img_t, class_names, device, topk=args.top_k)
+        # Preprocess and predict
+        img_t = preprocess_image(args.image_path)
+        preds = predict(model, img_t, class_names, device, topk=args.top_k)
+    except Exception as e:
+        print(f"Error during inference: {e}", flush=True)
+        stacktrace = traceback.format_exc()
+        print(f"Full stacktrace:\n{stacktrace}", flush=True)
+
+        return
 
     # Display results
     for cls, prob in preds:

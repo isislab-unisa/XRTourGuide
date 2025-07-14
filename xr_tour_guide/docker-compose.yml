@@ -20,6 +20,8 @@ services:
     volumes:
       - .:/workspace
       - ./staticfiles:/workspace/staticfiles
+    environment:
+      - PYTHONUNBUFFERED=1
     expose:
       - 8001
     depends_on:
