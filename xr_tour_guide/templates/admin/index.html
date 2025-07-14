@@ -65,7 +65,7 @@
     {% component "unfold/components/container.html" %}
 
         <!-- Table -->
-        {% component "unfold/components/card.html" with title="Lessons" class="p-6 shadow-sm hover:shadow-md transition-shadow" %}
+        {% component "unfold/components/card.html" with title="Tour" class="p-6 shadow-sm hover:shadow-md transition-shadow" %}
             <div class="w-full overflow-x-auto">
                 <table class="min-w-full responsive-table">
                     <thead>
@@ -97,7 +97,7 @@
                                     </td>
 
                                     <td data-label="Stato" class="px-4 py-2 border-b">
-                                        <span class="{% if lesson.status == 'READY' %}text-green-600{% elif lesson.status == 'BUILDING' %}text-yellow-600{% else %}text-gray-600{% endif %}">
+                                        <span class="{% if tour.status == 'READY' %}text-green-600{% elif tour.status == 'BUILDING' %}text-yellow-600{% else %}text-gray-600{% endif %}">
                                             {{ tour.status }}
                                         </span>
                                     </td>
