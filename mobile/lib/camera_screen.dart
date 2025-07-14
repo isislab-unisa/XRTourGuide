@@ -11,7 +11,9 @@ import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:markdown_widget/markdown_widget.dart'; // Keep this for text/link/image
 import 'dart:async';
 import 'dart:math';
+import 'services/auth_service.dart';
 import 'services/tour_service.dart';
+import 'services/api_service.dart';
 import 'models/waypoint.dart';
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:easy_localization/easy_localization.dart";
@@ -88,6 +90,9 @@ Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei prin
 
 class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     with TickerProviderStateMixin {
+
+  late ApiService _apiService;
+
   // Camera controller
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
@@ -131,6 +136,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   void initState() {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
+    _apiService = ref.read(apiServiceProvider);
     _initializeCamera();
     _getCurrentLocation();
     _initializeAnimations();
@@ -423,18 +429,19 @@ This is one of the key images for this landmark.
     });
 
     //Camera feed
-    // final XFile file = await _cameraController!.takePicture();
-    // final bytes = await file.readAsBytes();
-    // final String base64Image = base64Encode(bytes);
+    final XFile file = await _cameraController!.takePicture();
+    final bytes = await file.readAsBytes();
+    final String base64Image = base64Encode(bytes);
 
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
     // Simulate recognition process (replace with actual ML/AR logic)
     // await Future.delayed(const Duration(seconds: 3));
-    // final response = await _apiService.inference(
-    //   base64Image, // Replace with actual base64 image string
-    // );
+    final waypointId = await _apiService.inference(
+      base64Image,
+      widget.tourId,
+    );
 
     // Stop pulse animation
     _pulseAnimationController.stop();
@@ -442,6 +449,9 @@ This is one of the key images for this landmark.
     // Force success for debugging - ALWAYS SUCCESS
     //TODO: Replace with actual recognition logic
     bool recognitionSuccess = true;
+    if (waypointId == -1) {
+      recognitionSuccess = false;
+    }
     print('Recognition result: $recognitionSuccess');
 
     if (recognitionSuccess) {
@@ -465,13 +475,6 @@ This is one of the key images for this landmark.
       // Start AR overlays with manual timer-based animation
       _startAROverlayAnimation();
 
-      // Auto-reset after 30 seconds for testing
-      //TODO Decidere su un tempo di reset automatico oppurew implementare un pulsante
-      // Timer(const Duration(seconds: 30), () {
-      //   if (mounted) {
-      //     _resetRecognition();
-      //   }
-      // });
     } else {
       setState(() {
         _recognitionState = RecognitionState.failure;

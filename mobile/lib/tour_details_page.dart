@@ -553,7 +553,7 @@ Future<void> _loadWaypoints() async {
                   icon: const Icon(Icons.camera_alt, color: Colors.white, size: 28,),
                   onPressed: () {
                     //Initialize the inference module for the tour
-                    // _apiService.initializeInferenceModule(widget.tourId);
+                    _apiService.initializeInferenceModule(widget.tourId);
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude)),
@@ -1200,6 +1200,7 @@ Future<void> _loadWaypoints() async {
                             child: ElevatedButton(
                               onPressed: () {
                                 // TODO: AR Guide functionality
+                                _apiService.initializeInferenceModule(_tourDetails!.id);
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

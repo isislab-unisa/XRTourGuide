@@ -318,7 +318,7 @@ class ApiService {
 
   Future<Response> initializeInferenceModule(int tourId) async {
     try {
-      final response = await dio.get('/tour_categories/');
+      final response = await dio.get('/load_model/$tourId');
       return response;
     } catch (e) {
       print('Failed to fetch tour categories: $e');
@@ -326,10 +326,28 @@ class ApiService {
     }
   }
 
-  Future<Response> inference(String imageBase64, int tourId) async {
+  Future<int> inference(String imageBase64, int tourId) async {
     try {
-      final response = await dio.get('/tour_categories/');
-      return response;
+      final formData = FormData.fromMap({
+        'img': imageBase64,
+        'tour_id': tourId,
+      });
+
+      print("imageBase64: $imageBase64");
+
+      final response = await dio.post('/inference/', data: formData);
+      if (response.data is Map && response.data.containsKey('error')) {
+        print("Key 'error' found in response.");
+        return -1;
+      } else {
+        print("Key 'error' not found in response.");
+        if (response.data.containsKey("waypoint_id")) {
+          return response.data["waypoint_id"];
+        } else {
+          print("Key 'waypoint_id' not found in response.");
+          return -1; // Return 0 if the key is not found
+        }
+      }
     } catch (e) {
       print('Failed to fetch tour categories: $e');
       rethrow;
