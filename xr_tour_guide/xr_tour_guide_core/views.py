@@ -586,11 +586,11 @@ def inference(request):
     
     shutil.rmtree(data_path, ignore_errors=True)
 
-    raw_result = result.get("result", "")
-    response_data = {"result": raw_result}
+    # raw_result = result.get("result", "")
+    response_data = {"result": result}
 
     try:
-        lines = raw_result.strip().split("\n")
+        lines = result.strip().split("\n")
         if len(lines) >= 2:
             label_line = lines[1]
             if ":" in label_line:
