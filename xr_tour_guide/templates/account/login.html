@@ -7,8 +7,8 @@
 <div class="container d-flex justify-content-center align-items-center min-vh-100">
     <div class="card shadow rounded-4 border-0" style="max-width: 400px; width: 100%;">
         <div class="card-body p-4">
-            <h2 class="card-title text-center mb-3">Log In</h2>
-            <p class="text-center text-muted mb-4">Enter your username and password</p>
+            <h2 class="card-title text-center mb-3">Accedi</h2>
+            <p class="text-center text-muted mb-4">Inserisci username e password</p>
 
             <form method="post" class="mb-3">
                 {% csrf_token %}
@@ -36,19 +36,19 @@
                 {% endfor %}
 
                 <div class="d-flex justify-content-end mb-3">
-                    <a class="text-decoration-none" href="#">Forgot password?</a>
+                    <a class="text-decoration-none" href="#">Password dimenticata?</a>
                 </div>
 
                 <div class="d-grid mb-3">
-                    <button class="btn btn-primary btn-lg" type="submit">Log in</button>
+                    <button class="btn btn-primary btn-lg" type="submit">Accedi</button>
                 </div>
             </form>
 
-            <div class="text-center text-muted mb-3">or</div>
+            <div class="text-center text-muted mb-3">oppure</div>
 
             <div class="d-grid">
                 <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger btn-lg">
-                    <i class="bi bi-google me-2"></i> Log in with Google
+                    <i class="bi bi-google me-2"></i> Accedi con Google
                 </a>
             </div>
         </div>
