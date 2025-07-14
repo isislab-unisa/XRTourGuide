@@ -3,30 +3,65 @@
 {% block public_content %}
 
 <style>
+    body {
+        background-color: #f4f6f9;
+    }
+
     .form-section {
         max-width: 600px;
         margin: 60px auto;
         padding: 40px;
         background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        font-family: 'Segoe UI', sans-serif;
     }
+
     .form-section h2 {
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         text-align: center;
+        font-weight: 600;
+        color: #343a40;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-control {
+        border-radius: 8px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(to right, #007bff, #6610f2);
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(to right, #0056b3, #520dc2);
+    }
+
+    .form-message {
+        font-size: 0.95rem;
+        margin-top: 10px;
     }
 </style>
 
 <section class="form-section">
-    <h2>Registrati</h2>
+    <h2>✨ Crea il tuo account</h2>
     <form id="register-form">
         <div class="mb-3">
             <label for="username" class="form-label">Username*</label>
-            <input type="text" class="form-control" id="username" required>
+            <input type="text" class="form-control" id="username" placeholder="es. mariorossi" required>
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email*</label>
-            <input type="email" class="form-control" id="email" required>
+            <input type="email" class="form-control" id="email" placeholder="esempio@mail.com" required>
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password*</label>
@@ -48,8 +83,8 @@
             <label for="description" class="form-label">Descrizione</label>
             <textarea class="form-control" id="description" rows="3"></textarea>
         </div>
-        <div id="register-message" class="text-center text-success mb-3"></div>
-        <button type="submit" class="btn btn-primary w-100">Registrati</button>
+        <div id="register-message" class="form-message text-center fw-bold"></div>
+        <button type="submit" class="btn btn-primary w-100 mt-3">Registrati</button>
     </form>
 </section>
 
@@ -69,6 +104,7 @@ document.getElementById("register-form").addEventListener("submit", async functi
 
     const messageBox = document.getElementById("register-message");
     messageBox.textContent = "";
+    messageBox.classList.remove("text-danger", "text-success");
 
     try {
         const response = await fetch("{% url 'api_register' %}", {
@@ -81,12 +117,16 @@ document.getElementById("register-form").addEventListener("submit", async functi
         });
 
         if (response.status === 201) {
-            messageBox.textContent = "Registrazione completata. Controlla l'email per attivare l'account.";
+            messageBox.textContent = "Registrazione completata! Reindirizzamento in corso...";
+            messageBox.classList.add("text-success");
+
+            setTimeout(() => {
+                window.location.href = "{% url 'landing_page' %}";
+            }, 2000);
         } else {
             const errorData = await response.json();
-            messageBox.classList.remove("text-success");
-            messageBox.classList.add("text-danger");
             messageBox.textContent = Object.values(errorData).flat().join(" ");
+            messageBox.classList.add("text-danger");
         }
     } catch (error) {
         messageBox.textContent = "Errore di rete. Riprova.";

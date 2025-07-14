@@ -486,12 +486,12 @@ def build(request):
         tour = Tour.objects.get(pk=tour_id)
     except Tour.DoesNotExist as e:
         print(f"This tour: {tour_id} does not exist")
-    # if tour.status == "READY":
-    tour.status = "ENQUEUED"
-    tour.save()
-    call_api_and_save.apply_async(args=[tour.id], queue='api_tasks')
-    # else:
-    #     return JsonResponse({"message": "Tour already built"}, status=400)
+    if tour.status == "READY":
+        tour.status = "ENQUEUED"
+        tour.save()
+        call_api_and_save.apply_async(args=[tour.id], queue='api_tasks')
+    else:
+        return JsonResponse({"message": "Tour already built"}, status=400)
     return JsonResponse({"message": "Build started"}, status=200)
 
 @permission_classes([IsAuthenticated])

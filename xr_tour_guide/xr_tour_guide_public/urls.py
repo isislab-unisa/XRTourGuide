@@ -5,6 +5,6 @@ from .views import landing_page, register_page
 
 urlpatterns = [
     path('', landing_page, name='landing_page'),
-    path("register/", register_page, name="register"),
+    path("register_platform/", register_page, name="register_platform"),
     path("api/register/", RegisterView.as_view(), name="api_register"),
 ]
