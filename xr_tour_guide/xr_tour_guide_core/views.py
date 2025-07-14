@@ -535,9 +535,28 @@ def complete_build(request):
         )
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def load_model(request, tour_id):
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+    storage = MinioStorage()
+    if not os.path.exists(f"model_{tour_id}.pth") and storage.exists(
+        f"{tour_id}/model.pth"
+    ):
+        model_file = storage.open(f"/models/{tour_id}/model.pth")
+        with open(f"model_{tour_id}.pth", "wb") as f:
+            for chunk in model_file.chunks():
+                f.write(chunk)
+    else:
+        return JsonResponse({"error": "Model not found"}, status=404)
+    return JsonResponse({"message": "Model loaded"}, status=200)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def load_model(request):
+def inference(request):
     tour_id = request.data.get('tour_id')
     try:
         tour = Tour.objects.get(pk=tour_id)
