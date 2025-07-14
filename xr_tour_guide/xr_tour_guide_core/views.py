@@ -586,5 +586,25 @@ def inference(request):
     
     shutil.rmtree(data_path, ignore_errors=True)
 
-    return JsonResponse({"result": result}, status=200)
+    raw_result = result.get("result", "")
+    response_data = {"result": raw_result}
+
+    try:
+        lines = raw_result.strip().split("\n")
+        if len(lines) >= 2:
+            label_line = lines[1]
+            if ":" in label_line:
+                title, percent_str = label_line.split(":")
+                confidence = float(percent_str.strip().replace("%", ""))
+
+                if confidence > 60:
+                    try:
+                        waypoint = Waypoint.objects.get(title=title.strip())
+                        response_data["waypoint_id"] = waypoint.id
+                    except Waypoint.DoesNotExist:
+                        response_data["error"] = f"Waypoint with title '{title.strip()}' not found"
+    except Exception as e:
+        response_data["error"] = f"Failed to parse result: {str(e)}"
+
+    return JsonResponse(response_data, status=200)
         

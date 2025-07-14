@@ -1,0 +1,98 @@
+{% extends 'xr_tour_guide_public/base.html' %}
+{% load static %}
+{% block public_content %}
+
+<style>
+    .form-section {
+        max-width: 600px;
+        margin: 60px auto;
+        padding: 40px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .form-section h2 {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+</style>
+
+<section class="form-section">
+    <h2>Registrati</h2>
+    <form id="register-form">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username*</label>
+            <input type="text" class="form-control" id="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email*</label>
+            <input type="email" class="form-control" id="email" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password*</label>
+            <input type="password" class="form-control" id="password" required>
+        </div>
+        <div class="mb-3">
+            <label for="first_name" class="form-label">Nome</label>
+            <input type="text" class="form-control" id="first_name">
+        </div>
+        <div class="mb-3">
+            <label for="last_name" class="form-label">Cognome</label>
+            <input type="text" class="form-control" id="last_name">
+        </div>
+        <div class="mb-3">
+            <label for="city" class="form-label">Città</label>
+            <input type="text" class="form-control" id="city">
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Descrizione</label>
+            <textarea class="form-control" id="description" rows="3"></textarea>
+        </div>
+        <div id="register-message" class="text-center text-success mb-3"></div>
+        <button type="submit" class="btn btn-primary w-100">Registrati</button>
+    </form>
+</section>
+
+<script>
+document.getElementById("register-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const data = {
+        username: document.getElementById("username").value,
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+        first_name: document.getElementById("first_name").value,
+        last_name: document.getElementById("last_name").value,
+        city: document.getElementById("city").value,
+        description: document.getElementById("description").value,
+    };
+
+    const messageBox = document.getElementById("register-message");
+    messageBox.textContent = "";
+
+    try {
+        const response = await fetch("{% url 'api_register' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (response.status === 201) {
+            messageBox.textContent = "Registrazione completata. Controlla l'email per attivare l'account.";
+        } else {
+            const errorData = await response.json();
+            messageBox.classList.remove("text-success");
+            messageBox.classList.add("text-danger");
+            messageBox.textContent = Object.values(errorData).flat().join(" ");
+        }
+    } catch (error) {
+        messageBox.textContent = "Errore di rete. Riprova.";
+        messageBox.classList.add("text-danger");
+    }
+});
+</script>
+
+{% endblock %}

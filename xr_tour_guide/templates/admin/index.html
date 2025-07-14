@@ -7,3 +7,80 @@
 {% block title %}
     Dashboard
 {% endblock %}
+
+{% block content %}
+    <h1 class="text-2xl font-bold mb-4">Tour Dashboard</h1>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full border border-gray-300 divide-y divide-gray-200 bg-white rounded shadow">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Title</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Place</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Coordinates</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Image</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for tour in tours %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2">{{ tour.title }}</td>
+                    <td class="px-4 py-2">{{ tour.place }}</td>
+                    <td class="px-4 py-2">
+                        {% if tour.coordinates %}
+                            {{ tour.coordinates }}
+                        {% else %}
+                            <span class="text-gray-400 italic">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2">
+                        {% if tour.default_image %}
+                        <img src="{% url 'stream_minio_resource' %}?tour={{ tour.id }}&file={{ tour.default_image.name|urlencode }}" 
+                             alt="Image" 
+                             class="h-16 w-auto rounded shadow-sm border" />
+                        {% else %}
+                            <span class="text-gray-400 italic">No Image</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2">
+                        <form method="post" action="{% url 'build_tour' tour.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                                Build
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-2 text-center text-gray-500 italic">No tours found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll('img[data-lesson-id]').forEach(function (img) {
+                const lessonId = img.dataset.lessonId;
+    
+                fetch(`/get_images/${lessonId}`, {
+                    method: "GET"
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Errore nella richiesta dell'immagine");
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    img.src = url;
+                })
+                .catch(error => {
+                    console.error(`Errore caricamento immagine per lezione ${lessonId}:`, error);
+                });
+            });
+        });
+    </script>
+{% endblock %}
