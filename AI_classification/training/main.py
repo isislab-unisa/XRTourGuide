@@ -115,7 +115,7 @@ def read_s3_file(file_name):
 
 
 def write_s3_file(file_path, remote_path):
-    print("AAAAA:", str(remote_path))
+    print(f"Writing file {file_path} to S3 at {remote_path}", flush=True)
     try:
         s3.upload_file(
             file_path,
@@ -141,12 +141,12 @@ def run_training_subproc(
             input_dir,
             "--output-dir",
             output_dir,
-            "--run-name",
-            run_name,
+            # "--run-name",
+            # run_name,
         ]
-        if num_epochs != 25:
-            cmd.append("--num-epochs")
-            cmd.append(str(num_epochs))
+        # if num_epochs != 25:
+        #     cmd.append("--num-epochs")
+        #     cmd.append(str(num_epochs))
         print("Running command:", " ".join(cmd), flush=True)
 
         subprocess.run(cmd, check=True)
@@ -169,18 +169,18 @@ def run_train(request: Request, view_dir: str, data_path: str):
         # if result is None:
         #     raise Exception("Training failed")
 
-        model_path = os.path.join(view_dir , request.poi_name, f"model.pth")
-        report_path = os.path.join(view_dir, request.poi_name, f"probability_table.csv")
-        print("AAAAAAAA", model_path, report_path, flush=True)
+        model_path = os.path.join(view_dir , f"model.pt")
+        # report_path = os.path.join(view_dir, request.poi_name, f"probability_table.csv")
+        print("AAAAAAAA", model_path, flush=True)
         
         # LOAD ON MINIO
         write_s3_file(
-            model_path, f"{request.poi_id}/model.pth"
+            model_path, f"{request.poi_id}/model.pt"
         )
         
-        write_s3_file(
-            report_path, f"{request.poi_id}/report.csv"
-        )
+        # write_s3_file(
+        #     report_path, f"{request.poi_id}/report.csv"
+        # )
         
         
         # DELETE FOLDER
@@ -212,8 +212,8 @@ def run_train(request: Request, view_dir: str, data_path: str):
         callback_payload = {
             "poi_id": int(request.poi_id),
             "poi_name": request.poi_name,
-            "model_url": f"{request.poi_id}/model.pth",
-            "report_url": f"{request.poi_id}/report.csv",	
+            "model_url": f"{request.poi_id}/model.pt",
+            # "report_url": f"{request.poi_id}/report.csv",	
             "status": "COMPLETED",
         }
         
@@ -242,7 +242,7 @@ def run_train(request: Request, view_dir: str, data_path: str):
             "poi_id": int(request.poi_id),
             "poi_name": request.poi_name,
             "model_url": "None",
-            "report_url": "None",
+            # "report_url": "None",
             "status": "FAILED",
         }
         
