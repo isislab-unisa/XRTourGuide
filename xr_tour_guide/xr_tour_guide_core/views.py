@@ -544,10 +544,10 @@ def load_model(request, tour_id):
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
     storage = MinioStorage()
     if storage.exists(
-        f"{tour_id}/model.pth"
+        f"{tour_id}/model.pt"
     ):
-        model_file = storage.open(f"/{tour_id}/model.pth")
-        with open(f"model_{tour_id}.pth", "wb") as f:
+        model_file = storage.open(f"/{tour_id}/model.pt")
+        with open(f"model_{tour_id}.pt", "wb") as f:
             for chunk in model_file.chunks():
                 f.write(chunk)
     else:
@@ -579,7 +579,7 @@ def inference(request):
     result = run_inference_subproc(
         input_dir=os.path.join(data_path, "input_image.jpg"),
         # model_path=os.path.join(f"/model_{tour_id}.pth", "model.pth"),
-        model_path = f"/workspace/model_{tour_id}.pth",
+        model_path = f"/workspace/model_{tour_id}.pt",
     )
     
     print("INFERENCE DONE", flush=True)

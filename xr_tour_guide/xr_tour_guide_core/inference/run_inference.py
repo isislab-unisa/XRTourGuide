@@ -18,6 +18,13 @@ def run_inference_subproc(
         print("Running command:", " ".join(cmd))
 
         result = subprocess.run(cmd, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        result_str = result.stdout.strip()
+        if "Recognized waypoint:" in result_str:
+            print("Inference successful:", result_str)
+            return result_str.split("Recognized waypoint: ")[1].strip()
+        elif "No matching waypoint found." in result_str:
+            print("Inference completed but no matching waypoint found.")
+            return None
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         print(f"Command failed with return code {e.returncode}", flush=True)
