@@ -6,7 +6,7 @@ import nested_admin
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfolTabularInline
-from .models import Tour, Waypoint, WaypointViewImage, Review
+from .models import Tour, Waypoint, WaypointViewImage, Review, WaypointLink
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from .models import CustomUser
@@ -98,6 +98,10 @@ class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedI
 class UnfoldNestedTabularInline(UnfoldStackedInline, nested_admin.NestedTabularInline):
     pass
 
+class WaypointLinkInline(UnfoldNestedStackedInline):
+    model = WaypointLink
+    extra = 1
+    
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
@@ -105,6 +109,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
     }
+    inlines = [WaypointLinkInline]
     
     # def get_queryset(self, request):
     #     qs = super().get_queryset(request)
@@ -142,8 +147,6 @@ class TourForm(forms.ModelForm):
             self.fields['category'].initial = 'INSIDE'
             self.fields['category'].disabled = True
 
-
-
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours')
     list_display = ('title', 'creation_time', 'category', 'place', 'user')
@@ -157,7 +160,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
     class Media:
         js = ['https://code.jquery.com/jquery-3.6.0.min.js', 'admin/js/hide_waypoint_coordinates.js']
-
+    
     def get_form(self, request, obj=None, **kwargs):
         Form = super().get_form(request, obj, **kwargs)
 
@@ -230,3 +233,4 @@ class ReviewAdmin(ModelAdmin):
 admin.site.register(Review, ReviewAdmin)
 admin.site.register(Tour, TourAdmin)
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
+# admin.site.register(WaypointLink, WaypointLinkInline)

@@ -247,6 +247,7 @@ class Waypoint(models.Model):
 
 class WaypointLink(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE)
+    title = models.CharField(max_length=200, blank=False, null=False)
     link = models.URLField()
     
 class WaypointViewImage(models.Model):
