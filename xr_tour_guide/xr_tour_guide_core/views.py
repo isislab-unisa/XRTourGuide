@@ -596,7 +596,6 @@ def inference(request):
         "video": 0,
         "audio": 0,
         "links": 0,
-        "text": 0
     }
     
     if waypoint.pdf_item is not None:

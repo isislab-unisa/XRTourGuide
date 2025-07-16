@@ -98,9 +98,9 @@ class UserSerializer(serializers.ModelSerializer):
     reviewCount = serializers.SerializerMethodField()
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'city', 'description', 'reviewCount']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'city', 'description', 'review_count']
     
-    def get_reviewCount(self, obj):
+    def get_review_count(self, obj):
         return len(obj.reviews.all())
 
 class ReviewSerializer(serializers.ModelSerializer):
