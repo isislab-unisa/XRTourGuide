@@ -586,25 +586,73 @@ def inference(request):
     
     shutil.rmtree(data_path, ignore_errors=True)
 
-    # raw_result = result.get("result", "")
-    response_data = {"result": result}
+    if result is None:
+        return -1
+    
+    waypoint = tour.waypoints.filter(title=result).first()
+    available_resources = {
+        "pdf": 0,
+        "readme": 0,
+        "video": 0,
+        "audio": 0,
+        "links": 0,
+        "text": 0
+    }
+    
+    if waypoint.pdf_item is not None:
+        available_resources["pdf"] = 1
+    if waypoint.readme_item is not None:
+        available_resources["readme"] = 1
+    if waypoint.video_item is not None:
+        available_resources["video"] = 1
+    if waypoint.audio_item is not None:
+        available_resources["audio"] = 1
+    if waypoint.links.exists():
+        available_resources["links"] = 1
+        
+    response_data = {
+            "result": waypoint.id,
+            "available_resources": available_resources   
+    }
+    
+    # try:
+    #     lines = result.strip().split("\n")
+    #     if len(lines) >= 2:
+    #         label_line = lines[1]
+    #         if ":" in label_line:
+    #             title, percent_str = label_line.split(":")
+    #             confidence = float(percent_str.strip().replace("%", ""))
 
-    try:
-        lines = result.strip().split("\n")
-        if len(lines) >= 2:
-            label_line = lines[1]
-            if ":" in label_line:
-                title, percent_str = label_line.split(":")
-                confidence = float(percent_str.strip().replace("%", ""))
-
-                if confidence > 60:
-                    try:
-                        waypoint = Waypoint.objects.get(title=title.strip())
-                        response_data["waypoint_id"] = waypoint.id
-                    except Waypoint.DoesNotExist:
-                        response_data["error"] = f"Waypoint with title '{title.strip()}' not found"
-    except Exception as e:
-        response_data["error"] = f"Failed to parse result: {str(e)}"
+    #             if confidence > 60:
+    #                 try:
+    #                     waypoint = Waypoint.objects.get(title=title.strip())
+    #                     response_data["waypoint_id"] = waypoint.id
+    #                 except Waypoint.DoesNotExist:
+    #                     response_data["error"] = f"Waypoint with title '{title.strip()}' not found"
+    # except Exception as e:
+    #     response_data["error"] = f"Failed to parse result: {str(e)}"
 
     return JsonResponse(response_data, status=200)
-        
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_waypoint_resources(request):
+    waypoint_id = request.GET.get('waypoint_id')
+    resource_type = request.GET.get('resource_type')
+    waypoint = Waypoint.objects.get(id=waypoint_id)
+
+    if resource_type == "readme" and waypoint.readme_item:
+        return JsonResponse({"readme": waypoint.readme_item}, status=200)
+    elif resource_type == "video" and waypoint.video_item:
+        return JsonResponse({"url": "/stream_minio_resource?waypoint=" + str(waypoint_id) + "&file=video"}, status=200)
+    elif resource_type == "audio" and waypoint.audio_item:
+        return JsonResponse({"url": "/stream_minio_resource?waypoint=" + str(waypoint_id) + "&file=audio"}, status=200)
+    elif resource_type == "pdf" and waypoint.pdf_item:
+        return JsonResponse({"url": "/stream_minio_resource?waypoint=" + str(waypoint_id) + "&file=pdf"}, status=200)
+    elif resource_type == "links" and waypoint.links.exists():
+        links = waypoint.links.all()
+        readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
+        return JsonResponse({"readme": readme_content}, status=200)
+    else:
+        return JsonResponse({"error": "Invalid resource type"}, status=400)
+

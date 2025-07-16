@@ -30,6 +30,7 @@ def upload_media_item(instance, filename):
         'readme_item': 'readme',
         'video_item': 'video',
         'audio_item': 'audio',
+        # 'text_item': 'text',
     }.get(field_name, 'other')
 
     return f"{poi_id}/{instance.id}/data/{subfolder}/{filename}"
@@ -181,6 +182,7 @@ class Waypoint(models.Model):
     readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
+    # text_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INSIDE:
@@ -243,6 +245,10 @@ class Waypoint(models.Model):
     def __str__(self):
         return self.title
 
+class WaypointLink(models.Model):
+    waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE)
+    link = models.URLField()
+    
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
     image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)

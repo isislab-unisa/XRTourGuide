@@ -3,7 +3,8 @@ from django.urls import path, include, re_path
 import nested_admin
 from .views import tour_list, tour_details, profile_details, update_profile, delete_account, update_password, stream_minio_resource, \
    get_reviews_by_tour_id, RegisterView, ActivateAccountView, tour_waypoints, tour_detail, create_review, get_reviews_by_user, increment_view_count, \
-   PasswordResetView, PasswordResetConfirmView, PasswordResetConfirmSubmit, PasswordResetConfirmPage, build, complete_build, load_model, inference
+   PasswordResetView, PasswordResetConfirmView, PasswordResetConfirmSubmit, PasswordResetConfirmPage, build, complete_build, load_model, inference, \
+   get_waypoint_resources
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -63,4 +64,5 @@ urlpatterns = [
     path("complete_build/", complete_build, name="complete_build"),
     path("load_model/<int:tour_id>/", load_model, name="load_model"),
     path("inference/", inference, name="inference"),
+    path("get_waypoint_resources/", get_waypoint_resources, name="get_waypoint_resources"),
 ]
