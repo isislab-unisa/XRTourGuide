@@ -98,9 +98,9 @@ class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedI
 class UnfoldNestedTabularInline(UnfoldStackedInline, nested_admin.NestedTabularInline):
     pass
 
-class WaypointLinkInline(UnfoldNestedStackedInline):
-    model = WaypointLink
-    extra = 1
+# class WaypointLinkInline(UnfoldNestedStackedInline):
+#     model = WaypointLink
+#     extra = 1
     
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
@@ -109,7 +109,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
     }
-    inlines = [WaypointLinkInline]
+    # inlines = [WaypointLinkInline]
     
     # def get_queryset(self, request):
     #     qs = super().get_queryset(request)
