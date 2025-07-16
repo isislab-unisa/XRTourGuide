@@ -271,7 +271,7 @@ UNFOLD = {
         #         ],
         #     },
             {
-                "title": _("xr_tour_guide"),
+                "title": _("xr tour guide functionalities"),
                 "separator": False,
                 "collapsible": True,
                 "default_open": True,
