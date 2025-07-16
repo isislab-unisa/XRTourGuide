@@ -268,6 +268,45 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     });
   }
 
+  String _processImageContent(String content) {
+    if (content.isEmpty) return content;
+
+    // Definisci il prefisso che vuoi aggiungere (ad esempio il base URL del tuo server)
+    String baseUrl = ApiService.basicUrl;
+
+    // Split il contenuto in righe
+    List<String> lines = content.split('\n');
+
+    // Processa ogni riga
+    List<String> processedLines =
+        lines.map((line) {
+          line = line.trim();
+
+          // Controlla se la riga contiene un'immagine markdown
+          if (line.startsWith('![') &&
+              line.contains('](/stream_minio_resource/')) {
+            // Estrai il numero dell'immagine e il percorso
+            RegExp regex = RegExp(
+              r'!\[(\d+)\]\((/stream_minio_resource/[^)]+)\)',
+            );
+            Match? match = regex.firstMatch(line);
+
+            if (match != null) {
+              String imageNumber = match.group(1)!;
+              String imagePath = match.group(2)!;
+
+              // Ricostruisci la riga con il prefisso
+              return '![$imageNumber]($baseUrl$imagePath)';
+            }
+          }
+
+          return line;
+        }).toList();
+
+    // Ricomponi il contenuto
+    return processedLines.join('\n');
+  }
+
   // Update draggable sheet content based on type
   Future<void> _updateDraggableSheetContent(String type, int waypointId) async {
     //Aggiungere un parametro content che verra'popolato da una chiamata api
@@ -285,15 +324,16 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     if (type == "document") {
       queryType = "pdf";
     }
+    if (type == "image"){
+      queryType = "images";
+    }
 
     try {
-      if (queryType != "image"){
-        final response =
-            await _tourService.getResourceByWaypointAndType(waypointId, queryType);
-        print("RESPONSE: $response");
-        content = response as Map<String, dynamic>;
-        print("CONTENT: $content");
-      }
+      final response =
+          await _tourService.getResourceByWaypointAndType(waypointId, queryType);
+      print("RESPONSE: $response");
+      content = response as Map<String, dynamic>;
+      print("CONTENT: $content");
     } catch (e) {
       print("error retrieving content: $e");
       type = 'error';
@@ -328,13 +368,14 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         );
         break;
       case 'image':
-        _currentMarkdownContent = """
-## Landmark Image
+//         _currentMarkdownContent = """
+// ## Landmark Image
 
-![${widget.landmarkName} Image](${widget.landmarkImages.isNotEmpty ? widget.landmarkImages[0] : 'https://picsum.photos/300/200'})
+// ![${widget.landmarkName} Image](${widget.landmarkImages.isNotEmpty ? widget.landmarkImages[0] : 'https://picsum.photos/300/200'})
 
-This is one of the key images for this landmark.
-            """;
+// This is one of the key images for this landmark.
+//             """;
+        _currentMarkdownContent = _processImageContent(content['readme'] ?? '');
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
           config: _buildMarkdownConfig(),

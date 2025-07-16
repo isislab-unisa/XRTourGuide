@@ -616,8 +616,8 @@ def inference(request):
         available_resources["video"] = 1
     if waypoint.audio_item is not None and len(waypoint.audio_item.name) > 1:
         available_resources["audio"] = 1
-    if waypoint.links.exists():
-        available_resources["links"] = 1
+    # if waypoint.links.exists():
+    #     available_resources["links"] = 1
         
     response_data = {
             "result": waypoint.id,
@@ -672,10 +672,10 @@ def get_waypoint_resources(request):
     elif resource_type == "pdf" and waypoint.pdf_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=pdf"}, status=200)
 
-    elif resource_type == "links" and waypoint.links.exists():
-        links = waypoint.links.all()
-        readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
-        return JsonResponse({"readme": readme_content}, status=200)
+    # elif resource_type == "links" and waypoint.links.exists():
+    #     links = waypoint.links.all()
+    #     readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
+    #     return JsonResponse({"readme": readme_content}, status=200)
 
     elif resource_type == "images":
         images = waypoint.images.all()[:10]

@@ -25,7 +25,7 @@ def run_inference_subproc(
         elif "No matching waypoint found." in result_str:
             print("Inference completed but no matching waypoint found.")
             return None
-        return result.stdout.strip()
+        # return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         print(f"Command failed with return code {e.returncode}", flush=True)
         print(f"Output: {e.stdout}", flush=True)
