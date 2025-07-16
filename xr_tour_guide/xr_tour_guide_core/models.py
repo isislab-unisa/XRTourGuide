@@ -246,9 +246,9 @@ class Waypoint(models.Model):
         return self.title
 
 class WaypointLink(models.Model):
-    waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE)
+    waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE, null=True, blank=True)
     title = models.CharField(max_length=200, blank=False, null=False)
-    link = models.URLField()
+    link = models.URLField(null=True, blank=True)
     
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
