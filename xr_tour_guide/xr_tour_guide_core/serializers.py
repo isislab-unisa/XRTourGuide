@@ -95,7 +95,7 @@ class TourSerializer(serializers.ModelSerializer):
         return obj.user.username
     
 class UserSerializer(serializers.ModelSerializer):
-    reviewCount = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
     class Meta:
         model = get_user_model()
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'city', 'description', 'review_count']
