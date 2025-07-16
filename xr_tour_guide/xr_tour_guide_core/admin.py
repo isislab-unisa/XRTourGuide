@@ -6,7 +6,7 @@ import nested_admin
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfolTabularInline
-from .models import Tour, Waypoint, WaypointViewImage, Review, WaypointLink
+from .models import Tour, Waypoint, WaypointViewImage, Review
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from .models import CustomUser
@@ -30,9 +30,12 @@ class MultipleClearableFileInput(ClearableFileInput):
         return mark_safe(f"""
         <div class="flex w-full max-w-2xl items-center justify-between gap-2 rounded-default border border-base-200 px-3 py-2 shadow-xs dark:border-base-700">
             <label class="text-sm font-medium text-base-700 dark:text-base-200">
+                Upload Images
                 {input_html}
             </label>
-            
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v6m0 0L8 16m4 2l4-2m-6-6h6m-3-4v4" />
+            </svg>
         </div>
         """)
 
@@ -49,16 +52,17 @@ class MultipleFileField(forms.FileField):
     
     def save(self, commit=True):
         instance = super().save(commit=commit)
-        print("[DEBUG] Saving form for waypoint", instance)
+        print("[DEBUG] Saving form for Cromo_View", instance)
 
         uploaded_files = self.cleaned_data.get('uploaded_images')
         print("[DEBUG] Uploaded files:", uploaded_files)
 
         if instance.pk and uploaded_files:
             for uploaded_file in uploaded_files:
-                WaypointViewImage.objects.create(waypoint=instance, image=uploaded_file)
+                WaypointViewImage.objects.create(cromo_view=instance, image=uploaded_file)
 
         return instance
+
 
 class WaypointForm(forms.ModelForm):
     uploaded_images = forms.FileField(
@@ -98,9 +102,9 @@ class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedI
 class UnfoldNestedTabularInline(UnfoldStackedInline, nested_admin.NestedTabularInline):
     pass
 
-class WaypointLinkInline(UnfoldNestedStackedInline):
-    model = WaypointLink
-    extra = 1
+# class WaypointLinkInline(UnfoldNestedStackedInline):
+#     model = WaypointLink
+#     extra = 1
     
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
@@ -109,7 +113,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
     }
-    inlines = [WaypointLinkInline]
+    # inlines = [WaypointLinkInline]
     
     # def get_queryset(self, request):
     #     qs = super().get_queryset(request)

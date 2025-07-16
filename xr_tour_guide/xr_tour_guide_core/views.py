@@ -648,7 +648,11 @@ def inference(request):
 def get_waypoint_resources(request):
     waypoint_id = request.GET.get('waypoint_id')
     resource_type = request.GET.get('resource_type')
-    waypoint = Waypoint.objects.get(id=waypoint_id)
+
+    try:
+        waypoint = Waypoint.objects.get(id=waypoint_id)
+    except Waypoint.DoesNotExist:
+        return JsonResponse({"error": "Waypoint not found"}, status=404)
 
     if resource_type == "readme" and waypoint.readme_item:
         # Se è un file di testo, leggi il contenuto
@@ -660,15 +664,30 @@ def get_waypoint_resources(request):
             # Se non riesce a leggere come testo, restituisci l'URL per il download
             return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=readme"}, status=200)
     elif resource_type == "video" and waypoint.video_item:
-        return JsonResponse({"url": "/stream_minio_resource?waypoint=" + str(waypoint_id) + "&file=video"}, status=200)
+        return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=video"}, status=200)
+
     elif resource_type == "audio" and waypoint.audio_item:
-        return JsonResponse({"url": "/stream_minio_resource?waypoint=" + str(waypoint_id) + "&file=audio"}, status=200)
+        return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=audio"}, status=200)
+
     elif resource_type == "pdf" and waypoint.pdf_item:
-        return JsonResponse({"url": "/stream_minio_resource?waypoint=" + str(waypoint_id) + "&file=pdf"}, status=200)
+        return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=pdf"}, status=200)
+
     elif resource_type == "links" and waypoint.links.exists():
         links = waypoint.links.all()
         readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
         return JsonResponse({"readme": readme_content}, status=200)
+
+    elif resource_type == "images":
+        images = waypoint.images.all()[:10]
+        if not images.exists():
+            return JsonResponse({"error": "No images found"}, status=404)
+
+        readme_content = "\n".join(
+            [f"![{i+1}](/stream_minio_resource/?waypoint={waypoint_id}&file={img.image.name})" for i, img in enumerate(images)]
+        )
+        return JsonResponse({"readme": readme_content}, status=200)
+
     else:
         return JsonResponse({"error": "Invalid resource type"}, status=400)
+
 
