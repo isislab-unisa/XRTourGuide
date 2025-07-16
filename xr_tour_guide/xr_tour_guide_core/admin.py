@@ -6,7 +6,7 @@ import nested_admin
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfolTabularInline
-from .models import Tour, Waypoint, WaypointViewImage, Review, WaypointLink
+from .models import Tour, Waypoint, WaypointViewImage, Review
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from .models import CustomUser
