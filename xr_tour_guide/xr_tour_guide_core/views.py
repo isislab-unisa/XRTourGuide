@@ -587,7 +587,17 @@ def inference(request):
     shutil.rmtree(data_path, ignore_errors=True)
 
     if result is None:
-        return -1
+        response_data = {
+            "result": -1,
+            "available_resources": {
+                "pdf": 0,
+                "readme": 0,
+                "video": 0,
+                "audio": 0,
+                "links": 0,
+            }
+        }
+        return JsonResponse(response_data, status=200)
     
     waypoint = tour.waypoints.filter(title=result).first()
     available_resources = {
@@ -598,13 +608,13 @@ def inference(request):
         "links": 0,
     }
     
-    if waypoint.pdf_item is not None:
+    if waypoint.pdf_item is not None and len(waypoint.pdf_item.name) > 1:
         available_resources["pdf"] = 1
-    if waypoint.readme_item is not None:
+    if waypoint.readme_item is not None and len(waypoint.readme_item.name) > 1:
         available_resources["readme"] = 1
-    if waypoint.video_item is not None:
+    if waypoint.video_item is not None and len(waypoint.video_item.name) > 1:
         available_resources["video"] = 1
-    if waypoint.audio_item is not None:
+    if waypoint.audio_item is not None and len(waypoint.audio_item.name) > 1:
         available_resources["audio"] = 1
     if waypoint.links.exists():
         available_resources["links"] = 1
@@ -641,7 +651,14 @@ def get_waypoint_resources(request):
     waypoint = Waypoint.objects.get(id=waypoint_id)
 
     if resource_type == "readme" and waypoint.readme_item:
-        return JsonResponse({"readme": waypoint.readme_item}, status=200)
+        # Se è un file di testo, leggi il contenuto
+        try:
+            storage = MinioStorage()
+            file_content = storage.open(waypoint.readme_item.name, mode='r').read()
+            return JsonResponse({"readme": file_content}, status=200)
+        except Exception as e:
+            # Se non riesce a leggere come testo, restituisci l'URL per il download
+            return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=readme"}, status=200)
     elif resource_type == "video" and waypoint.video_item:
         return JsonResponse({"url": "/stream_minio_resource?waypoint=" + str(waypoint_id) + "&file=video"}, status=200)
     elif resource_type == "audio" and waypoint.audio_item:

@@ -246,10 +246,6 @@ Future<User> getUserDetails() async {
       print("Resource Retrieval error: $e");
       rethrow;
     }
-
     return resource;
   }
-
-
-
 }

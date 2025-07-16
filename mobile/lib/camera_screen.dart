@@ -39,14 +39,14 @@ Widget? _currentActiveContent;
 
 class ARCameraScreen extends ConsumerStatefulWidget {
   // Landmark data passed to the screen
-  final String landmarkName;
-  final String landmarkDescription;
-  final List<String> landmarkImages;
+  String landmarkName;
+  String landmarkDescription;
+  List<String> landmarkImages;
   final double latitude;
   final double longitude;
   final int tourId;
 
-  const ARCameraScreen({
+  ARCameraScreen({
     Key? key,
     required this.tourId,
     this.landmarkName = "Santuario di Montevergine",
@@ -100,6 +100,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   // Recognition state
   RecognitionState _recognitionState = RecognitionState.ready;
+
+  int _recognizedWaypointId = -1; // Store recognized waypoint ID
+  Map<String, dynamic> _availableResources = {}; // Store available resources
 
   // Animation controllers
   late AnimationController _pulseAnimationController;
@@ -266,23 +269,41 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   }
 
   // Update draggable sheet content based on type
-  void _updateDraggableSheetContent(String type, int waypointId) {
+  Future<void> _updateDraggableSheetContent(String type, int waypointId) async {
     //Aggiungere un parametro content che verra'popolato da una chiamata api
     // This will hold the content that goes into the _currentActiveContent
     Widget? contentToDisplay;
-    Map<String, dynamic> content;
+    Map<String, dynamic> content = {};
 
-    // try {
-    //   final response =_tourService..getResourceByWaypointAndType(waypointId, type);
-    //   content = response as Map<String, dynamic>;
-    // } catch (e) {
-    //   type = 'error';
-    // }
+    var queryType = type;
+    if (type == "text"){
+      queryType = "readme";
+    }
+    if (type == "link") {
+      queryType = "links";
+    }
+    if (type == "document") {
+      queryType = "pdf";
+    }
+
+    try {
+      if (queryType != "image"){
+        final response =
+            await _tourService.getResourceByWaypointAndType(waypointId, queryType);
+        print("RESPONSE: $response");
+        content = response as Map<String, dynamic>;
+        print("CONTENT: $content");
+      }
+    } catch (e) {
+      print("error retrieving content: $e");
+      type = 'error';
+    }
 
     switch (type) {
       case 'text':
-        _currentMarkdownContent =
-            widget.landmarkDescription; // Or specific text
+        // _currentMarkdownContent =
+        //     widget.landmarkDescription; // Or specific text
+        _currentMarkdownContent = content['readme'] ?? '';
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
           config: _buildMarkdownConfig(),
@@ -291,13 +312,14 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         );
         break;
       case 'link':
-        _currentMarkdownContent = '''
-## External Links
+//         _currentMarkdownContent = '''
+// ## External Links
 
-For more information, please visit:
-[Official Website](https://www.santuariodimontevergine.com)
-[Wikipedia Page](https://en.wikipedia.org/wiki/Montevergine_Sanctuary)
-            ''';
+// For more information, please visit:
+// [Official Website](https://www.santuariodimontevergine.com)
+// [Wikipedia Page](https://en.wikipedia.org/wiki/Montevergine_Sanctuary)
+//             ''';
+        _currentMarkdownContent = content['links'] ?? '';
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
           config: _buildMarkdownConfig(),
@@ -321,27 +343,30 @@ This is one of the key images for this landmark.
         );
         break;
       case 'video':
-        contentToDisplay = const VideoPlayerWidget(
+        contentToDisplay = VideoPlayerWidget(
           videoUrl:
-              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4', // Replace with your video URL
+              // 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4', // Replace with your video URL
+              content['video'] ?? 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
         );
         break;
       case 'document':
-        contentToDisplay = const PdfViewerWidget(
+        contentToDisplay = PdfViewerWidget(
           pdfUrl:
-              'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf', // Replace with your PDF URL
+              // 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf', // Replace with your PDF URL
+              content['pdf'] ?? 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf',
         );
         break;
       case 'audio':
-        contentToDisplay = const AudioPlayerWidget(
+        contentToDisplay = AudioPlayerWidget(
           audioUrl:
-              'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Replace with your audio URL
+              // 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Replace with your audio URL
+              content['audio'] ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
         );
         break;
       case 'error':
         contentToDisplay = Center(
           child: Text(
-            'No content available for "$type".',
+            'No content available for "$queryType".',
             style: const TextStyle(color: AppColors.textPrimary),
           ),
         );
@@ -438,24 +463,34 @@ This is one of the key images for this landmark.
 
     // Simulate recognition process (replace with actual ML/AR logic)
     // await Future.delayed(const Duration(seconds: 3));
-    final waypointId = await _apiService.inference(
+    final result = await _apiService.inference(
       base64Image,
       widget.tourId,
     );
 
+    var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
+    var availableResources = result.data["available_resources"] ?? {};
+
+    _waypoints.forEach((waypoint) {
+      if (waypoint.id == waypointId) {
+        // Update the current landmark name and description
+        widget.landmarkImages = waypoint.images;
+      }
+    });
+
+    print("AVAILABLE_RESOURCES: $availableResources");
+
     // Stop pulse animation
     _pulseAnimationController.stop();
 
-    // Force success for debugging - ALWAYS SUCCESS
-    //TODO: Replace with actual recognition logic
-    bool recognitionSuccess = true;
-    if (waypointId == -1) {
-      recognitionSuccess = false;
-    }
+    bool recognitionSuccess = waypointId != -1;
     print('Recognition result: $recognitionSuccess');
 
     if (recognitionSuccess) {
       setState(() {
+        _recognizedWaypointId = waypointId; // Store recognized waypoint ID
+        _availableResources = Map<String, dynamic>.from(availableResources); // Store available resources
+
         _currentMarkdownContent = """
 # ${widget.landmarkName}
 """;
@@ -472,7 +507,7 @@ This is one of the key images for this landmark.
       _successAnimationController.reset();
       _successAnimationController.forward();
 
-      // Start AR overlays with manual timer-based animation
+      // Start AR overlays
       _startAROverlayAnimation();
 
     } else {
@@ -681,10 +716,10 @@ This is one of the key images for this landmark.
         'assetPath': 'assets/icons/text.png',
         'delay': 0.0,
         'label': 'Text',
-        'isVisible': true,
+        'isVisible': _availableResources["readme"] == 1,
         'onTapAction': () {
           print('Text Info icon tapped!');
-          _updateDraggableSheetContent('text', 1);
+          _updateDraggableSheetContent('text', _recognizedWaypointId);
         },
       }, // Top
       {
@@ -692,10 +727,10 @@ This is one of the key images for this landmark.
         'assetPath': 'assets/icons/link.png',
         'delay': 0.1,
         'label': 'Link',
-        'isVisible': true,
+        'isVisible': _availableResources["links"] == 1,
         'onTapAction': () {
           print('Link Info icon tapped!');
-          _updateDraggableSheetContent('link', 1);
+          _updateDraggableSheetContent('link', _recognizedWaypointId);
         },
       }, // Top-right
       {
@@ -706,7 +741,7 @@ This is one of the key images for this landmark.
         'isVisible': true,
         'onTapAction': () {
           print('Image Info icon tapped!');
-          _updateDraggableSheetContent('image', 1);
+          _updateDraggableSheetContent('image', _recognizedWaypointId);
         },
       }, // Bottom-right
       {
@@ -714,10 +749,10 @@ This is one of the key images for this landmark.
         'assetPath': 'assets/icons/video.png',
         'delay': 0.3,
         'label': 'Video',
-        'isVisible': true,
+        'isVisible': _availableResources["video"] == 1,
         'onTapAction': () {
           print('Video Info icon tapped!');
-          _updateDraggableSheetContent('video', 1);
+          _updateDraggableSheetContent('video', _recognizedWaypointId);
         },
       }, // Bottom
       {
@@ -725,10 +760,10 @@ This is one of the key images for this landmark.
         'assetPath': 'assets/icons/document.png',
         'delay': 0.4,
         'label': 'Doc',
-        'isVisible': true,
+        'isVisible': _availableResources["pdf"] == 1,
         'onTapAction': () {
           print('Doc Info icon tapped!');
-          _updateDraggableSheetContent('document', 1);
+          _updateDraggableSheetContent('document', _recognizedWaypointId);
         },
       }, // Bottom-left
       {
@@ -736,10 +771,10 @@ This is one of the key images for this landmark.
         'assetPath': 'assets/icons/audio.png',
         'delay': 0.5,
         'label': 'Audio',
-        'isVisible': true,
+        'isVisible': _availableResources["audio"] == 1,
         'onTapAction': () {
           print('Audio Info icon tapped!');
-          _updateDraggableSheetContent('audio', 1);
+          _updateDraggableSheetContent('audio', _recognizedWaypointId);
         },
       }, // Top-left
       {

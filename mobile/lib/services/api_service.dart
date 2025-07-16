@@ -18,7 +18,7 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.163:80';
+  static const String basicUrl = 'http://172.16.15.168:80';
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
@@ -326,37 +326,36 @@ class ApiService {
     }
   }
 
-  Future<int> inference(String imageBase64, int tourId) async {
+  Future<Response> inference(String imageBase64, int tourId) async {
     try {
       final formData = FormData.fromMap({
         'img': imageBase64,
         'tour_id': tourId,
       });
 
-      print("imageBase64: $imageBase64");
-
+      var results_data = {};
       final response = await dio.post('/inference/', data: formData);
-      if (response.data is Map && response.data.containsKey('error')) {
-        print("Key 'error' found in response.");
-        return -1;
-      } else {
-        print("Key 'error' not found in response.");
-        if (response.data.containsKey("waypoint_id")) {
-          return response.data["waypoint_id"];
-        } else {
-          print("Key 'waypoint_id' not found in response.");
-          return -1; // Return 0 if the key is not found
-        }
-      }
+      // if (response.data.get("result") == -1) {
+      //   results_data["result"] = -1;
+      //   results_data["available_resources"] = response.data.get("available_resources");
+      // } else {
+      //   return response.data["result"];
+      // }
+      return response;
     } catch (e) {
-      print('Failed to fetch tour categories: $e');
+      print('Failed inference: $e');
       rethrow;
     }
   }
     
     Future<Response> loadResource(int waypointId, String resourceType) async {
     try {
-      final response = await dio.get('/tour_categories/');
+      final response = await dio.get('/get_waypoint_resources/',
+        queryParameters: {
+          'waypoint_id': waypointId,
+          'resource_type': resourceType,
+        }
+      );
       return response;
     } catch (e) {
       print('Failed to fetch tour categories: $e');
