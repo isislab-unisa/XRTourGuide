@@ -515,6 +515,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _waypoints.forEach((waypoint) {
       if (waypoint.id == waypointId) {
         // Update the current landmark name and description
+        widget.landmarkName = waypoint.title;
         widget.landmarkImages = waypoint.images;
       }
     });
