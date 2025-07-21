@@ -14,6 +14,7 @@ import 'dart:math';
 import 'services/auth_service.dart';
 import 'services/tour_service.dart';
 import 'services/api_service.dart';
+import 'services/local_state_service.dart';
 import 'models/waypoint.dart';
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:easy_localization/easy_localization.dart";
@@ -92,6 +93,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     with TickerProviderStateMixin {
 
   late ApiService _apiService;
+  late LocalStateService _localStateService;
 
   // Camera controller
   CameraController? _cameraController;
@@ -140,6 +142,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     super.initState();
     _tourService = ref.read(tourServiceProvider);
     _apiService = ref.read(apiServiceProvider);
+    _localStateService = LocalStateService();
     _initializeCamera();
     _getCurrentLocation();
     _initializeAnimations();
@@ -309,7 +312,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   // Update draggable sheet content based on type
   Future<void> _updateDraggableSheetContent(String type, int waypointId) async {
-    //Aggiungere un parametro content che verra'popolato da una chiamata api
     // This will hold the content that goes into the _currentActiveContent
     Widget? contentToDisplay;
     Map<String, dynamic> content = {};
@@ -341,8 +343,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     switch (type) {
       case 'text':
-        // _currentMarkdownContent =
-        //     widget.landmarkDescription; // Or specific text
         _currentMarkdownContent = content['readme'] ?? '';
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
@@ -352,13 +352,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         );
         break;
       case 'link':
-//         _currentMarkdownContent = '''
-// ## External Links
-
-// For more information, please visit:
-// [Official Website](https://www.santuariodimontevergine.com)
-// [Wikipedia Page](https://en.wikipedia.org/wiki/Montevergine_Sanctuary)
-//             ''';
         _currentMarkdownContent = content['links'] ?? '';
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
@@ -368,13 +361,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         );
         break;
       case 'image':
-//         _currentMarkdownContent = """
-// ## Landmark Image
-
-// ![${widget.landmarkName} Image](${widget.landmarkImages.isNotEmpty ? widget.landmarkImages[0] : 'https://picsum.photos/300/200'})
-
-// This is one of the key images for this landmark.
-//             """;
         _currentMarkdownContent = _processImageContent(content['readme'] ?? '');
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
@@ -386,14 +372,12 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       case 'video':
         contentToDisplay = VideoPlayerWidget(
           videoUrl:
-              // 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4', // Replace with your video URL
               content['video'] ?? 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
         );
         break;
       case 'document':
         contentToDisplay = PdfViewerWidget(
           pdfUrl:
-              // 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf', // Replace with your PDF URL
               content['pdf'] ?? 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf',
         );
         break;
@@ -528,6 +512,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     print('Recognition result: $recognitionSuccess');
 
     if (recognitionSuccess) {
+      await _localStateService.addScannedWaypoint(widget.tourId, waypointId);
+
       setState(() {
         _recognizedWaypointId = waypointId; // Store recognized waypoint ID
         _availableResources = Map<String, dynamic>.from(availableResources); // Store available resources
@@ -551,6 +537,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       // Start AR overlays
       _startAROverlayAnimation();
 
+      await _checkTourCompletion();
+
     } else {
       setState(() {
         _recognitionState = RecognitionState.failure;
@@ -564,6 +552,53 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         }
       });
     }
+  }
+
+  // NUOVO: Verifica se il tour è completato
+  Future<void> _checkTourCompletion() async {
+    try {
+      final tourDetails = await _apiService.getTourDetails(widget.tourId);
+      final totalWaypoints = tourDetails.data['waypoints']?.length ?? 0;
+      final scannedWaypoints = await _localStateService.getScannedWaypoints(
+        widget.tourId,
+      );
+
+      if (scannedWaypoints.length >= totalWaypoints && totalWaypoints > 0) {
+        await _localStateService.markTourCompleted(widget.tourId);
+
+        // Mostra dialog di completamento
+        if (mounted) {
+          _showTourCompletedDialog();
+        }
+      }
+    } catch (e) {
+      print('Error checking tour completion: $e');
+    }
+  }
+
+  // NUOVO: Mostra dialog di tour completato
+  void _showTourCompletedDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('🎉 Congratulazioni!'),
+          content: const Text(
+            'Hai completato questo tour! Hai visitato tutti i waypoint disponibili.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Torna alla schermata precedente
+              },
+              child: const Text('Continua'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Manual AR overlay animation using Timer

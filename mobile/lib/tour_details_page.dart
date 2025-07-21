@@ -17,6 +17,9 @@ import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
 import 'review_list.dart'; // Import your review list screen
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
+import 'services/local_state_service.dart';
+import 'providers/local_state_provider.dart';
+
 
 
 
@@ -39,6 +42,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
   late TourService _tourService;
   late ApiService _apiService;
+  late LocalStateService _localStateService;
+  Set<int> _scannedWaypoints = {};
 
   String _selectedTab = 'About';
   late List<bool> _expandedWaypoints;
@@ -81,6 +86,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     super.initState();
     _tourService = ref.read(tourServiceProvider);
     _apiService = ref.read(apiServiceProvider);
+    _localStateService = ref.read(localStateServiceProvider);
     _loadData();
     _checkLocationPermission();
     _incrementViewCount();
@@ -117,6 +123,22 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       print('Error incrementing view count: $e');
     }
   }
+
+  Future<void> _loadScannedWaypoints() async {
+    try {
+      final scannedIds = await _localStateService.getScannedWaypoints(
+        widget.tourId,
+      );
+      if (mounted) {
+        setState(() {
+          _scannedWaypoints = scannedIds.toSet();
+        });
+      }
+    } catch (e) {
+      print('Error loading scanned waypoints: $e');
+    }
+  }
+
 
   Future<void> _loadTourDetails() async{
     try {
@@ -1724,6 +1746,8 @@ Widget _buildWaypointItem({
     bool isSubWaypoint = false,
   }) {
 
+    final bool isScanned = _scannedWaypoints.contains(waypointIndex);
+
     // Determina se questo item è espanso
     bool isExpanded;
     if (isSubWaypoint && parentIndex != null) {
@@ -1740,155 +1764,184 @@ Widget _buildWaypointItem({
       child: Column(
         children: [
           // Waypoint header
-          Container(
-            margin: EdgeInsets.symmetric(
-              horizontal:
-                  isSubWaypoint ? 32.0 : 16.0, // Indentazione per sub-waypoints
-              vertical: 4.0,
-            ),
-            decoration: BoxDecoration(
-              color: isSubWaypoint ? Colors.grey.shade50 : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border:
-                  isSubWaypoint
-                      ? Border.all(color: Colors.grey.shade200)
-                      : null,
-              boxShadow:
-                  isSubWaypoint
-                      ? []
-                      : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    if (isSubWaypoint && parentIndex != null) {
-                      // Logica per sub-waypoints: chiudi solo gli altri sub-waypoints dello stesso parent
-                      if (_expandedSubWaypoints[parentIndex] != null) {
-                        for (
-                          int i = 0;
-                          i < _expandedSubWaypoints[parentIndex]!.length;
-                          i++
-                        ) {
-                          if (i != index) {
-                            _expandedSubWaypoints[parentIndex]![i] = false;
-                          }
-                        }
-                        _expandedSubWaypoints[parentIndex]![index] =
-                            !_expandedSubWaypoints[parentIndex]![index];
-                      }
-                      // NON centrare la mappa per i sub-waypoints
-                    } else {
-                      // Logica per waypoints principali: chiudi tutti gli altri waypoints principali
-                      if (index >= 0 && index < _expandedWaypoints.length) {
-                        for (int i = 0; i < _expandedWaypoints.length; i++) {
-                          if (i != index) {
-                            _expandedWaypoints[i] = false;
-                            // Chiudi anche tutti i sub-waypoints quando si chiude un waypoint principale
-                            if (_expandedSubWaypoints[i] != null) {
-                              for (
-                                int j = 0;
-                                j < _expandedSubWaypoints[i]!.length;
-                                j++
-                              ) {
-                                _expandedSubWaypoints[i]![j] = false;
+          Stack(
+            children: [ 
+              Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal:
+                      isSubWaypoint ? 32.0 : 16.0, // Indentazione per sub-waypoints
+                  vertical: 4.0,
+                ),
+                decoration: BoxDecoration(
+                  color: isSubWaypoint ? Colors.grey.shade50 : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      isSubWaypoint
+                          ? Border.all(color: Colors.grey.shade200)
+                          : null,
+                  boxShadow:
+                      isSubWaypoint
+                          ? []
+                          : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (isSubWaypoint && parentIndex != null) {
+                          // Logica per sub-waypoints: chiudi solo gli altri sub-waypoints dello stesso parent
+                          if (_expandedSubWaypoints[parentIndex] != null) {
+                            for (
+                              int i = 0;
+                              i < _expandedSubWaypoints[parentIndex]!.length;
+                              i++
+                            ) {
+                              if (i != index) {
+                                _expandedSubWaypoints[parentIndex]![i] = false;
                               }
+                            }
+                            _expandedSubWaypoints[parentIndex]![index] =
+                                !_expandedSubWaypoints[parentIndex]![index];
+                          }
+                          // NON centrare la mappa per i sub-waypoints
+                        } else {
+                          // Logica per waypoints principali: chiudi tutti gli altri waypoints principali
+                          if (index >= 0 && index < _expandedWaypoints.length) {
+                            for (int i = 0; i < _expandedWaypoints.length; i++) {
+                              if (i != index) {
+                                _expandedWaypoints[i] = false;
+                                // Chiudi anche tutti i sub-waypoints quando si chiude un waypoint principale
+                                if (_expandedSubWaypoints[i] != null) {
+                                  for (
+                                    int j = 0;
+                                    j < _expandedSubWaypoints[i]!.length;
+                                    j++
+                                  ) {
+                                    _expandedSubWaypoints[i]![j] = false;
+                                  }
+                                }
+                              }
+                            }
+                            _expandedWaypoints[index] = !_expandedWaypoints[index];
+                            _selectedWaypointIndex = index;
+              
+                            // Centra la mappa SOLO per waypoints principali
+                            if (index < _waypoints.length &&
+                                _selectedTab == 'Itinerario' &&
+                                (tourCategory != "INSIDE" &&
+                                    tourCategory != "Cibo")) {
+                              _centerMap(
+                                LatLng(
+                                  _waypoints[index].latitude,
+                                  _waypoints[index].longitude,
+                                ),
+                              );
                             }
                           }
                         }
-                        _expandedWaypoints[index] = !_expandedWaypoints[index];
-                        _selectedWaypointIndex = index;
-
-                        // Centra la mappa SOLO per waypoints principali
-                        if (index < _waypoints.length &&
-                            _selectedTab == 'Itinerario' &&
-                            (tourCategory != "INSIDE" &&
-                                tourCategory != "Cibo")) {
-                          _centerMap(
-                            LatLng(
-                              _waypoints[index].latitude,
-                              _waypoints[index].longitude,
+                      });                },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
+                      ),
+                      child: Row(
+                        children: [
+                          // Waypoint number con logica degli indici corretta
+                          Container(
+                            width: isSubWaypoint ? 24 : 28,
+                            height: isSubWaypoint ? 24 : 28,
+                            decoration: BoxDecoration(
+                              color:
+                                  isSubWaypoint
+                                      ? AppColors.primary.withOpacity(0.7)
+                                      : AppColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 3,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
                             ),
-                          );
-                        }
-                      }
-                    }
-                  });                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 16.0,
-                  ),
-                  child: Row(
-                    children: [
-                      // Waypoint number con logica degli indici corretta
-                      Container(
-                        width: isSubWaypoint ? 24 : 28,
-                        height: isSubWaypoint ? 24 : 28,
-                        decoration: BoxDecoration(
-                          color:
-                              isSubWaypoint
-                                  ? AppColors.primary.withOpacity(0.7)
-                                  : AppColors.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 3,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            // Logica corretta per gli indici
-                            isSubWaypoint
-                                ? '${(parentIndex ?? 0) + 1}.${index + 1}' // Sub-waypoint: 2.1, 2.2, etc.
-                                : '${index + 1}', // Waypoint principale: 1, 2, 3, etc.
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: isSubWaypoint ? 10 : 12,
+                            child: Center(
+                              child: Text(
+                                // Logica corretta per gli indici
+                                isSubWaypoint
+                                    ? '${(parentIndex ?? 0) + 1}.${index + 1}' // Sub-waypoint: 2.1, 2.2, etc.
+                                    : '${index + 1}', // Waypoint principale: 1, 2, 3, etc.
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: isSubWaypoint ? 10 : 12,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Waypoint name
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: isSubWaypoint ? 14 : 16,
-                            fontWeight: FontWeight.w500,
+                          const SizedBox(width: 16),
+              
+                          // Waypoint name
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: isSubWaypoint ? 14 : 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+              
+                          // Expand/collapse icon
+                          Icon(
+                            (isExpanded)
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
                             color: AppColors.textSecondary,
+                            size: isSubWaypoint ? 20 : 24,
                           ),
-                        ),
+                        ],
                       ),
-
-                      // Expand/collapse icon
-                      Icon(
-                        (isExpanded)
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        color: AppColors.textSecondary,
-                        size: isSubWaypoint ? 20 : 24,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
+              if (isScanned)
+                Positioned(
+                  top: isSubWaypoint ? 6 : 8,
+                  right: isSubWaypoint ? 38 : 22,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ),
+            ],
           ),
 
           // Waypoint content (expanded)
