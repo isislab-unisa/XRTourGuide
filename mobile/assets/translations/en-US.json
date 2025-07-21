@@ -88,5 +88,8 @@
     "search_bar_hint": "What do you want to see?",
     "recent_tours": "Recent Tours",
     "categories": "Categories",
-    "category_results": "{category}: {count} Results"
+    "category_results": "{category}: {count} Results",
+    "tour_completed": "You've completed this Tour! You visited all available waypoints.",
+    "congratulations": "🎉 Congratulations!",
+    "continue": "Continue"
 }

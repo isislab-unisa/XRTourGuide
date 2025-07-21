@@ -592,9 +592,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('🎉 Congratulazioni!'),
-          content: const Text(
-            'Hai completato questo tour! Hai visitato tutti i waypoint disponibili.',
+          title: Text('congratulations'.tr()),
+          content: Text(
+            'tour_completed'.tr(),
           ),
           actions: [
             TextButton(
@@ -602,7 +602,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
                 Navigator.of(context).pop();
                 // Navigator.of(context).pop(); // Torna alla schermata precedente
               },
-              child: const Text('Continua'),
+              child: Text('continue'.tr()),
             ),
           ],
         );
