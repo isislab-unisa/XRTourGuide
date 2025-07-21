@@ -599,7 +599,25 @@ def inference(request):
         }
         return JsonResponse(response_data, status=200)
     
+    waypoint = None
     waypoint = tour.waypoints.filter(title=result).first()
+    if waypoint is None:
+        sub_tours = tour.sub_tours.all()
+        for sub_tour in sub_tours:
+            waypoint = sub_tour.waypoints.filter(title=result).first()
+        if waypoint is None:
+            response_data = {
+                "result": -1,
+                "available_resources": {
+                    "pdf": 0,
+                    "readme": 0,
+                    "video": 0,
+                    "audio": 0,
+                    "links": 0,
+                }
+            }
+            return JsonResponse(response_data, status=200)
+        
     available_resources = {
         "pdf": 0,
         "readme": 0,
@@ -623,23 +641,6 @@ def inference(request):
             "result": waypoint.id,
             "available_resources": available_resources   
     }
-    
-    # try:
-    #     lines = result.strip().split("\n")
-    #     if len(lines) >= 2:
-    #         label_line = lines[1]
-    #         if ":" in label_line:
-    #             title, percent_str = label_line.split(":")
-    #             confidence = float(percent_str.strip().replace("%", ""))
-
-    #             if confidence > 60:
-    #                 try:
-    #                     waypoint = Waypoint.objects.get(title=title.strip())
-    #                     response_data["waypoint_id"] = waypoint.id
-    #                 except Waypoint.DoesNotExist:
-    #                     response_data["error"] = f"Waypoint with title '{title.strip()}' not found"
-    # except Exception as e:
-    #     response_data["error"] = f"Failed to parse result: {str(e)}"
 
     return JsonResponse(response_data, status=200)
 
