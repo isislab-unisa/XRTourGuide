@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:xr_tour_guide/providers/local_state_provider.dart';
 import '../models/app_colors.dart';
 import '../services/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/local_state_service.dart';
 
 
 class TravelListItemCard extends ConsumerWidget {
@@ -52,6 +52,7 @@ class TravelListItemCard extends ConsumerWidget {
       future: localStateService.isTourCompleted(tourId!),
       builder: (context, snapshot) {
         final bool isCompleted = snapshot.data ?? false;
+        print("TourId: $tourId, isCompleted: $isCompleted");
         return GestureDetector(
           onTap: onTap,
           child: SizedBox(

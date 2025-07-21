@@ -558,19 +558,27 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   // NUOVO: Verifica se il tour è completato
   Future<void> _checkTourCompletion() async {
     try {
-      final tourDetails = await _apiService.getTourDetails(widget.tourId);
-      final totalWaypoints = tourDetails.data['waypoints']?.length ?? 0;
-      final scannedWaypoints = await _localStateService.getScannedWaypoints(
+      // Ottieni tutti gli ID dei waypoint del tour corrente
+      List<int> allWaypointIds =
+          _waypoints.map((waypoint) => waypoint.id).toList();
+
+      // Aggiungi anche gli ID dei sub-waypoint se presenti
+      for (var waypoint in _waypoints) {
+        if (waypoint.subWaypoints != null) {
+          allWaypointIds.addAll(waypoint.subWaypoints!.map((sub) => sub.id));
+        }
+      }
+
+      print("All waypoint IDs: $allWaypointIds");
+
+      // Verifica se il tour è completato
+      final isCompleted = await _localStateService.checkTourCompletion(
         widget.tourId,
+        allWaypointIds,
       );
 
-      if (scannedWaypoints.length >= totalWaypoints && totalWaypoints > 0) {
-        await _localStateService.markTourCompleted(widget.tourId);
-
-        // Mostra dialog di completamento
-        if (mounted) {
-          _showTourCompletedDialog();
-        }
+      if (isCompleted && mounted) {
+        _showTourCompletedDialog();
       }
     } catch (e) {
       print('Error checking tour completion: $e');
@@ -592,7 +600,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).pop(); // Torna alla schermata precedente
+                // Navigator.of(context).pop(); // Torna alla schermata precedente
               },
               child: const Text('Continua'),
             ),

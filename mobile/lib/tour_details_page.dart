@@ -18,7 +18,6 @@ import 'review_list.dart'; // Import your review list screen
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import 'services/local_state_service.dart';
-import 'providers/local_state_provider.dart';
 
 
 
@@ -90,6 +89,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     _loadData();
     _checkLocationPermission();
     _incrementViewCount();
+    _loadScannedWaypoints();
     _pageController = PageController();
 
     // Initialize animation controllers

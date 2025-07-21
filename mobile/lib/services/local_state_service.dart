@@ -1,7 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 class LocalStateService {
   static const String scannedWaypointsKey = 'scanned_waypoints';
   static const String completedToursKey = 'completed_tours';
@@ -65,6 +64,24 @@ class LocalStateService {
     return completedTours.contains(tourId);
   }
 
+  // NUOVO: Verifica se un tour dovrebbe essere considerato completato
+  // Controlla se tutti i waypoint del tour sono stati scansionati
+  Future<bool> checkTourCompletion(int tourId, List<int> allWaypointIds) async {
+    final scannedWaypoints = await getScannedWaypoints(tourId);
+
+    // Verifica se tutti i waypoint sono stati scansionati
+    bool allScanned = allWaypointIds.every(
+      (id) => scannedWaypoints.contains(id),
+    );
+
+    if (allScanned && allWaypointIds.isNotEmpty) {
+      await markTourCompleted(tourId);
+      return true;
+    }
+
+    return false;
+  }
+
   // NUOVO: Cancella tutti i dati salvati
   Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -80,9 +97,9 @@ class LocalStateService {
     completed.remove(tourId.toString());
     await prefs.setStringList(completedToursKey, completed);
   }
-
-  final localStateServiceProvider = Provider<LocalStateService>((ref) {
-    return LocalStateService();
-  });
-
 }
+
+// SPOSTATO FUORI DALLA CLASSE
+final localStateServiceProvider = Provider<LocalStateService>((ref) {
+  return LocalStateService();
+});

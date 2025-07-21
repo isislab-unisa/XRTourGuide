@@ -18,7 +18,7 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.168:80';
+  static const String basicUrl = 'http://172.16.15.185:80';
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
