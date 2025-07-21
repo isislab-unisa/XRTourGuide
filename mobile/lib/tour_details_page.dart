@@ -848,7 +848,7 @@ Future<void> _loadWaypoints() async {
                                         child:
                                             selectedWaypoint.images.isNotEmpty
                                                 ? Image.network(
-                                                  "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                                  "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
                                                   width: 80,
                                                   height: 80,
                                                   fit: BoxFit.cover,
@@ -1285,7 +1285,7 @@ Future<void> _loadWaypoints() async {
                     },
                   ),
                   SizedBox(width: 10),
-                  if (_tourDetails!.category != "Interno" && _tourDetails!.category != "Cibo")
+                  if (_tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
                     _buildNavTab(
                       icon: Icons.map_outlined,
                       label: 'map_tab'.tr(),
@@ -2030,7 +2030,7 @@ Widget _buildWaypointItem({
                       ),
 
                     // Navigate button - SOLO per waypoints principali
-                    if (!isSubWaypoint) ...[
+                    if (!isSubWaypoint && _tourDetails!.category != "INSIDE") ...[
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
