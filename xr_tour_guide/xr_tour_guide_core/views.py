@@ -36,7 +36,8 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
 from django.views import View
 from xr_tour_guide.tasks import call_api_and_save
-# from inference.run_inference import run_inference_subproc
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from .inference.run_inference import run_inference_subproc
 
 @swagger_auto_schema(
@@ -478,8 +479,10 @@ class PasswordResetConfirmSubmit(View):
         user.save()
         return redirect('/')
 
-@permission_classes([AllowAny])
-@api_view(['POST'])
+# @permission_classes([AllowAny])
+# @api_view(['POST'])
+@login_required
+@require_http_methods(['POST'])
 def build(request):
     tour_id = int(request.POST.get('tour_id'))
     try:
@@ -492,7 +495,7 @@ def build(request):
         call_api_and_save.apply_async(args=[tour.id], queue='api_tasks')
     else:
         return JsonResponse({"message": "Tour already built"}, status=400)
-    return JsonResponse({"message": "Build started"}, status=200)
+    return redirect('/admin/')
 
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
@@ -599,50 +602,40 @@ def inference(request):
         }
         return JsonResponse(response_data, status=200)
     
-    waypoint = None
     waypoint = tour.waypoints.filter(title=result).first()
+
     if waypoint is None:
-        sub_tours = tour.sub_tours.all()
-        for sub_tour in sub_tours:
+        for sub_tour in tour.sub_tours.all():
             waypoint = sub_tour.waypoints.filter(title=result).first()
-        if waypoint is None:
-            response_data = {
-                "result": -1,
-                "available_resources": {
-                    "pdf": 0,
-                    "readme": 0,
-                    "video": 0,
-                    "audio": 0,
-                    "links": 0,
-                }
+            if waypoint:
+                break
+
+    if waypoint is None:
+        return JsonResponse({
+            "result": -1,
+            "message": "Waypoint not found in waypoints or in sub-tours",
+            "available_resources": {
+                "pdf": 0,
+                "readme": 0,
+                "video": 0,
+                "audio": 0,
+                "links": 0,
             }
-            return JsonResponse(response_data, status=200)
-        
+        }, status=200)
+
     available_resources = {
-        "pdf": 0,
-        "readme": 0,
-        "video": 0,
-        "audio": 0,
-        "links": 0,
-    }
-    
-    if waypoint.pdf_item is not None and len(waypoint.pdf_item.name) > 1:
-        available_resources["pdf"] = 1
-    if waypoint.readme_item is not None and len(waypoint.readme_item.name) > 1:
-        available_resources["readme"] = 1
-    if waypoint.video_item is not None and len(waypoint.video_item.name) > 1:
-        available_resources["video"] = 1
-    if waypoint.audio_item is not None and len(waypoint.audio_item.name) > 1:
-        available_resources["audio"] = 1
-    # if waypoint.links.exists():
-    #     available_resources["links"] = 1
-        
-    response_data = {
-            "result": waypoint.id,
-            "available_resources": available_resources   
+        "pdf": int(bool(waypoint.pdf_item and waypoint.pdf_item.name)),
+        "readme": int(bool(waypoint.readme_item and waypoint.readme_item.name)),
+        "video": int(bool(waypoint.video_item and waypoint.video_item.name)),
+        "audio": int(bool(waypoint.audio_item and waypoint.audio_item.name)),
+        # "links": waypoint.links.exists()
     }
 
-    return JsonResponse(response_data, status=200)
+    return JsonResponse({
+        "result": waypoint.id,
+        "available_resources": available_resources
+    }, status=200)
+
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
