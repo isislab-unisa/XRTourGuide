@@ -11,6 +11,8 @@ from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from .models import CustomUser
 from django.contrib.auth.admin import UserAdmin
+from django.core.files.base import ContentFile
+
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -71,6 +73,12 @@ class WaypointForm(forms.ModelForm):
         widget=MultipleClearableFileInput()
     )
     
+    readme_text = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'markdown-editor', 'rows': 10}),
+        label="Readme (Markdown)",
+        required=False,
+    )
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if 'coordinates' in self.fields:
@@ -90,11 +98,17 @@ class WaypointForm(forms.ModelForm):
             for uploaded_file in uploaded_files:
                 WaypointViewImage.objects.create(waypoint=instance, image=uploaded_file)
         
+        if commit and hasattr(self, 'cleaned_data'):
+            readme_text = self.cleaned_data.get('readme_text')
+            if readme_text:
+                instance.readme_item = ContentFile(readme_text.encode('utf-8'), name='readme.md')
+                instance.save()
+        
         return instance
 
     class Meta:
         model = Waypoint
-        fields = ['title', 'coordinates', 'description', 'readme_item', 'pdf_item', 'video_item', 'audio_item']
+        fields = ['title', 'coordinates', 'description', 'pdf_item', 'video_item', 'audio_item']
 
 class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedInline):
     pass
@@ -113,13 +127,16 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
     }
-    # inlines = [WaypointLinkInline]
-    
-    # def get_queryset(self, request):
-    #     qs = super().get_queryset(request)
-    #     if request.user.is_superuser:
-    #         return qs
-    #     return qs.filter(user=request.user)
+
+    class Media:
+        js = [
+            'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js',
+            'admin/js/hide_waypoint_coordinates.js',
+            'admin/js/init_markdown_editor.js',
+        ]
+        css = {
+            'all': ['https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css']
+        }
     
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)

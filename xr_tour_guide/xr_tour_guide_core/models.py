@@ -216,18 +216,6 @@ class Waypoint(models.Model):
                 if self._meta.get_field(field_name).storage.exists(old_path):
                     self._meta.get_field(field_name).storage.delete(old_path)
 
-            # if old_files['default_image']:
-            #     filename = os.path.basename(old_files['default_image'].name)
-            #     old_path = old_files['default_image'].name
-            #     new_path = f"{self.tour.id}/{self.id}/default_image/{filename}"
-            #     file = old_files['default_image'].file
-            #     file.open()
-            #     self.default_image.storage.save(new_path, file)
-            #     self.default_image = new_path
-            #     updated_fields.append('default_image')
-            #     if self.default_image.storage.exists(old_path):
-            #         self.default_image.storage.delete(old_path)
-
             move_file('pdf_item', 'pdf')
             move_file('readme_item', 'readme')
             move_file('video_item', 'video')
@@ -244,63 +232,13 @@ class Waypoint(models.Model):
 
     def __str__(self):
         return self.title
-
-# class WaypointLink(models.Model):
-#     waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE, null=True, blank=True)
-#     title = models.CharField(max_length=200, blank=False, null=False)
-#     link = models.URLField(null=True, blank=True)
     
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
     image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
     
-    # def save(self, *args, **kwargs):
-    #     is_new = self.pk is None
-    #     old_path = f"{self.waypoint.tour.id}/{self.waypoint.id}/None/data/test/{self.waypoint.tag.name.replace(" ", "_")}/"
-    #     super().save(*args, **kwargs)
-
-    #     if is_new and self.image and self.waypoint and self.waypoint.id:
-    #         poi_id = self.waypoint.tour.id
-    #         tag = self.waypoint.tag.name.replace(" ", "_") if self.waypoint.tag else "notag"
-    #         filename = os.path.basename(self.image.name)
-    #         new_path = f"{poi_id}/{self.waypoint.id}/data/test/{tag}/{filename}"
-
-    #         file = self.image.file
-    #         file.open()
-    #         self.image.storage.save(new_path, file)
-    #         self.image = new_path
-    #         super().save(update_fields=["image"])
-
-    #         # if old_path and self.image.storage.exists(old_path):
-    #         self.image.storage.delete(old_path)
-    
     def __str__(self):
         return f"Image for {self.waypoint.title}"
-    
-# @receiver(post_save, sender=WaypointViewImage)
-# def sync_test_train_images(sender, instance, created, **kwargs):
-#     if not instance.image:
-#         return
-
-#     storage = MinioStorage()
-#     waypoint = instance.waypoint
-
-#     all_images = WaypointViewImage.objects.filter(waypoint=waypoint).exclude(pk=instance.pk)
-#     for image in all_images:
-#         if "/test/" in image.image.name:
-#             storage.delete(image.image.name)
-#             image.delete()
-
-#     image_count = WaypointViewImage.objects.filter(waypoint=waypoint).count()
-
-#     path = instance.image.name
-#     if "/test/" in path and image_count < 5:
-#         train_path = path.replace("/test/", "/train/")
-#         if not storage.exists(train_path):
-#             content = storage.open(path).read()
-#             storage.save(train_path, ContentFile(content))
-#             instance.image.name = train_path
-#             instance.save()
 
 class Review(models.Model):
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews')
