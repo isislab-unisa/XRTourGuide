@@ -42,9 +42,9 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
+    "unfold",  # before django.contrib.admin
     'rest_framework',
     'rest_framework.authtoken',
-    "unfold",  # before django.contrib.admin
     'drf_yasg',
     'location_field.apps.DefaultConfig',
     "unfold.contrib.filters",  # optional, if special filters are needed
