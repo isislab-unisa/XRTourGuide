@@ -488,13 +488,30 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     // Simulate recognition process (replace with actual ML/AR logic)
     // await Future.delayed(const Duration(seconds: 3));
-    final result = await _apiService.inference(
-      base64Image,
-      widget.tourId,
-    );
+    // final result = await _apiService.inference(
+    //   base64Image,
+    //   widget.tourId,
+    // );
 
-    var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
-    var availableResources = result.data["available_resources"] ?? {};
+    // var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
+    // var availableResources = result.data["available_resources"] ?? {};
+
+    // FOR DEBUG
+    final result = {
+      "result": 1, // Mock waypoint ID
+      "available_resources": {
+        "readme": 1,
+        "links": 1,
+        "images": 1,
+        "video": 1,
+        "pdf": 1,
+        "audio": 1,
+      },
+    };
+  
+    var waypointId = result["result"] ?? -1; // Get waypoint ID from result
+    var availableResources = result["available_resources"] ?? {};
+    // FOR DEBUG END
 
     _waypoints.forEach((waypoint) {
       if (waypoint.id == waypointId) {
@@ -513,11 +530,11 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     print('Recognition result: $recognitionSuccess');
 
     if (recognitionSuccess) {
-      await _localStateService.addScannedWaypoint(widget.tourId, waypointId);
+      await _localStateService.addScannedWaypoint(widget.tourId, waypointId as int);
 
       setState(() {
         _recognizedWaypointId = waypointId; // Store recognized waypoint ID
-        _availableResources = Map<String, dynamic>.from(availableResources); // Store available resources
+        _availableResources = Map<String, dynamic>.from(availableResources as Map<dynamic, dynamic>); // Store available resources
 
         _currentMarkdownContent = """
 # ${widget.landmarkName}

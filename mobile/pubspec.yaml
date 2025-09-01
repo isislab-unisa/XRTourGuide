@@ -59,7 +59,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   dio: ^5.8.0+1
   webview_flutter: ^4.13.0
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.3
   easy_localization: ^3.0.3
 
 dev_dependencies:

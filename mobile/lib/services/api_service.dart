@@ -18,7 +18,7 @@ class ApiService {
   '/register/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.185:80';
+  static const String basicUrl = 'http://172.16.15.187:80';
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
@@ -109,7 +109,6 @@ class ApiService {
   }
 
   Future<Response> login(String email, String password) async {
-    //TODO Vedere come criptare la password durante la chiamata
     try {
       final response = await dio.post(
         '/api/token/',
@@ -126,7 +125,6 @@ class ApiService {
   }
 
   Future<Response> register(String username, String password, String name, String surname, String mail, String description, String city) async {
-    //TODO Vedere come criptare la password durante la chiamata
     try {
       final response = await dio.post(
         '/register/',
@@ -167,7 +165,6 @@ class ApiService {
 
 
   Future<Response> updatePassword(String oldPassword, String newPassword) async {
-    //TODO Vedere come criptare la password durante la chiamata
     try {
       final response = await dio.post(
         '/update_password/',
@@ -199,7 +196,6 @@ class ApiService {
   }
 
   Future<Response> deleteAccount(String password) async {
-    //TODO Vedere come criptare la password durante la chiamata
     try {
       final response = await dio.post(
         '/delete_account/',

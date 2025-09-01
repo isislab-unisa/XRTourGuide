@@ -18,6 +18,8 @@ import 'review_list.dart'; // Import your review list screen
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import 'services/local_state_service.dart';
+import 'services/offline_tour_service.dart';
+
 
 
 
@@ -25,11 +27,13 @@ import 'services/local_state_service.dart';
 class TourDetailScreen extends ConsumerStatefulWidget {
   final int tourId;
   final bool isGuest;
+  final bool isOffline;
 
   const TourDetailScreen({
     Key? key,
     required this.tourId,
     required this.isGuest,
+    this.isOffline = false,
   }) : super(key: key);
 
   @override
@@ -42,6 +46,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   late TourService _tourService;
   late ApiService _apiService;
   late LocalStateService _localStateService;
+  late OfflineStorageService _offlineService;
   Set<int> _scannedWaypoints = {};
 
   String _selectedTab = 'About';
@@ -80,16 +85,22 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   late LocationPermission _permission;
   Position? _currentPosition;
 
+  bool _isDownloading = false;
+  bool _isAvailableOffline = false;
+  final bool isOffline = false;
+
   @override
   void initState() {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
     _apiService = ref.read(apiServiceProvider);
     _localStateService = ref.read(localStateServiceProvider);
+    _offlineService = ref.read(offlineStorageServiceProvider);
     _loadData();
     _checkLocationPermission();
     _incrementViewCount();
     _loadScannedWaypoints();
+    _checkOfflineAvailability();
     _pageController = PageController();
 
     // Initialize animation controllers
@@ -114,6 +125,109 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       _loadWaypoints(),
       _loadReviews(),
     ]);
+  }
+  
+  Future<void> _checkOfflineAvailability() async {
+    final isOffline = await _offlineService.isTourAvailableOffline(widget.tourId);
+    if (mounted) {
+      setState(() {
+        _isAvailableOffline = isOffline;
+      });
+    }
+  }
+
+  Future<void> _downloadTourOffline() async {
+    setState(() => _isDownloading = true);
+
+    try{
+      final success = await _offlineService.downloadTourOffline(widget.tourId);
+
+      if(mounted){
+        setState(() {
+          _isDownloading = false;
+          _isAvailableOffline = success;
+        });
+
+        if(success){
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Tour downloaded for offline use'), backgroundColor: Colors.green),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to download tour'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch(e){
+      if(mounted){
+        setState(() => _isDownloading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error downloading tour: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadOfflineData() async {
+    if (!widget.isOffline) return;
+
+    try{
+      final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
+      if (offlineData != null && mounted){
+        setState(() {
+          _tourDetails = Tour.fromJson(offlineData['tour']);
+          _waypoints = (offlineData['waypoints'] as List).map((wp) => Waypoint.fromJson(wp)).toList();
+          _isLoadingTourDetails = false;
+          _isLoadingWaypoints = false;
+        });
+      }
+    } catch (e) {
+      print("Error loading offline data: $e");
+    }
+  }
+
+  Future<void> _confirmRemoveOfflineTour() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("remove_offline_tour".tr()),
+        content: Text("confirm_remove_offline_tour".tr()),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text("cancel".tr())),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text("remove".tr(), style: const TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _removeOfflineTour();
+    }
+  }
+
+  Future<void> _removeOfflineTour() async {
+    setState(() => _isDownloading = true);
+    try {
+      final success = await _offlineService.removeTourOffline(widget.tourId);
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          if (success) _isAvailableOffline = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success ? 'Tour removed from offline storage' : 'Failed to remove tour'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDownloading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error removing offline tour: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Future<void> _incrementViewCount() async {
@@ -1350,6 +1464,12 @@ Future<void> _loadWaypoints() async {
                 ),
               ),
               const SizedBox(height: 24),
+              if (!widget.isOffline)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: _buildOfflineSection(),
+                ),
+              const SizedBox(height:24),
               // Verified reviews section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -2454,6 +2574,85 @@ void _showLeaveReviewSheet(int tourId) {
           },
         );
       },
+    );
+  }
+
+  Widget _buildOfflineSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _isAvailableOffline ? Icons.offline_bolt : Icons.cloud_download,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                "offline_access".tr(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _isAvailableOffline
+                ? "tour_available_offline".tr()
+                : "download_tour_offline_description".tr(),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isDownloading ? null : (_isAvailableOffline ? _confirmRemoveOfflineTour : _downloadTourOffline),
+              icon: _isDownloading
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Icon(_isAvailableOffline ? Icons.delete_outline : Icons.download),
+              label: Text(
+                _isDownloading
+                  ? "downloading".tr()
+                  : (_isAvailableOffline ? "remove".tr() : "download_for_offline".tr()),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isAvailableOffline ? Colors.red : AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

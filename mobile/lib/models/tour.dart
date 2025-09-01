@@ -49,4 +49,23 @@ class Tour {
       totViews: json['tot_view'] as int,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'default_img': imagePath,
+      'category': category,
+      'rating': rating,
+      'rating_counter': reviewCount,
+      // 'images': images,
+      'place': location,
+      'lat': latitude,
+      'lon': longitude,
+      'user_name': creator,
+      'l_edited': lastEdited,
+      'tot_view': totViews,
+    };
+  }
 }

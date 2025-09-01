@@ -39,6 +39,20 @@ class Waypoint {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'subtitle': subtitle,
+      'description': description,
+      'lat': latitude,
+      'lon': longitude,
+      'images': images,
+      'category': category,
+      'sub_waypoints': subWaypoints?.map((wp) => wp.toJson()).toList(),
+    };
+  }
+
   List<Waypoint> getAllWaypoints() {
     List<Waypoint> allWaypoints = [this];
     if (subWaypoints != null) {

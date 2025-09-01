@@ -371,18 +371,6 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
                                             builder:
                                                 (context) => TourDetailScreen(
                                                   tourId: tour.id,
-                                                  // tourName: tour.title,
-                                                  // location: tour.location,
-                                                  // rating: tour.rating,
-                                                  // reviewCount: tour.reviewCount,
-                                                  // images: tour.images,
-                                                  // category: tour.category,
-                                                  // description: tour.description,
-                                                  // creator: tour.creator,
-                                                  // lastEdited: tour.lastEdited,
-                                                  // totViews: tour.totViews.toString(),
-                                                  // latitude: tour.latitude,
-                                                  // longitude: tour.longitude,
                                                   isGuest: widget.isGuest,
                                                 ),
                                           ),
@@ -414,15 +402,6 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    // TextButton(
-                    //   onPressed: () {
-                    //     // TODO: Navigate to categories screen
-                    //   },
-                    //   child: Text(
-                    //     'See More',
-                    //     style: TextStyle(color: AppColors.primary),
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
@@ -445,73 +424,6 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen> wit
                           },
                         ),
               ),
-
-              // Cooking Tours Section
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(vertical: 10.0),
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       Padding(
-              //         padding: const EdgeInsets.symmetric(
-              //           horizontal: 20.0,
-              //           vertical: 10.0,
-              //         ),
-              //         child: Text(
-              //           'Cooking Tours around you',
-              //           style: TextStyle(
-              //             fontSize: 20,
-              //             fontWeight: FontWeight.bold,
-              //             color: AppColors.textPrimary,
-              //           ),
-              //         ),
-              //       ),
-              //       SizedBox(
-              //         height: screenHeight * 0.3,
-              //         child:
-              //             _isLoadingCooking
-              //                 ? const Center(child: CircularProgressIndicator())
-              //                 : ListView.builder(
-              //                   scrollDirection: Axis.horizontal,
-              //                   itemCount: _cookingTours?.length ?? 0,
-              //                   itemBuilder: (context, index) {
-              //                     final tour = _cookingTours![index];
-              //                     return Padding(
-              //                       padding: EdgeInsets.only(
-              //                         left: index == 0 ? 20.0 : 0.0,
-              //                         right: 15.0,
-              //                       ),
-              //                       child: TravelListItemCard(
-              //                         tourId: tour.id,
-              //                         imagePath: tour.imagePath,
-              //                         title: tour.title,
-              //                         description: tour.description,
-              //                         cardWidth: screenWidth * 0.6,
-              //                         imageHeight: 180,
-              //                         category: tour.category,
-              //                         rating: tour.rating,
-              //                         reviewCount: tour.reviewCount,
-              //                         onTap: () {
-              //                           Navigator.push(
-              //                             context,
-              //                             MaterialPageRoute(
-              //                               builder:
-              //                                   (context) => TourDetailScreen(
-              //                                     tourId: tour.id,
-              //                                     isGuest: widget.isGuest,
-              //                                   ),
-              //                             ),
-              //                           );
-              //                         },
-              //                       ),
-              //                     );
-              //                   },
-              //                 ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
-
               SizedBox(height: 20),
             ],
           ),
