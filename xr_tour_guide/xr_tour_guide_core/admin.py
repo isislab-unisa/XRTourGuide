@@ -124,9 +124,9 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
     extra = 1
-    formfield_overrides = {
-        PlainLocationField: {"widget": LocationWidget},
-    }
+    # formfield_overrides = {
+    #     PlainLocationField: {"widget": LocationWidget},
+    # }
 
     class Media:
         js = [

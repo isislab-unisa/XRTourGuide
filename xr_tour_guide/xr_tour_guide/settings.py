@@ -126,12 +126,8 @@ REST_FRAMEWORK = {
 }
 
 LOCATION_FIELD = {
-    "provider": "openstreetmap",
-    "provider.openstreetmap.search": "https://nominatim.openstreetmap.org/search",
-    "provider.openstreetmap.reverse": "https://nominatim.openstreetmap.org/reverse",
-    "provider.openstreetmap.max_zoom": 18,
-    "map.height": "480",
-    "map.zoom": 7,
+    'map.provider': 'openstreetmap',
+    'search.provider': 'nominatim',
 }
 
 
