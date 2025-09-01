@@ -269,6 +269,7 @@ def stream_minio_resource(request):
     tour_id = request.GET.get("tour")
     waypoint_id = request.GET.get("waypoint")
     file_name = request.GET.get("file")
+    attachment = request.GET.get("attachment")
 
     try:
         if tour_id and waypoint_id is None:
@@ -314,7 +315,7 @@ def stream_minio_resource(request):
     if content_type is None:
         content_type = 'application/octet-stream'
 
-    response = FileResponse(file, as_attachment=False, filename=file_name)
+    response = FileResponse(file, as_attachment=True if attachment == "True" else False, filename=file_name)
     response['Content-Type'] = content_type
     return response
 
