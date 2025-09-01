@@ -42,9 +42,9 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
+    "unfold",  # before django.contrib.admin
     'rest_framework',
     'rest_framework.authtoken',
-    "unfold",  # before django.contrib.admin
     'drf_yasg',
     'location_field.apps.DefaultConfig',
     "unfold.contrib.filters",  # optional, if special filters are needed
@@ -126,12 +126,8 @@ REST_FRAMEWORK = {
 }
 
 LOCATION_FIELD = {
-    "provider": "openstreetmap",
-    "provider.openstreetmap.search": "https://nominatim.openstreetmap.org/search",
-    "provider.openstreetmap.reverse": "https://nominatim.openstreetmap.org/reverse",
-    "provider.openstreetmap.max_zoom": 18,
-    "map.height": "480",
-    "map.zoom": 7,
+    'map.provider': 'openstreetmap',
+    'search.provider': 'nominatim',
 }
 
 

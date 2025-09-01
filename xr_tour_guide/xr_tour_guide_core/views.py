@@ -315,7 +315,7 @@ def stream_minio_resource(request):
     if content_type is None:
         content_type = 'application/octet-stream'
 
-    response = FileResponse(file, as_attachment=True if attachment == "True" else False, filename=file_name)
+    response = FileResponse(file, as_attachment=True if attachment else False, filename=file_name)
     response['Content-Type'] = content_type
     return response
 
