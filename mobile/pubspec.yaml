@@ -62,6 +62,8 @@ dependencies:
   shared_preferences: ^2.5.3
   easy_localization: ^3.0.3
   opencv_dart: ^1.4.3
+  tflite_flutter: ^0.11.0
+  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:
@@ -111,6 +113,7 @@ flutter:
     - assets/interior.jpg
     - assets/int-exterior.jpg
     - assets/translations/
+    - assets/models/ResNet50.tflite
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
