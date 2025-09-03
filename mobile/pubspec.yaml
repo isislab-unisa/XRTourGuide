@@ -61,6 +61,7 @@ dependencies:
   webview_flutter: ^4.13.0
   shared_preferences: ^2.5.3
   easy_localization: ^3.0.3
+  opencv_dart: ^1.4.3
 
 dev_dependencies:
   flutter_test:

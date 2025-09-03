@@ -333,9 +333,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     try {
       final response =
           await _tourService.getResourceByWaypointAndType(waypointId, queryType);
-      print("RESPONSE: $response");
       content = response as Map<String, dynamic>;
-      print("CONTENT: $content");
     } catch (e) {
       print("error retrieving content: $e");
       type = 'error';

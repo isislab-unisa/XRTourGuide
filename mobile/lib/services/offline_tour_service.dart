@@ -215,6 +215,18 @@ class OfflineStorageService {
     return localResources;
   }
 
+  Future<void> _downloadOfflineIndex(int tourId, Directory tourDir) async {
+    try {
+      final url = '${ApiService.basicUrl}/get_offline_index?tour=$tourId';
+      final file = File('${tourDir.path}/offline_index.json');
+      final response = await _dio.get(url, options: Options(responseType: ResponseType.json));
+      final data = response.data;
+      await file.writeAsString(jsonEncode(data));
+    } catch (e) {
+      print('Error downloading offline index: $e');
+    }
+  }
+
   List<String> extractMarkdownLinks(String text) {
     final regex = RegExp(
       r'''!?\[[^\]]*\]\(\s*([^\s)]+)(?:\s+(?:\"[^\"]*\"|'[^']*'))?\s*\)''',
