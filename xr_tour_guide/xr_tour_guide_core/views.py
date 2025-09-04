@@ -38,6 +38,7 @@ from xr_tour_guide.tasks import call_api_and_save
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from .inference.run_inference import run_inference_subproc
+import requests
 
 @swagger_auto_schema(
     method='get',
@@ -567,29 +568,39 @@ def inference(request):
     except Tour.DoesNotExist:
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
     
-    img_base_64 = request.data.get('img')
-    input_image = base64.b64decode(img_base_64)
+    # img_base_64 = request.data.get('img')
+    # input_image = base64.b64decode(img_base_64)
     
     #SAVE IMAGE LOCALLY
-    unique_id = str(uuid.uuid4())
-    data_path = os.path.join("/data", tour_id, unique_id)
-    os.makedirs(data_path, exist_ok=True)
-    image_path = os.path.join(data_path, "input_image.jpg")
-    with open(image_path, "wb") as f:
-        f.write(input_image)
-    print("DATA DOWNLOADED", flush=True)
+    # unique_id = str(uuid.uuid4())
+    # data_path = os.path.join("/data", tour_id, unique_id)
+    # os.makedirs(data_path, exist_ok=True)
+    # image_path = os.path.join(data_path, "input_image.jpg")
+    # with open(image_path, "wb") as f:
+    #     f.write(input_image)
+    # print("DATA DOWNLOADED", flush=True)
     
     #RUN INFERENCE
-    result = run_inference_subproc(
-        input_dir=os.path.join(data_path, "input_image.jpg"),
-        # model_path=os.path.join(f"/model_{tour_id}.pth", "model.pth"),
-        model_path = f"/workspace/models/model_{tour_id}.pt",
-    )
+    # result = run_inference_subproc(
+    #     input_dir=os.path.join(data_path, "input_image.jpg"),
+    #     # model_path=os.path.join(f"/model_{tour_id}.pth", "model.pth"),
+    #     model_path = f"/workspace/models/model_{tour_id}.pt",
+    # )
+
+    payload = {
+        "poi_id": str(tour_id),
+        "inference_image": request.data.get('img'),
+        "model_url": tour.model_path,
+        "poi_name": tour.title,
+    }
+    url = "http://ai_inference:8050/inference"
+    headers = {"Content-type": "application/json"}
+    response = requests.post(url, headers=headers, json=payload)
+
+    result = response
     
     print("INFERENCE DONE", flush=True)
     
-    shutil.rmtree(data_path, ignore_errors=True)
-
     if result is None:
         response_data = {
             "result": -1,

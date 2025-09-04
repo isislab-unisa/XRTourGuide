@@ -118,6 +118,18 @@ services:
     ports:
       - "8090:8090"
 
+  ai_inference:
+    build: ../AI_classification/inference
+    container_name: ai_inference
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    # gpus: all
+    user: root
+    ports:
+      - "8050:8050"
+
   certbot:
     image: certbot/certbot
     container_name: certbot
