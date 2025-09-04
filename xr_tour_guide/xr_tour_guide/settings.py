@@ -43,16 +43,16 @@ ALLOWED_HOSTS = [
 
 INSTALLED_APPS = [
     "unfold",  # before django.contrib.admin
-    'rest_framework',
-    'rest_framework.authtoken',
-    'drf_yasg',
-    'location_field.apps.DefaultConfig',
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
     "unfold.contrib.inlines",  # optional, if special inlines are needed
     "unfold.contrib.import_export",  # optional, if django-import-export package is used
     "unfold.contrib.guardian",  # optional, if django-guardian package is used
     "unfold.contrib.simple_history",
+    'rest_framework',
+    'rest_framework.authtoken',
+    'drf_yasg',
+    'location_field.apps.DefaultConfig',
     "storages",
     'django.contrib.admin',
     'django.contrib.auth',

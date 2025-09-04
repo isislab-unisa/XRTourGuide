@@ -34,4 +34,3 @@ numpy==2.2.5
 opencv-python-headless
 Pillow
 tqdm
-ai-edge-torch-nightly

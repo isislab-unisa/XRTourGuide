@@ -13,7 +13,6 @@ from .models import CustomUser
 from django.contrib.auth.admin import UserAdmin
 from django.core.files.base import ContentFile
 
-
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -88,8 +87,10 @@ class WaypointForm(forms.ModelForm):
 
     def clean_uploaded_images(self):
         field_name = self.add_prefix('uploaded_images')
-        return self.files.getlist(field_name)
-    
+        try:
+            return self.files.getlist(field_name)
+        except Exception as e:
+            return []
     def save(self, commit=True):
         instance = super().save(commit=commit)
         
@@ -140,7 +141,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
-
+        
         for formset in formsets:
             for inline_form in formset.forms:
                 if not hasattr(inline_form, 'cleaned_data'):
@@ -150,10 +151,9 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 if uploaded_files:
                     waypoint = inline_form.instance
                     print("Salvo per waypoint:", waypoint)
-                    for uploaded_file in uploaded_files:
-                        WaypointViewImage.objects.create(waypoint=waypoint, image=uploaded_file)
-
-from django import forms
+                    if len(uploaded_files) > 0:
+                        for uploaded_file in uploaded_files:
+                            WaypointViewImage.objects.create(waypoint=waypoint, image=uploaded_file)
 
 class TourForm(forms.ModelForm):
     class Meta:
