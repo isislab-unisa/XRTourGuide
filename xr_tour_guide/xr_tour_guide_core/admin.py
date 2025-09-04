@@ -170,7 +170,7 @@ class TourForm(forms.ModelForm):
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours')
-    list_display = ('title', 'creation_time', 'category', 'place', 'user')
+    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
@@ -210,6 +210,8 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.user = request.user
+        if change:
+            obj.status = "READY"
         super().save_model(request, obj, form, change)
 
     def get_changeform_initial_data(self, request):

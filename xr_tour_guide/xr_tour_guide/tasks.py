@@ -1,3 +1,4 @@
+import shutil
 import requests
 from celery import shared_task
 from xr_tour_guide_core.models import Tour, MinioStorage, Status
@@ -174,7 +175,7 @@ def fail_stuck_builds():
             
     cromo_poi = None
     try:
-        timeout_minutes = 18 * 60 # 24 hours
+        timeout_minutes = 10 #18 * 60 # 18 hours
         threshold = timezone.now() - timedelta(minutes=timeout_minutes)
 
         cromo_poi = Tour.objects.filter(status=Status.BUILDING, build_started_at__lt=threshold).first()
@@ -203,3 +204,12 @@ def fail_stuck_builds():
             build_lock.release()
     except Exception as e:
         print(f"Errore nell'acquisizione del lock: {e}")
+
+@shared_task(queue='api_tasks')
+def remove_models():
+    if os.path.exists("/workspace/models"):
+        try:
+            shutil.rmtree("/workspace/models")
+            print("Models removed")
+        except Exception as e:
+            print(f"Error removing models: {e}")

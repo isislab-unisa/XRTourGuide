@@ -25,4 +25,11 @@ app.conf.beat_schedule = {
     },
 }
 
+app.conf.beat_schedule = {
+    'remove_models' : {
+        'task': 'xr_tour_guide.tasks.remove_models',
+        'schedule': timedelta(hours=12),
+    }
+}
+
 # docker-compose exec web celery -A xr_tour_guide.celery worker -Q api_tasks --concurrency=1 --loglevel=info

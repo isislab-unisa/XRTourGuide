@@ -15,9 +15,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, Http404, FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from storages.backends.s3boto3 import S3Boto3Storage
 import mimetypes
-from .models import MinioStorage, Waypoint, Tour, Review, Category
+from .models import MinioStorage, Waypoint, Tour, Review, Category, WaypointViewImage
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -39,6 +38,8 @@ from xr_tour_guide.tasks import call_api_and_save
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from .inference.run_inference import run_inference_subproc
+import ai_edge_torch
+import torch
 
 @swagger_auto_schema(
     method='get',
@@ -551,7 +552,8 @@ def load_model(request, tour_id):
         f"{tour_id}/model.pt"
     ):
         model_file = storage.open(f"/{tour_id}/model.pt")
-        with open(f"model_{tour_id}.pt", "wb") as f:
+        os.makedirs("models", exist_ok=True)
+        with open(f"models/model_{tour_id}.pt", "wb") as f:
             for chunk in model_file.chunks():
                 f.write(chunk)
     else:
@@ -583,7 +585,7 @@ def inference(request):
     result = run_inference_subproc(
         input_dir=os.path.join(data_path, "input_image.jpg"),
         # model_path=os.path.join(f"/model_{tour_id}.pth", "model.pth"),
-        model_path = f"/workspace/model_{tour_id}.pt",
+        model_path = f"/workspace/models/model_{tour_id}.pt",
     )
     
     print("INFERENCE DONE", flush=True)
@@ -685,4 +687,35 @@ def get_waypoint_resources(request):
     else:
         return JsonResponse({"error": "Invalid resource type"}, status=400)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def convert_model(request, tour_id):
+    storage = MinioStorage()
+
+    tour = Tour.objects.get(pk=tour_id)
+    view = Waypoint.objects.filter(tour=tour).first()
+    image = WaypointViewImage.objects.filter(waypoint=view).first()
+
+    os.makedirs("/transform_model", exist_ok=True)
+
+    local_pt_path = f"/transform_model/model_{tour.pk}.pt"
+    with storage.open(f"/{tour.pk}/model.pt", "rb") as src, open(local_pt_path, "wb") as dst:
+        dst.write(src.read())
+
+    model = torch.load(local_pt_path, map_location="cpu", weights_only=False)
+    model.eval()
+
+    example_input = torch.randn(1, 3, 224, 224)
+
+    tflite_model = ai_edge_torch.convert(model, example_input)
+
+    tflite_path = f"/transform_model/model_{tour.pk}.tflite"
+    with open(tflite_path, "wb") as f:
+        f.write(tflite_model)
+
+    return FileResponse(
+        open(tflite_path, "rb"),
+        as_attachment=True,
+        filename=f"model_{tour.pk}.tflite"
+    )
 
