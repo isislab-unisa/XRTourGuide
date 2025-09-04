@@ -590,7 +590,7 @@ def inference(request):
     payload = {
         "poi_id": str(tour_id),
         "inference_image": request.data.get('img'),
-        "model_url": tour.model_path,
+        "model_url": f"{tour.pk}/model.pt",
         "poi_name": tour.title,
     }
     url = "http://ai_inference:8050/inference"
