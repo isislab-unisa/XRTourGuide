@@ -50,17 +50,6 @@ class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
     custom_domain = False
     
-# class Tag(models.Model):
-#     name = models.CharField(max_length=64, null=False, blank=False, primary_key=True)
-    
-#     class Meta:
-#         db_table = "Tag"
-#         verbose_name = "Tag"
-#         verbose_name_plural = "Tag"
-        
-#     def __str__(self):
-#         return self.name
-
 class Status(models.TextChoices):
     READY = "READY", "Ready"
     FAILED = "FAILED", "Failed"

@@ -4,6 +4,10 @@ import dotenv
 from django.urls import re_path
 from django.views.static import serve
 from django.conf import settings
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.templatetags.static import static
+
 
 dotenv.load_dotenv()
 
@@ -218,10 +222,6 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-from django.templatetags.static import static
 UNFOLD = {
     "SITE_TITLE": "Xr Tour Guide Login",
     "SITE_HEADER": "Xr Tour Guide",
