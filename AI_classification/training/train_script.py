@@ -79,7 +79,7 @@ def _save_index_json(index, json_path):
         else:
             des = des.astype(np.uint8)
             rows, cols = int(des.shape[0]), int(des.shape[1]) if des.ndim == 2 else (0,0)
-            des.b64 = base64.b64encode(des.tobytes()).decode("ascii")
+            des_b64 = base64.b64encode(des.tobytes()).decode("ascii")
             
         out.append(
             {
@@ -162,6 +162,6 @@ if __name__ == "__main__":
 
     train_dir = args.input_dir + "/train"
     output_dir = args.output_dir + "/model.pt"
-    json_dir = args.output_dir + "/offline_model.json"
+    json_dir = args.output_dir + "/training_data.json"
 
     index_waypoints(train_dir, extractor, transform, output_dir, json_dir)

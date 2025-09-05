@@ -679,6 +679,6 @@ def download_model(request):
     storage = MinioStorage()
 
     tour_id = request.GET.get('tour_id')
-    model = storage.open(f"/{tour_id}/model_data.json", mode='r').read()
+    model = storage.open(f"/{tour_id}/training_data.json", mode='r').read()
 
     return HttpResponse(model, content_type='application/json')
