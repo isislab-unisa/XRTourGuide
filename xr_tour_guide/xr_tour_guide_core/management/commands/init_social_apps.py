@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = 'Inizializza le social apps (Google, Facebook)'
 
     def handle(self, *args, **options):
-        site = Site.objects.get(id=1)
+        site = Site.objects.get(id=2)
 
         providers = [
             {

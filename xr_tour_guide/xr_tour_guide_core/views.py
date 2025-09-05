@@ -38,6 +38,10 @@ from xr_tour_guide.tasks import call_api_and_save
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 import requests
+import redis
+from redis.lock import Lock
+
+redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
 
 @swagger_auto_schema(
     method='get',
@@ -505,6 +509,8 @@ def complete_build(request):
     tour_id =request.data.get('poi_id')
     model_url = request.data.get('model_url')
     status = request.data.get('status')
+
+    redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
     
     if status == "COMPLETED":
         try:
@@ -523,6 +529,10 @@ def complete_build(request):
             [tour.user.email],
             fail_silently=False,
         )
+        try:
+            redis_client.delete("build_lock")
+        except Exception as e:
+            print(f"Errore nell'acquisizione del lock: {e}")
         return JsonResponse({"message": "Build completata"}, status=200)
     else:
         tour = Tour.objects.get(pk=tour_id)
@@ -536,6 +546,10 @@ def complete_build(request):
             [tour.user.email],
             fail_silently=False,
         )
+        try:
+            redis_client.delete("build_lock")
+        except Exception as e:
+            print(f"Errore nell'acquisizione del lock: {e}")
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
 
 @api_view(["GET"])
