@@ -1,7 +1,8 @@
 .env
 *.pyc
 __pycache__/
-migrations/**/*.py
+xr_tour_guide/xr_tour_guide_public/__pycache__/
+xr_tour_guide/xr_tour_guide_core/migrations/*.py
 certbot/
 
 # Miscellaneous
