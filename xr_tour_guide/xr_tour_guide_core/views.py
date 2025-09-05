@@ -501,17 +501,22 @@ def build(request):
         return JsonResponse({"message": "Tour already built"}, status=400)
     return redirect('/admin/')
 
-@permission_classes([IsAuthenticated])
 @api_view(['POST'])
 def complete_build(request):
-    print(f"Request data: {request.POST.get("poi_id")}")
+    allowed_ip = "172.28.0.20"
+    remote_ip = request.META.get("REMOTE_ADDR")
+
+    if remote_ip != allowed_ip:
+        return JsonResponse({"error": "Access denied"}, status=403)
+
+    print(f"Request data: {request.POST.get('poi_id')}")
     tour_title = request.data.get('poi_name')
-    tour_id =request.data.get('poi_id')
+    tour_id = request.data.get('poi_id')
     model_url = request.data.get('model_url')
     status = request.data.get('status')
 
     redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
-    
+
     if status == "COMPLETED":
         try:
             tour = Tour.objects.get(pk=int(tour_id))
@@ -522,6 +527,7 @@ def complete_build(request):
             return JsonResponse({"error": "Cromo POI not found"}, status=404)
         except Exception as e:
             return JsonResponse({"error": f"Error saving Cromo POI: {str(e)}"}, status=500)
+
         send_mail(
             'Build completata',
             f"Lezione {tour.title} buildata.",
@@ -529,16 +535,19 @@ def complete_build(request):
             [tour.user.email],
             fail_silently=False,
         )
+
         try:
             redis_client.delete("build_lock")
         except Exception as e:
-            print(f"Errore nell'acquisizione del lock: {e}")
+            print(f"Errore nell'eliminazione del lock: {e}")
+
         return JsonResponse({"message": "Build completata"}, status=200)
+
     else:
         tour = Tour.objects.get(pk=tour_id)
         tour.status = "FAILED"
         tour.save()
-        
+
         send_mail(
             'Build fallita',
             f"Build Fallita {tour.title}.",
@@ -546,10 +555,12 @@ def complete_build(request):
             [tour.user.email],
             fail_silently=False,
         )
+
         try:
             redis_client.delete("build_lock")
         except Exception as e:
-            print(f"Errore nell'acquisizione del lock: {e}")
+            print(f"Errore nell'eliminazione del lock: {e}")
+
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
 
 @api_view(["GET"])

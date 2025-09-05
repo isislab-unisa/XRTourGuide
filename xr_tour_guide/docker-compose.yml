@@ -1,9 +1,16 @@
 version: '3.8'
 
+networks:
+  backend_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
 services:
   db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: mysql_db_tour_guide
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -13,6 +20,9 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data_xr_tour_guide:/var/lib/mysql
+    networks:
+      backend_net:
+        ipv4_address: 172.28.0.30
 
   web:
     build: .
@@ -30,6 +40,8 @@ services:
     env_file:
       - .env
     restart: always
+    networks:
+      - backend_net
 
   celery:
     build: .
@@ -42,6 +54,8 @@ services:
       - redis
     env_file:
       - .env
+    networks:
+      - backend_net
 
   celery-beat:
     build: .
@@ -55,16 +69,20 @@ services:
     env_file:
       - .env
     restart: always
+    networks:
+      - backend_net
 
   redis:
     image: redis:7
-    container_name: redis
+    container_name: redis_tour_guide
     ports:
       - "6379:6379"
+    networks:
+    - backend_net
 
   nginx:
     image: nginx:latest
-    container_name: nginx_proxy
+    container_name: nginx_proxy_tour_guide
     ports:
       - "80:80"
       - "443:443"
@@ -75,10 +93,12 @@ services:
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
       - web
+    networks:
+      - backend_net
 
   minio:
     image: minio/minio@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e
-    container_name: minio
+    container_name: minio_tour_guide
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -88,6 +108,8 @@ services:
       - "9000:9000"
     volumes:
       - minio_data:/data
+    networks:
+      - backend_net
 
   createbuckets:
     image: minio/mc@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3
@@ -104,11 +126,13 @@ services:
       /usr/bin/mc mb --quiet myminio/${AWS_STORAGE_BUCKET_NAME} || true;
       /usr/bin/mc policy set none myminio/${AWS_STORAGE_BUCKET_NAME} || true;
       '
+    networks:
+      - backend_net
     
   ai_training:
     # image: cromo_ai_classification:training
     build: ../AI_classification/training
-    container_name: ai_training
+    container_name: ai_training_tour_guide
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
@@ -117,10 +141,13 @@ services:
     user: root
     ports:
       - "8090:8090"
+    networks:
+      backend_net:
+        ipv4_address: 172.28.0.20
 
   ai_inference:
     build: ../AI_classification/inference
-    container_name: ai_inference
+    container_name: ai_inference_tour_guide
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
@@ -129,6 +156,8 @@ services:
     user: root
     ports:
       - "8050:8050"
+    networks:
+      - backend_net
 
   certbot:
     image: certbot/certbot
@@ -143,6 +172,8 @@ services:
       --no-eff-email
       -d xrtourguide.di.unisa.it
       -d xrtourguide.di.unisa.it"
+    networks:
+      - backend_net
   
   certbot-renew:
     image: certbot/certbot
@@ -152,6 +183,8 @@ services:
       - ./certbot/conf:/etc/letsencrypt
     entrypoint: >
       sh -c "certbot renew --webroot --webroot-path=/var/www/certbot && nginx -s reload"
+    networks:
+      - backend_net
 
 
 volumes:
