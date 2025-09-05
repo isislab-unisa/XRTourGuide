@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from .models import CustomUser
 from django.contrib.auth.admin import UserAdmin
 from django.core.files.base import ContentFile
+from django.db.models import Q
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -168,7 +169,6 @@ class TourForm(forms.ModelForm):
             self.fields['category'].initial = 'INSIDE'
             self.fields['category'].disabled = True
 
-from django.utils.html import format_html
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours')
     list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
@@ -183,15 +183,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     class Media:
         js = ['https://code.jquery.com/jquery-3.6.0.min.js', 'admin/js/hide_waypoint_coordinates.js']
 
-    # def formfield_for_dbfield(self, db_field, **kwargs):
-    #     field = super().formfield_for_dbfield(db_field, **kwargs)
-    #     if db_field.name == "default_image":
-    #         instance = getattr(kwargs.get('request'), 'instance', None)
-    #         if instance and instance.default_image:
-    #             url = f'/stream-file/?tour={instance.id}&file={instance.default_image.name}'
-    #             field.help_text = format_html('File corrente: <a href="{}" target="_blank">{}</a>', url, instance.default_image.name)
-    #     return field
-    
     def get_form(self, request, obj=None, **kwargs):
         Form = super().get_form(request, obj, **kwargs)
 
@@ -211,10 +202,10 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         if request.user.is_superuser:
             return qs
         return qs.filter(user=request.user)
-
+    
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "sub_tours":
-            kwargs["queryset"] = Tour.objects.filter(category='INSIDE')
+            kwargs["queryset"] = Tour.objects.filter(category='INSIDE').filter(parent_tours__isnull=True)
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):

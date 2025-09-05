@@ -37,7 +37,6 @@ from django.views import View
 from xr_tour_guide.tasks import call_api_and_save
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from .inference.run_inference import run_inference_subproc
 import requests
 
 @swagger_auto_schema(
@@ -567,25 +566,6 @@ def inference(request):
         tour = Tour.objects.get(pk=tour_id)
     except Tour.DoesNotExist:
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
-    
-    # img_base_64 = request.data.get('img')
-    # input_image = base64.b64decode(img_base_64)
-    
-    #SAVE IMAGE LOCALLY
-    # unique_id = str(uuid.uuid4())
-    # data_path = os.path.join("/data", tour_id, unique_id)
-    # os.makedirs(data_path, exist_ok=True)
-    # image_path = os.path.join(data_path, "input_image.jpg")
-    # with open(image_path, "wb") as f:
-    #     f.write(input_image)
-    # print("DATA DOWNLOADED", flush=True)
-    
-    #RUN INFERENCE
-    # result = run_inference_subproc(
-    #     input_dir=os.path.join(data_path, "input_image.jpg"),
-    #     # model_path=os.path.join(f"/model_{tour_id}.pth", "model.pth"),
-    #     model_path = f"/workspace/models/model_{tour_id}.pt",
-    # )
 
     payload = {
         "poi_id": str(tour_id),
@@ -661,13 +641,11 @@ def get_waypoint_resources(request):
         return JsonResponse({"error": "Waypoint not found"}, status=404)
 
     if resource_type == "readme" and waypoint.readme_item:
-        # Se è un file di testo, leggi il contenuto
         try:
             storage = MinioStorage()
             file_content = storage.open(waypoint.readme_item.name, mode='r').read()
             return JsonResponse({"readme": file_content}, status=200)
         except Exception as e:
-            # Se non riesce a leggere come testo, restituisci l'URL per il download
             return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=readme"}, status=200)
     elif resource_type == "video" and waypoint.video_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=video"}, status=200)
@@ -677,7 +655,6 @@ def get_waypoint_resources(request):
 
     elif resource_type == "pdf" and waypoint.pdf_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=pdf"}, status=200)
-
     # elif resource_type == "links" and waypoint.links.exists():
     #     links = waypoint.links.all()
     #     readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])

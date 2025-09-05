@@ -206,7 +206,7 @@ def fail_stuck_builds():
         print(f"Errore nell'acquisizione del lock: {e}")
 
 @shared_task(queue='api_tasks')
-def remove_models():
+def remove_append_tour():
     if os.path.exists("/workspace/models"):
         try:
             shutil.rmtree("/workspace/models")
