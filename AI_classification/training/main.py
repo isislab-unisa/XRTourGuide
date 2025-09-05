@@ -170,6 +170,7 @@ def run_train(request: Request, view_dir: str, data_path: str):
         #     raise Exception("Training failed")
 
         model_path = os.path.join(view_dir , f"model.pt")
+        offline_model_path = os.path.join(view_dir, f"training_data.json")
         # report_path = os.path.join(view_dir, request.poi_name, f"probability_table.csv")
         print("AAAAAAAA", model_path, flush=True)
         
@@ -178,9 +179,9 @@ def run_train(request: Request, view_dir: str, data_path: str):
             model_path, f"{request.poi_id}/model.pt"
         )
         
-        # write_s3_file(
-        #     report_path, f"{request.poi_id}/report.csv"
-        # )
+        write_s3_file(
+            offline_model_path, f"{request.poi_id}/training_data.json"
+        )
         
         
         # DELETE FOLDER

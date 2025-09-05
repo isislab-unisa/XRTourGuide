@@ -7,6 +7,8 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 import argparse
+import base64
+import json
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -57,9 +59,45 @@ def compute_orb_features(image_path):
     except Exception as e:
         print(f"Errore durante il calcolo delle feature ORB per {image_path}: {e}")
         return None, None
+    
+def _save_index_json(index, json_path):
+    out = []
+    for item in index:
+        emb = item["embedding"]
+        if isinstance(emb, torch.Tensor):
+            emb = emb.detach().cpu().numpy()
+        emb_list = emb.astype(np.float32).reshape(-1).tolist()
+        
+        kps = item.get("keypoints", [])
+        
+        des = item.get("descriptors")
+        if isinstance(des, torch.Tensor):
+            des = des.detach().cpu().numpy()
+        if des is None:
+            rows, cols = 0,0
+            des_b64 = ""
+        else:
+            des = des.astype(np.uint8)
+            rows, cols = int(des.shape[0]), int(des.shape[1]) if des.ndim == 2 else (0,0)
+            des_b64 = base64.b64encode(des.tobytes()).decode("ascii")
+            
+        out.append(
+            {
+                "waypoint_name": item["waypoint_name"],
+                "image_path": item["image_path"],
+                "embedding": emb_list,
+                "keypoints": kps,
+                "descriptors_b64" : des_b64,
+                "desc_rows": rows,
+                "desc_cols": cols
+            }
+        )
+    
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii = False)
 
 
-def index_waypoints(waypoints_dir, model, transform, cache_path):
+def index_waypoints(waypoints_dir, model, transform, cache_path, json_path):
     """
     Scorre tutte le immagini dei waypoint, estrae i loro embedding e le feature geometriche,
     e li memorizza in un indice.
@@ -99,6 +137,10 @@ def index_waypoints(waypoints_dir, model, transform, cache_path):
     # Salva l'indice su disco
     torch.save(index, cache_path)
     print(f"Indice salvato in: {cache_path}")
+    
+    if json_path:
+        _save_index_json(index, json_path)
+        print(f"Indice JSON salvato in: {json_path}")
 
 
 if __name__ == "__main__":
@@ -120,5 +162,6 @@ if __name__ == "__main__":
 
     train_dir = args.input_dir + "/train"
     output_dir = args.output_dir + "/model.pt"
+    json_dir = args.output_dir + "/training_data.json"
 
-    index_waypoints(train_dir, extractor, transform, output_dir)
+    index_waypoints(train_dir, extractor, transform, output_dir, json_dir)
