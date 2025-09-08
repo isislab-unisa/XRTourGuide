@@ -486,29 +486,28 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     // Simulate recognition process (replace with actual ML/AR logic)
     // await Future.delayed(const Duration(seconds: 3));
-    // final result = await _apiService.inference(
-    //   base64Image,
-    //   widget.tourId,
-    // );
+    final result = await _apiService.inference(
+      base64Image,
+      widget.tourId,
+    );
 
-    // var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
-    // var availableResources = result.data["available_resources"] ?? {};
+    var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
+    var availableResources = result.data["available_resources"] ?? {};
 
     // FOR DEBUG
-    final result = {
-      "result": 1, // Mock waypoint ID
-      "available_resources": {
-        "readme": 1,
-        "links": 1,
-        "images": 1,
-        "video": 1,
-        "pdf": 1,
-        "audio": 1,
-      },
-    };
-  
-    var waypointId = result["result"] ?? -1; // Get waypoint ID from result
-    var availableResources = result["available_resources"] ?? {};
+    // final result = {
+    //   "result": 1, // Mock waypoint ID
+    //   "available_resources": {
+    //     "readme": 1,
+    //     "links": 1,
+    //     "images": 1,
+    //     "video": 1,
+    //     "pdf": 1,
+    //     "audio": 1,
+    //   },
+    // };
+    // var waypointId = result["result"] ?? -1; // Get waypoint ID from result
+    // var availableResources = result["available_resources"] ?? {};
     // FOR DEBUG END
 
     _waypoints.forEach((waypoint) {

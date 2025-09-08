@@ -20,9 +20,9 @@ class TourService {
   TourService(this.apiService);
 
   // Simulate API call to get nearby tours
-  Future<List<Tour>> getNearbyTours() async {
+  Future<List<Tour>> getNearbyTours(int timeout) async {
     try {
-      final response = await apiService.getNearbyTours();
+      final response = await apiService.getNearbyTours(timeout);
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
