@@ -73,8 +73,8 @@ class TourQuerySet(models.QuerySet):
 class Tour(models.Model):
     title = models.CharField(max_length=200, blank=False, null=False, unique=True)
     subtitle = models.CharField(max_length=200, blank=True, null=True)
-    place = models.CharField(max_length=200, blank=False, null=False)
-    coordinates = PlainLocationField(zoom=7, null=True, blank=True)
+    place = models.CharField(max_length=200, blank=True, null=True)
+    coordinates = PlainLocationField(zoom=7, null=True, blank=True, based_fields=['place'])
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
@@ -157,7 +157,8 @@ class Tour(models.Model):
 
 class Waypoint(models.Model):
     title = models.CharField(max_length=200, blank=False, null=False)
-    coordinates = PlainLocationField(zoom=7, null=True, blank=True)
+    place = models.CharField(max_length=200, blank=True, null=True)
+    coordinates = PlainLocationField(zoom=7, null=True, blank=True, based_fields=['place'])
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints')
     description = models.TextField(blank=True, null=True)
     model_path = models.CharField(max_length=200, blank=True, null=True)

@@ -107,7 +107,7 @@ class WaypointForm(forms.ModelForm):
 
     class Meta:
         model = Waypoint
-        fields = ['title', 'coordinates', 'description', 'pdf_item', 'video_item', 'audio_item']
+        fields = ['title', 'place', 'coordinates', 'description', 'pdf_item', 'video_item', 'audio_item']
 
 class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedInline):
     pass
@@ -124,15 +124,16 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     form = WaypointForm
     extra = 1
     
-    formfield_overrides = {
-        PlainLocationField: {"widget": LocationWidget},
-    }
+    # formfield_overrides = {
+    #     PlainLocationField: {"widget": LocationWidget},
+    # }
 
     class Media:
         js = [
             'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js',
             'admin/js/hide_waypoint_coordinates.js',
             'admin/js/init_markdown_editor.js',
+            'admin/js/init_maps.js',
         ]
         css = {
             'all': ['https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css']
@@ -179,8 +180,12 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     inlines = [WaypointAdmin]
 
     class Media:
-        js = ['https://code.jquery.com/jquery-3.6.0.min.js', 'admin/js/hide_waypoint_coordinates.js']
-
+        js = ['https://code.jquery.com/jquery-3.6.0.min.js', 
+            'admin/js/init_markdown_editor.js',
+            'admin/js/hide_waypoint_coordinates.js',
+              'admin/js/init_maps.js',
+            ]
+        
     def get_form(self, request, obj=None, **kwargs):
         Form = super().get_form(request, obj, **kwargs)
 
@@ -190,9 +195,9 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
         return form_wrapper
     
-    formfield_overrides = {
-        PlainLocationField: {"widget": LocationWidget},
-    }
+    # formfield_overrides = {
+    #     PlainLocationField: {"widget": LocationWidget},
+    # }
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
