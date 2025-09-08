@@ -3,7 +3,6 @@
         function toggleFields() {
             var category = $("#id_category").val();
 
-            // Manage main Tour coordinates field
             var tourCoordField = $("#id_coordinates").closest('.form-row, .form-group, .field, .form__field');
             if (category === "THING") {
                 tourCoordField.hide();
@@ -11,7 +10,6 @@
                 tourCoordField.show();
             }
 
-            // Manage waypoint coordinates (inline)
             $("div.inline-related").each(function() {
                 var $inline = $(this);
                 var coordField = $inline.find(".waypoint-coordinates-field").closest('.form-row, .form-group, .field, .form__field');
@@ -25,7 +23,6 @@
                 }
             });
 
-            // Manage sub_tours field
             var subToursField = $("#id_sub_tours").closest('.form-row, .form-group, .field, .form__field');
             if (category === "MIXED") {
                 subToursField.show();
