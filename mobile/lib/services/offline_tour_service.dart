@@ -218,7 +218,7 @@ class OfflineStorageService {
   Future<void> _downloadOfflineIndex(int tourId, Directory tourDir) async {
     try {
       final url = '${ApiService.basicUrl}/get_offline_index?tour=$tourId';
-      final file = File('${tourDir.path}/offline_index.json');
+      final file = File('${tourDir.path}/training_data.json');
       final response = await _dio.get(url, options: Options(responseType: ResponseType.json));
       final data = response.data;
       await file.writeAsString(jsonEncode(data));
