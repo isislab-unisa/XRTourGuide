@@ -20,6 +20,7 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('Informazioni aggiuntive', {'fields': ('city', 'description')}),
     )
+    
 class MultipleClearableFileInput(ClearableFileInput):
     def __init__(self, attrs=None):
         super().__init__(attrs)
@@ -32,12 +33,8 @@ class MultipleClearableFileInput(ClearableFileInput):
         return mark_safe(f"""
         <div class="flex w-full max-w-2xl items-center justify-between gap-2 rounded-default border border-base-200 px-3 py-2 shadow-xs dark:border-base-700">
             <label class="text-sm font-medium text-base-700 dark:text-base-200">
-                Upload Images
                 {input_html}
             </label>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v6m0 0L8 16m4 2l4-2m-6-6h6m-3-4v4" />
-            </svg>
         </div>
         """)
 
@@ -126,9 +123,10 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
     extra = 1
-    # formfield_overrides = {
-    #     PlainLocationField: {"widget": LocationWidget},
-    # }
+    
+    formfield_overrides = {
+        PlainLocationField: {"widget": LocationWidget},
+    }
 
     class Media:
         js = [

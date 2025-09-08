@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tourCategorySelect.addEventListener('change', toggleWaypointCoordinates);
     }
 
-    // 🧠 Mutation observer: osserva aggiunte dinamiche (es. nuovi inline)
     const observer = new MutationObserver(function () {
         toggleWaypointCoordinates();
     });
