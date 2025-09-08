@@ -131,9 +131,9 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     class Media:
         js = [
             'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js',
+            'admin/js/init_maps.js',
             'admin/js/hide_waypoint_coordinates.js',
             'admin/js/init_markdown_editor.js',
-            'admin/js/init_maps.js',
         ]
         css = {
             'all': ['https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css']
@@ -181,9 +181,9 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
     class Media:
         js = ['https://code.jquery.com/jquery-3.6.0.min.js', 
+              'admin/js/init_maps.js',
             'admin/js/init_markdown_editor.js',
             'admin/js/hide_waypoint_coordinates.js',
-              'admin/js/init_maps.js',
             ]
         
     def get_form(self, request, obj=None, **kwargs):
