@@ -1,54 +1,40 @@
-(function($){
-    $(document).ready(function(){
+// (function($) {
+//     $(document).ready(function() {
 
-        function initInlineMap($row){
-            $row.find("input[id$='-coordinates']").each(function(){
-                var $input = $(this);
-                if (($input.attr('id') || '').indexOf('__prefix__') !== -1) return;
+//         function activateWaypointMap(inputElement) {
+//             if (!inputElement) return;
 
-                // trova il div della mappa relativo all'input
-                var $mapDiv = $input.closest('.form-row, .inline-related, .form-group, .field')
-                                    .find('.map-widget').first();
-                if (!$mapDiv.length) {
-                    console.warn("Div mappa non trovato per", $input.attr('id'));
-                    return;
-                }
+//             // initLocationWidget è definita dal JS di django-plain-location
+//             if (typeof initLocationWidget === 'function') {
+//                 initLocationWidget(inputElement);
 
-                // già inizializzata?
-                if ($mapDiv.data("map-initialized")) return;
+//                 // Se la mappa è già renderizzata, forza il resize
+//                 if (inputElement._locationMap) {
+//                     setTimeout(function() {
+//                         inputElement._locationMap.invalidateSize();
+//                     }, 100);
+//                 }
+//             } else {
+//                 console.warn("initLocationWidget non definita. Assicurati che plainlocation JS sia caricato.");
+//             }
+//         }
 
-                // inizializza il widget quando il div è pronto
-                var tryInit = function(){
-                    if (typeof $input.init_location_widget === "function") {
-                        $input.init_location_widget();
-                        $mapDiv.data("map-initialized", true);
+//         // Attiva le mappe dei waypoint già presenti
+//         $('input[id*="map_waypoints-"][id$="-coordinates"]').each(function() {
+//             activateWaypointMap(this);
+//         });
 
-                        // forza invalidateSize per Leaflet
-                        if ($mapDiv[0]._leaflet_map) {
-                            setTimeout(function(){ $mapDiv[0]._leaflet_map.invalidateSize(); }, 300);
-                        }
-                    } else {
-                        console.warn("init_location_widget non disponibile per", $input.attr('id'));
-                    }
-                };
+//         // Attiva le mappe dei nuovi inline aggiunti
+//         $(document).on('formset:added', function(event) {
+//             const newInline = event.target;
+//             if (!newInline) return;
 
-                // se il div non è visibile, aspetta 100ms
-                if ($mapDiv.is(":visible")) {
-                    tryInit();
-                } else {
-                    setTimeout(tryInit, 100);
-                }
-            });
-        }
+//             const input = $(newInline).find('input[id*="map_waypoints-"][id$="-coordinates"]')[0];
+//             if (input) {
+//                 console.log("Attivazione mappa per nuovo waypoint");
+//                 activateWaypointMap(input);
+//             }
+//         });
 
-        // inizializza tutte le mappe già presenti
-        initInlineMap($(document));
-
-        // inizializza mappe per nuovi inline
-        $(document).on('formset:added', function(event, $row){
-            var ctx = $row && $row.length ? $row : $(event.target);
-            initInlineMap(ctx);
-        });
-
-    });
-})(django.jQuery);
+//     });
+// })(django.jQuery);

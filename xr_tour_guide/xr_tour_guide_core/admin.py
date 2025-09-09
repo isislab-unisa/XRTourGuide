@@ -122,21 +122,30 @@ class UnfoldNestedTabularInline(UnfoldStackedInline, nested_admin.NestedTabularI
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
-    extra = 1
+    extra = 0
     
-    # formfield_overrides = {
-    #     PlainLocationField: {"widget": LocationWidget},
-    # }
+    formfield_overrides = {
+        PlainLocationField: {"widget": LocationWidget},
+    }
 
     class Media:
         js = [
+            # Leaflet prima del tuo JS
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+
+            # SimpleMDE JS prima del tuo init_markdown_editor.js
             'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js',
+            
+            # I tuoi JS personalizzati
             'admin/js/init_maps.js',
-            'admin/js/hide_waypoint_coordinates.js',
             'admin/js/init_markdown_editor.js',
+            'admin/js/hide_waypoint_coordinates.js',
         ]
         css = {
-            'all': ['https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css']
+            'all': [
+                'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+                'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css'
+            ]
         }
     
     def save_related(self, request, form, formsets, change):
