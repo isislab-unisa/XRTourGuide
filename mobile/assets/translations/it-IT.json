@@ -113,5 +113,7 @@
     "remove": "Rimuovi",
     "open_tour": "Apri Tour",
     "downloaded_on": "Scaricato il {date}",
-    "tours": "tours"
+    "tours": "tours",
+    "error_loading_offline_tours": "Errore nel caricamento dei tour offline",
+    "offline_mode_message": "Sei in modalità offline."
 }

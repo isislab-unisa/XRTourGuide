@@ -16,9 +16,10 @@ class ApiService {
   '/api/token/',
   '/api/token/refresh/',
   '/register/',
+  '/tour_list/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.187:80';
+  static const String basicUrl = 'http://172.16.15.194:80';
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(
@@ -28,6 +29,7 @@ class ApiService {
           print("Request: ${options.method} ${options.path}");
 
           if (excludedPaths.any((path) => options.path.startsWith(path))) {
+            print("Skipping bearer token");
             return handler.next(options); // Skip adding token for excluded paths
           }
 
@@ -210,9 +212,14 @@ class ApiService {
     }
   }
   
-  Future<Response> getNearbyTours() async {
+  Future<Response> getNearbyTours(int timeout) async {
     try {
-      final response = await dio.get('/tour_list/');
+      Response response;
+      if (timeout > 0) {
+        response = await dio.get("/tour_list/", options: Options(sendTimeout: const Duration(seconds: 5)));
+      } else {
+        response = await dio.get('/tour_list/');
+      }
       return response;
     } catch (e) {
       print('Failed to fetch tours: $e');
