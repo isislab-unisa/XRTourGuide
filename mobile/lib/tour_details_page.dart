@@ -19,10 +19,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import 'services/local_state_service.dart';
 import 'services/offline_tour_service.dart';
-
-
-
-
+import "dart:io";
+import "package:path_provider/path_provider.dart";
 
 class TourDetailScreen extends ConsumerStatefulWidget {
   final int tourId;
@@ -48,6 +46,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   late LocalStateService _localStateService;
   late OfflineStorageService _offlineService;
   Set<int> _scannedWaypoints = {};
+
+  Map<int, List<String>> _offlineImagesByWaypoint = {};
+  String? _offlineTourImagePath;
 
   String _selectedTab = 'About';
   late List<bool> _expandedWaypoints;
@@ -89,6 +90,10 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   bool _isAvailableOffline = false;
   final bool isOffline = false;
 
+  List<String> _getWaypointImagesFor(Waypoint wp) {
+    return widget.isOffline ? (_offlineImagesByWaypoint[wp.id] ?? []) : wp.images;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -96,9 +101,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     _apiService = ref.read(apiServiceProvider);
     _localStateService = ref.read(localStateServiceProvider);
     _offlineService = ref.read(offlineStorageServiceProvider);
-    _loadData();
+    if (widget.isOffline) {
+      print("OFFLINE TOUR");
+      _loadOfflineData();
+    }else {
+      print("ONLINE TOUR");
+      _loadData();
+      _incrementViewCount();
+    }
     _checkLocationPermission();
-    _incrementViewCount();
     _loadScannedWaypoints();
     _checkOfflineAvailability();
     _pageController = PageController();
@@ -125,6 +136,67 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       _loadWaypoints(),
       _loadReviews(),
     ]);
+  }
+
+  Future<void> _loadOfflineData() async {
+    if (!widget.isOffline) return;
+
+    try {
+      final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
+      if (offlineData != null) {
+        final appDir = await getApplicationDocumentsDirectory();
+        _offlineTourImagePath = "${appDir.path}/offline_tours_data/tour_${widget.tourId}/default_image.jpg";
+
+        final Map<int, List<String>> imagesByWp = {};
+        final List wps = (offlineData['waypoints'] as List?) ?? [];
+        for (final wp in wps) {
+          final id = (wp['id'] as num).toInt();
+          final localImages = (wp['local_images'] as List?)?.cast<String>() ?? <String>[];
+          imagesByWp[id] = localImages;
+        }
+        final List subTours = (offlineData['sub_tours'] as List?) ?? [];
+        for (final st in subTours) {
+          final List subWp = (st['waypoints'] as List?) ?? [];
+          for (final wp in subWp) {
+            final id = (wp['id'] as num).toInt();
+            final localImages = (wp['local_images'] as List?)?.cast<String>() ?? <String>[];
+            imagesByWp[id] = localImages;
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _offlineImagesByWaypoint = imagesByWp;
+            _tourDetails = Tour.fromJson(offlineData['tour']);
+            _waypoints = (wps.map<Waypoint>((wp) => Waypoint.fromJson(wp)).toList());
+            _isLoadingTourDetails = false;
+            _isLoadingWaypoints = false;
+            _isLoadingReviews = false; // Assuming reviews are not stored offline
+          });
+        }
+      }
+    } catch (e) {
+      print("Error loading offline data: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingTourDetails = false;
+          _isLoadingWaypoints = false;
+          _isLoadingReviews = false;
+        });
+      }
+    }
+  }
+
+  Widget _offlineImagePlaceholder() {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.image_not_supported, color: Colors.grey.shade600, size: 30),
+    );
   }
   
   Future<void> _checkOfflineAvailability() async {
@@ -168,23 +240,23 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     }
   }
 
-  Future<void> _loadOfflineData() async {
-    if (!widget.isOffline) return;
+  // Future<void> _loadOfflineData() async {
+  //   if (!widget.isOffline) return;
 
-    try{
-      final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
-      if (offlineData != null && mounted){
-        setState(() {
-          _tourDetails = Tour.fromJson(offlineData['tour']);
-          _waypoints = (offlineData['waypoints'] as List).map((wp) => Waypoint.fromJson(wp)).toList();
-          _isLoadingTourDetails = false;
-          _isLoadingWaypoints = false;
-        });
-      }
-    } catch (e) {
-      print("Error loading offline data: $e");
-    }
-  }
+  //   try{
+  //     final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
+  //     if (offlineData != null && mounted){
+  //       setState(() {
+  //         _tourDetails = Tour.fromJson(offlineData['tour']);
+  //         _waypoints = (offlineData['waypoints'] as List).map((wp) => Waypoint.fromJson(wp)).toList();
+  //         _isLoadingTourDetails = false;
+  //         _isLoadingWaypoints = false;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print("Error loading offline data: $e");
+  //   }
+  // }
 
   Future<void> _confirmRemoveOfflineTour() async {
     final confirmed = await showDialog<bool>(
@@ -757,48 +829,25 @@ Future<void> _loadWaypoints() async {
                                 // Waypoint image
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
-                                  child:
-                                      selectedWaypoint.images.isNotEmpty
+                                  child: widget.isOffline
+                                      ? (_getWaypointImagesFor(selectedWaypoint).isNotEmpty
+                                          ? Image.file(
+                                              File(_getWaypointImagesFor(selectedWaypoint)[0]),
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                            )
+                                          : _offlineImagePlaceholder())
+                                      : (selectedWaypoint.images.isNotEmpty
                                           ? Image.network(
-                                            "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
-                                            width: 80,
-                                            height: 80,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (
-                                              context,
-                                              error,
-                                              stackTrace,
-                                            ) {
-                                              return Container(
-                                                width: 80,
-                                                height: 80,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey.shade300,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Icon(
-                                                  Icons.image_not_supported,
-                                                  color: Colors.grey.shade600,
-                                                  size: 30,
-                                                ),
-                                              );
-                                            },
-                                          )
-                                          : Container(
-                                            width: 80,
-                                            height: 80,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Icon(
-                                              Icons.image,
-                                              color: Colors.grey.shade600,
-                                              size: 30,
-                                            ),
-                                          ),
+                                              "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                            )
+                                          : _offlineImagePlaceholder()),
                                 ),
                                 const SizedBox(width: 16),
 
@@ -959,59 +1008,25 @@ Future<void> _loadWaypoints() async {
                                       // ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
-                                        child:
-                                            selectedWaypoint.images.isNotEmpty
-                                                ? Image.network(
-                                                  "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) {
-                                                    return Container(
-                                                      width: 80,
-                                                      height: 80,
-                                                      decoration: BoxDecoration(
-                                                        color:
-                                                            Colors
-                                                                .grey
-                                                                .shade300,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              12,
-                                                            ),
-                                                      ),
-                                                      child: Icon(
-                                                        Icons
-                                                            .image_not_supported,
-                                                        color:
-                                                            Colors
-                                                                .grey
-                                                                .shade600,
-                                                        size: 30,
-                                                      ),
-                                                    );
-                                                  },
-                                                )
-                                                : Container(
-                                                  width: 80,
-                                                  height: 80,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey.shade300,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.image,
-                                                    color: Colors.grey.shade600,
-                                                    size: 30,
-                                                  ),
-                                                ),
+                                        child: widget.isOffline ?
+                                        (_getWaypointImagesFor(selectedWaypoint).isNotEmpty
+                                            ? Image.file(
+                                                File(_getWaypointImagesFor(selectedWaypoint)[0]),
+                                                width: 80,
+                                                height: 80,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                              )
+                                            : _offlineImagePlaceholder())
+                                        : (selectedWaypoint.images.isNotEmpty
+                                            ? Image.network(
+                                                "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
+                                                width: 80,
+                                                height: 80,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                              )
+                                            : _offlineImagePlaceholder()),
                                       ),
                                     );
                                   },
@@ -2120,30 +2135,67 @@ Widget _buildWaypointItem({
                                 padding: const EdgeInsets.only(right: 8.0),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8.0),
-                                  child: Image.network(
-                                    "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${waypointIndex}&file=${images[imageIndex]}",
-                                    height: 100,
-                                    width: 150,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
+                                  child: widget.isOffline
+                                    ? (() {
+                                      final offlineList = _offlineImagesByWaypoint[waypointIndex] ?? const <String>[];
+                                      if (imageIndex < offlineList.length && offlineList[imageIndex].isNotEmpty) {
+                                      return Image.file(
+                                        File(offlineList[imageIndex]),
+                                        height: 100,
+                                        width: 150,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          height: 100,
+                                          width: 150,
+                                          decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius: BorderRadius.circular(8.0),
+                                          ),
+                                          child: Icon(
+                                          Icons.image_not_supported,
+                                          color: Colors.grey.shade600,
+                                          ),
+                                        );
+                                        },
+                                      );
+                                      } else {
                                       return Container(
                                         height: 100,
                                         width: 150,
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.circular(
-                                            8.0,
-                                          ),
+                                        color: Colors.grey.shade300,
+                                        borderRadius: BorderRadius.circular(8.0),
                                         ),
                                         child: Icon(
-                                          Icons.image_not_supported,
-                                          color: Colors.grey.shade600,
+                                        Icons.image_not_supported,
+                                        color: Colors.grey.shade600,
                                         ),
                                       );
-                                    },
-                                  ),
+                                      }
+                                    })()
+                                    : Image.network(
+                                      "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
+                                      height: 100,
+                                      width: 150,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: 100,
+                                        width: 150,
+                                        decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        ),
+                                        child: Icon(
+                                        Icons.image_not_supported,
+                                        color: Colors.grey.shade600,
+                                        ),
+                                      );
+                                      },
+                                    ),
                                 ),
-                              );
+                                );
                             },
                           ),
                         ),

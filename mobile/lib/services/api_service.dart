@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import "dart:io";
 import 'secure_storage_service.dart';
 import 'auth_service.dart';
 import 'package:flutter/material.dart';
@@ -96,6 +97,48 @@ class ApiService {
       await ref.read(authServiceProvider).logout();
       return null;
     }
+  }
+
+  Future<bool> pingServer({Duration timeout = const Duration(seconds: 2)}) async {
+
+    final uri = Uri.parse(dio.options.baseUrl);
+    final host = uri.host;
+    final port = uri.hasPort ? uri.port : (uri.scheme == "https" ? 443 : 80);
+
+    print("URI: ${uri}");
+    print("HOST: ${host}");
+    print("PORT: ${port}");
+
+    try {
+      final socket = await Socket.connect(host, port, timeout: timeout);
+      socket.destroy();
+    } catch (e) {
+      print('Ping failed: $e');
+      return false;
+    }
+
+    try {
+      final response = await dio.head(
+        "/tour_list/",
+        options: Options(
+          sendTimeout: timeout,
+          receiveTimeout: timeout,
+          validateStatus: (status) => status != null && status < 600, // Accept any status code less than 500
+        ),
+      );
+      return true;
+    } on DioException catch(e) {
+      if (e.type == DioExceptionType.sendTimeout || e.type == DioExceptionType.receiveTimeout) {
+        print('Ping timeout: $e');
+        return false;
+      } 
+      return true;
+    } catch (_) {
+      return false;
+    }
+
+
+
   }
 
   Future<Response> getProfileDetails() async {
@@ -216,7 +259,7 @@ class ApiService {
     try {
       Response response;
       if (timeout > 0) {
-        response = await dio.get("/tour_list/", options: Options(sendTimeout: const Duration(seconds: 5)));
+        response = await dio.get("/tour_list/", options: Options(sendTimeout: Duration(seconds: timeout)));
       } else {
         response = await dio.get('/tour_list/');
       }

@@ -99,21 +99,10 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   Future<bool> _checkServerReachability() async {
     try {
       // Use a lightweight, public endpoint. getNearbyTours is a good candidate.
-      await _tourService.getNearbyTours(5);
-      return true;
-    } on DioException catch (e) {
-      // These errors typically mean the server is not reachable
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.unknown) {
-        print("Server reachability check failed: ${e.message}");
-        return false;
-      }
-      // Other errors (4xx, 5xx) mean the server is reachable.
-      return true;
-    } catch (e) {
-      print("Unexpected error during server reachability check: $e");
+      return await _tourService.apiService.pingServer(
+        timeout: const Duration(seconds: 2),
+      ).timeout(const Duration(seconds: 2), onTimeout: () => false);
+    } catch (_) {
       return false;
     }
   }
