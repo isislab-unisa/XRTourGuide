@@ -130,13 +130,8 @@ class WaypointAdmin(UnfoldNestedStackedInline):
 
     class Media:
         js = [
-            # Leaflet prima del tuo JS
             'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-
-            # SimpleMDE JS prima del tuo init_markdown_editor.js
             'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js',
-            
-            # I tuoi JS personalizzati
             'admin/js/init_maps.js',
             'admin/js/init_markdown_editor.js',
             'admin/js/hide_waypoint_coordinates.js',
