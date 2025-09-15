@@ -27,8 +27,8 @@ app.conf.beat_schedule = {
 
 app.conf.beat_schedule = {
     'remove_append_tour' : {
-        'task': 'xr_tour_guide.tasks.remove_append_tour',
-        'schedule': timedelta(hours=24),
+        'task': 'xr_tour_guide.tasks.remove_append_user',
+        'schedule': timedelta(minutes=5),
     }
 }
 

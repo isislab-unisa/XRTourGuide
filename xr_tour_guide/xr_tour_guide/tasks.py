@@ -1,7 +1,7 @@
 import shutil
 import requests
 from celery import shared_task
-from xr_tour_guide_core.models import Tour, MinioStorage, Status
+from xr_tour_guide_core.models import Tour, MinioStorage, Status, CustomUser
 from django.core.mail import send_mail
 import os
 import json
@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from django.utils import timezone
 from datetime import timedelta
 from django.core.files.base import ContentFile
+from django.contrib.auth import get_user_model
 
 load_dotenv()
 
@@ -206,10 +207,12 @@ def fail_stuck_builds():
         print(f"Errore nell'acquisizione del lock: {e}")
 
 @shared_task(queue='api_tasks')
-def remove_append_tour():
-    if os.path.exists("/workspace/models"):
-        try:
-            shutil.rmtree("/workspace/models")
-            print("Models removed")
-        except Exception as e:
-            print(f"Error removing models: {e}")
+def remove_append_user():
+    try:
+        one_minute_ago = timezone.now() - timedelta(minutes=30)
+        User = get_user_model()
+        users = User.objects.filter(date_joined__lt=one_minute_ago, is_active=False)
+        count, _ = users.delete()
+        print(f"{count} utenti eliminati", flush=True)
+    except Exception as e:
+        print(f"Errore nella cancellazione degli utenti: {e}", flush=True)
