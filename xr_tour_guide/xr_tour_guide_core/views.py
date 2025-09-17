@@ -602,9 +602,11 @@ def inference(request):
     headers = {"Content-type": "application/json"}
     response = requests.post(url, headers=headers, json=payload)
 
-    result = response
-    
+    result = response.json()
+    print(f"RESPONSE: {result.get("message")}", flush=True)
+
     print("INFERENCE DONE", flush=True)
+    
     
     if result is None:
         response_data = {
@@ -619,15 +621,17 @@ def inference(request):
         }
         return JsonResponse(response_data, status=200)
     
-    waypoint = tour.waypoints.filter(title=result).first()
+    waypoint = tour.waypoints.filter(title=result.get("message")).first()
 
+    
     if waypoint is None:
         for sub_tour in tour.sub_tours.all():
-            waypoint = sub_tour.waypoints.filter(title=result).first()
+            waypoint = sub_tour.waypoints.filter(title=result.get("message")).first()
             if waypoint:
                 break
 
     if waypoint is None:
+        print("Waypoint non trovato", flush=True)
         return JsonResponse({
             "result": -1,
             "message": "Waypoint not found in waypoints or in sub-tours",

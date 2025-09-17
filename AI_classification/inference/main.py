@@ -205,7 +205,7 @@ async def inference(request: Request):
 
         cmd = [
             "python",
-            "/workspace/xr_tour_guide_core/inference/inference_script.py",
+            "inference_script.py",
             "--image-path", image_path,
             "--checkpoint", model_path
         ]
