@@ -23,6 +23,22 @@ class Waypoint {
 
   factory Waypoint.fromJson(Map<String, dynamic> json) {
     final imagesJson = json['images'] as List<dynamic>?;
+
+    // Supporta sia List<Map>{image_name} (online) che List<String> (offline)
+    final images = (imagesJson ?? [])
+            .map<String>((img) {
+              if (img is Map<String, dynamic> && img.containsKey('image_name')) {
+                final name = img['image_name'];
+                return name as String;
+              } else if (img is String) {
+                return img;
+              } else {
+                return '';
+              }
+            })
+            .where((s) => s.isNotEmpty)
+            .toList();
+
     return Waypoint(
       id: json['id'] as int,
       title: json['title'] as String,
@@ -30,7 +46,8 @@ class Waypoint {
       description: json['description'] as String,
       latitude: (json['lat'] as num).toDouble(),
       longitude: (json['lon'] as num).toDouble(),
-      images: imagesJson!.map((img) => img["image_name"] as String).toList(),
+      // images: imagesJson!.map((img) => img["image_name"] as String).toList(),
+      images: images,
       // images: [],
       category: json['category'] != null ? json['category'] as String : "Generale",
       subWaypoints: json["sub_waypoints"] != null ? (json['sub_waypoints'] as List<dynamic>?)

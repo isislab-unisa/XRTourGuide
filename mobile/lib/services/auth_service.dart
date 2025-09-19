@@ -31,14 +31,72 @@ class AuthService extends ChangeNotifier {
     _checkAuthStatus();
   }
 
+  // Future<void> _checkAuthStatus() async {
+  //   final accessToken = await _storageService.getAccessToken();
+  //   if (accessToken != null) {
+  //     _authStatus = AuthStatus.authenticated;
+  //   } else {
+  //     _authStatus = AuthStatus.unauthenticated;
+  //   }
+  //   notifyListeners();
+  // }
+
   Future<void> _checkAuthStatus() async {
+    _authStatus = AuthStatus.loading;
+    notifyListeners();
+
     final accessToken = await _storageService.getAccessToken();
-    if (accessToken != null) {
-      _authStatus = AuthStatus.authenticated;
+    final refreshToken = await _storageService.getRefreshToken();
+
+    final serverUp = await apiService.pingServer(timeout: const Duration(seconds: 2));
+
+    if (serverUp) {
+      if (refreshToken != null) {
+        final refreshed = await _refreshAccessTokenSilently(timeout: const Duration(seconds: 5));
+        if (refreshed) {
+          _authStatus = AuthStatus.authenticated;
+        } else {
+          await _storageService.deleteAllTokens();
+          _authStatus = AuthStatus.unauthenticated;
+        }
+      } else {
+        _authStatus = AuthStatus.unauthenticated;
+      }
     } else {
-      _authStatus = AuthStatus.unauthenticated;
+      if (accessToken != null) {
+        _authStatus = AuthStatus.authenticated;
+      } else {
+        _authStatus = AuthStatus.unauthenticated;
+      }
     }
     notifyListeners();
+  }
+
+  Future<bool> _refreshAccessTokenSilently({Duration timeout = const Duration(seconds: 4)}) async{
+    try{
+      final refreshToken = await _storageService.getRefreshToken();
+      if (refreshToken == null) return false;
+
+      final response = await apiService.dio.post(
+        '/api/token/refresh/',
+        data: {"refresh": refreshToken},
+        options: Options(
+          validateStatus: (s) => s == 200 || s == 401,
+          sendTimeout: timeout,
+          receiveTimeout: timeout,
+        ),
+      );
+
+      if (response.statusCode == 200){
+        final newAccess = response.data["access"] as String?;
+        if (newAccess == null) return false;
+        await _storageService.saveTokens(accessToken: newAccess, refreshToken: refreshToken);
+        return true;
+      }
+      return false;
+    }catch (e) {
+      return false;
+    }
   }
 
   Future<void> login(String email, String password) async {
