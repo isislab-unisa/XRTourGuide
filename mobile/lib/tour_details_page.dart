@@ -155,6 +155,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
           imagesByWp[id] = localImages;
         }
         final List subTours = (offlineData['sub_tours'] as List?) ?? [];
+        print("SUbtours: ${subTours}");
         for (final st in subTours) {
           final List subWp = (st['waypoints'] as List?) ?? [];
           for (final wp in subWp) {
@@ -164,11 +165,48 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
           }
         }
 
+        final List<Waypoint> mainWaypoints = wps.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+
+        final List<Waypoint> subTourWaypoints = <Waypoint>[];
+        for (final st in subTours) {
+          final subTourInfo = st['sub_tour'] as Map<String, dynamic>?;
+          if (subTourInfo == null) continue;
+
+          final subWpJson = (st['waypoints'] as List?) ?? [];
+          final subWps = subWpJson.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+
+          final subTourWaypoint = Waypoint(
+            id: (subTourInfo['id'] as num).toInt(),
+            title: (subTourInfo['title'] ?? '') as String,
+            subtitle: (subTourInfo['description'] ?? '') as String,
+            description: (subTourInfo['description'] ?? '') as String,
+            latitude: (subTourInfo['lat'] as num?)?.toDouble() ?? 0.0,
+            longitude: (subTourInfo['lon'] as num?)?.toDouble() ?? 0.0,
+            images: const [], // il contenitore non ha immagini proprie
+            category: (subTourInfo['category'] ?? 'INSIDE') as String,
+            subWaypoints: subWps,
+          );
+          subTourWaypoints.add(subTourWaypoint);
+        }
+
         if (mounted) {
           setState(() {
             _offlineImagesByWaypoint = imagesByWp;
             _tourDetails = Tour.fromJson(offlineData['tour']);
-            _waypoints = (wps.map<Waypoint>((wp) => Waypoint.fromJson(wp)).toList());
+            _waypoints = [...mainWaypoints, ...subTourWaypoints];
+            _expandedWaypoints = List.generate(_waypoints.length, (i) => i == 0);
+            _expandedSubWaypoints.clear();
+            for (int i = 0; i < _waypoints.length; i++) {
+              if (_waypoints[i].subWaypoints != null &&
+                  _waypoints[i].subWaypoints!.isNotEmpty) {
+                _expandedSubWaypoints[i] = List.generate(
+                  _waypoints[i].subWaypoints!.length,
+                  (subIndex) =>
+                      false, // Tutti i sub-waypoints inizialmente chiusi
+                );
+              }
+            }
+
             _isLoadingTourDetails = false;
             _isLoadingWaypoints = false;
             _isLoadingReviews = false; // Assuming reviews are not stored offline
