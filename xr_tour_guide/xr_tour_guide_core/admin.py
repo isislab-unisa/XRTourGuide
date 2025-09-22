@@ -172,8 +172,25 @@ class TourForm(forms.ModelForm):
             self.fields['category'].initial = 'INSIDE'
             self.fields['category'].disabled = True
 
+class SubTourInline(UnfoldNestedStackedInline):
+    model = Tour.sub_tours.through
+    fk_name = "to_tour"
+    extra = 1
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "to_tour":
+            parent_obj_id = request.resolver_match.kwargs.get('object_id')
+            if parent_obj_id:
+                # Mostra solo i subtour già associabili
+                kwargs["queryset"] = Tour.objects.filter(parent_tours__id=parent_obj_id)
+            else:
+                # Nuovo tour → vuoto o solo tour MIXED
+                kwargs["queryset"] = Tour.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
-    fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours')
+    fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image')
     list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
@@ -181,7 +198,15 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     date_hierarchy = 'creation_time'
     form = TourForm
 
-    inlines = [WaypointAdmin]
+    inlines = [WaypointAdmin, SubTourInline]
+
+    def get_inline_instances(self, request, obj=None):
+        inline_instances = super().get_inline_instances(request, obj)
+
+        if obj and obj.category == "MIXED":
+            inline_instances.append(SubTourInline(self.model, self.admin_site))
+
+        return inline_instances
 
     class Media:
         js = ['https://code.jquery.com/jquery-3.6.0.min.js', 
@@ -212,8 +237,28 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "sub_tours":
-            kwargs["queryset"] = Tour.objects.filter(category='INSIDE').filter(parent_tours__isnull=True)
+            tour_id = request.resolver_match.kwargs.get("object_id")
+
+            if tour_id:
+                kwargs["queryset"] = (
+                    Tour.objects.filter(parent_tours__id=tour_id)
+                    | Tour.objects.filter(is_subtour=False, category='INSIDE')
+                ).exclude(id=tour_id).distinct()
+            else:
+                kwargs["queryset"] = Tour.objects.none()
+
         return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+
+        qs = qs.filter(is_subtour=False)
+
+        if not request.user.is_superuser:
+            qs = qs.filter(user=request.user)
+
+        return qs
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -229,6 +274,12 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
+
+        for subtour in form.instance.sub_tours.all():
+            if not subtour.is_subtour:
+                subtour.is_subtour = True
+                subtour.save()
+
 
     def has_change_permission(self, request, obj=None):
         has_permission = super().has_change_permission(request, obj)
