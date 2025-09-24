@@ -36,6 +36,7 @@ class OfflineStorageService {
 
   // Download and store a tour offline
   Future<bool> downloadTourOffline(int tourId) async {
+    //TODO: Download della mappa in pmtiles
     try {
       // 1. Get tour details
       final tourResponse = await apiService.getTourDetails(tourId);

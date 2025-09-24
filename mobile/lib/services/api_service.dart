@@ -20,7 +20,9 @@ class ApiService {
   '/tour_list/',
   ];
 
-  static const String basicUrl = 'http://172.16.15.194:80';
+  // static const String basicUrl = 'http://172.16.15.197:80';
+  static const String basicUrl = 'http://172.16.15.197:80';
+
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
     _dio.interceptors.add(

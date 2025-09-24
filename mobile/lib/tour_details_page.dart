@@ -12,15 +12,17 @@ import 'models/review.dart';
 import 'models/tour.dart';
 import 'services/tour_service.dart';
 import 'services/api_service.dart';
-import 'camera_screen.dart'; // Import your camera screen
-import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
-import 'review_list.dart'; // Import your review list screen
+import 'camera_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'review_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import 'services/local_state_service.dart';
 import 'services/offline_tour_service.dart';
 import "dart:io";
 import "package:path_provider/path_provider.dart";
+import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart'; 
+
 
 class TourDetailScreen extends ConsumerStatefulWidget {
   final int tourId;
@@ -90,6 +92,10 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   bool _isAvailableOffline = false;
   final bool isOffline = false;
 
+  String? _pmtilesPath;
+  late Future<PmTilesTileProvider> _futureTileProvider;
+
+
   List<String> _getWaypointImagesFor(Waypoint wp) {
     return widget.isOffline ? (_offlineImagesByWaypoint[wp.id] ?? []) : wp.images;
   }
@@ -103,6 +109,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     _offlineService = ref.read(offlineStorageServiceProvider);
     if (widget.isOffline) {
       print("OFFLINE TOUR");
+      _initOfflineMap();
       _loadOfflineData();
     }else {
       print("ONLINE TOUR");
@@ -136,6 +143,49 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       _loadWaypoints(),
       _loadReviews(),
     ]);
+  }
+
+  Future<void> _initOfflineMap() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final path = '${dir.path}/offline_tours_data/tour_${widget.tourId}/map.pmtiles';
+    if (await File(path).exists()) {
+      setState(() {
+        _pmtilesPath = path;
+        _futureTileProvider = PmTilesTileProvider.fromSource(_pmtilesPath!);
+      });
+    } else {
+      print("PMTiles file not found at $path");
+    }
+  }
+
+  Widget _baseMapLayer() {
+    if (widget.isOffline && _pmtilesPath != null) {
+      return FutureBuilder<PmTilesTileProvider>(
+        future: _futureTileProvider,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return TileLayer(
+              tileProvider: snapshot.data!,
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            );
+          }
+          // You might want to show a loader or a fallback here
+          // return const SizedBox.shrink();
+          if (snapshot.hasError) {
+            debugPrint(snapshot.error.toString());
+            debugPrintStack(stackTrace: snapshot.stackTrace);
+            return Center(child: Text(snapshot.error.toString()));
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+    }
+
+    return TileLayer(
+      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      userAgentPackageName: 'com.isislab.xrtourguide',
+      tileProvider: NetworkTileProvider(),
+    );
   }
 
   Future<void> _loadOfflineData() async {
@@ -278,24 +328,6 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     }
   }
 
-  // Future<void> _loadOfflineData() async {
-  //   if (!widget.isOffline) return;
-
-  //   try{
-  //     final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
-  //     if (offlineData != null && mounted){
-  //       setState(() {
-  //         _tourDetails = Tour.fromJson(offlineData['tour']);
-  //         _waypoints = (offlineData['waypoints'] as List).map((wp) => Waypoint.fromJson(wp)).toList();
-  //         _isLoadingTourDetails = false;
-  //         _isLoadingWaypoints = false;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print("Error loading offline data: $e");
-  //   }
-  // }
-
   Future<void> _confirmRemoveOfflineTour() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -382,29 +414,6 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       }
     }
   }
-
-  // Future<void> _loadWaypoints() async {
-  //   try {
-  //     final waypoints = await _tourService.getWaypointsByTour(widget.tourId);
-  //     if (mounted) {
-  //       setState(() {
-  //         _waypoints = waypoints;
-  //         _isLoadingWaypoints = false;
-  //         _expandedWaypoints = List.generate(
-  //           _waypoints.length,
-  //           (index) => index == 0,
-  //         );
-  //       });
-  //     }
-  //   } catch (e) {
-  //     if (mounted) {
-  //       setState(() {
-  //         _isLoadingWaypoints = false;
-  //       });
-  //       _showError('Error loading waypoints');
-  //     }
-  //   }
-  // }
 
 Future<void> _loadWaypoints() async {
     try {
@@ -689,27 +698,20 @@ Future<void> _loadWaypoints() async {
                   // _waypoints[0].location, // Start with first waypoint
                   _currentPosition != null ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude) : LatLng(_waypoints[0].latitude, _waypoints[0].longitude),
               initialZoom: 13.0,
+              maxZoom: 16.0,
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
             ),
             children: [
               // Base map layer
-              TileLayer(
-                urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.isislab.xrtourguide',
-                tileProvider: NetworkTileProvider()
-              ),
               // TileLayer(
               //   urlTemplate:
-              //       'https://{s}.tile.openstreetmap.it/osm/{z}/{x}/{y}.png',
-              //   subdomains: const ['a', 'b', 'c'],
-              //   userAgentPackageName: 'com.xr_tour_guide.app',
-              //   maxZoom: 19,
-              //   minZoom: 1,
+              //       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              //   userAgentPackageName: 'com.isislab.xrtourguide',
+              //   tileProvider: NetworkTileProvider()
               // ),
-
+              _baseMapLayer(),
               // Waypoint markers
               MarkerLayer(
                 markers:
@@ -1186,11 +1188,32 @@ Future<void> _loadWaypoints() async {
                       });
                     },
                     itemBuilder: (context, index) {
-                      return Image.network(
-                        // _tourDetails!.imagePath,
-                        "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
-                        fit: BoxFit.cover,
-                      );
+                      // return Image.network(
+                      //   // _tourDetails!.imagePath,
+                      //   "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
+                      //   fit: BoxFit.cover,
+                      // );
+                      if (widget.isOffline &&
+                          _offlineTourImagePath != null &&
+                          File(_offlineTourImagePath!).existsSync()) {
+                        // Modalità Offline: carica l'immagine dal file locale
+                        return Image.file(
+                          File(_offlineTourImagePath!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _offlineImagePlaceholder(),
+                        );
+                      } else if (_tourDetails != null) {
+                        // Modalità Online: carica l'immagine dalla rete
+                        return Image.network(
+                          "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _offlineImagePlaceholder(),
+                        );
+                      }
+                      // Fallback nel caso in cui non ci sia nessuna immagine
+                      return _offlineImagePlaceholder();
                     },
                   ),
                 ),
@@ -1725,26 +1748,20 @@ Future<void> _loadWaypoints() async {
                         options: MapOptions(
                           initialCenter: LatLng(_waypoints[0].latitude, _waypoints[0].longitude),
                           initialZoom: 13.0,
+                          maxZoom: 16.0,
                           interactionOptions: const InteractionOptions(
                             flags: InteractiveFlag.all,
                           ),
                         ),
                         children: [
                           // Base map layer
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.isislab.xrtourguide',
-                            tileProvider: NetworkTileProvider()
-                          ),
                           // TileLayer(
                           //   urlTemplate:
-                          //       'https://{s}.tile.openstreetmap.it/osm/{z}/{x}/{y}.png',
-                          //   subdomains: const ['a', 'b', 'c'],
-                          //   userAgentPackageName: 'com.xr_tour_guide.app',
-                          //   maxZoom: 19,
-                          //   minZoom: 1,
+                          //       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          //   userAgentPackageName: 'com.isislab.xrtourguide',
+                          //   tileProvider: NetworkTileProvider()
                           // ),
+                          _baseMapLayer(),
 
                           // Current location marker
                           if (_currentPosition != null)
