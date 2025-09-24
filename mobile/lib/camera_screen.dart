@@ -18,6 +18,14 @@ import 'services/local_state_service.dart';
 import 'models/waypoint.dart';
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:easy_localization/easy_localization.dart";
+import 'services/offline_tour_service.dart';
+import "dart:io";
+import "package:path_provider/path_provider.dart";
+import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
+import 'services/offline_recognition_service.dart';
+
+
+
 
 
 // New imports for media players/viewers
@@ -46,6 +54,7 @@ class ARCameraScreen extends ConsumerStatefulWidget {
   final double latitude;
   final double longitude;
   final int tourId;
+  final bool isOffline;
 
   ARCameraScreen({
     Key? key,
@@ -83,6 +92,7 @@ Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei prin
     ],
     required this.latitude,
     required this.longitude,
+    this.isOffline = false,
   }) : super(key: key);
 
   @override
@@ -94,6 +104,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   late ApiService _apiService;
   late LocalStateService _localStateService;
+  late OfflineStorageService _offlineService;
+  OfflineRecognitionService? _offlineRecognitionService;
+  bool _isProcessingFrame = false;
+
 
   // Camera controller
   CameraController? _cameraController;
@@ -137,26 +151,92 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   List<Waypoint> _waypoints = [];
   bool _isLoadingWaypoints = true;
 
+  String? _pmtilesPath;
+  late Future<PmTilesTileProvider> _futureTileProvider;
+
+
   @override
   void initState() {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
     _apiService = ref.read(apiServiceProvider);
     _localStateService = LocalStateService();
+    _offlineService = ref.read(offlineStorageServiceProvider);
     _initializeCamera();
     _getCurrentLocation();
     _initializeAnimations();
-    _setInitialContent(); // Set initial content
+    _setInitialContent();
+    if (widget.isOffline) {
+      _initOfflineMap();
+      _initializeOfflineRecognizer();
+    } // Set initial content
   }
 
   @override
   void dispose() {
+    _cameraController?.stopImageStream();
     _cameraController?.dispose();
     _sheetController.dispose();
     _pulseAnimationController.dispose();
     _successAnimationController.dispose();
     _failureAnimationController.dispose();
+    _offlineRecognitionService?.dispose();
     super.dispose();
+  }
+
+  Future<void> _initOfflineMap() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final path = '${dir.path}/offline_tours_data/tour_${widget.tourId}/map.pmtiles';
+    if (await File(path).exists()) {
+      setState(() {
+        _pmtilesPath = path;
+        _futureTileProvider = PmTilesTileProvider.fromSource(_pmtilesPath!);
+      });
+    } else {
+      print("PMTiles file not found at $path");
+    }
+  }
+
+  Widget _baseMapLayer() {
+    if (widget.isOffline && _pmtilesPath != null) {
+      return FutureBuilder<PmTilesTileProvider>(
+        future: _futureTileProvider,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return TileLayer(
+              tileProvider: snapshot.data!,
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            );
+          }
+          // You might want to show a loader or a fallback here
+          // return const SizedBox.shrink();
+          if (snapshot.hasError) {
+            debugPrint(snapshot.error.toString());
+            debugPrintStack(stackTrace: snapshot.stackTrace);
+            return Center(child: Text(snapshot.error.toString()));
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+    }
+
+    return TileLayer(
+      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      userAgentPackageName: 'com.isislab.xrtourguide',
+      tileProvider: NetworkTileProvider(),
+    );
+  }
+
+  Future<void> _initializeOfflineRecognizer() async {
+    try {
+      _offlineRecognitionService = OfflineRecognitionService();
+      await _offlineRecognitionService!.initEmbedderFromAsset('assets/models/ResNet50.tflite');
+      await _offlineRecognitionService!.initIndexForTour(widget.tourId);
+      print('Offline recognizer initialized for tour ${widget.tourId}');
+    } catch (e) {
+      print('Error initializing offline recognizer: $e');
+      _showError('Error initializing offline recognizer.');
+    }
   }
 
   // Initialize camera
@@ -168,18 +248,91 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           _cameras![0], // Use the first camera (usually back camera)
           ResolutionPreset.high,
           enableAudio: false,
+          imageFormatGroup: ImageFormatGroup.yuv420,
         );
 
         await _cameraController!.initialize();
+        if (!mounted) return;
+
+        if (widget.isOffline) {
+          _cameraController!.startImageStream((CameraImage image) {
+            if (_recognitionState == RecognitionState.scanning &&
+                !_isProcessingFrame) {
+              _processCameraImage(image);
+            }
+          });
+        }
+
         if (mounted) {
           setState(() {
             _isCameraInitialized = true;
           });
         }
+
       }
     } catch (e) {
       print('Error initializing camera: $e');
     }
+  }
+
+  Future<void> _processCameraImage(CameraImage image) async {
+    _isProcessingFrame = true;
+    try{
+      if (_offlineRecognitionService == null) {
+        throw Exception("OfflineRecognitionService not initialized");
+      }
+      final sensorOrientation = _cameraController!.description.sensorOrientation;
+      final waypointId = await _offlineRecognitionService!.match(image, sensorOrientation);
+
+      if (waypointId != -1) {
+        await _cameraController?.stopImageStream();
+        _handleRecognitionSuccess(waypointId);
+      }
+    } catch (e) {
+      print("Error processing camera image: $e");
+    } finally {
+      Future.delayed(const Duration(milliseconds: 500), (){
+        _isProcessingFrame = false;
+      });
+    }
+  }
+
+  void _handleRecognitionSuccess(int waypointId) async {
+    Map<String, dynamic> availableResources = {
+      "readme": 1,
+      "links": 1,
+      "images": 1,
+      "video": 1,
+      "pdf": 1,
+      "audio": 1,
+    };
+
+    _waypoints.forEach((waypoint) {
+      if (waypoint.id == waypointId) {
+        widget.landmarkName = waypoint.title;
+        widget.landmarkImages = waypoint.images;
+      }
+    });
+
+    _pulseAnimationController.stop();
+
+    // await _localStateService.addScannedWaypoint(widget.tourId, waypointId);
+    setState(() {
+      _recognizedWaypointId = waypointId;
+      _availableResources = availableResources;
+      _currentMarkdownContent = "# ${widget.landmarkName}";
+      _currentActiveContent = MarkdownWidget(
+        data: _currentMarkdownContent,
+        config: _buildMarkdownConfig(),
+        padding: const EdgeInsets.only(top: 0),
+        shrinkWrap: true,
+      );
+      _recognitionState = RecognitionState.success;
+    });
+    _successAnimationController.reset();
+    _successAnimationController.forward();
+    _startAROverlayAnimation();
+    // await _checkTourCompletion();
   }
 
   // Helper to build MarkdownConfig once
@@ -232,27 +385,66 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
 
   Future<void> _getTourWaypoints() async{
-    try {
-      final waypoints = await _tourService.getWaypointsByTour(widget.tourId);
-      if (mounted) {
-        setState(() {
-          _waypoints = [];
-          for (var waypoint in waypoints) {
-            _waypoints.add(waypoint);
-            if (waypoint.subWaypoints != null){
-              _waypoints.addAll(waypoint.subWaypoints!);
+    if (!widget.isOffline) {
+      try {
+        final waypoints = await _tourService.getWaypointsByTour(widget.tourId);
+        if (mounted) {
+          setState(() {
+            _waypoints = [];
+            for (var waypoint in waypoints) {
+              _waypoints.add(waypoint);
+              if (waypoint.subWaypoints != null){
+                _waypoints.addAll(waypoint.subWaypoints!);
+              }
             }
-          }
-          _isLoadingWaypoints = false;
-        });
+            _isLoadingWaypoints = false;
+          });
+        }
+      } catch (e) {
+        if (mounted){
+          setState(() {
+            _isLoadingWaypoints = false;
+          });
+        }
+        _showError('Failed to load waypoints: $e');
       }
-    } catch (e) {
-      if (mounted){
-        setState(() {
-          _isLoadingWaypoints = false;
-        });
+    } else {
+      final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
+      if (offlineData != null) {
+        final List wps = (offlineData['waypoints'] as List?) ?? [];
+        final List subTours = (offlineData['sub_tours'] as List?) ?? [];
+        for (final st in subTours) {
+          final List subWp = (st['waypoints'] as List?) ?? [];
+        }
+        final List<Waypoint> mainWaypoints = wps.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+        final List<Waypoint> subTourWaypoints = <Waypoint>[];
+        for (final st in subTours) {
+          final subTourInfo = st['sub_tour'] as Map<String, dynamic>?;
+          if (subTourInfo == null) continue;
+
+          final subWpJson = (st['waypoints'] as List?) ?? [];
+          final subWps = subWpJson.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+
+          final subTourWaypoint = Waypoint(
+            id: (subTourInfo['id'] as num).toInt(),
+            title: (subTourInfo['title'] ?? '') as String,
+            subtitle: (subTourInfo['description'] ?? '') as String,
+            description: (subTourInfo['description'] ?? '') as String,
+            latitude: (subTourInfo['lat'] as num?)?.toDouble() ?? 0.0,
+            longitude: (subTourInfo['lon'] as num?)?.toDouble() ?? 0.0,
+            images: const [], // il contenitore non ha immagini proprie
+            category: (subTourInfo['category'] ?? 'INSIDE') as String,
+            subWaypoints: subWps,
+          );
+          subTourWaypoints.add(subTourWaypoint);
+        }
+        if (mounted) {
+          setState(() {
+            _waypoints = [...mainWaypoints, ...subTourWaypoints];
+            _isLoadingWaypoints = false;
+          });
+        }
       }
-      _showError('Failed to load waypoints: $e');
     }
   }
 
@@ -476,15 +668,20 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       _recognitionState = RecognitionState.scanning;
     });
 
+    // Start pulse animation
+    _pulseAnimationController.repeat(reverse: true);
+
+    if (widget.isOffline) {
+      return;
+    }
+
     //Camera feed
     final XFile file = await _cameraController!.takePicture();
     final bytes = await file.readAsBytes();
     final String base64Image = base64Encode(bytes);
 
-    // Start pulse animation
-    _pulseAnimationController.repeat(reverse: true);
 
-    // Simulate recognition process (replace with actual ML/AR logic)
+    // DEBUG  Simulate recognition process (replace with actual ML/AR logic)
     // await Future.delayed(const Duration(seconds: 3));
     final result = await _apiService.inference(
       base64Image,
@@ -1217,10 +1414,11 @@ Widget _buildMiniMap(BuildContext context) {
       ),
       children: [
         // Base map layer
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.isislab.xrtourguide',
-        ),
+        _baseMapLayer(),
+        // TileLayer(
+        //   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        //   userAgentPackageName: 'com.isislab.xrtourguide',
+        // ),
 
         // Current location marker (se disponibile)
         if (_currentPosition != null)

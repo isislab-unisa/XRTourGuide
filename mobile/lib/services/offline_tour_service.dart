@@ -107,6 +107,9 @@ class OfflineStorageService {
       final tourDataFile = File('${tourDir.path}/tour_data.json');
       await tourDataFile.writeAsString(jsonEncode(tourData));
 
+      //Save training_data
+      await _downloadOfflineIndex(tourId, tourDir);
+
       // 8. Update offline tours list
       await _updateOfflineToursList(tourId, tour);
 
@@ -218,7 +221,7 @@ class OfflineStorageService {
 
   Future<void> _downloadOfflineIndex(int tourId, Directory tourDir) async {
     try {
-      final url = '${ApiService.basicUrl}/get_offline_index?tour=$tourId';
+      final url = '${ApiService.basicUrl}/download_model?tour=$tourId';
       final file = File('${tourDir.path}/training_data.json');
       final response = await _dio.get(url, options: Options(responseType: ResponseType.json));
       final data = response.data;
