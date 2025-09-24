@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+WORKDIR /workspace
+
+COPY requirements.txt .
+
+RUN apt-get update && \
+    apt-get install -y default-libmysqlclient-dev build-essential netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+COPY wait-for-it.sh .
+RUN chmod +x wait-for-it.sh
+
+EXPOSE 8002
+
+CMD ["./wait-for-it.sh", "db", "3306", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+
