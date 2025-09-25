@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String
 from .database import Base
+from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class Services(Base):
     __tablename__ = "services"
@@ -15,3 +17,9 @@ class User(Base):
     name = Column(String(50), nullable=False)
     email = Column(String(100), nullable=False, unique=True)
     password = Column(String(100), nullable=False)
+
+    def set_password(self, raw_password):
+        self.password = pwd_context.hash(raw_password)
+
+    def verify_password(self, raw_password):
+        return pwd_context.verify(raw_password, self.password)
