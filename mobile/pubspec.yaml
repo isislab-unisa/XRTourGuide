@@ -65,6 +65,7 @@ dependencies:
   tflite_flutter: ^0.11.0
   image: ^4.5.4
   connectivity_plus: ^6.1.5
+  flutter_map_pmtiles: ^1.0.5
 
 dev_dependencies:
   flutter_test:
@@ -114,7 +115,7 @@ flutter:
     - assets/interior.jpg
     - assets/int-exterior.jpg
     - assets/translations/
-    - assets/models/ResNet50.tflite
+    - assets/models/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

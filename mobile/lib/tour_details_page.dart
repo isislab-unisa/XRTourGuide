@@ -801,11 +801,13 @@ Future<void> _loadWaypoints() async {
                 child: IconButton(
                   icon: const Icon(Icons.camera_alt, color: Colors.white, size: 28,),
                   onPressed: () {
+                    if (!widget.isOffline){
+                      _apiService.initializeInferenceModule(widget.tourId);
+                    }
                     //Initialize the inference module for the tour
-                    _apiService.initializeInferenceModule(widget.tourId);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude)),
+                      MaterialPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude, isOffline: widget.isOffline)),
                     );
                   },
                 ),
@@ -1188,11 +1190,6 @@ Future<void> _loadWaypoints() async {
                       });
                     },
                     itemBuilder: (context, index) {
-                      // return Image.network(
-                      //   // _tourDetails!.imagePath,
-                      //   "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
-                      //   fit: BoxFit.cover,
-                      // );
                       if (widget.isOffline &&
                           _offlineTourImagePath != null &&
                           File(_offlineTourImagePath!).existsSync()) {
@@ -1412,12 +1409,13 @@ Future<void> _loadWaypoints() async {
                           child: Center(
                             child: ElevatedButton(
                               onPressed: () {
-                                // TODO: AR Guide functionality
-                                _apiService.initializeInferenceModule(_tourDetails!.id);
+                                if (!widget.isOffline) {
+                                  _apiService.initializeInferenceModule(_tourDetails!.id);
+                                }
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude),
+                                    builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude, isOffline: widget.isOffline),
                                   ),
                                 );
                                 print('Activate AR Guide');
@@ -1547,183 +1545,184 @@ Future<void> _loadWaypoints() async {
                 ),
               const SizedBox(height:24),
               // Verified reviews section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'verified_reviews'.tr(),
-                          style: TextStyle(
-                            fontSize: 23,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '(${_tourDetails!.reviewCount})',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: () {
-                            _showLeaveReviewSheet(_tourDetails!.id);
-                          },
-                          icon: Icon(
-                            Icons.add_circle,
-                            color: AppColors.primary,
-                            size: 60,
+              if (!widget.isOffline)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'verified_reviews'.tr(),
+                            style: TextStyle(
+                              fontSize: 23,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
-                          )
-                      ],
-                    ),
-                    // const SizedBox(height: 4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          _tourDetails!.rating.toStringAsFixed(1).toString(),
-                          style: const TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  ),
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  ),
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  ),
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  ),
-                                  const Icon(
-                                    Icons.star_half,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  ),
-                                ],
+                          const SizedBox(width: 8),
+                          Text(
+                            '(${_tourDetails!.reviewCount})',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () {
+                              _showLeaveReviewSheet(_tourDetails!.id);
+                            },
+                            icon: Icon(
+                              Icons.add_circle,
+                              color: AppColors.primary,
+                              size: 60,
                               ),
-                              Text(
-                                'based_on_reviews'.tr(namedArgs: {'count': '${_tourDetails!.reviewCount}'}),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
+                            )
+                        ],
+                      ),
+                      // const SizedBox(height: 4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            _tourDetails!.rating.toStringAsFixed(1).toString(),
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 18,
+                                    ),
+                                    const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 18,
+                                    ),
+                                    const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 18,
+                                    ),
+                                    const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 18,
+                                    ),
+                                    const Icon(
+                                      Icons.star_half,
+                                      color: Colors.amber,
+                                      size: 18,
+                                    ),
+                                  ],
                                 ),
+                                Text(
+                                  'based_on_reviews'.tr(namedArgs: {'count': '${_tourDetails!.reviewCount}'}),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      //load the first two elements from _reviews
+                      if (_isLoadingReviews)
+                        const Center(child: CircularProgressIndicator())
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: _reviews.length,
+                          itemBuilder: (context, index) {
+                            return _buildReviewItem(
+                              name: _reviews[index].user,
+                              date: _reviews[index].date,
+                              rating: _reviews[index].rating,
+                              comment: _reviews[index].comment,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      //  ...[
+                      //   _buildReviewItem(
+                      //     name: _reviews[0].user,
+                      //     date: _reviews[0].date,
+                      //     rating: _reviews[0].rating,
+                      //     comment: _reviews[0].comment,
+                      //   ),
+                      //   const SizedBox(height: 16),
+                      //   _buildReviewItem(
+                      //     name: _reviews[1].user,
+                      //     date: _reviews[1].date,
+                      //     rating: _reviews[1].rating,
+                      //     comment: _reviews[1].comment,
+                      //   ),
+                      //   const SizedBox(height: 16),
+                      // ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReviewListScreen(
+                                  tourName: _tourDetails!.title,
+                                  tourId: widget.tourId,
+                                  isTour: true,
+                                  reviewCount: _tourDetails!.reviewCount,
+                                ),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'More',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 20,
+                                color: AppColors.primary,
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    //load the first two elements from _reviews
-                    if (_isLoadingReviews)
-                      const Center(child: CircularProgressIndicator())
-                    else
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: _reviews.length,
-                        itemBuilder: (context, index) {
-                          return _buildReviewItem(
-                            name: _reviews[index].user,
-                            date: _reviews[index].date,
-                            rating: _reviews[index].rating,
-                            comment: _reviews[index].comment,
-                          );
-                        },
                       ),
-                      const SizedBox(height: 16),
-                    //  ...[
-                    //   _buildReviewItem(
-                    //     name: _reviews[0].user,
-                    //     date: _reviews[0].date,
-                    //     rating: _reviews[0].rating,
-                    //     comment: _reviews[0].comment,
-                    //   ),
-                    //   const SizedBox(height: 16),
-                    //   _buildReviewItem(
-                    //     name: _reviews[1].user,
-                    //     date: _reviews[1].date,
-                    //     rating: _reviews[1].rating,
-                    //     comment: _reviews[1].comment,
-                    //   ),
-                    //   const SizedBox(height: 16),
-                    // ],
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ReviewListScreen(
-                                tourName: _tourDetails!.title,
-                                tourId: widget.tourId,
-                                isTour: true,
-                                reviewCount: _tourDetails!.reviewCount,
-                              ),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'More',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 20,
-                              color: AppColors.primary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ] else if (_selectedTab == 'Itinerario') ...[
               if (_tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
                 // Interactive Map view using flutter_map
