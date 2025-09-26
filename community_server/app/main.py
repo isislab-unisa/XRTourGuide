@@ -1,4 +1,5 @@
 import sys, os
+from fastapi import Request
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Form
@@ -10,6 +11,8 @@ from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request as FastAPIRequest
+from fastapi.responses import RedirectResponse
+
 
 dotenv.load_dotenv()
 
@@ -42,7 +45,8 @@ async def lifespan(app: FastAPI):
         if not existing_service:
             new_service = models.Services(
                 name="default",
-                domain="default"
+                domain="default",
+                active=True
             )
             db.add(new_service)
             print("Servizio di default aggiunto")
@@ -72,7 +76,7 @@ def get_db():
 async def root(request: FastAPIRequest, db: Session = Depends(get_db)):
     services = db.query(models.Services).all()
     return templates.TemplateResponse(
-        request=request, name="home.html", context={"services": services}
+        request=request, name="login.html", context={"services": services}
     )
 
 @app.get("/list_services/")
@@ -94,4 +98,44 @@ async def login(
     if not user or not user.verify_password(password):
         return templates.TemplateResponse("home.html", {"request": request, "message": "Invalid credentials"})
 
-    return templates.TemplateResponse("home.html", {"request": request, "message": f"Welcome {user.name}!"})
+    services = db.query(models.Services).all()
+    return templates.TemplateResponse(
+        "home.html",
+        {"request": request, "message": f"Welcome {user.name}!", "services": services})
+
+@app.get("/register_service")
+def register_service(request: Request):
+    return templates.TemplateResponse(
+        "register_service.html",
+        {"request": request}
+    )
+
+@app.post("/add_service/")
+def add_service(
+    request: Request,
+    name: str = Form(...),
+    domain: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    new_service = models.Services(name=name, domain=domain)
+    db.add(new_service)
+    db.commit()
+    return RedirectResponse("/", status_code=303)
+
+@app.get("/delete_service/{service_id}")
+def delete_service(service_id: int, db: Session = Depends(get_db)):
+    service = db.query(models.Services).filter(models.Services.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    db.delete(service)
+    db.commit()
+    return RedirectResponse("/", status_code=303)
+
+@app.get("/deactivate_service/{service_id}")
+def deactivate_service(service_id: int, db: Session = Depends(get_db)):
+    service = db.query(models.Services).filter(models.Services.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    service.active = False
+    db.commit()
+    return RedirectResponse("/", status_code=303)

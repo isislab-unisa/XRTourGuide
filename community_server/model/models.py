@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from .database import Base
 from passlib.context import CryptContext
 
@@ -9,7 +9,7 @@ class Services(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
     domain = Column(String(100), nullable=False, unique=True)
-    # others...
+    active = Column(Boolean, default=True, nullable=False)
 
 class User(Base):
     __tablename__ = "users"

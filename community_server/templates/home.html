@@ -12,7 +12,7 @@
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>{{ message }}</h1>
-        <a href="/add_service/" class="btn btn-success">Add Service</a>
+        <a href="/register_service" class="btn btn-success">Add Service</a>
     </div>
 
     <div class="card shadow-sm">
@@ -35,6 +35,7 @@
                             <td>{{ service.name }}</td>
                             <td>{{ service.domain }}</td>
                             <td><button href="/delete_service/{{ service.id }}" class="btn btn-danger">Delete</button></td>
+                            <td><button href="/deactivate_service/{{ service.id }}" class="btn btn-danger">Deactivate</button></td>
                         </tr>
                         {% else %}
                         <tr>
