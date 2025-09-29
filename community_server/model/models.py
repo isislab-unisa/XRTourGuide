@@ -9,7 +9,7 @@ class Services(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
     domain = Column(String(100), nullable=False, unique=True)
-    active = Column(Boolean, default=True, nullable=False)
+    active = Column(Boolean, default=True, nullable=True)
 
 class User(Base):
     __tablename__ = "users"

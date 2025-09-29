@@ -115,27 +115,43 @@ def add_service(
     request: Request,
     name: str = Form(...),
     domain: str = Form(...),
+    active: bool = Form(...),
     db: Session = Depends(get_db)
 ):
-    new_service = models.Services(name=name, domain=domain)
+    new_service = models.Services(name=name, domain=domain, active=active)
     db.add(new_service)
     db.commit()
-    return RedirectResponse("/", status_code=303)
+    services = db.query(models.Services).all()
+    return templates.TemplateResponse(
+        "home.html",
+        {"request": request, "services": services,}
+    )
 
-@app.get("/delete_service/{service_id}")
-def delete_service(service_id: int, db: Session = Depends(get_db)):
+@app.post("/delete_service/{service_id}")
+def delete_service(service_id: int, request: Request, db: Session = Depends(get_db)):
     service = db.query(models.Services).filter(models.Services.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     db.delete(service)
     db.commit()
-    return RedirectResponse("/", status_code=303)
 
-@app.get("/deactivate_service/{service_id}")
-def deactivate_service(service_id: int, db: Session = Depends(get_db)):
+    services = db.query(models.Services).all()
+    return templates.TemplateResponse(
+        "home.html",
+        {"request": request, "services": services, "message": "Service deleted successfully"}
+    )
+
+@app.post("/status_service/{service_id}")
+def status_service(service_id: int, request: Request, db: Session = Depends(get_db)):
     service = db.query(models.Services).filter(models.Services.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
-    service.active = False
+    
+    service.active = not service.active
     db.commit()
-    return RedirectResponse("/", status_code=303)
+
+    services = db.query(models.Services).all()
+    return templates.TemplateResponse(
+        "home.html",
+        {"request": request, "services": services, "message": "Service status updated"}
+    )

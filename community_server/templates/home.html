@@ -25,6 +25,7 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Domain</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -34,8 +35,21 @@
                             <td>{{ service.id }}</td>
                             <td>{{ service.name }}</td>
                             <td>{{ service.domain }}</td>
-                            <td><button href="/delete_service/{{ service.id }}" class="btn btn-danger">Delete</button></td>
-                            <td><button href="/deactivate_service/{{ service.id }}" class="btn btn-danger">Deactivate</button></td>
+                            <td>{{ service.active }}</td>
+                            <td>
+                                <form action="/delete_service/{{ service.id }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                                {% if service.active %}
+                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-warning btn-sm">Deactivate</button>
+                                    </form>
+                                {% else %}
+                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-success btn-sm">Activate</button>
+                                    </form>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% else %}
                         <tr>
