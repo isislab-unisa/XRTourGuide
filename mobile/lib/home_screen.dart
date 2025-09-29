@@ -224,7 +224,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
           if (index == 1) {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => UserDetailScreen(isGuest: widget.isGuest),
+                builder: (context) => UserDetailScreen(isGuest: widget.isGuest, isOffline: !_isOnline),
               ),
             );
           }

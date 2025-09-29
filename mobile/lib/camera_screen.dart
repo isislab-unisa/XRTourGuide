@@ -298,6 +298,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   }
 
   void _handleRecognitionSuccess(int waypointId) async {
+    // if(_cameraController != null && _cameraController!.value.isStreamingImages) {
+    //   await _cameraController!.stopImageStream();
+    // }
     Map<String, dynamic> availableResources = {
       "readme": 1,
       "links": 1,
@@ -668,6 +671,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       _recognitionState = RecognitionState.scanning;
     });
 
+    // await _cameraController?.stopImageStream();
+
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
@@ -677,6 +682,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     //Camera feed
     final XFile file = await _cameraController!.takePicture();
+    // if (_cameraController != null && _cameraController!.value.isStreamingImages) {
+    //   await _cameraController?.stopImageStream();
+    // }
     final bytes = await file.readAsBytes();
     final String base64Image = base64Encode(bytes);
 
