@@ -12,14 +12,6 @@ RUN apt-get update && \
 apt-get install -y ca-certificates && \
 update-ca-certificates
 
-RUN apt-get update && \
-    apt-get install -y gdal-bin libgdal-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
-ENV C_INCLUDE_PATH=/usr/include/gdal
-
 RUN pip install gunicorn
 
 EXPOSE 8001

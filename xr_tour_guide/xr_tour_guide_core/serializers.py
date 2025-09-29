@@ -80,10 +80,14 @@ class TourSerializer(serializers.ModelSerializer):
 
         
     def get_lat(self, obj):
-        return float(obj.coordinates.split(',')[0])
+        if len(obj.coordinates) > 0:
+            return float(obj.coordinates.split(',')[0])
+        return None
     
     def get_lon(self, obj):
-        return float(obj.coordinates.split(',')[1])
+        if len(obj.coordinates) > 0:
+            return float(obj.coordinates.split(',')[1])
+        return None
     
     def get_default_img(self, obj):
         return obj.default_image.name if obj.default_image else None

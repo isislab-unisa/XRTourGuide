@@ -186,7 +186,18 @@ services:
     networks:
       - backend_net
 
-
+  pmtiles-server:
+    build: ../pmtiles-server
+    container_name: pmtiles-server
+    depends_on:
+      - minio
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    networks:
+      - backend_net
+      
 volumes:
   mysql_data_xr_tour_guide:
   minio_data:

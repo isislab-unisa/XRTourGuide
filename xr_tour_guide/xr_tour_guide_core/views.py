@@ -2,9 +2,6 @@ import os
 import sys
 # sys.path.append(os.path.join(os.path.dirname(__file__), 'inference'))
 
-import base64
-import shutil
-import uuid
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -40,6 +37,9 @@ from django.views.decorators.http import require_http_methods
 import requests
 import redis
 from redis.lock import Lock
+import subprocess
+import tempfile
+from django.conf import settings
 
 redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
 
@@ -711,3 +711,52 @@ def download_model(request):
     model = storage.open(f"/{tour_id}/training_data.json", mode='r').read()
 
     return HttpResponse(model, content_type='application/json')
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cut_map(request, tour_id):
+    storage = MinioStorage()
+
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return JsonResponse({"error": "Tour not found"}, status=404)
+
+    if storage.exists(f"{tour_id}/tour_{tour_id}.pmtiles"):
+        file = storage.open(f"/{tour_id}/tour_{tour_id}.pmtiles", mode='rb')
+        return FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}.pmtiles")
+    
+    waypoints = tour.waypoints.all()
+    if not waypoints.exists():
+        return JsonResponse({"error": "No waypoints found for this tour"}, status=400)
+
+    lons, lats = [], []
+    for wp in waypoints:
+        try:
+            lat_str, lon_str = wp.coordinates.split(",")
+            lat, lon = float(lat_str.strip()), float(lon_str.strip())
+            lats.append(lat)
+            lons.append(lon)
+        except Exception:
+            continue
+
+    if not lats or not lons:
+        return JsonResponse({"error": "Waypoints have invalid coordinates"}, status=400)
+
+    min_lon, max_lon = min(lons), max(lons)
+    min_lat, max_lat = min(lats), max(lats)
+    bbox = f"{min_lon},{min_lat},{max_lon},{max_lat}"
+
+    payload = {
+        "tour_id": str(tour_id),
+        "bbox": bbox
+    }
+    url = "http://pmtiles-server:8081/extract"
+    headers = {"Content-type": "application/json"}
+    response = requests.post(url, headers=headers, json=payload)
+    print("DIOCANE", response, flush=True)
+    if response.status_code != 200:
+        return JsonResponse({"error": "Failed to extract pmtiles"}, status=400)
+    
+    file = storage.open(f"/{tour_id}/tour_{tour_id}.pmtiles", mode='rb')
+    return FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}.pmtiles")
