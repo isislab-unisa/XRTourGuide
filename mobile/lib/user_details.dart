@@ -23,7 +23,9 @@ enum ProfileScreenState {
 class UserDetailScreen extends ConsumerStatefulWidget {
   // NEW: Add isGuest parameter to the constructor
   final bool isGuest;
-  const UserDetailScreen({Key? key, this.isGuest = false})
+  final bool isOffline;
+
+  const UserDetailScreen({Key? key, this.isGuest = false, this.isOffline = false})
     : super(key: key); // Default to false
 
   @override
@@ -51,6 +53,12 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
   void initState() {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
+    if(widget.isOffline) {
+      _isLoadingUserDetails = false;
+      _isLoadingReviews = false;
+      return;
+    }
+
     // Only load user data if not in guest mode
     if (!widget.isGuest) {
       _loadData();
@@ -697,6 +705,35 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isOffline) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal:24.0),
+            child: Text(
+              'offline_mode_user_details'.tr(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     // Conditional rendering based on isGuest
     if (widget.isGuest) {
       return _buildGuestProfileScreen(context);

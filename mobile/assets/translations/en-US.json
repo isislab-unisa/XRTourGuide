@@ -115,5 +115,6 @@
     "downloaded_on": "Downloaded on {date}",
     "tours": "tours",
     "error_loading_offline_tours" : "Error loading offline tours",
-    "offline_mode_message" : "You are in offline mode"
+    "offline_mode_message" : "You are in offline mode",
+    "offline_mode_user_details": "You are in offline mode. Go back online to visualize your own profile."
 }

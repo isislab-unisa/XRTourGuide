@@ -12,6 +12,7 @@ import "package:camera/camera.dart";
 class OfflineRecognitionService {
 
   Interpreter? _embedder;
+  int? _modelOutputDim;
   final int dim; // dimensione embedding (es. 2048 o 1280)
   final int inputSize;
 
@@ -30,11 +31,28 @@ class OfflineRecognitionService {
     try {
       final modelData = await rootBundle.load(assetPath);
       _embedder = await Interpreter.fromBuffer(modelData.buffer.asUint8List());
-      print('Interpreter loaded successfully from asset: $assetPath');
+      final outputShape = _embedder!.getOutputTensor(0).shape;
+      _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
+      print('1) Interpreter loaded successfully from asset: $assetPath (output dim $_modelOutputDim)');
     } catch (e) {
       print('Error loading interpreter from asset: $e');
       rethrow;
     }
+  }
+
+  List<double> _alignEmbedding(List<double> emb) {
+    final targetDim = _modelOutputDim ?? dim;
+    if (emb.length == targetDim) return emb;
+
+    if (emb.length > targetDim) {
+      return emb.sublist(0, targetDim);
+    }
+
+    final aligned = List<double>.filled(targetDim, 0.0);
+    for (var i = 0; i < emb.length && i < targetDim; i++) {
+      aligned[i] = emb[i];
+    }
+    return aligned;
   }
 
   //Load the offline JSON index
@@ -85,8 +103,9 @@ class OfflineRecognitionService {
       final int wpId = nameToId[wpName] ?? -1;
 
       final embList = (m["embedding"] as List).map((e) => (e as num).toDouble()).toList();
-      final norm = math.sqrt(embList.fold<double>(0, (s,v) => s + v * v));
-      final emb = norm >0 ? embList.map((e) => e / norm).toList() : embList;
+      final alignedEmb = _alignEmbedding(embList);
+      final norm = math.sqrt(alignedEmb.fold<double>(0, (s,v) => s + v * v));
+      final emb = norm >0 ? alignedEmb.map((e) => e / norm).toList() : alignedEmb;
 
       final kps = (m['keypoints'] as List?)?? const [];
       final coords = <List<double>>[];
@@ -202,7 +221,8 @@ class OfflineRecognitionService {
     }
 
     final inTensor = input.reshape([1, inputSize, inputSize, 3]);
-    final out = List.filled(dim, 0.0).reshape([1, dim]);
+    final outputDim = _modelOutputDim ?? dim;
+    final out = List.filled(outputDim, 0.0).reshape([1, outputDim]);
     _embedder?.run(inTensor, out);
 
     final v = List<double>.from(out.first);
@@ -215,6 +235,7 @@ class OfflineRecognitionService {
     final scores = List<double>.filled(N, 0.0);
     for (int i = 0; i < N; i++) {
       final db = _dbEmbeddings[i];
+      final len = math.min(qEmb.length, db.length);
       double s = 0.0;
       for (int j = 0; j < db.length; j++) {
         s += qEmb[j] * db[j];
@@ -285,9 +306,10 @@ class OfflineRecognitionService {
       final qKey = qKp.toList();
 
       for (final i in topIdx) {
+        final dbKps = _kpCoords[i];
         final rows = _descRows[i];
         final bytes = _descBytes[i];
-        if (rows < 8 || bytes.isEmpty) continue;
+        if (rows < 8 || bytes.isEmpty || dbKps.isEmpty) continue;
 
         final dMat = cv.Mat.fromList(rows, 32, cv.MatType(cv.MatType.CV_8U), bytes);
         final matches = bf.match(qDesc, dMat);
@@ -296,17 +318,24 @@ class OfflineRecognitionService {
         dMat.release();
         matches.clear();
 
-        if (ms.length < 8) continue;
+        if (ms.length < inliersThreshold) continue;
 
         ms.sort((a, b) => a.distance.compareTo(b.distance));
-        final top = ms.take(topMatchesForRansac).toList();
+
+        final top = ms
+            .take(topMatchesForRansac)
+            .where((m) =>
+                m.queryIdx >= 0 &&
+                m.queryIdx < qKey.length &&
+                m.trainIdx >= 0 &&
+                m.trainIdx < dbKps.length)
+            .toList();
 
         final src = <cv.Point2f>[];
         final dst = <cv.Point2f>[];
-        final coords = _kpCoords[i];
         for (final m in top) {
           final qp = qKey[m.queryIdx];
-          final p2 = coords[m.trainIdx];
+          final p2 = dbKps[m.trainIdx];
           src.add(cv.Point2f(qp.x, qp.y));
           dst.add(cv.Point2f(p2[0], p2[1]));
         }
