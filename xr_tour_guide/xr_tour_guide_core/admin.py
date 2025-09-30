@@ -72,7 +72,7 @@ class WaypointForm(forms.ModelForm):
     
     readme_text = forms.CharField(
         widget=forms.Textarea(attrs={'class': 'markdown-editor', 'rows': 10}),
-        label="Readme (Markdown)",
+        label="Markdown",
         required=False,
     )
     
@@ -108,7 +108,17 @@ class WaypointForm(forms.ModelForm):
     class Meta:
         model = Waypoint
         fields = ['title', 'place', 'coordinates', 'description', 'pdf_item', 'video_item', 'audio_item']
-
+        js = [
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+            'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js',
+            'admin/js/init_markdown_editor.js',
+        ]
+        css = {
+            'all': [
+                'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+                'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css'
+            ]
+        }
 class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedInline):
     pass
 
@@ -179,7 +189,7 @@ class TourForm(forms.ModelForm):
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours', 'is_subtour')
-    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status', 'is_subtour')
+    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
