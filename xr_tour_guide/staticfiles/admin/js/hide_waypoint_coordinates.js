@@ -23,11 +23,11 @@
                 }
             });
 
-            const subtourInline = $(".inline-related.group.inline-stacked.dynamic-Tour_sub_tours");
+            var subToursField = $("#id_sub_tours").closest('.form-row, .form-group, .field, .form__field');
             if (category === "MIXED") {
-                subtourInline.show();
+                subToursField.show();
             } else {
-                subtourInline.hide();
+                subToursField.hide();
             }
         }
 

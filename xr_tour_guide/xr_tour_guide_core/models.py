@@ -95,7 +95,7 @@ class Tour(models.Model):
     tot_view = models.IntegerField(default=0)
     last_edited = models.DateTimeField(auto_now=True, null=True, blank=True)
     sub_tours = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='parent_tours', null=True)
-    is_subtour = models.BooleanField(default=False)
+    is_subtour = models.BooleanField(default=False, null=True, blank=True)
 
     class Meta:
         db_table = "Tour"
