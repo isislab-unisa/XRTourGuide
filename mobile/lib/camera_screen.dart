@@ -59,37 +59,10 @@ class ARCameraScreen extends ConsumerStatefulWidget {
   ARCameraScreen({
     Key? key,
     required this.tourId,
-    this.landmarkName = "Santuario di Montevergine",
+    this.landmarkName = "",
     this.landmarkDescription = """
-# Santuario di Montevergine
-
-Il Santuario di Montevergine è un importante complesso monastico mariano situato a circa 1.270 metri sul livello del mare, nel massiccio del Partenio, nel comune di Mercogliano (Avellino).
-
-## Storia
-
-Fondato nel 1124 da San Guglielmo da Vercelli, il santuario è oggi uno dei principali luoghi di pellegrinaggio del Sud Italia, con oltre un milione di visitatori ogni anno.
-
-## Architettura
-
-- **Basilica**: La basilica attuale risale al XVIII secolo
-- **Cripta**: Conserva importanti opere d'arte medievali
-- **Museo**: Ospita preziosi manufatti storici e religiosi
-
-## Come Arrivare
-
-1. In auto dalla A16 uscita Avellino Ovest
-2. Con la funicolare da Mercogliano
-3. A piedi attraverso i sentieri del Partenio
-
-> Il santuario è aperto tutti i giorni dalle 6:00 alle 20:00
-
-[Visita il sito ufficiale](https://www.santuariodimontevergine.com)
 """,
-    this.landmarkImages = const [
-      'https://picsum.photos/300/200?random=1',
-      'https://picsum.photos/300/200?random=2',
-      'https://picsum.photos/300/200?random=3',
-    ],
+    this.landmarkImages = const [],
     required this.latitude,
     required this.longitude,
     this.isOffline = false,
@@ -254,14 +227,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         await _cameraController!.initialize();
         if (!mounted) return;
 
-        if (widget.isOffline) {
-          _cameraController!.startImageStream((CameraImage image) {
-            if (_recognitionState == RecognitionState.scanning &&
-                !_isProcessingFrame) {
-              _processCameraImage(image);
-            }
-          });
-        }
 
         if (mounted) {
           setState(() {
@@ -275,40 +240,38 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     }
   }
 
-  Future<void> _processCameraImage(CameraImage image) async {
-    _isProcessingFrame = true;
-    try{
-      if (_offlineRecognitionService == null) {
-        throw Exception("OfflineRecognitionService not initialized");
-      }
-      final sensorOrientation = _cameraController!.description.sensorOrientation;
-      final waypointId = await _offlineRecognitionService!.match(image, sensorOrientation);
+  // Future<void> _processCameraImage(CameraImage image) async {
+  //   _isProcessingFrame = true;
+  //   try{
+  //     if (_offlineRecognitionService == null) {
+  //       throw Exception("OfflineRecognitionService not initialized");
+  //     }
+  //     final sensorOrientation = _cameraController!.description.sensorOrientation;
+  //     final waypointId = await _offlineRecognitionService!.match(image, sensorOrientation);
 
-      if (waypointId != -1) {
-        await _cameraController?.stopImageStream();
-        _handleRecognitionSuccess(waypointId);
-      }
-    } catch (e) {
-      print("Error processing camera image: $e");
-    } finally {
-      Future.delayed(const Duration(milliseconds: 500), (){
-        _isProcessingFrame = false;
-      });
-    }
-  }
+  //     if (waypointId != -1) {
+  //       await _cameraController?.stopImageStream();
+  //       _handleRecognitionSuccess(waypointId);
+  //     }
+  //   } catch (e) {
+  //     print("Error processing camera image: $e");
+  //   } finally {
+  //     Future.delayed(const Duration(milliseconds: 500), (){
+  //       _isProcessingFrame = false;
+  //     });
+  //   }
+  // }
 
-  void _handleRecognitionSuccess(int waypointId) async {
-    // if(_cameraController != null && _cameraController!.value.isStreamingImages) {
-    //   await _cameraController!.stopImageStream();
-    // }
-    Map<String, dynamic> availableResources = {
-      "readme": 1,
-      "links": 1,
-      "images": 1,
-      "video": 1,
-      "pdf": 1,
-      "audio": 1,
-    };
+  void _handleRecognitionSuccess(int waypointId, Map<String, dynamic> availableResources, bool isOffline) async {
+    // Map<String, dynamic> availableResources = {
+    //   "readme": 1,
+    //   "links": 1,
+    //   "images": 1,
+    //   "video": 1,
+    //   "pdf": 1,
+    //   "audio": 1,
+    // };
+
 
     _waypoints.forEach((waypoint) {
       if (waypoint.id == waypointId) {
@@ -318,6 +281,11 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     });
 
     _pulseAnimationController.stop();
+    // await _localStateService.addScannedWaypoint(
+    //   widget.tourId,
+    //   waypointId as int,
+    // );
+
 
     // await _localStateService.addScannedWaypoint(widget.tourId, waypointId);
     setState(() {
@@ -667,111 +635,158 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   // Start recognition process with animations
   void _startRecognition() async {
+
     setState(() {
       _recognitionState = RecognitionState.scanning;
     });
 
-    // await _cameraController?.stopImageStream();
-
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
-    if (widget.isOffline) {
-      return;
-    }
-
-    //Camera feed
-    final XFile file = await _cameraController!.takePicture();
-    // if (_cameraController != null && _cameraController!.value.isStreamingImages) {
-    //   await _cameraController?.stopImageStream();
+    // if (widget.isOffline) {
+    //   return;
     // }
-    final bytes = await file.readAsBytes();
-    final String base64Image = base64Encode(bytes);
 
+    try {
+      final XFile file = await _cameraController!.takePicture();
+      final bytes = await file.readAsBytes();
 
-    // DEBUG  Simulate recognition process (replace with actual ML/AR logic)
-    // await Future.delayed(const Duration(seconds: 3));
-    final result = await _apiService.inference(
-      base64Image,
-      widget.tourId,
-    );
+      int waypointId = -1;
+      Map<String, dynamic> availableResources = {};
 
-    var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
-    var availableResources = result.data["available_resources"] ?? {};
-
-    // FOR DEBUG
-    // final result = {
-    //   "result": 1, // Mock waypoint ID
-    //   "available_resources": {
-    //     "readme": 1,
-    //     "links": 1,
-    //     "images": 1,
-    //     "video": 1,
-    //     "pdf": 1,
-    //     "audio": 1,
-    //   },
-    // };
-    // var waypointId = result["result"] ?? -1; // Get waypoint ID from result
-    // var availableResources = result["available_resources"] ?? {};
-    // FOR DEBUG END
-
-    _waypoints.forEach((waypoint) {
-      if (waypoint.id == waypointId) {
-        // Update the current landmark name and description
-        widget.landmarkName = waypoint.title;
-        widget.landmarkImages = waypoint.images;
-      }
-    });
-
-    print("AVAILABLE_RESOURCES: $availableResources");
-
-    // Stop pulse animation
-    _pulseAnimationController.stop();
-
-    bool recognitionSuccess = waypointId != -1;
-    print('Recognition result: $recognitionSuccess');
-
-    if (recognitionSuccess) {
-      await _localStateService.addScannedWaypoint(widget.tourId, waypointId as int);
-
-      setState(() {
-        _recognizedWaypointId = waypointId; // Store recognized waypoint ID
-        _availableResources = Map<String, dynamic>.from(availableResources as Map<dynamic, dynamic>); // Store available resources
-
-        _currentMarkdownContent = """
-# ${widget.landmarkName}
-""";
-        _currentActiveContent = MarkdownWidget(
-          data: _currentMarkdownContent,
-          config: _buildMarkdownConfig(),
-          padding: const EdgeInsets.only(top: 0),
-          shrinkWrap: true,
-        );
-        _recognitionState = RecognitionState.success;
-      });
-
-      // Start the central button animation
-      _successAnimationController.reset();
-      _successAnimationController.forward();
-
-      // Start AR overlays
-      _startAROverlayAnimation();
-
-      await _checkTourCompletion();
-
-    } else {
-      setState(() {
-        _recognitionState = RecognitionState.failure;
-      });
-      _failureAnimationController.forward();
-
-      // Auto-reset after 3 seconds
-      Timer(const Duration(seconds: 3), () {
-        if (mounted) {
-          _resetRecognition();
+      if (widget.isOffline) {
+        if(_offlineRecognitionService == null) {
+          throw Exception("Offline Recognition Service not initialized");
         }
+        final int orientation = _cameraController!.description.sensorOrientation;
+        waypointId = await _offlineRecognitionService!.matchFromImageBytes(bytes, sensorOrientation: orientation);
+        if (waypointId != -1) {
+          availableResources = {
+            "readme": 0,
+            "links": 0,
+            "images": 0,
+            "video": 0,
+            "pdf": 0,
+            "audio": 0,
+          };
+        }
+      } else {
+        final String base64Image = base64Encode(bytes);
+        final result = await _apiService.inference(base64Image, widget.tourId);
+        waypointId = result.data["result"] ?? -1;
+        availableResources = result.data["available_resources"] ?? {};
+      }
+
+      _pulseAnimationController.stop();
+      
+      final success = waypointId != -1;
+      if (success) {
+        _handleRecognitionSuccess(waypointId, availableResources, widget.isOffline);
+      } else {
+        setState(() => _recognitionState = RecognitionState.failure);
+        _failureAnimationController.forward();
+        Timer(const Duration(seconds: 3), () {
+          if (mounted) _resetRecognition();
+        });
+      }
+    } catch(e) {
+      print("Error during recognition: $e");
+      _showError("Recognition failed: $e");
+      setState(() => _recognitionState = RecognitionState.failure);
+      _failureAnimationController.forward();
+      Timer(const Duration(seconds: 3), () {
+        if (mounted) _resetRecognition();
       });
     }
+//     //Camera feed
+//     final XFile file = await _cameraController!.takePicture();
+//     final bytes = await file.readAsBytes();
+//     final String base64Image = base64Encode(bytes);
+
+
+//     // DEBUG  Simulate recognition process (replace with actual ML/AR logic)
+//     // await Future.delayed(const Duration(seconds: 3));
+//     final result = await _apiService.inference(
+//       base64Image,
+//       widget.tourId,
+//     );
+
+//     var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
+//     var availableResources = result.data["available_resources"] ?? {};
+
+//     // FOR DEBUG
+//     // final result = {
+//     //   "result": 1, // Mock waypoint ID
+//     //   "available_resources": {
+//     //     "readme": 1,
+//     //     "links": 1,
+//     //     "images": 1,
+//     //     "video": 1,
+//     //     "pdf": 1,
+//     //     "audio": 1,
+//     //   },
+//     // };
+//     // var waypointId = result["result"] ?? -1; // Get waypoint ID from result
+//     // var availableResources = result["available_resources"] ?? {};
+//     // FOR DEBUG END
+
+//     _waypoints.forEach((waypoint) {
+//       if (waypoint.id == waypointId) {
+//         // Update the current landmark name and description
+//         widget.landmarkName = waypoint.title;
+//         widget.landmarkImages = waypoint.images;
+//       }
+//     });
+
+//     print("AVAILABLE_RESOURCES: $availableResources");
+
+//     // Stop pulse animation
+//     _pulseAnimationController.stop();
+
+//     bool recognitionSuccess = waypointId != -1;
+//     print('Recognition result: $recognitionSuccess');
+
+//     if (recognitionSuccess) {
+//       await _localStateService.addScannedWaypoint(widget.tourId, waypointId as int);
+
+//       setState(() {
+//         _recognizedWaypointId = waypointId; // Store recognized waypoint ID
+//         _availableResources = Map<String, dynamic>.from(availableResources as Map<dynamic, dynamic>); // Store available resources
+
+//         _currentMarkdownContent = """
+// # ${widget.landmarkName}
+// """;
+//         _currentActiveContent = MarkdownWidget(
+//           data: _currentMarkdownContent,
+//           config: _buildMarkdownConfig(),
+//           padding: const EdgeInsets.only(top: 0),
+//           shrinkWrap: true,
+//         );
+//         _recognitionState = RecognitionState.success;
+//       });
+
+//       // Start the central button animation
+//       _successAnimationController.reset();
+//       _successAnimationController.forward();
+
+//       // Start AR overlays
+//       _startAROverlayAnimation();
+
+//       await _checkTourCompletion();
+
+//     } else {
+//       setState(() {
+//         _recognitionState = RecognitionState.failure;
+//       });
+//       _failureAnimationController.forward();
+
+//       // Auto-reset after 3 seconds
+//       Timer(const Duration(seconds: 3), () {
+//         if (mounted) {
+//           _resetRecognition();
+//         }
+//       });
+//     }
   }
 
   // NUOVO: Verifica se il tour è completato
@@ -1555,86 +1570,6 @@ Widget _buildMiniMap(BuildContext context) {
       },
     );
   }
-
-
-  // Build a grid of photos (This seems to be an old unused function, can be removed if not called elsewhere)
-  // Widget _buildPhotoGrid() {
-  //   return GridView.builder(
-  //     shrinkWrap: true,
-  //     physics: const NeverScrollableScrollPhysics(),
-  //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //       crossAxisCount: 2,
-  //       crossAxisSpacing: 12,
-  //       mainAxisSpacing: 12,
-  //       childAspectRatio: 1.2,
-  //     ),
-  //     itemCount: widget.landmarkImages.length,
-  //     itemBuilder: (context, index) {
-  //       return _buildPhotoCard(widget.landmarkImages[index], index);
-  //     },
-  //   );
-  // }
-
-  // Build individual photo card (This seems to be an old unused function, can be removed if not called elsewhere)
-  // Widget _buildPhotoCard(String imageUrl, int index) {
-  //   return GestureDetector(
-  //     onTap: () {
-  //       // Show full-screen image viewer
-  //       _showImageViewer(imageUrl, index);
-  //     },
-  //     child: Container(
-  //       decoration: BoxDecoration(
-  //         borderRadius: BorderRadius.circular(12),
-  //         boxShadow: [
-  //           BoxShadow(
-  //             color: AppColors.cardShadow,
-  //             blurRadius: 4,
-  //             offset: const Offset(0, 2),
-  //           ),
-  //         ],
-  //       ),
-  //       child: ClipRRect(
-  //         borderRadius: BorderRadius.circular(12),
-  //         child: Image.network(
-  //           imageUrl,
-  //           fit: BoxFit.cover,
-  //           loadingBuilder: (context, child, loadingProgress) {
-  //             if (loadingProgress == null) return child;
-  //             return Container(
-  //               color: AppColors.lightGrey,
-  //               child: const Center(
-  //                 child: CircularProgressIndicator(color: AppColors.primary),
-  //               ),
-  //             );
-  //           },
-  //           errorBuilder: (context, error, stackTrace) {
-  //             return Container(
-  //               color: AppColors.lightGrey,
-  //               child: const Icon(
-  //                 Icons.image_not_supported,
-  //                 color: AppColors.textSecondary,
-  //                 size: 40,
-  //               ),
-  //             );
-  //           },
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Show full-screen image viewer (This seems to be an old unused function, can be removed if not called elsewhere)
-  // void _showImageViewer(String imageUrl, int initialIndex) {
-  //   Navigator.of(context).push(
-  //     MaterialPageRoute(
-  //       builder:
-  //           (context) => _FullScreenImageViewer(
-  //             images: widget.landmarkImages,
-  //             initialIndex: initialIndex,
-  //           ),
-  //     ),
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {

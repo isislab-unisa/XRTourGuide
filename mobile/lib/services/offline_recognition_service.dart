@@ -203,17 +203,36 @@ class OfflineRecognitionService {
     return outImg;
   }
 
+  img.Image _preprocessImage(img.Image image) {
+    final shortest = math.min(image.width, image.height);
+    if (shortest == 0) return img.copyResize(image, width: inputSize, height: inputSize);
+
+    final scale = 256 / shortest;
+    final resized = img.copyResize(
+      image,
+      width: (image.width * scale).round(),
+      height: (image.height * scale).round(),
+      interpolation: img.Interpolation.cubic,
+    );
+
+    final cropX = ((resized.width - inputSize) / 2).round().clamp(0, resized.width - inputSize);
+    final cropY = ((resized.height - inputSize) / 2).round().clamp(0, resized.height - inputSize);
+
+    return img.copyCrop(resized, x: cropX, y: cropY, width: inputSize, height: inputSize);
+  }
+
   //Extraction of embedding for query image
   List<double> _extractEmbedding(img.Image image) {
-    final resized = img.copyResize(image, width: inputSize, height: inputSize);
+    // final resized = img.copyResize(image, width: inputSize, height: inputSize);
+    final processed = _preprocessImage(image);
     final mean = [0.485, 0.456, 0.406];
     final std = [0.229, 0.224, 0.225];
 
-    final input = Float32List(1 * inputSize * inputSize * 3);
+    final input = Float32List(inputSize * inputSize * 3);
     int bufferIndex = 0;
     for (int y = 0; y < inputSize; y++) {
       for (int x = 0; x < inputSize; x++) {
-        final pixel = resized.getPixel(x, y);
+        final pixel = processed.getPixel(x, y);
         input[bufferIndex++] = (pixel.rNormalized - mean[0]) / std[0];
         input[bufferIndex++] = (pixel.gNormalized - mean[1]) / std[1];
         input[bufferIndex++] = (pixel.bNormalized - mean[2]) / std[2];
@@ -237,7 +256,7 @@ class OfflineRecognitionService {
       final db = _dbEmbeddings[i];
       final len = math.min(qEmb.length, db.length);
       double s = 0.0;
-      for (int j = 0; j < db.length; j++) {
+      for (int j = 0; j < len; j++) {
         s += qEmb[j] * db[j];
       }
       scores[i] = s;
@@ -247,128 +266,247 @@ class OfflineRecognitionService {
     return idx.take(math.min(k, N)).toList();
   }
 
-  //Matching function
-  Future<int> match(
-    CameraImage cameraImage,
-    int sensorOrientation, {
-      int inliersThreshold = 15,
-      int topMatchesForRansac = 80,
-      int topK = 10,
-    }) async {
-      if (_embedder == null || !_jsonIndexLoaded) {
-        throw Exception("Embedder non inizializzato o indice JSON non caricato");
-      }
+  // //Matching function
+  // Future<int> match(
+  //   CameraImage cameraImage,
+  //   int sensorOrientation, {
+  //     int inliersThreshold = 15,
+  //     int topMatchesForRansac = 80,
+  //     int topK = 10,
+  //   }) async {
+  //     if (_embedder == null || !_jsonIndexLoaded) {
+  //       throw Exception("OFFLINE ERROR: Embedder non inizializzato o indice JSON non caricato");
+  //     }
 
-      img.Image? queryImg = _convertCameraImage(cameraImage);
-      if (queryImg == null) {
-        print('Failed to convert camera image.');
-        return -1;
-      }
+  //     img.Image? queryImg = _convertCameraImage(cameraImage);
+  //     if (queryImg == null) {
+  //       print('OFFLINE ERROR: Failed to convert camera image.');
+  //       return -1;
+  //     }
 
-      final angle = sensorOrientation.toDouble();
-      if (angle != 0) {
-        queryImg = img.copyRotate(queryImg, angle: angle);
-      }
+  //     final angle = sensorOrientation.toDouble();
+  //     if (angle != 0) {
+  //       queryImg = img.copyRotate(queryImg, angle: angle);
+  //     }
 
-      final qEmb = _extractEmbedding(queryImg);
-      if (qEmb.isEmpty) {
-        print('Failed to extract embedding from query image.');
-        return -1;
-      }
+  //     final qEmb = _extractEmbedding(queryImg);
+  //     if (qEmb.isEmpty) {
+  //       print('OFFLINE ERROR: Failed to extract embedding from query image.');
+  //       return -1;
+  //     }
 
-      final topIdx = _topKByCosine(qEmb, topK);
+  //     final topIdx = _topKByCosine(qEmb, topK);
 
-      final orb = cv.ORB.create(nFeatures: 5000);
-      final bf = cv.BFMatcher.create(type: cv.NORM_HAMMING, crossCheck: true);
+  //     final orb = cv.ORB.create(nFeatures: 5000);
+  //     final bf = cv.BFMatcher.create(type: cv.NORM_HAMMING, crossCheck: true);
 
-      final Uint8List pngBytes = img.encodePng(queryImg);
-      final cv.Mat qColor = cv.imdecode(pngBytes, cv.IMREAD_COLOR);
-      if (qColor.isEmpty) {
-        print('Failed to decode query image to Mat.');
-        return -1;
-      }
+  //     final Uint8List pngBytes = img.encodePng(queryImg);
+  //     final cv.Mat qColor = cv.imdecode(pngBytes, cv.IMREAD_COLOR);
+  //     if (qColor.isEmpty) {
+  //       print('OFFLINE ERROR: Failed to decode query image to Mat.');
+  //       return -1;
+  //     }
 
-      final qGray = cv.cvtColor(qColor, cv.COLOR_BGR2GRAY);
-      qColor.release();
+  //     final qGray = cv.cvtColor(qColor, cv.COLOR_BGR2GRAY);
+  //     qColor.release();
 
-      final qKp = cv.VecKeyPoint();
-      final qDesc = cv.Mat.empty();
-      orb.detectAndCompute(qGray, cv.Mat.empty(), keypoints: qKp, description: qDesc);
+  //     final qKp = cv.VecKeyPoint();
+  //     final qDesc = cv.Mat.empty();
+  //     orb.detectAndCompute(qGray, cv.Mat.empty(), keypoints: qKp, description: qDesc);
 
-      if (qDesc.isEmpty) {
+  //     if (qDesc.isEmpty) {
+  //       qGray.release();
+  //       qKp.clear();
+  //       qDesc.release();
+  //       return -1;
+  //     }
+
+  //     int bestWp = -1, bestInliers = 0;
+  //     final qKey = qKp.toList();
+
+  //     for (final i in topIdx) {
+  //       final dbKps = _kpCoords[i];
+  //       final rows = _descRows[i];
+  //       final bytes = _descBytes[i];
+  //       if (rows < 8 || bytes.isEmpty || dbKps.isEmpty) continue;
+
+  //       final dMat = cv.Mat.fromList(rows, 32, cv.MatType(cv.MatType.CV_8U), bytes);
+  //       final matches = bf.match(qDesc, dMat);
+  //       final ms = matches.toList();
+
+  //       dMat.release();
+  //       matches.clear();
+
+  //       if (ms.length < inliersThreshold) continue;
+
+  //       ms.sort((a, b) => a.distance.compareTo(b.distance));
+
+  //       final top = ms
+  //           .take(topMatchesForRansac)
+  //           .where((m) =>
+  //               m.queryIdx >= 0 &&
+  //               m.queryIdx < qKey.length &&
+  //               m.trainIdx >= 0 &&
+  //               m.trainIdx < dbKps.length)
+  //           .toList();
+
+  //       final src = <cv.Point2f>[];
+  //       final dst = <cv.Point2f>[];
+  //       for (final m in top) {
+  //         final qp = qKey[m.queryIdx];
+  //         final p2 = dbKps[m.trainIdx];
+  //         src.add(cv.Point2f(qp.x, qp.y));
+  //         dst.add(cv.Point2f(p2[0], p2[1]));
+  //       }
+
+  //       if (src.length >= 8) {
+  //         final srcVec = cv.VecPoint2f.fromList(src);
+  //         final dstVec = cv.VecPoint2f.fromList(dst);
+  //         final srcMat = cv.Mat.fromVec(srcVec);
+  //         final dstMat = cv.Mat.fromVec(dstVec);
+  //         final mask = cv.Mat.empty();
+  //         final H = cv.findHomography(srcMat, dstMat, method: cv.RANSAC, ransacReprojThreshold : 5.0, mask: mask);
+
+  //         if (!H.isEmpty) {
+  //           final inliers = cv.countNonZero(mask);
+  //           if (inliers > bestInliers) {
+  //             bestInliers = inliers;
+  //             bestWp = _imgWpIds[i];
+  //           }
+  //         }
+
+  //         srcMat.release();
+  //         dstMat.release();
+  //         mask.release();
+  //         H.release();
+  //       }
+  //     }
+
+  //     qGray.release();
+  //     qKp.clear();
+  //     qDesc.release();
+
+  //     return bestInliers >= inliersThreshold ? bestWp : -1;
+  //   }
+
+    Future<int> matchFromImageBytes(
+      Uint8List imageBytes, {
+        int sensorOrientation = 0,
+        int inliersThreshold = 15,
+        int topMatchesForRansac = 80,
+        int topK = 10,
+      }) async {
+        if (_embedder == null || !_jsonIndexLoaded) {
+          throw Exception("OFFLINE ERROR: Embedder non inizializzato o indice JSON non caricato");
+        }
+
+        img.Image? queryImg = img.decodeImage(imageBytes);
+        if (queryImg == null) {
+          print('OFFLINE ERROR: Failed to decode image bytes.');
+          return -1;
+        }
+
+        if (sensorOrientation != 0) {
+          queryImg = img.copyRotate(queryImg, angle: sensorOrientation.toDouble());
+        }
+
+        final qEmb = _extractEmbedding(queryImg);
+        if (qEmb.isEmpty) {
+          print('OFFLINE ERROR: Failed to extract embedding from query image.');
+          return -1;
+        }
+
+        final topIdx = _topKByCosine(qEmb, topK);
+        final orb = cv.ORB.create(nFeatures: 5000);
+        final bf = cv.BFMatcher.create(type: cv.NORM_HAMMING, crossCheck: true);
+
+        final cv.Mat qColor = cv.imdecode(imageBytes, cv.IMREAD_COLOR);
+        if (qColor.isEmpty) {
+          print('OFFLINE ERROR: Failed to decode query image to Mat.');
+          return -1;
+        }
+
+        final qGray = cv.cvtColor(qColor, cv.COLOR_BGR2GRAY);
+        qColor.release();
+
+        final qKp = cv.VecKeyPoint();
+        final qDesc = cv.Mat.empty();
+        orb.detectAndCompute(qGray, cv.Mat.empty(), keypoints: qKp, description: qDesc);
+
+        if (qDesc.isEmpty) {
+          qGray.release();
+          qKp.clear();
+          qDesc.release();
+          return -1;
+        }
+
+        final qKey = qKp.toList();
+        int bestWp = -1, bestInliers = 0;
+
+        for (final i in topIdx) {
+          final dbKps = _kpCoords[i];
+          final rows = _descRows[i];
+          final bytes = _descBytes[i];
+          if (rows < 8 || bytes.isEmpty || dbKps.isEmpty) continue;
+
+          final dMat = cv.Mat.fromList(rows, 32, cv.MatType(cv.MatType.CV_8U), bytes);
+          final matches = bf.match(qDesc, dMat);
+          final ms = matches.toList();
+
+          dMat.release();
+          matches.clear();
+
+          if (ms.length < inliersThreshold) continue;
+
+          ms.sort((a, b) => a.distance.compareTo(b.distance));
+
+          final topMatches = ms
+              .take(topMatchesForRansac)
+              .where((m) =>
+                  m.queryIdx >= 0 &&
+                  m.queryIdx < qKey.length &&
+                  m.trainIdx >= 0 &&
+                  m.trainIdx < dbKps.length)
+              .toList();
+
+          final src = <cv.Point2f>[];
+          final dst = <cv.Point2f>[];
+          for (final m in topMatches) {
+            final qp = qKey[m.queryIdx];
+            final p = dbKps[m.trainIdx];
+            src.add(cv.Point2f(qp.x, qp.y));
+            dst.add(cv.Point2f(p[0], p[1]));
+          }
+
+          if (src.length >= 8) {
+            final srcVec = cv.VecPoint2f.fromList(src);
+            final dstVec = cv.VecPoint2f.fromList(dst);
+            final srcMat = cv.Mat.fromVec(srcVec);
+            final dstMat = cv.Mat.fromVec(dstVec);
+            final mask = cv.Mat.empty();
+            final H = cv.findHomography(srcMat, dstMat, method: cv.RANSAC, ransacReprojThreshold : 5.0, mask: mask);
+
+            if (!H.isEmpty) {
+              final inliers = cv.countNonZero(mask);
+              if (inliers > bestInliers) {
+                bestInliers = inliers;
+                bestWp = _imgWpIds[i];
+              }
+            }
+
+            srcMat.release();
+            dstMat.release();
+            mask.release();
+            H.release();
+          }
+        }
+
         qGray.release();
         qKp.clear();
         qDesc.release();
-        return -1;
+
+        return bestInliers >= inliersThreshold ? bestWp : -1;
       }
-
-      int bestWp = -1, bestInliers = 0;
-      final qKey = qKp.toList();
-
-      for (final i in topIdx) {
-        final dbKps = _kpCoords[i];
-        final rows = _descRows[i];
-        final bytes = _descBytes[i];
-        if (rows < 8 || bytes.isEmpty || dbKps.isEmpty) continue;
-
-        final dMat = cv.Mat.fromList(rows, 32, cv.MatType(cv.MatType.CV_8U), bytes);
-        final matches = bf.match(qDesc, dMat);
-        final ms = matches.toList();
-
-        dMat.release();
-        matches.clear();
-
-        if (ms.length < inliersThreshold) continue;
-
-        ms.sort((a, b) => a.distance.compareTo(b.distance));
-
-        final top = ms
-            .take(topMatchesForRansac)
-            .where((m) =>
-                m.queryIdx >= 0 &&
-                m.queryIdx < qKey.length &&
-                m.trainIdx >= 0 &&
-                m.trainIdx < dbKps.length)
-            .toList();
-
-        final src = <cv.Point2f>[];
-        final dst = <cv.Point2f>[];
-        for (final m in top) {
-          final qp = qKey[m.queryIdx];
-          final p2 = dbKps[m.trainIdx];
-          src.add(cv.Point2f(qp.x, qp.y));
-          dst.add(cv.Point2f(p2[0], p2[1]));
-        }
-
-        if (src.length >= 8) {
-          final srcVec = cv.VecPoint2f.fromList(src);
-          final dstVec = cv.VecPoint2f.fromList(dst);
-          final srcMat = cv.Mat.fromVec(srcVec);
-          final dstMat = cv.Mat.fromVec(dstVec);
-          final mask = cv.Mat.empty();
-          final H = cv.findHomography(srcMat, dstMat, method: cv.RANSAC, ransacReprojThreshold : 5.0, mask: mask);
-
-          if (!H.isEmpty) {
-            final inliers = cv.countNonZero(mask);
-            if (inliers > bestInliers) {
-              bestInliers = inliers;
-              bestWp = _imgWpIds[i];
-            }
-          }
-
-          srcMat.release();
-          dstMat.release();
-          mask.release();
-          H.release();
-        }
-      }
-
-      qGray.release();
-      qKp.clear();
-      qDesc.release();
-
-      return bestInliers >= inliersThreshold ? bestWp : -1;
-    }
 
   void dispose() {
     _embedder?.close();
