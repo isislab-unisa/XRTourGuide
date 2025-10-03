@@ -655,11 +655,13 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       Map<String, dynamic> availableResources = {};
 
       if (widget.isOffline) {
+        print("OFFLINE RECOGNITION");
         if(_offlineRecognitionService == null) {
           throw Exception("Offline Recognition Service not initialized");
         }
         final int orientation = _cameraController!.description.sensorOrientation;
         waypointId = await _offlineRecognitionService!.matchFromImageBytes(bytes, sensorOrientation: orientation);
+        print("WAYPOINT ID: ${waypointId}");
         if (waypointId != -1) {
           availableResources = {
             "readme": 0,
