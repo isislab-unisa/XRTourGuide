@@ -18,7 +18,7 @@ class OfflineRecognitionService {
 
   static const double _similarityThreshold = 0.65;
   static const int _defaultTopK = 3;
-  static const int _defaultInliersThreshold = 7;
+  static const int _defaultInliersThreshold = 5;
 
   final List<List<double>> _dbEmbeddings = [];
   final List<int> _imgWpIds = [];
@@ -36,7 +36,7 @@ class OfflineRecognitionService {
   Future<void> initEmbedderFromAsset(String assetPath) async {
     try {
       final modelData = await rootBundle.load(assetPath);
-      print("MODEL DATA DEBUG: ${modelData.lengthInBytes} bytes loaded from $assetPath");
+      // print("MODEL DATA DEBUG: ${modelData.lengthInBytes} bytes loaded from $assetPath");
       _embedder = await Interpreter.fromBuffer(modelData.buffer.asUint8List());
       final outputShape = _embedder!.getOutputTensor(0).shape;
       _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
@@ -150,7 +150,7 @@ class OfflineRecognitionService {
       }
     }
 
-    print("NAMETOID: ${nameToId}");
+    // print("NAMETOID: ${nameToId}");
 
     if (_dbEmbeddings.isEmpty) {
       throw Exception("Indice offline vuoto o non valido per il tour $tourId");
@@ -161,7 +161,6 @@ class OfflineRecognitionService {
 
   img.Image _preprocessImage(img.Image image) {
     final shortest = math.min(image.width, image.height);
-    if (shortest == 0) return img.copyResize(image, width: inputSize, height: inputSize);
 
     final scale = 256 / shortest;
     final resized = img.copyResize(
@@ -170,59 +169,98 @@ class OfflineRecognitionService {
       height: (image.height * scale).round(),
       interpolation: img.Interpolation.cubic,
     );
+    // print("  [Dart] Resized shape: ${resized.width}x${resized.height}");
 
-    final cropX = ((resized.width - inputSize) / 2).round().clamp(0, resized.width - inputSize);
-    final cropY = ((resized.height - inputSize) / 2).round().clamp(0, resized.height - inputSize);
+    // final cropX = ((resized.width - inputSize) / 2).round().clamp(0, resized.width - inputSize);
+    // final cropY = ((resized.height - inputSize) / 2).round().clamp(0, resized.height - inputSize);
+    final cropX = ((resized.width - inputSize) / 2).round();
+    final cropY = ((resized.height - inputSize) / 2).round();
+
 
     return img.copyCrop(resized, x: cropX, y: cropY, width: inputSize, height: inputSize);
   }
 
-  //Extraction of embedding for query image
   List<double> _extractEmbedding(img.Image image) {
-    // final resized = img.copyResize(image, width: inputSize, height: inputSize);
-    final processed = _preprocessImage(image);
+    if (_embedder == null) throw Exception("Embedder not initialized");
+
+    final processedImage = _preprocessImage(image);
+
     final mean = [0.485, 0.456, 0.406];
     final std = [0.229, 0.224, 0.225];
 
-    final inputShape = _embedder?.getInputTensor(0).shape ?? const [1, 224, 224, 3];
-    final isNHWC = inputShape.length == 4  && inputShape[3] == 3;
+    final pixels = inputSize * inputSize;
+    final floatBuffer = Float32List(pixels * 3);
 
-    final input = Float32List(inputSize * inputSize * 3);
+    // --- DEBUG LOGGING ---
+    List<String> pixelLogs = [];
+    for (int i = 0; i < 10; i++) {
+      final pixel = processedImage.getPixel(i, 0);
+      pixelLogs.add(
+        "[${pixel.r.toInt()}, ${pixel.g.toInt()}, ${pixel.b.toInt()}]",
+      );
+    }
+    // print("  [Dart] First 10 cropped RGB pixels:\n[${pixelLogs.join(', ')}]");
+
+    // 3. Normalize
     int bufferIndex = 0;
     for (int y = 0; y < inputSize; y++) {
       for (int x = 0; x < inputSize; x++) {
-        final pixel = processed.getPixel(x, y);
-        final r = pixel.r / 255.0;
-        final g = pixel.g / 255.0;
-        final b = pixel.b / 255.0;
-        input[bufferIndex++] = (r - mean[0]) / std[0];
-        input[bufferIndex++] = (g - mean[1]) / std[1];
-        input[bufferIndex++] = (b - mean[2]) / std[2];
+        final pixel = processedImage.getPixel(x, y);
+        floatBuffer[bufferIndex++] = (pixel.r / 255.0 - mean[0]) / std[0];
+        floatBuffer[bufferIndex++] = (pixel.g / 255.0 - mean[1]) / std[1];
+        floatBuffer[bufferIndex++] = (pixel.b / 255.0 - mean[2]) / std[2];
       }
     }
 
-    Object inTensor;
-    if (isNHWC) {
-      inTensor = input.reshape([1, inputSize, inputSize, 3]);
-    } else {
-      final nchwInput = Float32List(input.length);
-      final planeSize = inputSize * inputSize;
-      for (int i = 0; i < planeSize; i++) {
-        nchwInput[i] = input[i * 3];
-        nchwInput[i + planeSize] = input[i * 3 + 1];
-        nchwInput[i + 2 * planeSize] = input[i * 3 + 2];
+    // --- DEBUG LOGGING ---
+    // print(
+    //   "  [Dart] First 30 normalized values:\n${floatBuffer.sublist(0, 30)}",
+    // );
+
+    // 4. Prepare Tensor
+    // Reshape to [1, 224, 224, 3] for NHWC models
+    final inputTensor = floatBuffer.reshape([1, inputSize, inputSize, 3]);
+
+    final outputShape = _embedder!.getOutputTensor(0).shape;
+    final outputBuffer = List.filled(
+      outputShape.reduce((a, b) => a * b),
+      0.0,
+    ).reshape(outputShape);
+
+    _embedder!.run(inputTensor, outputBuffer);
+
+    // final embedding = (outputBuffer[0] as List).cast<double>();
+    List<double> embedding = [];
+
+    void flattenToDoubles(dynamic item) {
+      if (item is List) {
+        for (var subItem in item) {
+          flattenToDoubles(subItem);
+        }
+      } else if (item is num) {
+        embedding.add(item.toDouble());
       }
-      inTensor = nchwInput.reshape([1, 3, inputSize, inputSize]);
     }
 
-    // final inTensor = input.reshape([1, inputSize, inputSize, 3]);
-    final outputDim = _modelOutputDim ?? dim;
-    final out = List.filled(outputDim, 0.0).reshape([1, outputDim]);
-    _embedder?.run(inTensor, out);
+    flattenToDoubles(outputBuffer);
 
-    final v = List<double>.from(out.first);
-    final n = math.sqrt(v.fold<double>(0, (s, e) => s + e * e));
-    return n > 1e-6 ? v.map((e) => e / n).toList() : v;
+    // Limita alla dimensione del modello se necessario
+    final targetDim = _modelOutputDim ?? dim;
+    if (embedding.length > targetDim) {
+      embedding = embedding.sublist(0, targetDim);
+    }
+
+    // 5. L2 Normalize Embedding
+    final n = math.sqrt(embedding.fold<double>(0, (s, e) => s + e * e));
+    final normalizedEmbedding =
+        n > 1e-6 ? embedding.map((e) => e / n).toList() : embedding;
+
+    // print("  [Dart] Embedding norm: $n");
+    // print(
+    //   "  [Dart] First 10 embedding values:\n${normalizedEmbedding.sublist(0, 10)}",
+    // );
+
+    return normalizedEmbedding;
   }
 
   List<int> _topKByCosine(List<double> qEmb, int k, {List<double>? scoreOut}) {
@@ -247,129 +285,6 @@ class OfflineRecognitionService {
     return idx.take(math.min(k, N)).toList();
   }
 
-  // Future<int> matchFromImageBytes(
-  //   Uint8List imageBytes, {
-  //     int sensorOrientation = 0,
-  //     int inliersThreshold = _defaultInliersThreshold,
-  //     int topMatchesForRansac = 80,
-  //     int topK = _defaultTopK,
-  //   }) async {
-  //     if (_embedder == null || !_jsonIndexLoaded) {
-  //       throw Exception("OFFLINE ERROR: Embedder non inizializzato o indice JSON non caricato");
-  //     }
-
-  //     img.Image? queryImg = img.decodeImage(imageBytes);
-  //     if (queryImg == null) {
-  //       print('OFFLINE ERROR: Failed to decode image bytes.');
-  //       return -1;
-  //     }
-
-  //     if (sensorOrientation != 0) {
-  //       queryImg = img.copyRotate(queryImg, angle: sensorOrientation.toDouble());
-  //     }
-
-  //     final qEmb = _extractEmbedding(queryImg);
-  //     if (qEmb.isEmpty) {
-  //       print('OFFLINE ERROR: Failed to extract embedding from query image.');
-  //       return -1;
-  //     }
-
-  //     final scores = List<double>.filled(_dbEmbeddings.length, 0.0);
-  //     final topIdx = _topKByCosine(qEmb, topK, scoreOut: scores);
-  //     final candidateIdx = topIdx.where((i) => scores[i] >= _similarityThreshold).toList();
-
-
-  //     final orb = cv.ORB.create(nFeatures: 5000);
-  //     final bf = cv.BFMatcher.create(type: cv.NORM_HAMMING, crossCheck: true);
-
-  //     final cv.Mat qColor = cv.imdecode(imageBytes, cv.IMREAD_COLOR);
-  //     if (qColor.isEmpty) {
-  //       print('OFFLINE ERROR: Failed to decode query image to Mat.');
-  //       return -1;
-  //     }
-
-  //     final qGray = cv.cvtColor(qColor, cv.COLOR_BGR2GRAY);
-  //     qColor.release();
-
-  //     final qKp = cv.VecKeyPoint();
-  //     final qDesc = cv.Mat.empty();
-  //     orb.detectAndCompute(qGray, cv.Mat.empty(), keypoints: qKp, description: qDesc);
-
-  //     if (qDesc.isEmpty || candidateIdx.isEmpty) {
-  //       qGray.release();
-  //       qKp.clear();
-  //       qDesc.release();
-  //       return -1;
-  //     }
-
-  //     final qKey = qKp.toList();
-  //     int bestWp = -1, bestInliers = 0;
-
-  //     for (final i in candidateIdx) {
-  //       final dbKps = _kpCoords[i];
-  //       final rows = _descRows[i];
-  //       final bytes = _descBytes[i];
-  //       if (rows < 8 || bytes.isEmpty || dbKps.isEmpty) continue;
-
-  //       final dMat = cv.Mat.fromList(rows, 32, cv.MatType(cv.MatType.CV_8U), bytes);
-  //       final matches = bf.match(qDesc, dMat);
-  //       final ms = matches.toList();
-
-  //       dMat.release();
-  //       matches.clear();
-
-  //       if (ms.length < inliersThreshold) continue;
-
-  //       ms.sort((a, b) => a.distance.compareTo(b.distance));
-
-  //       final topMatches = ms
-  //           .take(topMatchesForRansac)
-  //           .where((m) =>
-  //               m.queryIdx >= 0 &&
-  //               m.queryIdx < qKey.length &&
-  //               m.trainIdx >= 0 &&
-  //               m.trainIdx < dbKps.length)
-  //           .toList();
-
-  //       final src = <cv.Point2f>[];
-  //       final dst = <cv.Point2f>[];
-  //       for (final m in topMatches) {
-  //         final qp = qKey[m.queryIdx];
-  //         final p = dbKps[m.trainIdx];
-  //         src.add(cv.Point2f(qp.x, qp.y));
-  //         dst.add(cv.Point2f(p[0], p[1]));
-  //       }
-
-  //       if (src.length >= 8) {
-  //         final srcVec = cv.VecPoint2f.fromList(src);
-  //         final dstVec = cv.VecPoint2f.fromList(dst);
-  //         final srcMat = cv.Mat.fromVec(srcVec);
-  //         final dstMat = cv.Mat.fromVec(dstVec);
-  //         final mask = cv.Mat.empty();
-  //         final H = cv.findHomography(srcMat, dstMat, method: cv.RANSAC, ransacReprojThreshold : 5.0, mask: mask);
-
-  //         if (!H.isEmpty) {
-  //           final inliers = cv.countNonZero(mask);
-  //           if (inliers > bestInliers) {
-  //             bestInliers = inliers;
-  //             bestWp = _imgWpIds[i];
-  //           }
-  //         }
-
-  //         srcMat.release();
-  //         dstMat.release();
-  //         mask.release();
-  //         H.release();
-  //       }
-  //     }
-
-  //     qGray.release();
-  //     qKp.clear();
-  //     qDesc.release();
-
-  //     return bestInliers >= inliersThreshold ? bestWp : -1;
-  //   }
-
   Future<int> matchFromImageBytes(
     Uint8List imageBytes, {
     int sensorOrientation = 0,
@@ -393,8 +308,10 @@ class OfflineRecognitionService {
         );
       }
 
+      final Uint8List visionBytes = Uint8List.fromList(img.encodeJpg(queryImg, quality: 95));
+
       final qEmb = _extractEmbedding(queryImg);
-      print("QEMB: ${qEmb.length} values");
+      // print("QEMB: ${qEmb.length} values");
       if (qEmb.isEmpty) return -1;
 
       final scores = List<double>.filled(_dbEmbeddings.length, 0.0);
@@ -404,7 +321,7 @@ class OfflineRecognitionService {
         scoreOut: scores,
       );
 
-      print("RANKED: ${ranked.length} images");
+      // print("RANKED: ${ranked.length} images");
 
       final waypointScores = <int, double>{};
       for (final idx in ranked) {
@@ -418,8 +335,8 @@ class OfflineRecognitionService {
         );
       }
 
-      print("WAYPOINT SCORES: ${waypointScores.length}");
-      print("WAYPOINT SCORES: ${waypointScores.entries}");
+      // print("WAYPOINT SCORES: ${waypointScores.length}");
+      // print("WAYPOINT SCORES: ${waypointScores.entries}");
 
       final sortedWaypoints =
           waypointScores.entries
@@ -427,14 +344,15 @@ class OfflineRecognitionService {
               .toList()
             ..sort((a, b) => b.value.compareTo(a.value));
 
-      print("SORTED WAYPOINTS: ${sortedWaypoints.length} candidates");
+      // print("SORTED WAYPOINTS: ${sortedWaypoints.length} candidates");
       if (sortedWaypoints.isEmpty) return -1;
 
       final orb = cv.ORB.create(nFeatures: 5000);
       final bf = cv.BFMatcher.create(type: cv.NORM_HAMMING, crossCheck: true);
 
-      final cv.Mat qColor = cv.imdecode(imageBytes, cv.IMREAD_COLOR);
-      print("QCOLOR: ${qColor.rows}x${qColor.cols}");
+      // final cv.Mat qColor = cv.imdecode(imageBytes, cv.IMREAD_COLOR);
+      final cv.Mat qColor = cv.imdecode(visionBytes, cv.IMREAD_COLOR);
+      // print("QCOLOR: ${qColor.rows}x${qColor.cols}");
       if (qColor.isEmpty) return -1;
       final qGray = cv.cvtColor(qColor, cv.COLOR_BGR2GRAY);
       qColor.release();
@@ -447,7 +365,7 @@ class OfflineRecognitionService {
         keypoints: qKp,
         description: qDesc,
       );
-      print("QDESC: ${qDesc.rows}x${qDesc.cols}, KPs: ${qKp.size()}");
+      // print("QDESC: ${qDesc.rows}x${qDesc.cols}, KPs: ${qKp.size()}");
       if (qDesc.isEmpty) {
         qGray.release();
         qKp.clear();
@@ -546,8 +464,8 @@ class OfflineRecognitionService {
       qKp.clear();
       qDesc.release();
 
-      print("BEST INLIERS: ${bestInliers}");
-      print("BEST WP: ${bestWp}");
+      // print("BEST INLIERS: ${bestInliers}");
+      // print("BEST WP: ${bestWp}");
 
       return bestInliers >= inliersThreshold ? bestWp : -1;
     } catch(e) {

@@ -23,6 +23,8 @@ import "dart:io";
 import "package:path_provider/path_provider.dart";
 import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
 import 'services/offline_recognition_service.dart';
+import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
 
 
@@ -643,13 +645,27 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
-    // if (widget.isOffline) {
-    //   return;
-    // }
-
     try {
       final XFile file = await _cameraController!.takePicture();
-      final bytes = await file.readAsBytes();
+      var bytes = await file.readAsBytes();
+
+      img.Image? capturedImage = img.decodeImage(bytes);
+      if (capturedImage == null) {
+        throw Exception("Failed to decode captured image");
+      }
+
+      final int orientation = _cameraController!.description.sensorOrientation;
+      print("Sensor Orientation: $orientation");
+
+      if (orientation != 0) {
+        capturedImage = img.copyRotate(capturedImage, angle: orientation.toDouble());
+      }
+
+
+      final dir = await getApplicationDocumentsDirectory();
+      final testPath = '${dir.path}/test_flutter_photo.jpg';
+      await File(testPath).writeAsBytes(img.encodeJpg(capturedImage));
+      print("Saved test image to $testPath");
 
       int waypointId = -1;
       Map<String, dynamic> availableResources = {};
@@ -659,8 +675,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         if(_offlineRecognitionService == null) {
           throw Exception("Offline Recognition Service not initialized");
         }
-        final int orientation = _cameraController!.description.sensorOrientation;
-        waypointId = await _offlineRecognitionService!.matchFromImageBytes(bytes, sensorOrientation: orientation);
+        final rotatedBytes = Uint8List.fromList(img.encodeJpg(capturedImage));
+        waypointId = await _offlineRecognitionService!.matchFromImageBytes(bytes, sensorOrientation: 0);
         print("WAYPOINT ID: ${waypointId}");
         if (waypointId != -1) {
           availableResources = {
