@@ -1,4 +1,6 @@
 // lib/video_player_widget.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
@@ -6,8 +8,9 @@ import '../models/app_colors.dart'; // Import AppColors
 
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
+  final bool isLocalFile;
 
-  const VideoPlayerWidget({Key? key, required this.videoUrl}) : super(key: key);
+  const VideoPlayerWidget({Key? key, required this.videoUrl, this.isLocalFile = false}) : super(key: key);
 
   @override
   State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
@@ -24,9 +27,18 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   Future<void> _initializePlayer() async {
-    _videoPlayerController = VideoPlayerController.networkUrl(
-      Uri.parse(widget.videoUrl),
-    );
+    if (widget.isLocalFile) {      
+      _videoPlayerController = VideoPlayerController.file(
+        File(widget.videoUrl),
+      );
+    } else {
+      _videoPlayerController = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoUrl),
+      );
+    }
+    // _videoPlayerController = VideoPlayerController.networkUrl(
+    //   Uri.parse(widget.videoUrl),
+    // );
     await _videoPlayerController.initialize();
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController,

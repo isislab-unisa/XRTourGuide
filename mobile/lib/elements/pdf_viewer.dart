@@ -1,4 +1,6 @@
 // lib/pdf_viewer_widget.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../models/app_colors.dart';
@@ -12,8 +14,9 @@ import '../services/download_service_locator.dart';
 
 class PdfViewerWidget extends StatefulWidget {
   final String pdfUrl;
+  final bool isLocalFile;
 
-  const PdfViewerWidget({Key? key, required this.pdfUrl}) : super(key: key);
+  const PdfViewerWidget({Key? key, required this.pdfUrl, this.isLocalFile = false}) : super(key: key);
 
   @override
   _PdfViewerWidgetState createState() => _PdfViewerWidgetState();
@@ -97,11 +100,17 @@ class _PdfViewerWidgetState extends State<PdfViewerWidget> {
           height: MediaQuery.of(context).size.height * 0.6,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: SfPdfViewer.network(
-              widget.pdfUrl,
-              canShowHyperlinkDialog: false,
-              canShowScrollHead: false,
-            ),
+            child: widget.isLocalFile 
+              ? SfPdfViewer.file(
+                  File(widget.pdfUrl),
+                  canShowHyperlinkDialog: false,
+                  canShowScrollHead: false,
+                )
+              : SfPdfViewer.network(
+                  widget.pdfUrl,
+                  canShowHyperlinkDialog: false,
+                  canShowScrollHead: false,
+                ),
           ),
         ),
         if (_downloadMessage != null)

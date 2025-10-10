@@ -97,6 +97,7 @@ class OfflineRecognitionService {
       }
     }
 
+
     _dbEmbeddings.clear();
     _imgWpIds.clear();
     _descRows.clear();

@@ -124,6 +124,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   late TourService _tourService;
 
   List<Waypoint> _waypoints = [];
+  Map<int, List<String>> _offlineImagesByWaypoint = {};
+  Map<int, Map<String, dynamic>> _offlineResourcesByWaypoint = {};
+
   bool _isLoadingWaypoints = true;
 
   String? _pmtilesPath;
@@ -242,41 +245,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     }
   }
 
-  // Future<void> _processCameraImage(CameraImage image) async {
-  //   _isProcessingFrame = true;
-  //   try{
-  //     if (_offlineRecognitionService == null) {
-  //       throw Exception("OfflineRecognitionService not initialized");
-  //     }
-  //     final sensorOrientation = _cameraController!.description.sensorOrientation;
-  //     final waypointId = await _offlineRecognitionService!.match(image, sensorOrientation);
-
-  //     if (waypointId != -1) {
-  //       await _cameraController?.stopImageStream();
-  //       _handleRecognitionSuccess(waypointId);
-  //     }
-  //   } catch (e) {
-  //     print("Error processing camera image: $e");
-  //   } finally {
-  //     Future.delayed(const Duration(milliseconds: 500), (){
-  //       _isProcessingFrame = false;
-  //     });
-  //   }
-  // }
-
   void _handleRecognitionSuccess(int waypointId, Map<String, dynamic> availableResources, bool isOffline) async {
-    // Map<String, dynamic> availableResources = {
-    //   "readme": 1,
-    //   "links": 1,
-    //   "images": 1,
-    //   "video": 1,
-    //   "pdf": 1,
-    //   "audio": 1,
-    // };
-
 
     _waypoints.forEach((waypoint) {
-      if (waypoint.id == waypointId) {
+      if (waypoint.id == waypointId && waypoint.subWaypoints == null) {
         widget.landmarkName = waypoint.title;
         widget.landmarkImages = waypoint.images;
       }
@@ -289,7 +261,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     // );
 
 
-    // await _localStateService.addScannedWaypoint(widget.tourId, waypointId);
     setState(() {
       _recognizedWaypointId = waypointId;
       _availableResources = availableResources;
@@ -339,6 +310,74 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
             decoration: TextDecoration.underline,
           ),
         ),
+        ImgConfig(
+          builder: (url, attributes) {
+            // Gestisci immagini locali con protocollo file://
+            if (url.startsWith('file://')) {
+              final localPath = url.substring(7); // Rimuovi 'file://'
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: Image.file(
+                  File(localPath),
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.broken_image,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Image not found: ${localPath.split('/').last}'),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            } else {
+              // Immagini remote (modalità online)
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Icons.broken_image,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 8),
+                          Text('Failed to load image'),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
+          },
+        ),
         BlockquoteConfig(
           sideColor: AppColors.primary.withOpacity(0.5),
           textColor: AppColors.textSecondary.withOpacity(0.8),
@@ -382,41 +421,69 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         _showError('Failed to load waypoints: $e');
       }
     } else {
-      final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
-      if (offlineData != null) {
-        final List wps = (offlineData['waypoints'] as List?) ?? [];
-        final List subTours = (offlineData['sub_tours'] as List?) ?? [];
-        for (final st in subTours) {
-          final List subWp = (st['waypoints'] as List?) ?? [];
-        }
-        final List<Waypoint> mainWaypoints = wps.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
-        final List<Waypoint> subTourWaypoints = <Waypoint>[];
-        for (final st in subTours) {
-          final subTourInfo = st['sub_tour'] as Map<String, dynamic>?;
-          if (subTourInfo == null) continue;
+      try {
+        final offlineData = await _offlineService.getOfflineTourData(widget.tourId);
+        if (offlineData != null) {
+          final List wps = (offlineData['waypoints'] as List?) ?? [];
+          final List subTours = (offlineData['sub_tours'] as List?) ?? [];
 
-          final subWpJson = (st['waypoints'] as List?) ?? [];
-          final subWps = subWpJson.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+          final List<Waypoint> mainWaypoints = wps.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+          final List<Waypoint> subTourWaypoints = <Waypoint>[];
 
-          final subTourWaypoint = Waypoint(
-            id: (subTourInfo['id'] as num).toInt(),
-            title: (subTourInfo['title'] ?? '') as String,
-            subtitle: (subTourInfo['description'] ?? '') as String,
-            description: (subTourInfo['description'] ?? '') as String,
-            latitude: (subTourInfo['lat'] as num?)?.toDouble() ?? 0.0,
-            longitude: (subTourInfo['lon'] as num?)?.toDouble() ?? 0.0,
-            images: const [], // il contenitore non ha immagini proprie
-            category: (subTourInfo['category'] ?? 'INSIDE') as String,
-            subWaypoints: subWps,
-          );
-          subTourWaypoints.add(subTourWaypoint);
+          for (final st in subTours) {
+            final subTourInfo = st['sub_tour'] as Map<String, dynamic>?;
+            if (subTourInfo == null) continue;
+
+            final subWpJson = (st['waypoints'] as List?) ?? [];
+            final subWps = subWpJson.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+
+            subTourWaypoints.addAll(subWps);
+          }
+
+          print("Loading images and resources for offline waypoints...");
+
+          final Map<int, List<String>> imagesByWp = {};
+          final Map<int, Map<String, dynamic>> resourcesByWp = {};
+          for (final wp in wps) {
+            final id = (wp['id'] as num).toInt();
+            final localImages =
+                (wp['local_images'] as List?)?.cast<String>() ?? <String>[];
+            final local_resources = wp["local_resources"] as Map<String, dynamic>?;
+
+            imagesByWp[id] = localImages;
+            resourcesByWp[id] = local_resources!;
+          }
+          for (final st in subTours) {
+            final List subWp = (st['waypoints'] as List?) ?? [];
+            for (final wp in subWp) {
+              final id = (wp['id'] as num).toInt();
+              final localImages = (wp['local_images'] as List?)?.cast<String>() ?? <String>[];
+              final local_resources = wp["local_resources"] as Map<String, dynamic>?;
+
+              imagesByWp[id] = localImages;
+              resourcesByWp[id] = local_resources!;
+            }
+          }
+
+
+          if (mounted) {
+            setState(() {
+              _waypoints = [...mainWaypoints, ...subTourWaypoints];
+              _offlineImagesByWaypoint = imagesByWp;
+              _offlineResourcesByWaypoint = resourcesByWp;
+              _isLoadingWaypoints = false;
+            });
+          }
         }
+      } catch (e) {
         if (mounted) {
           setState(() {
-            _waypoints = [...mainWaypoints, ...subTourWaypoints];
             _isLoadingWaypoints = false;
           });
         }
+        print("Failed to load offline waypoints: $e");
+        _showError('Failed to load offline waypoints: $e');
+
       }
     }
   }
@@ -496,9 +563,32 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     }
 
     try {
-      final response =
-          await _tourService.getResourceByWaypointAndType(waypointId, queryType);
-      content = response as Map<String, dynamic>;
+      if (widget.isOffline) {
+        // if(_offlineResourcesByWaypoint.containsKey(waypointId)) {
+        //   content = _offlineResourcesByWaypoint[waypointId]!;
+        // } else {
+        //   throw Exception("No offline resources found for waypoint $waypointId");
+        // }
+        final resources = _offlineResourcesByWaypoint[waypointId] ?? {};
+        final images = _offlineImagesByWaypoint[waypointId] ?? [];
+
+        // Crea un oggetto content con i path locali
+        content = {
+          'readme': resources['readme'],
+          'links': resources['links'],
+          'pdf': resources['pdf'],
+          'video': resources['video'],
+          'audio': resources['audio'],
+          'images': images, // Lista di path immagini locali
+        };
+
+      } else {
+        final response = await _tourService.getResourceByWaypointAndType(
+          waypointId,
+          queryType,
+        );
+        content = response as Map<String, dynamic>;
+      }
     } catch (e) {
       print("error retrieving content: $e");
       type = 'error';
@@ -506,7 +596,30 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     switch (type) {
       case 'text':
-        _currentMarkdownContent = content['readme'] ?? '';
+        if (widget.isOffline) {
+          final readmePath = content['readme'] ?? '';
+          String readmeContent = '';
+
+          if (readmePath.isNotEmpty) {
+            try {
+              final file = File(readmePath);
+              if (await file.exists()) {
+                readmeContent = await file.readAsString();
+              } else {
+                readmeContent = 'No readme file found offline.';
+              }
+            } catch (e) {
+              print("Error reading readme file: $e");
+              readmeContent = 'Error reading readme file: $e';
+            }
+          } else {
+            readmeContent = 'No readme available for this waypoint.';
+          }
+          _currentMarkdownContent = readmeContent;
+        } else {
+          _currentMarkdownContent = content['readme'] ?? '';
+        }
+
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
           config: _buildMarkdownConfig(),
@@ -514,8 +627,33 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           shrinkWrap: true,
         );
         break;
+
       case 'link':
-        _currentMarkdownContent = content['links'] ?? '';
+        if (widget.isOffline) {
+          final linksPath = content['links'] ?? '';
+          String linksContent = '';
+
+          if (linksPath.isNotEmpty) {
+            try {
+              final file = File(linksPath);
+              if (await file.exists()) {
+                linksContent = await file.readAsString();
+              } else {
+                linksContent = 'No links file found offline.';
+              }
+            } catch (e) {
+              print("Error reading links file: $e");
+              linksContent = 'Error reading links file: $e';
+            }
+          } else {
+            linksContent = 'No links available for this waypoint.';
+          }
+          _currentMarkdownContent = linksContent;
+
+        } else {
+          _currentMarkdownContent = content['links'] ?? '';
+        }
+
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
           config: _buildMarkdownConfig(),
@@ -523,8 +661,24 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           shrinkWrap: true,
         );
         break;
+
       case 'image':
-        _currentMarkdownContent = _processImageContent(content['readme'] ?? '');
+        if (widget.isOffline) {
+          final localImages = content['images'] as List<String>? ?? [];
+          if (localImages.isNotEmpty) {
+            String imageContent = "#${widget.landmarkName}\n\n";
+            for (int i = 0; i < localImages.length; i++) {
+              final imagePath = localImages[i];
+              imageContent += "![Image ${i + 1}](file://$imagePath)\n\n";
+            }
+            _currentMarkdownContent = imageContent;
+          } else {
+            _currentMarkdownContent = "#${widget.landmarkName}\n\nNo images available for this waypoint.";
+          }
+        } else {
+          _currentMarkdownContent = _processImageContent(content['readme'] ?? '');
+        }
+
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
           config: _buildMarkdownConfig(),
@@ -532,25 +686,85 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           shrinkWrap: true,
         );
         break;
+
       case 'video':
-        contentToDisplay = VideoPlayerWidget(
-          videoUrl:
-              content['video'] ?? 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-        );
+        if (widget.isOffline) {
+          final videoPath = content['video'] ?? '';
+          if (videoPath.isNotEmpty) {
+            contentToDisplay = VideoPlayerWidget(
+              videoUrl: videoPath,
+              isLocalFile: true,
+            );
+          } else {
+            contentToDisplay = const Center(
+              child: Text(
+                'No video available for this waypoint.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+            );
+          }
+
+        } else {
+          contentToDisplay = VideoPlayerWidget(
+            videoUrl:
+                content['video'] ?? 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+                isLocalFile: false,
+          );
+        }
         break;
+
       case 'document':
-        contentToDisplay = PdfViewerWidget(
-          pdfUrl:
-              content['pdf'] ?? 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf',
-        );
+        if (widget.isOffline) {
+          final pdfPath = content['pdf'] ?? '';
+          if (pdfPath.isNotEmpty) {
+            contentToDisplay = PdfViewerWidget(
+              pdfUrl: pdfPath,
+              isLocalFile: true,
+            );
+          } else {
+            contentToDisplay = const Center(
+              child: Text(
+                'No PDF document available for this waypoint.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+            );
+          }
+
+        } else {
+          contentToDisplay = PdfViewerWidget(
+            pdfUrl:
+                content['pdf'] ?? 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf',
+            isLocalFile: false,
+          );
+        }
         break;
+
       case 'audio':
-        contentToDisplay = AudioPlayerWidget(
-          audioUrl:
-              // 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Replace with your audio URL
-              content['audio'] ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        );
+        if (widget.isOffline) {
+          final audioPath = content['audio'] ?? '';
+          if (audioPath.isNotEmpty) {
+            contentToDisplay = AudioPlayerWidget(
+              audioUrl: audioPath,
+              isLocalFile: true,
+            );
+          } else {
+            contentToDisplay = const Center(
+              child: Text(
+                'No audio available for this waypoint.',
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+            );
+          }
+        } else {
+          contentToDisplay = AudioPlayerWidget(
+            audioUrl:
+                content['audio'] ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            isLocalFile: false,
+          );
+
+        }
         break;
+
       case 'error':
         contentToDisplay = Center(
           child: Text(
@@ -640,6 +854,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     setState(() {
       _recognitionState = RecognitionState.scanning;
+      _currentMarkdownContent = """
+      """;
     });
 
     // Start pulse animation
@@ -687,7 +903,18 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
             "pdf": 0,
             "audio": 0,
           };
-        }
+          final images = _offlineImagesByWaypoint[waypointId] ?? [];
+          if (images.isNotEmpty) {
+            availableResources["images"] = 1;
+          }
+          final resources = _offlineResourcesByWaypoint[waypointId] ?? {};
+          resources.forEach((key, value) {
+            if (value is String && value.isNotEmpty) {
+              availableResources[key] = 1;
+            }
+          });
+
+          }
       } else {
         final String base64Image = base64Encode(bytes);
         final result = await _apiService.inference(base64Image, widget.tourId);
@@ -716,95 +943,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         if (mounted) _resetRecognition();
       });
     }
-//     //Camera feed
-//     final XFile file = await _cameraController!.takePicture();
-//     final bytes = await file.readAsBytes();
-//     final String base64Image = base64Encode(bytes);
-
-
-//     // DEBUG  Simulate recognition process (replace with actual ML/AR logic)
-//     // await Future.delayed(const Duration(seconds: 3));
-//     final result = await _apiService.inference(
-//       base64Image,
-//       widget.tourId,
-//     );
-
-//     var waypointId = result.data["result"] ?? -1; // Get waypoint ID from result
-//     var availableResources = result.data["available_resources"] ?? {};
-
-//     // FOR DEBUG
-//     // final result = {
-//     //   "result": 1, // Mock waypoint ID
-//     //   "available_resources": {
-//     //     "readme": 1,
-//     //     "links": 1,
-//     //     "images": 1,
-//     //     "video": 1,
-//     //     "pdf": 1,
-//     //     "audio": 1,
-//     //   },
-//     // };
-//     // var waypointId = result["result"] ?? -1; // Get waypoint ID from result
-//     // var availableResources = result["available_resources"] ?? {};
-//     // FOR DEBUG END
-
-//     _waypoints.forEach((waypoint) {
-//       if (waypoint.id == waypointId) {
-//         // Update the current landmark name and description
-//         widget.landmarkName = waypoint.title;
-//         widget.landmarkImages = waypoint.images;
-//       }
-//     });
-
-//     print("AVAILABLE_RESOURCES: $availableResources");
-
-//     // Stop pulse animation
-//     _pulseAnimationController.stop();
-
-//     bool recognitionSuccess = waypointId != -1;
-//     print('Recognition result: $recognitionSuccess');
-
-//     if (recognitionSuccess) {
-//       await _localStateService.addScannedWaypoint(widget.tourId, waypointId as int);
-
-//       setState(() {
-//         _recognizedWaypointId = waypointId; // Store recognized waypoint ID
-//         _availableResources = Map<String, dynamic>.from(availableResources as Map<dynamic, dynamic>); // Store available resources
-
-//         _currentMarkdownContent = """
-// # ${widget.landmarkName}
-// """;
-//         _currentActiveContent = MarkdownWidget(
-//           data: _currentMarkdownContent,
-//           config: _buildMarkdownConfig(),
-//           padding: const EdgeInsets.only(top: 0),
-//           shrinkWrap: true,
-//         );
-//         _recognitionState = RecognitionState.success;
-//       });
-
-//       // Start the central button animation
-//       _successAnimationController.reset();
-//       _successAnimationController.forward();
-
-//       // Start AR overlays
-//       _startAROverlayAnimation();
-
-//       await _checkTourCompletion();
-
-//     } else {
-//       setState(() {
-//         _recognitionState = RecognitionState.failure;
-//       });
-//       _failureAnimationController.forward();
-
-//       // Auto-reset after 3 seconds
-//       Timer(const Duration(seconds: 3), () {
-//         if (mounted) {
-//           _resetRecognition();
-//         }
-//       });
-//     }
   }
 
   // NUOVO: Verifica se il tour è completato

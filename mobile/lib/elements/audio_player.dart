@@ -6,8 +6,9 @@ import '../models/app_colors.dart'; // Import AppColors
 
 class AudioPlayerWidget extends StatefulWidget {
   final String audioUrl;
+  final bool isLocalFile;
 
-  const AudioPlayerWidget({Key? key, required this.audioUrl}) : super(key: key);
+  const AudioPlayerWidget({Key? key, required this.audioUrl, this.isLocalFile = false}) : super(key: key);
 
   @override
   State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
@@ -30,7 +31,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   Future<void> _initAudioPlayer() async {
     try {
-      await _audioPlayer.setUrl(widget.audioUrl);
+      if (widget.isLocalFile) {
+        await _audioPlayer.setFilePath(widget.audioUrl);
+      } else {
+        await _audioPlayer.setUrl(widget.audioUrl);
+      }
+      // await _audioPlayer.setUrl(widget.audioUrl);
       _playerStateSubscription = _audioPlayer.playerStateStream.listen((
         playerState,
       ) {
