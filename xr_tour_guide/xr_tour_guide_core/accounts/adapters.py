@@ -3,6 +3,7 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def populate_user(self, request, sociallogin, data):
         user = super().populate_user(request, sociallogin, data)
+        print(f"DATA: {data}", flush=True)
         user.first_name = data.get('first_name', '')
         user.last_name = data.get('last_name', '')
         user.email = (

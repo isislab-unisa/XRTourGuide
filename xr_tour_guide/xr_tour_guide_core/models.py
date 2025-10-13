@@ -42,6 +42,11 @@ def default_image_tour(instance, file_name):
     return f"{instance.id}/default_image/{file_name}"
 
 class CustomUser(AbstractUser):
+    last_name = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+    )
     city = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
     email = models.EmailField(unique=True)

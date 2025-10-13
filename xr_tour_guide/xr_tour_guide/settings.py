@@ -134,6 +134,18 @@ LOCATION_FIELD = {
     'search.provider': 'nominatim',
 }
 
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}
+
 
 LOGGING = {
     'version': 1,
