@@ -58,18 +58,34 @@ redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def tour_list(request):
-    searchTerm = request.GET.get('searchTerm', '')
+    search_term = request.GET.get('searchTerm', '')
     category = request.GET.get('category', '')
+    sort_param = request.GET.get('sorted', '').lower()
+    num_tours = request.GET.get('num_tours', None)
+    
+    print("DIOCANE", num_tours, flush=True)
 
     queryset = Tour.objects.filter(parent_tours__isnull=True, is_subtour=False)
 
     if category:
         queryset = queryset.filter(category__iexact=category)
-    if searchTerm:
+
+    if search_term:
         queryset = queryset.filter(
-            Q(title__icontains=searchTerm) |
-            Q(place__icontains=searchTerm)
+            Q(title__icontains=search_term) |
+            Q(place__icontains=search_term)
         )
+
+    if sort_param in ['true', '1', 'yes']:
+        queryset = queryset.order_by('creation_time')
+
+    if num_tours:
+        try:
+            limit = int(num_tours)
+            if limit > 0:
+                queryset = queryset[:limit]
+        except (ValueError, TypeError):
+            pass
 
     serializer = TourSerializer(queryset, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
