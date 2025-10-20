@@ -129,35 +129,35 @@ services:
     networks:
       - backend_net
     
-  ai_training:
-    # image: cromo_ai_classification:training
-    build: ../AI_classification/training
-    container_name: ai_training_tour_guide
-    environment:
-      - PYTHONUNBUFFERED=1
-    env_file:
-      - .env
-    # gpus: all
-    user: root
-    ports:
-      - "8090:8090"
-    networks:
-      backend_net:
-        ipv4_address: 172.28.0.20
+  # ai_training:
+  #   # image: cromo_ai_classification:training
+  #   build: ../AI_classification/training
+  #   container_name: ai_training_tour_guide
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   env_file:
+  #     - .env
+  #   # gpus: all
+  #   user: root
+  #   ports:
+  #     - "8090:8090"
+  #   networks:
+  #     backend_net:
+  #       ipv4_address: 172.28.0.20
 
-  ai_inference:
-    build: ../AI_classification/inference
-    container_name: ai_inference_tour_guide
-    environment:
-      - PYTHONUNBUFFERED=1
-    env_file:
-      - .env
-    # gpus: all
-    user: root
-    ports:
-      - "8050:8050"
-    networks:
-      - backend_net
+  # ai_inference:
+  #   build: ../AI_classification/inference
+  #   container_name: ai_inference_tour_guide
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   env_file:
+  #     - .env
+  #   # gpus: all
+  #   user: root
+  #   ports:
+  #     - "8050:8050"
+  #   networks:
+  #     - backend_net
 
   certbot:
     image: certbot/certbot

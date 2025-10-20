@@ -61,7 +61,7 @@ def tour_list(request):
     searchTerm = request.GET.get('searchTerm', '')
     category = request.GET.get('category', '')
 
-    queryset = Tour.objects.filter(parent_tours__isnull=True)
+    queryset = Tour.objects.filter(parent_tours__isnull=True, is_subtour=False)
 
     if category:
         queryset = queryset.filter(category__iexact=category)

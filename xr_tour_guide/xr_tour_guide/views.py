@@ -17,6 +17,6 @@ class DashboardView(UnfoldModelAdminViewMixin, TemplateView):
     
 def dashboard_callback(request, context):
     context.update({
-        "tours": Tour.objects.filter(parent_tours__isnull=True),
+        "tours": Tour.objects.filter(parent_tours__isnull=True, is_subtour=False),
     })
     return context
