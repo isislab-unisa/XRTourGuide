@@ -130,8 +130,9 @@ def write_s3_file(file_path, remote_path):
 def run_training_subproc(
     input_dir: str,
     output_dir: str,
-    num_epochs: int,
-    run_name: int,
+    tflite_model: str,
+    tour_id: int,
+    skip_pytorch: bool = False,
 ):
     try:
         cmd = [
@@ -141,38 +142,60 @@ def run_training_subproc(
             input_dir,
             "--output-dir",
             output_dir,
-            # "--run-name",
-            # run_name,
+            "--tflite-model",
+            tflite_model,
+            "--tour-id",
+            str(tour_id),
         ]
-        # if num_epochs != 25:
-        #     cmd.append("--num-epochs")
-        #     cmd.append(str(num_epochs))
+        
+        if skip_pytorch:
+            cmd.append("--skip-pytorch")
+        
         print("Running command:", " ".join(cmd), flush=True)
 
-        subprocess.run(cmd, check=True)
-        return
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+        
+        if result.stdout:
+            print("Training output:", result.stdout, flush=True)
+            
+        if result.stderr:
+            print("Training error output:", result.stderr, flush=True)
+            
+        if result.returncode != 0:
+            raise Exception(f"Training subprocess failed with return code {result.returncode}")
+        
+        return True
+    
     except Exception as e:
         print(f"Training failed: {e}", flush=True)
 
 
 def run_train(request: Request, view_dir: str, data_path: str):
     print("Content of directory:", os.listdir(data_path), flush=True)
+    tflite_model_path = "./resnet50.tflite"
     try:
         # RUN THE FULL PIPELINE
         result = run_training_subproc(
             input_dir=data_path,
             output_dir=view_dir,
-            num_epochs=25,
-            run_name=request.poi_name,
+            tflite_model=tflite_model_path,
+            tour_id=int(request.poi_id),
+            skip_pytorch=False,
         )
         
-        # if result is None:
-        #     raise Exception("Training failed")
+        if not result:
+            raise Exception("Training subprocess failed")
 
-        model_path = os.path.join(view_dir , f"model.pt")
-        offline_model_path = os.path.join(view_dir, f"training_data.json")
-        # report_path = os.path.join(view_dir, request.poi_name, f"probability_table.csv")
+        model_path = os.path.join(view_dir , "model.pt")
+        offline_model_path = os.path.join(view_dir, "training_data.json")
         print("AAAAAAAA", model_path, flush=True)
+        
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model file not found at {model_path}")
+        if not os.path.exists(offline_model_path):
+            raise FileNotFoundError(f"Offline model file not found at {offline_model_path}")
+        
+        print("Files exist, proceeding to upload to S3", flush=True)
         
         # LOAD ON MINIO
         write_s3_file(
@@ -214,7 +237,7 @@ def run_train(request: Request, view_dir: str, data_path: str):
             "poi_id": int(request.poi_id),
             "poi_name": request.poi_name,
             "model_url": f"{request.poi_id}/model.pt",
-            # "report_url": f"{request.poi_id}/report.csv",	
+            "index_url": f"{request.poi_id}/training_data.json",
             "status": "COMPLETED",
         }
         
@@ -243,32 +266,38 @@ def run_train(request: Request, view_dir: str, data_path: str):
             "poi_id": int(request.poi_id),
             "poi_name": request.poi_name,
             "model_url": "None",
-            # "report_url": "None",
+            "index_url": "None",
             "status": "FAILED",
         }
         
         print("Callback payload:", callback_payload, flush=True)
 
-        # token_payload = {
-        #     "username": "root",
-        #     "password": "root",
-        # }
-
         try:
-            # token_response = requests.post(
-            #     TOKEN_REQUEST_ENDPOINT,
-            #     json=token_payload,
-            # )
-            # print("Token response:", token_response.status_code, token_response.text)
-            # token_access = token_response.json().get("access")
-            # headers = {
-            #     "Authorization": f"Bearer {token_access}",
-            # }
+            token_payload = {
+                "username": "root",
+                "password": "root",
+            }
 
+            token_response = requests.post(
+                TOKEN_REQUEST_ENDPOINT,
+                json=token_payload,
+            )
+            print(
+                "Token response:",
+                token_response.status_code,
+                token_response.text,
+                flush=True,
+            )
+            token_access = token_response.json().get("access")
+
+            headers = {
+                "Authorization": f"Bearer {token_access}",
+            }
+            
             response = requests.post(
                 CALLBACK_ENDPOINT,
                 json=callback_payload,
-                # headers=headers,
+                headers=headers,
             )
             print("Callback response:", response.status_code, response.text, flush=True)
         except requests.RequestException as e:
