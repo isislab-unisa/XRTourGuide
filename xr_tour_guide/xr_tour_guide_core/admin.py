@@ -217,18 +217,13 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
         return form_wrapper
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        # qs = qs.filter(parent_tours__isnull=True)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(user=request.user)
-    
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "sub_tours":
             tour_id = request.resolver_match.kwargs.get("object_id")
 
             if tour_id:
+                kwargs["queryset"] = Tour.objects.none()
+                formfield = super().formfield_for_manytomany(db_field, request, **kwargs)
                 tour = Tour.objects.get(id=tour_id)
                 associated = tour.sub_tours.all()
                 available = Tour.objects.filter(is_subtour=True, category="INSIDE", parent_tours__isnull=True)
@@ -245,7 +240,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
 
-        qs = qs.filter()
+        qs = qs.filter(is_subtour=False)
 
         if not request.user.is_superuser:
             qs = qs.filter(user=request.user)
