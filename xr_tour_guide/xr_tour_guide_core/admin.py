@@ -189,7 +189,7 @@ class TourForm(forms.ModelForm):
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours', 'is_subtour')
-    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
+    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status', 'is_subtour')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
@@ -231,7 +231,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             if tour_id:
                 tour = Tour.objects.get(id=tour_id)
                 associated = tour.sub_tours.all()
-                available = Tour.objects.filter(is_subtour=True, category="INSIDE", parent_tours__isnull=True)#.exclude(id=tour_id)
+                available = Tour.objects.filter(is_subtour=True, category="INSIDE", parent_tours__isnull=True)
                 kwargs["queryset"] = (associated | available).distinct()
             else:
                 kwargs["queryset"] = Tour.objects.none()
@@ -245,7 +245,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
 
-        qs = qs.filter(is_subtour=False)
+        qs = qs.filter()
 
         if not request.user.is_superuser:
             qs = qs.filter(user=request.user)

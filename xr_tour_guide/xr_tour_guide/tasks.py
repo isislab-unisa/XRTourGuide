@@ -216,3 +216,10 @@ def remove_append_user():
         print(f"{count} utenti eliminati", flush=True)
     except Exception as e:
         print(f"Errore nella cancellazione degli utenti: {e}", flush=True)
+
+@shared_task(queue='api_tasks')
+def remove_sub_tours():
+    difference = timezone.now() - timedelta(hours=5)
+    tours = Tour.objects.filter(is_subtour=True, parent_tours__isnull=True, created_at__lt=difference)
+    for tour in tours:
+        tour.delete()

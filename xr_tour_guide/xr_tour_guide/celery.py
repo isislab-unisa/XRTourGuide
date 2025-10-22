@@ -26,10 +26,16 @@ app.conf.beat_schedule = {
 }
 
 app.conf.beat_schedule = {
-    'remove_append_tour' : {
+    'remove_append_user' : {
         'task': 'xr_tour_guide.tasks.remove_append_user',
         'schedule': timedelta(minutes=5),
     }
 }
 
+app.conf.beat_schedule = {
+    'remove_sub_tours' : {
+        'task': 'xr_tour_guide.tasks.remove_sub_tours',
+        'schedule': timedelta(minutes=30),
+    }
+}
 # docker-compose exec web celery -A xr_tour_guide.celery worker -Q api_tasks --concurrency=1 --loglevel=info
