@@ -13,6 +13,8 @@ from .models import CustomUser
 from django.contrib.auth.admin import UserAdmin
 from django.core.files.base import ContentFile
 from django.db.models import Q
+from django.db import models
+
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -37,31 +39,6 @@ class MultipleClearableFileInput(ClearableFileInput):
             </label>
         </div>
         """)
-
-class MultipleFileField(forms.FileField):
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('widget', MultipleClearableFileInput())
-        super().__init__(*args, **kwargs)
-
-    def clean(self, data, initial=None):
-        single_file_clean = super().clean
-        if isinstance(data, (list, tuple)):
-            return [single_file_clean(d, initial) for d in data]
-        return [single_file_clean(data, initial)]
-    
-    def save(self, commit=True):
-        instance = super().save(commit=commit)
-        print("[DEBUG] Saving form for Cromo_View", instance)
-
-        uploaded_files = self.cleaned_data.get('uploaded_images')
-        print("[DEBUG] Uploaded files:", uploaded_files)
-
-        if instance.pk and uploaded_files:
-            for uploaded_file in uploaded_files:
-                WaypointViewImage.objects.create(cromo_view=instance, image=uploaded_file)
-
-        return instance
-
 
 class WaypointForm(forms.ModelForm):
     uploaded_images = forms.FileField(
@@ -153,28 +130,13 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             ]
         }
     
-    def save_related(self, request, form, formsets, change):
-        super().save_related(request, form, formsets, change)
-        
-        for formset in formsets:
-            for inline_form in formset.forms:
-                if not hasattr(inline_form, 'cleaned_data'):
-                    continue
-                uploaded_files = inline_form.cleaned_data.get('uploaded_images', [])
-                print("uploaded_files per form:", uploaded_files)
-                if uploaded_files:
-                    waypoint = inline_form.instance
-                    print("Salvo per waypoint:", waypoint)
-                    if len(uploaded_files) > 0:
-                        for uploaded_file in uploaded_files:
-                            WaypointViewImage.objects.create(waypoint=waypoint, image=uploaded_file)
-
 class TourForm(forms.ModelForm):
     class Meta:
         model = Tour
         fields = "__all__"
         widgets = {
-            'is_subtour': forms.HiddenInput()
+            'is_subtour': forms.HiddenInput(),
+            'sub_tours': forms.CheckboxSelectMultiple(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -184,7 +146,7 @@ class TourForm(forms.ModelForm):
         if request and "_popup" in request.GET:
             self.fields['category'].initial = 'INSIDE'
             self.fields['category'].disabled = True
-
+            self.fields['category'].widget = forms.HiddenInput()
             self.fields['is_subtour'].initial = True
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
@@ -196,6 +158,9 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     date_hierarchy = 'creation_time'
     form = TourForm
 
+    formfield_overrides = {
+        models.ManyToManyField: {'widget': forms.CheckboxSelectMultiple},
+    }
     widgets = {
             'is_subtour': forms.HiddenInput()
         }
@@ -204,8 +169,9 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     class Media:
         js = ['https://code.jquery.com/jquery-3.6.0.min.js', 
               'admin/js/init_maps.js',
-            'admin/js/init_markdown_editor.js',
-            'admin/js/hide_waypoint_coordinates.js',
+              'admin/js/init_markdown_editor.js',
+              'admin/js/hide_waypoint_coordinates.js',
+              'admin/js/refresh_subtours_checkboxes.js',
             ]
         
     def get_form(self, request, obj=None, **kwargs):
@@ -220,19 +186,19 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "sub_tours":
             tour_id = request.resolver_match.kwargs.get("object_id")
-
+            available = Tour.objects.filter(
+                    is_subtour=True, 
+                    category="INSIDE", 
+                    parent_tours__isnull=True
+                )
             if tour_id:
-                kwargs["queryset"] = Tour.objects.none()
-                formfield = super().formfield_for_manytomany(db_field, request, **kwargs)
                 tour = Tour.objects.get(id=tour_id)
                 associated = tour.sub_tours.all()
-                available = Tour.objects.filter(is_subtour=True, category="INSIDE", parent_tours__isnull=True)
                 kwargs["queryset"] = (associated | available).distinct()
             else:
-                kwargs["queryset"] = Tour.objects.none()
-                formfield = super().formfield_for_manytomany(db_field, request, **kwargs)
-                formfield.widget.attrs["disabled"] = True
-                return formfield
+                kwargs["queryset"] = available
+            
+            return super().formfield_for_manytomany(db_field, request, **kwargs)
 
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
