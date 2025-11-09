@@ -1,13 +1,9 @@
-import shutil
 import requests
 from celery import shared_task
-from xr_tour_guide_core.models import Tour, MinioStorage, Status, CustomUser
+from xr_tour_guide_core.models import Tour, MinioStorage, Status
 from django.core.mail import send_mail
 import os
-import json
-import time
 import redis
-from redis.exceptions import LockError
 from redis.lock import Lock
 from dotenv import load_dotenv
 from django.utils import timezone

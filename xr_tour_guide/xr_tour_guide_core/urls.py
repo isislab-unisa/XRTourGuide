@@ -1,10 +1,9 @@
-from django.contrib import admin
-from django.urls import path, include, re_path
-import nested_admin
-from .views import tour_list, tour_details, profile_details, update_profile, delete_account, update_password, stream_minio_resource, \
-   get_reviews_by_tour_id, RegisterView, ActivateAccountView, tour_waypoints, tour_detail, create_review, get_reviews_by_user, increment_view_count, \
-   PasswordResetView, PasswordResetConfirmView, PasswordResetConfirmSubmit, PasswordResetConfirmPage, build, complete_build, load_model, inference, \
-   get_waypoint_resources, download_model, cut_map
+from django.urls import path, re_path
+from .views.ai_views import *
+from .views.user_views import *
+from .views.tour_views import *
+from .views.waypoint_views import *
+from .views.review_views import *
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -45,7 +44,6 @@ urlpatterns = [
         name="activate-account",
     ),
     path("tour_waypoints/<int:tour_id>/", tour_waypoints, name="tour_waypoints"),
-    path("tour_detail/<int:tour_id>/", tour_detail, name="tour_detail"),
     path("create_review/", create_review, name="create_review"),
     path("get_reviews_by_user/", get_reviews_by_user, name="get_reviews_by_user"),
     path("increment_view_count/", increment_view_count, name="increment_view_count"),

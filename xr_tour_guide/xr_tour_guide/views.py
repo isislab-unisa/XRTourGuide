@@ -1,9 +1,6 @@
-import json
 from django.contrib import admin
 from django.urls import path
 from django.views.generic import TemplateView
-import base64
-from unfold.admin import ModelAdmin
 from unfold.views import UnfoldModelAdminViewMixin
 from xr_tour_guide_core.models import Tour
 

@@ -1,7 +1,5 @@
 from django.contrib import admin
 from django.urls import path, include
-import nested_admin
-from django.contrib.auth import views as auth_views
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,

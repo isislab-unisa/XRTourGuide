@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import landing_page
-from xr_tour_guide_core.views import RegisterView
+from xr_tour_guide_core.views.user_views import RegisterView
 from .views import landing_page, register_page
 
 urlpatterns = [
