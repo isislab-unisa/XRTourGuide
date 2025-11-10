@@ -159,32 +159,32 @@ services:
     networks:
       - backend_net
 
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    entrypoint: >
-      sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot
-      --email ${EMAIL_CERTBOT}
-      --agree-tos
-      --no-eff-email
-      -d xrtourguide.di.unisa.it
-      -d xrtourguide.di.unisa.it"
-    networks:
-      - backend_net
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: certbot
+  #   volumes:
+  #     - ./certbot/www:/var/www/certbot
+  #     - ./certbot/conf:/etc/letsencrypt
+  #   entrypoint: >
+  #     sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot
+  #     --email ${EMAIL_CERTBOT}
+  #     --agree-tos
+  #     --no-eff-email
+  #     -d xrtourguide.di.unisa.it
+  #     -d xrtourguide.di.unisa.it"
+  #   networks:
+  #     - backend_net
   
-  certbot-renew:
-    image: certbot/certbot
-    container_name: certbot_renew
-    volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    entrypoint: >
-      sh -c "certbot renew --webroot --webroot-path=/var/www/certbot && nginx -s reload"
-    networks:
-      - backend_net
+  # certbot-renew:
+  #   image: certbot/certbot
+  #   container_name: certbot_renew
+  #   volumes:
+  #     - ./certbot/www:/var/www/certbot
+  #     - ./certbot/conf:/etc/letsencrypt
+  #   entrypoint: >
+  #     sh -c "certbot renew --webroot --webroot-path=/var/www/certbot && nginx -s reload"
+  #   networks:
+  #     - backend_net
 
   pmtiles-server:
     build: ../pmtiles-server

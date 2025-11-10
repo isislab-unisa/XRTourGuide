@@ -33,6 +33,7 @@ def build(request):
     return redirect('/admin/')
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def complete_build(request):
     allowed_ip = "172.28.0.20"
     remote_ip = request.META.get("REMOTE_ADDR")

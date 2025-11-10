@@ -242,7 +242,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             return False
         if obj is None:
             return True
-        if obj.status in ['BUILT', 'BUILDING', 'SERVING', 'ENQUEUED']:
+        if obj.status in ['BUILDING', 'SERVING', 'ENQUEUED']:
             return False
         return True
 
