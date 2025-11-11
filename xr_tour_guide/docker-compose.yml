@@ -42,6 +42,12 @@ services:
     restart: always
     networks:
       - backend_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health_check/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   celery:
     build: .
@@ -92,7 +98,8 @@ services:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     networks:
       - backend_net
 

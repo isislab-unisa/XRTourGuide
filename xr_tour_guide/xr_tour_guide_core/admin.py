@@ -151,7 +151,7 @@ class TourForm(forms.ModelForm):
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours', 'is_subtour')
-    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status', 'is_subtour')
+    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')

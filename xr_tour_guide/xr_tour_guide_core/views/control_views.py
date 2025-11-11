@@ -5,5 +5,5 @@ from rest_framework import status
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def healt_check(request):
+def health_check(request):
     return Response({"status": "Active"}, status=status.HTTP_200_OK)
