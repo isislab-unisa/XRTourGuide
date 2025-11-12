@@ -96,7 +96,7 @@ async def login(
 ):
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user or not user.verify_password(password):
-        return templates.TemplateResponse("home.html", {"request": request, "message": "Invalid credentials"})
+        return templates.TemplateResponse("login.html", {"request": request, "message": "Invalid credentials"})
 
     services = db.query(models.Services).all()
     return templates.TemplateResponse(
@@ -155,3 +155,11 @@ def status_service(service_id: int, request: Request, db: Session = Depends(get_
         "home.html",
         {"request": request, "services": services, "message": "Service status updated"}
     )
+
+@app.get("/get_services/")
+async def get_services(db: Session = Depends(get_db)):
+    return db.query(models.Services).filter(models.Services.active == True).all()
+
+@app.get("/get_service/{service_id}")
+async def get_service(service_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Services).filter(models.Services.id == service_id).first().domain
