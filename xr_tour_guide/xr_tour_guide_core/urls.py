@@ -4,6 +4,7 @@ from .views.user_views import *
 from .views.tour_views import *
 from .views.waypoint_views import *
 from .views.review_views import *
+from .views.control_views import *
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -65,4 +66,5 @@ urlpatterns = [
     path("get_waypoint_resources/", get_waypoint_resources, name="get_waypoint_resources"),
     path("download_model/", download_model, name="download_model"),
     path("cut_map/<int:tour_id>/", cut_map, name="cut_map"),
+    path("health_check/", health_check, name="health_check"),
 ]
