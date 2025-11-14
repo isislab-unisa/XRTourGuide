@@ -62,101 +62,103 @@
 {% endblock %}
 
 {% block content %}
-    {% component "unfold/components/container.html" %}
+{% component "unfold/components/container.html" %}
 
-        <!-- Table -->
-        {% component "unfold/components/card.html" with title="Tour" class="p-6 shadow-sm hover:shadow-md transition-shadow" %}
-            <div class="w-full overflow-x-auto">
-                <table class="min-w-full responsive-table">
-                    <thead>
+    {% component "unfold/components/card.html" with title="Tour" class="p-6 shadow-sm hover:shadow-md transition-shadow" %}
+        <div class="w-full overflow-x-auto">
+            <table class="min-w-full responsive-table">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 text-left">Titolo</th>
+                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Descrizione</th>
+                        <th class="px-4 py-2 text-left lg:table-cell mobile-hidden">Data creazione</th>
+                        <th class="px-4 py-2 text-left">Utente</th>
+                        <th class="px-4 py-2 text-left">Status</th>
+                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Immagine</th>
+                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Review</th>
+                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Media Rating</th>
+                        <th class="px-4 py-2 text-left">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tour in tours %}
                         <tr>
-                            <th class="px-4 py-2 text-left">Titolo</th>
-                            <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Descrizione</th>
-                            <th class="px-4 py-2 text-left lg:table-cell mobile-hidden">Data di creazione</th>
-                            <th class="px-4 py-2 text-left">Utente</th>
-                            <th class="px-4 py-2 text-left">Status</th>
-                            <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Immagine</th>
-                            <th class="px-4 py-2 text-left">Azioni</th>
+                            <td data-label="Titolo" class="px-4 py-2 border-b">{{ tour.title }}</td>
+
+                            <td data-label="Descrizione" class="px-4 py-2 border-b md:table-cell mobile-hidden">
+                                {{ tour.description|default:"N/A"|truncatechars:30 }}
+                            </td>
+
+                            <td data-label="Data creazione" class="px-4 py-2 border-b lg:table-cell mobile-hidden">
+                                {{ tour.creation_time|date:"d, F Y" }}
+                            </td>
+
+                            <td data-label="Utente" class="px-4 py-2 border-b lg:table-cell mobile-hidden">
+                                {{ tour.user }}
+                            </td>
+
+                            <td data-label="Status" class="px-4 py-2 border-b">
+                                <span class="{% if tour.status == 'READY' %}text-green-600{% elif tour.status == 'BUILDING' %}text-yellow-600{% else %}text-gray-600{% endif %}">
+                                    {{ tour.status }}
+                                </span>
+                            </td>
+
+                            <td data-label="Immagine" class="px-4 py-2 border-b md:table-cell mobile-hidden">
+                                <img data-tour-id="{{ tour.id }}" data-filename="{{ tour.default_image.name|urlencode }}" src="/static/images/placeholder.jpg" alt="loading" class="w-16 h-16 object-cover rounded tour-image">
+                            </td>
+
+                            <td data-label="Review" class="px-4 py-2 border-b md:table-cell mobile-hidden">
+                                {{ tour.review_count }}
+                            </td>
+
+                            <td data-label="Media Rating" class="px-4 py-2 border-b md:table-cell mobile-hidden">
+                                {% if tour.avg_rating %}
+                                    {{ tour.avg_rating|floatformat:1 }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+
+                            <td data-label="Azioni" class="px-4 py-2 border-b">
+                                <div class="button-group">
+                                    {% if tour.status == "READY" and tour.user == request.user %}
+                                        <form method="post" action="{% url 'build' %}" class="flex flex-col md:flex-row gap-2">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="tour_id" value="{{ tour.pk }}">
+                                            <button type="submit" class="relative z-10 inline-flex items-center justify-center rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white shadow hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1">
+                                                Addestra il modello
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for tour in tours %}
-                                <tr>
-                                    <td data-label="Titolo" class="px-4 py-2 border-b">{{ tour.title }}</td>
-
-                                    <td data-label="Descrizione" class="px-4 py-2 border-b md:table-cell mobile-hidden">
-                                        {{ tour.description|default:"N/A"|truncatechars:30 }}
-                                    </td>
-
-                                    <td data-label="Data" class="px-4 py-2 border-b lg:table-cell mobile-hidden">
-                                        {{ tour.creation_time|date:"d, F Y"}}
-                                    </td>
-
-                                    <td data-label="creator" class="px-4 py-2 border-b lg:table-cell mobile-hidden">
-                                        {{ tour.user }}
-                                    </td>
-
-                                    <td data-label="Stato" class="px-4 py-2 border-b">
-                                        <span class="{% if tour.status == 'READY' %}text-green-600{% elif tour.status == 'BUILDING' %}text-yellow-600{% else %}text-gray-600{% endif %}">
-                                            {{ tour.status }}
-                                        </span>
-                                    </td>
-
-                                    <td data-label="Immagine" class="px-4 py-2 border-b md:table-cell mobile-hidden">
-                                        <img data-tour-id="{{ tour.id }}" data-filename="{{ tour.default_image.name|urlencode }}" src="/static/images/placeholder.jpg" alt="loading" class="w-16 h-16 object-cover rounded tour-image">
-                                    </td>
-
-                                    <td data-label="Azioni" class="px-4 py-2 border-b">
-                                        <div class="button-group">
-                                            {% if tour.status == "READY" and tour.user == request.user %}
-                                                <form method="post" action="{% url 'build' %}" class="flex flex-col md:flex-row gap-2">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="tour_id" value="{{ tour.pk }}">
-                                                    <button type="submit" class="relative z-10 inline-flex items-center justify-center rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white shadow hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1">
-                                                        Addestra il modello
-                                                    </button>
-                                                </form>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% endcomponent %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endcomponent %}
+{% endcomponent %}
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll("img.tour-image").forEach(function (img) {
-                const tourId = img.dataset.tourId;
-                const filename = img.dataset.filename;
-                console.log(tourId);
-                const filenameSplit = filename.split("/");
-                const filenameOnly = filenameSplit[filenameSplit.length - 1];
-                console.log(filenameOnly);
-                if (tourId && filename) {
-                    const url = `/stream_minio_resource/?tour=${tourId}&file=${filenameOnly}`;
-
-                    fetch(url)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error("Errore caricamento immagine");
-                            }
-                            return response.blob();
-                        })
-                        .then(blob => {
-                            img.src = URL.createObjectURL(blob);
-                        })
-                        .catch(error => {
-                            console.error("Errore immagine tour:", error);
-                            img.alt = "Errore immagine";
-                        });
-                }
-            });
-        });
-    </script>
-
-    
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("img.tour-image").forEach(function (img) {
+        const tourId = img.dataset.tourId;
+        const filename = img.dataset.filename;
+        if (tourId && filename) {
+            const filenameOnly = filename.split("/").pop();
+            const url = `/stream_minio_resource/?tour=${tourId}&file=${filenameOnly}`;
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error("Errore caricamento immagine");
+                    return response.blob();
+                })
+                .then(blob => { img.src = URL.createObjectURL(blob); })
+                .catch(err => { console.error("Errore immagine tour:", err); img.alt="Errore immagine"; });
+        }
+    });
+});
+</script>
 {% endblock %}
