@@ -24,6 +24,10 @@ def build(request):
         tour = Tour.objects.get(pk=tour_id)
     except Tour.DoesNotExist as e:
         print(f"This tour: {tour_id} does not exist")
+    
+    if tour.user != request.user:
+        return JsonResponse({"message": "You are not authorized to build this tour"}, status=403)
+    
     if tour.status == "READY":
         tour.status = "ENQUEUED"
         tour.save()

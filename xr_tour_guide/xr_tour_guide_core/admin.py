@@ -14,7 +14,8 @@ from django.contrib.auth.admin import UserAdmin
 from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.db import models
-
+from django.urls import reverse
+from django.middleware.csrf import get_token
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -142,6 +143,9 @@ class TourForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+        self.fields['sub_tours'].widget.attrs.update({
+            'class': 'unfold-multiselect flex flex-col gap-2 p-2 border rounded-lg bg-white shadow-sm'
+        })
 
         if request and "_popup" in request.GET:
             self.fields['category'].initial = 'INSIDE'
@@ -151,7 +155,7 @@ class TourForm(forms.ModelForm):
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours', 'is_subtour')
-    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
+    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status', 'build_tour')
     readonly_fields = ['user', 'creation_time']
     list_filter = ['user', 'category', 'place']
     search_fields = ('title', 'description')
