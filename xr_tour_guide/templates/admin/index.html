@@ -431,6 +431,11 @@
                     Addestra Modello
                 </button>
             </form>
+            <br>
+            <a href="/admin/xr_tour_guide_core/tour/{{ tour.pk }}/change/" class="tour-action-btn btn-primary">
+                <i data-lucide="eye" width="18" height="18"></i>
+                Visualizza Tour
+            </a>
             {% elif tour.status == "BUILDING" %}
             <button class="tour-action-btn btn-disabled" disabled>
                 <i data-lucide="loader" width="18" height="18"></i>
