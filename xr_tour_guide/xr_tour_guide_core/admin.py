@@ -139,6 +139,9 @@ class TourForm(forms.ModelForm):
             'is_subtour': forms.HiddenInput(),
             'sub_tours': forms.CheckboxSelectMultiple(),
         }
+        labels = {
+            'sub_tours': 'Tour interni',
+        }
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop("request", None)
