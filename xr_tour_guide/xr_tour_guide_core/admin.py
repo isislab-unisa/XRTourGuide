@@ -179,6 +179,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
               'admin/js/init_markdown_editor.js',
               'admin/js/hide_waypoint_coordinates.js',
               'admin/js/refresh_subtours_checkboxes.js',
+              'admin/js/loader.js'
             ]
         
     def get_form(self, request, obj=None, **kwargs):

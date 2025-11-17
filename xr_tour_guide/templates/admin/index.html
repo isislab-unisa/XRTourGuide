@@ -8,143 +8,459 @@
 {% endblock %}
 
 {% block extrahead %}
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-        });
-    </script>
-    <style>
-        @media (max-width: 768px) {
-            .responsive-table thead {
-                display: none;
-            }
+<!-- Lucide Icons CDN -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        lucide.createIcons();
+    });
+</script>
+<style>
+:root {
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+}
 
-            .responsive-table tr {
-                display: block;
-                margin-bottom: 1rem;
-                border: 1px solid #e2e8f0;
-                border-radius: 0.375rem;
-            }
+.dashboard-header {
+    margin-bottom: 2rem;
+    animation: fadeInDown 0.5s ease-out;
+}
 
-            .responsive-table td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.5rem 1rem;
-                border-bottom: 1px solid #e2e8f0;
-            }
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+}
 
-            .responsive-table td:before {
-                content: attr(data-label);
-                font-weight: 600;
-                margin-right: 1rem;
-                color: #4a5568;
-            }
+.dark .dashboard-title {
+    color: #f9fafb;
+}
 
-            .mobile-hidden {
-                display: none;
-            }
+.dashboard-subtitle {
+    color: var(--gray-700);
+    font-size: 1rem;
+}
 
-            .button-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
+.dark .dashboard-subtitle {
+    color: #d1d5db;
+}
 
-            .button-group button,
-            .button-group select {
-                width: 100%;
-            }
-        }
-    </style>
+.tours-grid {
+    display: grid;
+    gap: 1.5rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.tour-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid var(--gray-200);
+}
+
+.dark .tour-card {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.tour-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.tour-card-header {
+    position: relative;
+    height: 200px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+}
+
+.tour-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.tour-card:hover .tour-image {
+    transform: scale(1.05);
+}
+
+.tour-status-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.status-ready {
+    background: rgba(16, 185, 129, 0.9);
+    color: white;
+}
+
+.status-building {
+    background: rgba(245, 158, 11, 0.9);
+    color: white;
+}
+
+.status-default {
+    background: rgba(107, 114, 128, 0.9);
+    color: white;
+}
+
+.tour-card-body {
+    padding: 1.5rem;
+}
+
+.tour-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.dark .tour-title {
+    color: #f9fafb;
+}
+
+.tour-description {
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.dark .tour-description {
+    color: #d1d5db;
+}
+
+.tour-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.dark .tour-meta {
+    border-color: var(--gray-700);
+}
+
+.tour-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.tour-meta-label {
+    font-size: 0.75rem;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.dark .tour-meta-label {
+    color: #9ca3af;
+}
+
+.tour-meta-value {
+    font-size: 0.875rem;
+    color: var(--gray-900);
+    font-weight: 500;
+}
+
+.dark .tour-meta-value {
+    color: #f9fafb;
+}
+
+.tour-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--gray-50);
+    border-radius: 0.5rem;
+    flex: 1;
+}
+
+.dark .stat-item {
+    background: var(--gray-900);
+}
+
+.stat-icon {
+    color: var(--primary);
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.dark .stat-value {
+    color: #f9fafb;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--gray-700);
+}
+
+.dark .stat-label {
+    color: #9ca3af;
+}
+
+.tour-action-btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-disabled {
+    background: var(--gray-200);
+    color: var(--gray-700);
+    cursor: not-allowed;
+}
+
+.dark .btn-disabled {
+    background: var(--gray-700);
+    color: #9ca3af;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--gray-700);
+}
+
+.dark .empty-state {
+    color: #9ca3af;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Grid */
+@media (min-width: 640px) {
+    .tours-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .tours-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .tours-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
 {% component "unfold/components/container.html" %}
 
-    {% component "unfold/components/card.html" with title="Tour" class="p-6 shadow-sm hover:shadow-md transition-shadow" %}
-        <div class="w-full overflow-x-auto">
-            <table class="min-w-full responsive-table">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2 text-left">Titolo</th>
-                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Descrizione</th>
-                        <th class="px-4 py-2 text-left lg:table-cell mobile-hidden">Data creazione</th>
-                        <th class="px-4 py-2 text-left">Utente</th>
-                        <th class="px-4 py-2 text-left">Status</th>
-                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Immagine</th>
-                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Review</th>
-                        <th class="px-4 py-2 text-left md:table-cell mobile-hidden">Media Rating</th>
-                        <th class="px-4 py-2 text-left">Azioni</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for tour in tours %}
-                        <tr>
-                            <td data-label="Titolo" class="px-4 py-2 border-b">{{ tour.title }}</td>
+<div class="dashboard-header">
+    <h1 class="dashboard-title">I tuoi Tour</h1>
+    <p class="dashboard-subtitle">Gestisci e monitora i tuoi tour virtuali</p>
+</div>
 
-                            <td data-label="Descrizione" class="px-4 py-2 border-b md:table-cell mobile-hidden">
-                                {{ tour.description|default:"N/A"|truncatechars:30 }}
-                            </td>
-
-                            <td data-label="Data creazione" class="px-4 py-2 border-b lg:table-cell mobile-hidden">
-                                {{ tour.creation_time|date:"d, F Y" }}
-                            </td>
-
-                            <td data-label="Utente" class="px-4 py-2 border-b lg:table-cell mobile-hidden">
-                                {{ tour.user }}
-                            </td>
-
-                            <td data-label="Status" class="px-4 py-2 border-b">
-                                <span class="{% if tour.status == 'READY' %}text-green-600{% elif tour.status == 'BUILDING' %}text-yellow-600{% else %}text-gray-600{% endif %}">
-                                    {{ tour.status }}
-                                </span>
-                            </td>
-
-                            <td data-label="Immagine" class="px-4 py-2 border-b md:table-cell mobile-hidden">
-                                <img data-tour-id="{{ tour.id }}" data-filename="{{ tour.default_image.name|urlencode }}" src="/static/images/placeholder.jpg" alt="loading" class="w-16 h-16 object-cover rounded tour-image">
-                            </td>
-
-                            <td data-label="Review" class="px-4 py-2 border-b md:table-cell mobile-hidden">
-                                {{ tour.review_count }}
-                            </td>
-
-                            <td data-label="Media Rating" class="px-4 py-2 border-b md:table-cell mobile-hidden">
-                                {% if tour.avg_rating %}
-                                    {{ tour.avg_rating|floatformat:1 }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </td>
-
-                            <td data-label="Azioni" class="px-4 py-2 border-b">
-                                <div class="button-group">
-                                    {% if tour.status == "READY" and tour.user == request.user %}
-                                        <form method="post" action="{% url 'build' %}" class="flex flex-col md:flex-row gap-2">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="tour_id" value="{{ tour.pk }}">
-                                            <button type="submit" class="relative z-10 inline-flex items-center justify-center rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white shadow hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1">
-                                                Addestra il modello
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        <span class="text-gray-400">N/A</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{% if tours %}
+<div class="tours-grid">
+    {% for tour in tours %}
+    <div class="tour-card">
+        <div class="tour-card-header">
+            <img data-tour-id="{{ tour.id }}" 
+                 data-filename="{{ tour.default_image.name|urlencode }}" 
+                 src="/static/images/placeholder.jpg" 
+                 alt="{{ tour.title }}" 
+                 class="tour-image">
+            <div class="tour-status-badge 
+                {% if tour.status == 'READY' %}status-ready
+                {% elif tour.status == 'BUILDING' %}status-building
+                {% else %}status-default
+                {% endif %}">
+                {{ tour.status }}
+            </div>
         </div>
-    {% endcomponent %}
+        
+        <div class="tour-card-body">
+            <h3 class="tour-title">{{ tour.title }}</h3>
+            <p class="tour-description">
+                {{ tour.description|default:"Nessuna descrizione disponibile" }}
+            </p>
+            
+            <div class="tour-stats">
+                <div class="stat-item">
+                    <i data-lucide="star" class="stat-icon" width="20" height="20"></i>
+                    <div class="stat-content">
+                        <span class="stat-value">
+                            {% if tour.avg_rating %}
+                                {{ tour.avg_rating|floatformat:1 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </span>
+                        <span class="stat-label">Rating</span>
+                    </div>
+                </div>
+                
+                <div class="stat-item">
+                    <i data-lucide="message-circle" class="stat-icon" width="20" height="20"></i>
+                    <div class="stat-content">
+                        <span class="stat-value">{{ tour.review_count }}</span>
+                        <span class="stat-label">Review</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tour-meta">
+                <div class="tour-meta-item">
+                    <span class="tour-meta-label">Creato il</span>
+                    <span class="tour-meta-value">{{ tour.creation_time|date:"d M Y" }}</span>
+                </div>
+                <div class="tour-meta-item">
+                    <span class="tour-meta-label">Utente</span>
+                    <span class="tour-meta-value">{{ tour.user }}</span>
+                </div>
+            </div>
+            
+            {% if tour.status == "READY" and tour.user == request.user %}
+            <form method="post" action="{% url 'build' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tour_id" value="{{ tour.pk }}">
+                <button type="submit" class="tour-action-btn btn-warning">
+                    <i data-lucide="cpu" width="18" height="18"></i>
+                    Addestra Modello
+                </button>
+            </form>
+            {% elif tour.status == "BUILDING" %}
+            <button class="tour-action-btn btn-disabled" disabled>
+                <i data-lucide="loader" width="18" height="18"></i>
+                In Costruzione...
+            </button>
+            {% else %}
+            <a href="/admin/xr_tour_guide_core/tour/{{ tour.pk }}/change/" class="tour-action-btn btn-primary">
+                <i data-lucide="eye" width="18" height="18"></i>
+                Visualizza Tour
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i data-lucide="map" width="80" height="80"></i>
+    </div>
+    <h2>Nessun tour disponibile</h2>
+    <p>Inizia creando il tuo primo tour virtuale</p>
+</div>
+{% endif %}
+
 {% endcomponent %}
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("img.tour-image").forEach(function (img) {
+    document.querySelectorAll("img[data-tour-id]").forEach(function (img) {
         const tourId = img.dataset.tourId;
         const filename = img.dataset.filename;
         if (tourId && filename) {
@@ -155,10 +471,17 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (!response.ok) throw new Error("Errore caricamento immagine");
                     return response.blob();
                 })
-                .then(blob => { img.src = URL.createObjectURL(blob); })
-                .catch(err => { console.error("Errore immagine tour:", err); img.alt="Errore immagine"; });
+                .then(blob => { 
+                    img.src = URL.createObjectURL(blob);
+                })
+                .catch(err => { 
+                    console.error("Errore immagine tour:", err);
+                    img.alt = "Errore immagine";
+                });
         }
     });
+    
+    lucide.createIcons();
 });
 </script>
 {% endblock %}

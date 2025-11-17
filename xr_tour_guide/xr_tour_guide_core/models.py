@@ -76,7 +76,7 @@ class TourQuerySet(models.QuerySet):
         super().delete(*args, **kwargs)
 
 class Tour(models.Model):
-    title = models.CharField(max_length=200, blank=False, null=False, unique=True)
+    title = models.CharField(max_length=200, blank=False, null=False, unique=False)
     subtitle = models.CharField(max_length=200, blank=True, null=True)
     place = models.CharField(max_length=200, blank=True, null=True)
     coordinates = PlainLocationField(zoom=7, null=True, blank=True, based_fields=['place'])
