@@ -351,6 +351,31 @@
         grid-template-columns: repeat(4, 1fr);
     }
 }
+
+.pagination {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.pagination-btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: #f0f0f0;
+    color: #333;
+    margin: 0 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background .2s;
+}
+
+.pagination-btn:hover {
+    background: #ddd;
+}
+
+.current {
+    margin: 0 10px;
+    font-weight: bold;
+}
 </style>
 {% endblock %}
 
@@ -366,28 +391,32 @@
 <div class="tours-grid">
     {% for tour in tours %}
     <div class="tour-card">
+
         <div class="tour-card-header">
-            <img data-tour-id="{{ tour.id }}" 
-                 data-filename="{{ tour.default_image.name|urlencode }}" 
-                 src="/static/images/placeholder.jpg" 
-                 alt="{{ tour.title }}" 
+            <img data-tour-id="{{ tour.id }}"
+                 data-filename="{{ tour.default_image.name|urlencode }}"
+                 src="/static/images/placeholder.jpg"
+                 alt="{{ tour.title }}"
                  class="tour-image">
-            <div class="tour-status-badge 
-                {% if tour.status == 'READY' %}status-ready
-                {% elif tour.status == 'BUILDING' %}status-building
-                {% else %}status-default
+
+            <div class="tour-status-badge
+                {% if tour.status == 'READY' %} status-ready
+                {% elif tour.status == 'BUILDING' %} status-building
+                {% else %} status-default
                 {% endif %}">
                 {{ tour.status }}
             </div>
         </div>
-        
+
         <div class="tour-card-body">
             <h3 class="tour-title">{{ tour.title }}</h3>
+
             <p class="tour-description">
                 {{ tour.description|default:"Nessuna descrizione disponibile" }}
             </p>
-            
+
             <div class="tour-stats">
+
                 <div class="stat-item">
                     <i data-lucide="star" class="stat-icon" width="20" height="20"></i>
                     <div class="stat-content">
@@ -401,7 +430,7 @@
                         <span class="stat-label">Rating</span>
                     </div>
                 </div>
-                
+
                 <div class="stat-item">
                     <i data-lucide="message-circle" class="stat-icon" width="20" height="20"></i>
                     <div class="stat-content">
@@ -409,8 +438,9 @@
                         <span class="stat-label">Review</span>
                     </div>
                 </div>
+
             </div>
-            
+
             <div class="tour-meta">
                 <div class="tour-meta-item">
                     <span class="tour-meta-label">Creato il</span>
@@ -421,37 +451,64 @@
                     <span class="tour-meta-value">{{ tour.user }}</span>
                 </div>
             </div>
-            
+
             {% if tour.status == "READY" and tour.user == request.user %}
-            <form method="post" action="{% url 'build' %}">
-                {% csrf_token %}
-                <input type="hidden" name="tour_id" value="{{ tour.pk }}">
-                <button type="submit" class="tour-action-btn btn-warning">
-                    <i data-lucide="cpu" width="18" height="18"></i>
-                    Addestra Modello
-                </button>
-            </form>
-            <br>
-            <a href="/admin/xr_tour_guide_core/tour/{{ tour.pk }}/change/" class="tour-action-btn btn-primary">
-                <i data-lucide="eye" width="18" height="18"></i>
-                Visualizza Tour
-            </a>
+                <form method="post" action="{% url 'build' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="tour_id" value="{{ tour.pk }}">
+                    <button type="submit" class="tour-action-btn btn-warning">
+                        <i data-lucide="cpu" width="18" height="18"></i>
+                        Addestra Modello
+                    </button>
+                </form>
+                <br>
+                <a href="/admin/xr_tour_guide_core/tour/{{ tour.pk }}/change/"
+                   class="tour-action-btn btn-primary">
+                    <i data-lucide="eye" width="18" height="18"></i>
+                    Visualizza Tour
+                </a>
+
             {% elif tour.status == "BUILDING" %}
-            <button class="tour-action-btn btn-disabled" disabled>
-                <i data-lucide="loader" width="18" height="18"></i>
-                In Costruzione...
-            </button>
+                <button class="tour-action-btn btn-disabled" disabled>
+                    <i data-lucide="loader" width="18" height="18"></i>
+                    In Costruzione...
+                </button>
+
             {% else %}
-            <a href="/admin/xr_tour_guide_core/tour/{{ tour.pk }}/change/" class="tour-action-btn btn-primary">
-                <i data-lucide="eye" width="18" height="18"></i>
-                Visualizza Tour
-            </a>
+                <a href="/admin/xr_tour_guide_core/tour/{{ tour.pk }}/change/"
+                   class="tour-action-btn btn-primary">
+                    <i data-lucide="eye" width="18" height="18"></i>
+                    Visualizza Tour
+                </a>
             {% endif %}
+
         </div>
     </div>
     {% endfor %}
 </div>
+
+<div class="pagination">
+    <span class="step-links">
+
+        {% if tours.has_previous %}
+            <a class="pagination-btn" href="?page=1">&laquo; First</a>
+            <a class="pagination-btn" href="?page={{ tours.previous_page_number }}">‹ Prev</a>
+        {% endif %}
+
+        <span class="current">
+            Pagina {{ tours.number }} di {{ tours.paginator.num_pages }}
+        </span>
+
+        {% if tours.has_next %}
+            <a class="pagination-btn" href="?page={{ tours.next_page_number }}">Next ›</a>
+            <a class="pagination-btn" href="?page={{ tours.paginator.num_pages }}">Last &raquo;</a>
+        {% endif %}
+
+    </span>
+</div>
+
 {% else %}
+
 <div class="empty-state">
     <div class="empty-state-icon">
         <i data-lucide="map" width="80" height="80"></i>
@@ -459,9 +516,37 @@
     <h2>Nessun tour disponibile</h2>
     <p>Inizia creando il tuo primo tour virtuale</p>
 </div>
+
 {% endif %}
 
 {% endcomponent %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("img[data-tour-id]").forEach(function (img) {
+        const tourId = img.dataset.tourId;
+        const filename = img.dataset.filename;
+
+        if (tourId && filename) {
+            const filenameOnly = filename.split("/").pop();
+            const url = `/stream_minio_resource/?tour=${tourId}&file=${filenameOnly}`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error("Errore caricamento immagine");
+                    return response.blob();
+                })
+                .then(blob => img.src = URL.createObjectURL(blob))
+                .catch(err => {
+                    console.error("Errore immagine tour:", err);
+                    img.alt = "Errore immagine";
+                });
+        }
+    });
+
+    lucide.createIcons();
+});
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

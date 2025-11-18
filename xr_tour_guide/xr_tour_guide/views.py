@@ -4,6 +4,7 @@ from django.views.generic import TemplateView
 from unfold.views import UnfoldModelAdminViewMixin
 from xr_tour_guide_core.models import Tour, Review
 from django.db.models import Avg, Count
+from django.core.paginator import Paginator
 
 
 admin.site.index_title = 'Dashboard'
@@ -23,8 +24,12 @@ def dashboard_callback(request, context):
         subtour_count=Count('sub_tours')
     )
 
+    paginator = Paginator(user_tours, 4)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     context.update({
-        "tours": user_tours,
+        "tours": page_obj,
         "reviews": reviews,
         "tour_stats": tour_stats,
     })

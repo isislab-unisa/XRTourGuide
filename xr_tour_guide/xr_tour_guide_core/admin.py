@@ -110,7 +110,7 @@ class UnfoldNestedTabularInline(UnfoldStackedInline, nested_admin.NestedTabularI
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
-    extra = 0
+    extra = 1
     
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
@@ -157,6 +157,9 @@ class TourForm(forms.ModelForm):
             self.fields['is_subtour'].initial = True
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
+    show_facets = admin.ShowFacets.ALLOW
+    hide_ordering_field = True
+    compressed_fields = True
     fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours', 'is_subtour')
     list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
     readonly_fields = ['user', 'creation_time']
