@@ -7,12 +7,10 @@ from sqlalchemy.orm import Session
 import model.models as models
 from model.database import SessionLocal, engine
 import dotenv
-from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request as FastAPIRequest
-from fastapi.responses import RedirectResponse
-
+import httpx
 
 dotenv.load_dotenv()
 
@@ -30,7 +28,7 @@ async def lifespan(app: FastAPI):
             existing_user = db.query(models.User).filter(models.User.email == default_email).first()
             if not existing_user:
                 new_user = models.User(
-                    name=default_name,
+                    username=default_name,
                     email=default_email,
                 )
                 new_user.set_password(default_password)
@@ -101,7 +99,7 @@ async def login(
     services = db.query(models.Services).all()
     return templates.TemplateResponse(
         "home.html",
-        {"request": request, "message": f"Welcome {user.name}!", "services": services})
+        {"request": request, "message": f"Welcome {user.username}!", "services": services})
 
 @app.get("/register_service")
 def register_service(request: Request):
@@ -158,7 +156,19 @@ def status_service(service_id: int, request: Request, db: Session = Depends(get_
 
 @app.get("/get_services/")
 async def get_services(db: Session = Depends(get_db)):
-    return db.query(models.Services).filter(models.Services.active == True).all()
+    services = db.query(models.Services).filter(models.Services.active == True).all()
+
+    async with httpx.AsyncClient() as client:
+        results = []
+        for s in services:
+            try:
+                r = await client.get(s.domain)
+                if r.status_code == 200:
+                    results.append(s)
+            except Exception:
+                pass
+
+    return results
 
 @app.get("/get_service/{service_id}")
 async def get_service(service_id: int, db: Session = Depends(get_db)):
