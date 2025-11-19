@@ -4,105 +4,431 @@
 
 <style>
     body {
-        background-color: #f4f6f9;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    /* Override any base template styles */
+    body > * {
+        margin: 0 auto;
+    }
+
+    body::before {
+        content: "";
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        top: -200px;
+        right: -150px;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    body::after {
+        content: "";
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        bottom: -100px;
+        left: -100px;
+        animation: float 15s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) translateX(0px); }
+        50% { transform: translateY(-30px) translateX(20px); }
+    }
+
+    .form-container {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: 550px;
+        animation: slideUp 0.6s ease-out;
+        margin: auto;
+        padding: 40px 20px;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .form-section {
-        max-width: 600px;
-        margin: 60px auto;
-        padding: 40px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        font-family: 'Segoe UI', sans-serif;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 50px 45px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
-    .form-section h2 {
-        margin-bottom: 25px;
+    .form-header {
         text-align: center;
-        font-weight: 600;
-        color: #343a40;
+        margin-bottom: 35px;
+    }
+
+    .form-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+    }
+
+    .form-header p {
+        color: #718096;
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        position: relative;
     }
 
     .form-label {
-        font-weight: 500;
-        color: #333;
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        display: block;
     }
 
     .form-control {
-        border-radius: 8px;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        padding: 14px 16px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        background: white;
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: #a0aec0;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .required-fields {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #718096;
+        margin-bottom: 25px;
+        font-style: italic;
     }
 
     .btn-primary {
-        background: linear-gradient(to right, #007bff, #6610f2);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
-        border-radius: 8px;
-        padding: 12px;
-        font-weight: bold;
+        border-radius: 12px;
+        padding: 16px;
+        font-weight: 700;
+        font-size: 1.05rem;
         letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
     }
 
     .btn-primary:hover {
-        background: linear-gradient(to right, #0056b3, #520dc2);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
     }
 
     .form-message {
+        padding: 12px 16px;
+        border-radius: 10px;
         font-size: 0.95rem;
-        margin-top: 10px;
+        margin-bottom: 20px;
+        font-weight: 500;
+        text-align: center;
+        animation: messageSlide 0.4s ease-out;
+    }
+
+    @keyframes messageSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .text-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .text-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .login-link {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .login-link p {
+        color: #718096;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .login-link a {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .login-link a:hover {
+        color: #5568d3;
+        text-decoration: underline;
+    }
+
+    .input-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+        font-size: 1.1rem;
+        pointer-events: none;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #718096;
+        font-size: 1.1rem;
+        user-select: none;
+        transition: color 0.3s ease;
+    }
+
+    .password-toggle:hover {
+        color: #667eea;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    /* Loading spinner */
+    .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-section {
+            padding: 40px 30px;
+        }
+
+        .form-header h2 {
+            font-size: 1.6rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .form-container {
+            padding: 30px 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-container {
+            padding: 20px 15px;
+        }
+
+        .form-section {
+            padding: 35px 25px;
+        }
+
+        .form-header h2 {
+            font-size: 1.5rem;
+        }
     }
 </style>
 
-<section class="form-section">
-    <h2>✨ Crea il tuo account</h2>
-    <form id="register-form">
-        <div class="mb-3">
-            <label for="username" class="form-label">Username*</label>
-            <input type="text" class="form-control" id="username" placeholder="es. mariorossi" required>
+<div class="form-container">
+    <section class="form-section">
+        <div class="form-header">
+            <h2>✨ Crea il tuo account</h2>
+            <p>Inizia la tua esperienza con XR Tour Guide</p>
         </div>
-        <div class="mb-3">
-            <label for="email" class="form-label">Email*</label>
-            <input type="email" class="form-control" id="email" placeholder="esempio@mail.com" required>
+
+        <form id="register-form">
+            <div id="register-message" class="form-message" style="display: none;"></div>
+
+            <div class="form-group">
+                <label for="username" class="form-label">Username*</label>
+                <input type="text" class="form-control" id="username" placeholder="es. mariorossi" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">Email*</label>
+                <input type="email" class="form-control" id="email" placeholder="esempio@mail.com" required>
+            </div>
+
+            <div class="form-group" style="position: relative;">
+                <label for="password" class="form-label">Password*</label>
+                <input type="password" class="form-control" id="password" placeholder="Minimo 8 caratteri" required>
+                <span class="password-toggle" onclick="togglePassword()">👁️</span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="first_name" placeholder="Mario">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name" class="form-label">Cognome</label>
+                    <input type="text" class="form-control" id="last_name" placeholder="Rossi">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="city" class="form-label">Città</label>
+                <input type="text" class="form-control" id="city" placeholder="Roma">
+            </div>
+
+            <div class="form-group">
+                <label for="description" class="form-label">Descrizione</label>
+                <textarea class="form-control" id="description" rows="3" placeholder="Parlaci un po' di te..."></textarea>
+            </div>
+
+            <p class="required-fields">* Campi obbligatori</p>
+
+            <button type="submit" class="btn btn-primary w-100" id="submit-btn">
+                <span id="btn-text">Registrati</span>
+            </button>
+        </form>
+
+        <div class="login-link">
+            <p>Hai già un account? <a href="{% url 'account_login' %}">Accedi qui</a></p>
         </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Password*</label>
-            <input type="password" class="form-control" id="password" required>
-        </div>
-        <div class="mb-3">
-            <label for="first_name" class="form-label">Nome</label>
-            <input type="text" class="form-control" id="first_name">
-        </div>
-        <div class="mb-3">
-            <label for="last_name" class="form-label">Cognome</label>
-            <input type="text" class="form-control" id="last_name">
-        </div>
-        <div class="mb-3">
-            <label for="city" class="form-label">Città</label>
-            <input type="text" class="form-control" id="city">
-        </div>
-        <div class="mb-3">
-            <label for="description" class="form-label">Descrizione</label>
-            <textarea class="form-control" id="description" rows="3"></textarea>
-        </div>
-        <div id="register-message" class="form-message text-center fw-bold"></div>
-        <button type="submit" class="btn btn-primary w-100 mt-3">Registrati</button>
-    </form>
-</section>
+    </section>
+</div>
 
 <script>
+function togglePassword() {
+    const passwordInput = document.getElementById("password");
+    const toggle = document.querySelector(".password-toggle");
+    
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggle.textContent = "🙈";
+    } else {
+        passwordInput.type = "password";
+        toggle.textContent = "👁️";
+    }
+}
+
 document.getElementById("register-form").addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    const submitBtn = document.getElementById("submit-btn");
+    const btnText = document.getElementById("btn-text");
+    const messageBox = document.getElementById("register-message");
+
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span>Registrazione in corso...';
+
     const data = {
-        username: document.getElementById("username").value,
-        email: document.getElementById("email").value,
+        username: document.getElementById("username").value.trim(),
+        email: document.getElementById("email").value.trim(),
         password: document.getElementById("password").value,
-        first_name: document.getElementById("first_name").value,
-        last_name: document.getElementById("last_name").value,
-        city: document.getElementById("city").value,
-        description: document.getElementById("description").value,
+        first_name: document.getElementById("first_name").value.trim(),
+        last_name: document.getElementById("last_name").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        description: document.getElementById("description").value.trim(),
     };
 
-    const messageBox = document.getElementById("register-message");
+    // Reset message
+    messageBox.style.display = "none";
     messageBox.textContent = "";
     messageBox.classList.remove("text-danger", "text-success");
 
@@ -117,21 +443,65 @@ document.getElementById("register-form").addEventListener("submit", async functi
         });
 
         if (response.status === 201) {
-            messageBox.textContent = "Registrazione completata! Reindirizzamento in corso...";
+            messageBox.textContent = "✅ Registrazione completata! Reindirizzamento in corso...";
             messageBox.classList.add("text-success");
+            messageBox.style.display = "block";
 
             setTimeout(() => {
                 window.location.href = "{% url 'landing_page' %}";
             }, 2000);
         } else {
             const errorData = await response.json();
-            messageBox.textContent = Object.values(errorData).flat().join(" ");
+            let errorMessage = "";
+            
+            // Format error messages nicely
+            if (typeof errorData === 'object') {
+                errorMessage = Object.entries(errorData)
+                    .map(([field, messages]) => {
+                        const fieldName = field === 'username' ? 'Username' :
+                                        field === 'email' ? 'Email' :
+                                        field === 'password' ? 'Password' : field;
+                        return `${fieldName}: ${Array.isArray(messages) ? messages.join(' ') : messages}`;
+                    })
+                    .join('\n');
+            } else {
+                errorMessage = errorData;
+            }
+
+            messageBox.textContent = "❌ " + errorMessage;
             messageBox.classList.add("text-danger");
+            messageBox.style.display = "block";
+
+            // Re-enable button
+            submitBtn.disabled = false;
+            btnText.textContent = "Registrati";
         }
     } catch (error) {
-        messageBox.textContent = "Errore di rete. Riprova.";
+        messageBox.textContent = "❌ Errore di rete. Controlla la connessione e riprova.";
         messageBox.classList.add("text-danger");
+        messageBox.style.display = "block";
+
+        // Re-enable button
+        submitBtn.disabled = false;
+        btnText.textContent = "Registrati";
     }
+});
+
+// Add input validation feedback
+document.querySelectorAll('.form-control').forEach(input => {
+    input.addEventListener('blur', function() {
+        if (this.hasAttribute('required') && !this.value.trim()) {
+            this.style.borderColor = '#fc8181';
+        } else {
+            this.style.borderColor = '#e2e8f0';
+        }
+    });
+
+    input.addEventListener('input', function() {
+        if (this.style.borderColor === 'rgb(252, 129, 129)') {
+            this.style.borderColor = '#e2e8f0';
+        }
+    });
 });
 </script>
 

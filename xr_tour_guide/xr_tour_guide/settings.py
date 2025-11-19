@@ -225,6 +225,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'it'
+LANGUAGES = [
+    ('it', 'Italiano'),
+    ('en', 'English'),
+]
 
 TIME_ZONE = 'UTC'
 

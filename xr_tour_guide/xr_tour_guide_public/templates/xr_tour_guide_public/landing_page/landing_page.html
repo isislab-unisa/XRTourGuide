@@ -2,149 +2,471 @@
 {% block public_content %}
 
 <style>
+    /* --- GENERALE --- */
+    body {
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5 {
+        font-weight: 700;
+    }
+
+    p {
+        color: #555;
+        line-height: 1.7;
+    }
+
+    .section {
+        padding: 100px 20px;
+    }
+
+    /* --- HERO --- */
     .hero {
-        padding: 60px 20px;
-        background: linear-gradient(to right, #007bff, #6610f2);
+        min-height: 100vh;
+        padding: 140px 20px 100px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
         color: white;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero::before {
+        content: "";
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        top: -300px;
+        right: -200px;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .hero::after {
+        content: "";
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        bottom: -150px;
+        left: -100px;
+        animation: float 15s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) translateX(0px); }
+        50% { transform: translateY(-30px) translateX(20px); }
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 900px;
+        animation: fadeInUp 1s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .hero h1 {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        text-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        letter-spacing: -1px;
+    }
+
+    .hero p {
+        font-size: 1.4rem;
+        opacity: 0.95;
+        margin-top: 15px;
+        color: rgba(255,255,255,0.95);
+        font-weight: 300;
+    }
+
+    .hero-cta {
+        margin-top: 40px;
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-hero {
+        padding: 16px 40px;
+        font-size: 1.15rem;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .btn-hero-primary {
+        background: white;
+        color: #667eea;
+    }
+
+    .btn-hero-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+        background: #f8f9fa;
+    }
+
+    .btn-hero-secondary {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-hero-secondary:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-3px);
+    }
+
+    /* --- FEATURES --- */
+    .features {
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fb 100%);
         text-align: center;
     }
 
-    .features {
-        padding: 40px 20px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-around;
-        gap: 30px;
-        background-color: #f9f9f9;
+    .features h2 {
+        font-size: 2.8rem;
+        margin-bottom: 60px;
+        color: #2d3748;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
     }
 
     .feature-card {
-        flex: 1 1 280px;
         background: white;
-        border-radius: 10px;
-        padding: 30px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-        transition: transform 0.2s ease;
+        border-radius: 20px;
+        padding: 45px 35px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover::before {
+        transform: scaleX(1);
     }
 
     .feature-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
 
+    .feature-icon {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        display: inline-block;
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .feature-card:hover .feature-icon {
+        animation: none;
+        transform: scale(1.1);
+        transition: transform 0.3s ease;
+    }
+
+    .feature-card h4 {
+        margin: 20px 0 15px;
+        color: #2d3748;
+        font-size: 1.5rem;
+    }
+
+    .feature-card p {
+        color: #718096;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    /* --- GALLERY --- */
     .gallery {
-        background: #ffffff;
-        padding: 60px 20px;
+        background: linear-gradient(180deg, #f8f9fb 0%, #ffffff 100%);
+        text-align: center;
+        padding: 100px 20px;
     }
 
     .gallery h2 {
-        text-align: center;
-        margin-bottom: 40px;
+        font-size: 2.8rem;
+        margin-bottom: 20px;
+        color: #2d3748;
     }
 
-    .location-card {
-        border: none;
-        border-radius: 10px;
+    .gallery-subtitle {
+        font-size: 1.2rem;
+        color: #718096;
+        margin-bottom: 60px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .compact-card {
+        background: white;
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.4s ease;
+        max-width: 420px;
+        margin: 0 auto;
     }
 
-    .location-card:hover {
-        transform: translateY(-5px);
+    .compact-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
     }
 
-    .location-card img {
+    .compact-card img {
+        height: 280px;
         width: 100%;
-        height: 200px;
         object-fit: cover;
+        transition: transform 0.5s ease;
     }
 
+    .compact-card:hover img {
+        transform: scale(1.1);
+    }
+
+    .compact-card-body {
+        padding: 30px;
+        text-align: left;
+    }
+
+    .compact-card-body h5 {
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 12px;
+        font-size: 1.4rem;
+    }
+
+    .compact-card-body p {
+        color: #718096;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* Carousel custom styling */
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 60px;
+        height: 60px;
+        background: rgba(102, 126, 234, 0.9);
+        border-radius: 50%;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.8;
+        transition: all 0.3s ease;
+    }
+
+    .carousel-control-prev:hover,
+    .carousel-control-next:hover {
+        opacity: 1;
+        background: rgba(102, 126, 234, 1);
+    }
+
+    .carousel-control-prev {
+        left: 20px;
+    }
+
+    .carousel-control-next {
+        right: 20px;
+    }
+
+    /* --- CTA --- */
     .cta {
-        padding: 40px 20px;
         text-align: center;
-        background: #f0f0f0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 100px 20px;
+        position: relative;
+        overflow: hidden;
     }
 
-    .btn {
-        padding: 10px 20px;
-        font-weight: bold;
+    .cta::before {
+        content: "";
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        top: -250px;
+        right: -150px;
+    }
+
+    .cta h3 {
+        font-size: 2.5rem;
+        margin-bottom: 25px;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .cta p {
+        font-size: 1.2rem;
+        margin-bottom: 40px;
+        color: rgba(255,255,255,0.9);
+        position: relative;
+        z-index: 2;
+    }
+
+    .cta-buttons {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+        }
+
+        .features h2,
+        .gallery h2 {
+            font-size: 2rem;
+        }
+
+        .section {
+            padding: 60px 20px;
+        }
+
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 45px;
+            height: 45px;
+        }
+    }
+
+    /* --- SMOOTH SCROLL --- */
+    html {
+        scroll-behavior: smooth;
     }
 </style>
 
+<!-- HERO -->
 <section class="hero">
-    <h1>XR Tour Guide</h1>
-    <p class="lead mt-3">An AI-powered virtual tour guide that offers immersive and intelligent navigation through cultural heritage sites and indoor/outdoor experiences.</p>
-</section>
-
-<section class="features">
-    <div class="feature-card">
-        <h4>Immersive Indoor & Outdoor Tours</h4>
-        <p>Explore cultural sites through indoor and outdoor environments with multimedia-rich storytelling and location-based guidance.</p>
-    </div>
-    <div class="feature-card">
-        <h4>AI-Powered Interactions</h4>
-        <p>Experience intelligent interactions using chatbots and augmented reality interfaces that enhance your understanding of exhibits and places.</p>
-    </div>
-    <div class="feature-card">
-        <h4>Custom Content Management</h4>
-        <p>Creators can build custom tours, add multimedia content, and tailor experiences through a user-friendly admin interface and smart content generation tools.</p>
+    <div class="hero-content">
+        <h1>XR Tour Guide</h1>
+        <p class="lead">Esplora il patrimonio culturale con tour immersivi guidati da intelligenza artificiale</p>
+        <div class="hero-cta">
+            <a href="{% url 'register_platform' %}" class="btn btn-hero btn-hero-primary">Inizia Ora</a>
+            <a href="#tours" class="btn btn-hero btn-hero-secondary">Scopri i Tour</a>
+        </div>
     </div>
 </section>
 
-<section class="gallery">
-    <h2>Discover Southern Italy</h2>
-    <div class="row">
-        {% if tours %}
+<!-- FEATURES -->
+<section class="section features">
+    <h2>Perché Scegliere XR Tour Guide</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🌍</div>
+            <h4>Tour Immersivi</h4>
+            <p>Scopri ambienti indoor e outdoor con storytelling multimediale e navigazione basata sulla posizione GPS.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h4>Intelligenza Artificiale</h4>
+            <p>Interagisci con chatbot intelligenti e interfacce AR per un'esperienza personalizzata e coinvolgente.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🛠️</div>
+            <h4>Gestione Semplice</h4>
+            <p>Crea e gestisci tour personalizzati con pannelli intuitivi e strumenti avanzati di generazione contenuti.</p>
+        </div>
+    </div>
+</section>
+
+<!-- GALLERY -->
+<section class="section gallery" id="tours">
+    <h2>Esplora il Sud Italia</h2>
+    <p class="gallery-subtitle">Scopri tesori culturali nascosti attraverso esperienze immersive e coinvolgenti</p>
+
+    {% if tours %}
+    <div id="tourCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner">
             {% for tour in tours %}
-            <div class="col-md-4 mb-4">
-                <div class="location-card card">
-                    <img src="{% url 'stream_minio_resource' %}?tour={{ tour.id }}&file={{ tour.default_image.name|urlencode }}" alt="{{ tour.title }}">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ tour.title }}</h5>
-                        <p class="card-text">{{ tour.description|default:"No description available." }}</p>
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="d-flex justify-content-center">
+                    <div class="compact-card">
+                        <img src="{% url 'stream_minio_resource' %}?tour={{ tour.id }}&file={{ tour.default_image.name|urlencode }}"
+                             alt="{{ tour.title }}">
+                        <div class="compact-card-body">
+                            <h5>{{ tour.title }}</h5>
+                            <p>{{ tour.description|default:"Scopri questa meravigliosa esperienza culturale." }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
             {% endfor %}
-        {% else %}
-            <div class="col-md-4 mb-4">
-                <div class="location-card card">
-                    <img src="static/img_def/cost.png" alt="Costiera Amalfitana">
-                    <div class="card-body">
-                        <h5 class="card-title">Costiera Amalfitana</h5>
-                        <p class="card-text">One of the most breathtaking coastlines in the world, with dramatic cliffs, charming villages, and Mediterranean flair.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="location-card card">
-                    <img src="static/img_def/palinuro.png" alt="Cilento - Palinuro">
-                    <div class="card-body">
-                        <h5 class="card-title">Cilento - Palinuro</h5>
-                        <p class="card-text">Crystal-clear waters, hidden caves, and natural beauty define the Cilento coast — a UNESCO World Heritage Site.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="location-card card">
-                    <img src="static/img_def/paestum.png" alt="Paestum - Templi Greci">
-                    <div class="card-body">
-                        <h5 class="card-title">Paestum - Temples</h5>
-                        <p class="card-text">Walk among the best-preserved ancient Greek temples in Italy, immersed in history and timeless architecture.</p>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#tourCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#tourCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
     </div>
+    {% else %}
+        <p class="text-muted">Nessun tour disponibile al momento.</p>
+    {% endif %}
 </section>
 
-<section class="cta">
-    <h3 class="mb-4">Start your journey with XR Tour Guide</h3>
-    <a href="{% url 'register_platform' %}" class="btn btn-primary me-2">Registrati</a>
-    <a href="{% url 'account_login' %}" class="btn btn-outline-primary">Accedi</a>
+<!-- CTA -->
+<section class="section cta">
+    <h3>Pronto per Iniziare?</h3>
+    <p>Unisciti a noi e trasforma il modo in cui esplori il patrimonio culturale</p>
+    <div class="cta-buttons">
+        <a href="{% url 'register_platform' %}" class="btn btn-hero btn-hero-primary">Registrati</a>
+        <a href="{% url 'account_login' %}" class="btn btn-hero btn-hero-secondary">Accedi</a>
+    </div>
 </section>
 
 {% endblock %}
