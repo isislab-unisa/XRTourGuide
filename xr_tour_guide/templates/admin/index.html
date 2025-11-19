@@ -491,8 +491,8 @@
     <span class="step-links">
 
         {% if tours.has_previous %}
-            <a class="pagination-btn" href="?page=1">&laquo; First</a>
-            <a class="pagination-btn" href="?page={{ tours.previous_page_number }}">‹ Prev</a>
+            <a class="pagination-btn" href="?page=1">&laquo; Prima pagina</a>
+            <a class="pagination-btn" href="?page={{ tours.previous_page_number }}">‹ Precedente</a>
         {% endif %}
 
         <span class="current">
@@ -500,8 +500,8 @@
         </span>
 
         {% if tours.has_next %}
-            <a class="pagination-btn" href="?page={{ tours.next_page_number }}">Next ›</a>
-            <a class="pagination-btn" href="?page={{ tours.paginator.num_pages }}">Last &raquo;</a>
+            <a class="pagination-btn" href="?page={{ tours.next_page_number }}">Successivo ›</a>
+            <a class="pagination-btn" href="?page={{ tours.paginator.num_pages }}">Ultima pagina &raquo;</a>
         {% endif %}
 
     </span>

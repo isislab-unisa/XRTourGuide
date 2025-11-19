@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django import forms
 from location_field.widgets import LocationWidget
@@ -47,7 +46,7 @@ class MultipleClearableFileInput(ClearableFileInput):
 class WaypointForm(forms.ModelForm):
     uploaded_images = forms.FileField(
         required=False,
-        label='Carica Nuove Immagini',
+        label='Immagini Vista',
         widget=MultipleClearableFileInput(),
         help_text='Carica più immagini contemporaneamente per questo punto di interesse'
     )
@@ -122,79 +121,31 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
     extra = 0  # Changed from 1 to 0 to reduce clutter
-    min_num = 0  # Ensure at least one waypoint
+    min_num = 1  # Ensure at least one waypoint
     verbose_name = "Punto di Interesse"
     verbose_name_plural = "Punti di Interesse"
-    readonly_fields = ['display_existing_images']
     
     # Organize fields into logical fieldsets
     fieldsets = (
         ('Informazioni Base', {
-            'fields': ('title', 'description'),
+            'fields': ('title', 'place'),
             'description': 'Informazioni principali del punto di interesse'
         }),
         ('Posizione', {
-            'fields': ('place', 'coordinates'),
+            'fields': ('coordinates',),
             'description': 'Seleziona la posizione sulla mappa'
         }),
         ('Contenuto', {
-            'fields': ('uploaded_images', 'display_existing_images'),
-            'classes': ('collapse',),
+            'fields': ('description', 'readme_text', 'uploaded_images'),
+            'classes': ('collapse',),  # Make it collapsible
             'description': 'Descrizioni e immagini del punto'
         }),
         ('Media Aggiuntivi', {
-            'fields': ('pdf_item', 'video_item', 'audio_item', 'readme_text'),
-            'classes': ('collapse',),
+            'fields': ('pdf_item', 'video_item', 'audio_item'),
+            'classes': ('collapse',),  # Make it collapsible
             'description': 'File multimediali opzionali'
         }),
     )
-    
-    @admin.display(description="Immagini Caricate")
-    def display_existing_images(self, obj):
-        if not obj or not obj.pk:
-            return mark_safe('<p class="text-sm text-gray-500">Salva prima il waypoint per visualizzare le immagini</p>')
-        
-        images = WaypointViewImage.objects.filter(waypoint=obj)
-        
-        if not images.exists():
-            return mark_safe('<p class="text-sm text-gray-500">Nessuna immagine caricata</p>')
-        
-        html_parts = ['<div class="flex flex-wrap gap-4">']
-        
-        for img in images:
-            # Get the app label dynamically
-            app_label = WaypointViewImage._meta.app_label
-            model_name = WaypointViewImage._meta.model_name
-            
-            try:
-                # Try to get the change URL (which typically has a delete button)
-                change_url = reverse(f'admin:{app_label}_{model_name}_change', args=[img.pk])
-                delete_link = f'<a href="{change_url}" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium" target="_blank">Gestisci</a>'
-            except:
-                # If that fails, just don't show the delete link
-                delete_link = ''
-            
-            img_url = img.image.url if img.image else ''
-            
-            html_parts.append(f'''
-                <div class="relative group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow" style="width: 200px;">
-                    <img src="{img_url}" 
-                         alt="View image" 
-                         class="w-full h-40 object-cover cursor-pointer"
-                         onclick="window.open('{img_url}', '_blank')"
-                         style="cursor: pointer;"
-                    />
-                    <div class="p-2 bg-white dark:bg-gray-800 flex justify-between items-center">
-                        <span class="text-xs text-gray-500 dark:text-gray-400 truncate">ID: {img.pk}</span>
-                        {delete_link}
-                    </div>
-                </div>
-            ''')
-        
-        html_parts.append('</div>')
-        html_parts.append(f'<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">Totale: {images.count()} immagini</p>')
-        
-        return mark_safe(''.join(html_parts))
     
     formfield_overrides = {
         PlainLocationField: {"widget": LocationWidget},
@@ -222,6 +173,7 @@ class TourForm(forms.ModelForm):
         widgets = {
             'is_subtour': forms.HiddenInput(),
             'sub_tours': forms.CheckboxSelectMultiple(),
+            'description': forms.Textarea(attrs={'rows': 4}),
         }
         labels = {
             'sub_tours': 'Tour Interni',
@@ -260,14 +212,8 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
     hide_ordering_field = True
     compressed_fields = True
-    # fields = ('category', 'title', 'subtitle', 'description', 'place', 'coordinates', 'default_image', 'sub_tours', 'is_subtour')
-    list_display = ('title', 'creation_time', 'category', 'place', 'user', 'status')
-    readonly_fields = ['user', 'creation_time']
-    list_filter = ['user', 'category', 'place']
-    search_fields = ('title', 'description')
-    date_hierarchy = 'creation_time'
-    form = TourForm
-
+    
+    # Organize fields into logical fieldsets for better UX
     fieldsets = (
         ('Informazioni Principali', {
             'fields': ('category', 'title', 'subtitle'),
@@ -290,13 +236,22 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             'classes': ('collapse',),
         }),
     )
-
+    
+    list_display = ('title', 'category_badge', 'place', 'user', 'status_badge', 'waypoint_count', 'creation_time')
+    readonly_fields = ['user', 'creation_time', 'status']
+    list_filter = ['category', 'status', 'place', 'creation_time', 'user']
+    search_fields = ('title', 'subtitle', 'description', 'place')
+    date_hierarchy = 'creation_time'
+    form = TourForm
+    list_per_page = 20
+    
+    # Add filter on the right side
+    list_filter_submit = True  # Add submit button to filters
+    
     formfield_overrides = {
         models.ManyToManyField: {'widget': forms.CheckboxSelectMultiple},
     }
-    widgets = {
-            'is_subtour': forms.HiddenInput()
-        }
+    
     inlines = [WaypointAdmin]
 
     class Media:
@@ -307,6 +262,45 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
               'admin/js/refresh_subtours_checkboxes.js',
               'admin/js/loader.js'
             ]
+    
+    # Custom display methods for better visualization
+    @display(description="Categoria", ordering="category")
+    def category_badge(self, obj):
+        colors = {
+            'INSIDE': 'bg-blue-100 text-blue-800',
+            'OUTSIDE': 'bg-green-100 text-green-800',
+            'MIXED': 'bg-purple-100 text-purple-800',
+        }
+        color_class = colors.get(obj.category, 'bg-gray-100 text-gray-800')
+        return format_html(
+            '<span class="px-2 py-1 rounded text-xs font-semibold {}">{}</span>',
+            color_class,
+            obj.get_category_display()
+        )
+    
+    @display(description="Stato", ordering="status")
+    def status_badge(self, obj):
+        colors = {
+            'READY': 'bg-green-100 text-green-800',
+            'BUILDING': 'bg-yellow-100 text-yellow-800',
+            'SERVING': 'bg-blue-100 text-blue-800',
+            'ENQUEUED': 'bg-orange-100 text-orange-800',
+            'FAILED': 'bg-red-100 text-red-800',
+        }
+        color_class = colors.get(obj.status, 'bg-gray-100 text-gray-800')
+        return format_html(
+            '<span class="px-2 py-1 rounded text-xs font-semibold {}">{}</span>',
+            color_class,
+            obj.get_status_display() if hasattr(obj, 'get_status_display') else obj.status
+        )
+    
+    @display(description="Punti di Interesse")
+    def waypoint_count(self, obj):
+        count = obj.waypoints.count()
+        return format_html(
+            '<span class="font-semibold">{} punti</span>',
+            count
+        )
         
     def get_form(self, request, obj=None, **kwargs):
         Form = super().get_form(request, obj, **kwargs)
@@ -336,15 +330,11 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
-
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-
         qs = qs.filter(is_subtour=False)
-
         if not request.user.is_superuser:
             qs = qs.filter(user=request.user)
-
         return qs
 
     def save_model(self, request, obj, form, change):
@@ -361,14 +351,12 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
-
         for subtour in form.instance.sub_tours.all():
             if not subtour.is_subtour:
                 subtour.is_subtour = True
                 subtour.save()
             if form.instance not in subtour.parent_tours.all():
                 subtour.parent_tours.add(form.instance)
-
 
     def has_change_permission(self, request, obj=None):
         has_permission = super().has_change_permission(request, obj)
@@ -393,13 +381,19 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         return True
 
 class MediaItemAdmin(ModelAdmin):
-    pass
+    list_display = ['id', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['id']
 
 class WaypointViewImageAdmin(ModelAdmin):
-    pass
+    list_display = ['id', 'waypoint', 'image']
+    list_filter = ['waypoint']
+    search_fields = ['waypoint__title']
 
 class ReviewAdmin(ModelAdmin):
-    pass
+    list_display = ['tour', 'user', 'rating']
+    list_filter = ['rating']
+    search_fields = ['tour__title', 'user__username', 'comment']
 
 admin.site.register(Review, ReviewAdmin)
 admin.site.register(Tour, TourAdmin)

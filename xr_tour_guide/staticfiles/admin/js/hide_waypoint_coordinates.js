@@ -12,22 +12,28 @@
 
             $("div.inline-related").each(function() {
                 var $inline = $(this);
-                var coordField = $inline.find(".waypoint-coordinates-field").closest('.form-row, .form-group, .field, .form__field');
-                if (coordField.length === 0) {
-                    coordField = $inline.find("input[name$='-coordinates']").closest('.form-row, .form-group, .field, .form__field');
-                }
+
+                var placeFieldsetInline = $inline.find("input[name$='-place'], select[name$='-place']")
+                                                .closest("fieldset.module");
+
+                var coordFieldsetInline = $inline.find("input[name$='-coordinates']")
+                                                .closest("fieldset.module");
+
                 if (category === "INSIDE" || category === "THING") {
-                    coordField.hide();
+                    placeFieldsetInline.hide();
+                    coordFieldsetInline.hide();
                 } else {
-                    coordField.show();
+                    placeFieldsetInline.show();
+                    coordFieldsetInline.show();
                 }
             });
 
-            var subToursField = $("#id_sub_tours").closest('.form-row, .form-group, .field, .form__field');
+            var subToursFieldset = $("#id_sub_tours").closest("fieldset.module");
+
             if (category === "MIXED") {
-                subToursField.show();
+                subToursFieldset.show();
             } else {
-                subToursField.hide();
+                subToursFieldset.hide();
             }
         }
 
