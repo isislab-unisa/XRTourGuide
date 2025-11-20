@@ -3,12 +3,13 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
 class Command(BaseCommand):
-    help = 'Crea i gruppi Author e Student con i permessi associati'
+    help = 'Crea il gruppo User con i permessi associati'
 
     def handle(self, *args, **kwargs):
         from xr_tour_guide_core.models import Tour, Waypoint, WaypointViewImage
+        from xr_tour_guide_core.models import CustomUser
 
-        author_group, _ = Group.objects.get_or_create(name='User')
+        user_group, created = Group.objects.get_or_create(name='User')
 
         tour_ct = ContentType.objects.get_for_model(Tour)
         tour_perms = Permission.objects.filter(content_type=tour_ct)
@@ -19,8 +20,11 @@ class Command(BaseCommand):
         image_ct = ContentType.objects.get_for_model(WaypointViewImage)
         image_perms = Permission.objects.filter(content_type=image_ct)
 
-        all_perms = list(tour_perms) + list(waypoint_perms) + list(image_perms)
+        user_ct = ContentType.objects.get_for_model(CustomUser)
+        change_own_user_perm = Permission.objects.get(content_type=user_ct, codename='change_customuser')
 
-        author_group.permissions.set(all_perms)
+        all_perms = list(tour_perms) + list(waypoint_perms) + list(image_perms) + [change_own_user_perm]
+
+        user_group.permissions.set(all_perms)
 
         self.stdout.write(self.style.SUCCESS('Gruppo "User" creato e permessi assegnati con successo.'))

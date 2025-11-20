@@ -264,24 +264,6 @@ UNFOLD = {
                     },
                 ],
             },
-        #    {
-        #         "title": _("Users & Groups"),
-        #         "permissions": ["auth.view_user"],
-        #         "separator": False,
-        #         "collapsible": True,
-        #         "items": [
-        #             {
-        #                 "title": _("Users"),
-        #                 "icon": "person",
-        #                 "link": reverse_lazy("admin:xr_tour_guide_core_customuser_changelist"),
-        #             },
-        #             {
-        #                 "title": _("Groups"),
-        #                 "icon": "group",
-        #                 "link": reverse_lazy("admin:auth_group_changelist"),
-        #             },
-        #         ],
-        #     },
             {
                 "title": _("Funzionalità"),
                 "separator": False,
@@ -292,6 +274,11 @@ UNFOLD = {
                         "title": _("Tour"),
                         "icon": "map",
                         "link": reverse_lazy("admin:xr_tour_guide_core_tour_changelist"),
+                    },
+                    {
+                        "title": _("Users"),
+                        "icon": "person",
+                        "link": reverse_lazy("admin:xr_tour_guide_core_customuser_changelist"),
                     },
                 ],
             },

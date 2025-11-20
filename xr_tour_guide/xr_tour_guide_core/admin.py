@@ -23,10 +23,31 @@ from django.middleware.csrf import get_token
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
+    # exclude = ("is_active", "is_staff", "is_superuser")
     fieldsets = UserAdmin.fieldsets + (
         ('Informazioni aggiuntive', {'fields': ('city', 'description')}),
     )
-    
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(id=request.user.id)
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        if obj is not None and obj == request.user:
+            return True
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        if obj is None or obj == request.user:
+            return True
+        return False
+
 class MultipleClearableFileInput(ClearableFileInput):
     def __init__(self, attrs=None):
         super().__init__(attrs)
