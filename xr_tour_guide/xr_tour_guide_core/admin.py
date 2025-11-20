@@ -21,12 +21,15 @@ from django.urls import reverse
 from django.middleware.csrf import get_token
 
 @admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(ModelAdmin, UserAdmin):
     model = CustomUser
-    # exclude = ("is_active", "is_staff", "is_superuser")
-    fieldsets = UserAdmin.fieldsets + (
-        ('Informazioni aggiuntive', {'fields': ('city', 'description')}),
+
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Informazioni personali', {'fields': ('first_name', 'last_name', 'email', 'city', 'description')}),
     )
+
+    exclude = ('is_staff', 'is_superuser', 'groups', 'user_permissions', 'last_login', 'date_joined')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -46,6 +49,12 @@ class CustomUserAdmin(UserAdmin):
             return True
         if obj is None or obj == request.user:
             return True
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
 class MultipleClearableFileInput(ClearableFileInput):
