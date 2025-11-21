@@ -68,7 +68,7 @@ def stream_minio_resource(request):
     elif "img" in file_name:
         file_path = file_name
     else:
-        return Response({"detail": "File non rovato"}, status=404)
+        return Response({"detail": "File non trovato"}, status=404)
 
     if not storage.exists(file_path):
         return Response({"detail": f"File {file_name}, {waypoint.pdf_item.name}, {file_path} non trovato"}, status=404)
