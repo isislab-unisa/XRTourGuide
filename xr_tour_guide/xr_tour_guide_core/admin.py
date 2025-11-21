@@ -575,33 +575,40 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         #     )
         
         status_info = {
-            'READY': {
-                'color': '#dbeafe',
-                'border': '#3b82f6',
-                'title': '✅ Pronto per la Pubblicazione',
-                'message': 'Il tour è completo e pronto per essere pubblicato.',
-                'action': 'Verrà elaborato e pubblicato automaticamente.'
+            "READY": {
+                "color": "#dbeafe",
+                "border": "#3b82f6",
+                "title": "✅ Pronto per la Pubblicazione",
+                "message": "Il tour è completo e pronto per essere pubblicato.",
+                "action": "Verrà elaborato e pubblicato automaticamente.",
             },
-            'ENQUEUED': {
-                'color': '#fef3c7',
-                'border': '#f59e0b',
-                'title': '⏳ In Coda',
-                'message': 'Il tour è in coda per essere elaborato.',
-                'action': 'Attendi, sarà processato a breve. Non modificare durante questa fase.'
+            "ENQUEUED": {
+                "color": "#fef3c7",
+                "border": "#f59e0b",
+                "title": "⏳ In Coda",
+                "message": "Il tour è in coda per essere elaborato.",
+                "action": "Attendi, sarà processato a breve. Non modificare durante questa fase.",
             },
-            'BUILDING': {
-                'color': '#f3e8ff',
-                'border': '#8b5cf6',
-                'title': '🔨 In Costruzione',
-                'message': 'Il tour è in fase di elaborazione.',
-                'action': 'Non modificare il tour durante questa fase. Il processo potrebbe richiedere alcuni minuti.'
+            "BUILDING": {
+                "color": "#f3e8ff",
+                "border": "#8b5cf6",
+                "title": "🔨 In Costruzione",
+                "message": "Il tour è in fase di elaborazione.",
+                "action": "Non modificare il tour durante questa fase. Il processo potrebbe richiedere alcuni minuti.",
             },
-            'FAILED': {
-                'color': '#fee2e2',
-                'border': '#ef4444',
-                'title': '❌ Errore',
-                'message': 'Si è verificato un errore durante l\'elaborazione del tour.',
-                'action': 'Controlla i dati inseriti o contatta l\'assistenza.'
+            "FAILED": {
+                "color": "#fee2e2",
+                "border": "#ef4444",
+                "title": "❌ Errore",
+                "message": "Si è verificato un errore durante l'elaborazione del tour.",
+                "action": "Controlla i dati inseriti o contatta l'assistenza.",
+            },
+            "BUILT": {
+                "color": "#048504d8",
+                "border": "#83f302",
+                "title": "✅ Pronto per l'uso",
+                "message": "Modello Addestrato con successo e pronto per essere utilizzato.",
+                "action": "Puoi iniziare a servire il tour ai visitatori.",
             },
         }
         
