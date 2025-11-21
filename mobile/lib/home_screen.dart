@@ -67,7 +67,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     if (mounted) setState(() => _isCheckingConnection = false);
   }
 
-  Future<void> _updateConnectionStatus() async {
+  Future<void> _updateConnectionStatus({bool forceReload = false}) async {
     final wasOnline = _isOnline;
 
     // 1. Check device connectivity
@@ -86,7 +86,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     final isNowOnline = deviceConnected && serverReachable;
     print("ONLINE?: ${isNowOnline}");
 
-    if (wasOnline != isNowOnline || _isCheckingConnection) {
+    if (wasOnline != isNowOnline || _isCheckingConnection || forceReload) {
       if (mounted) {
         setState(() {
           _isOnline = isNowOnline;
@@ -115,7 +115,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
 
   @override
   void didPopNext() {
-    _updateConnectionStatus(); // Re-check connection and reload data
+    _updateConnectionStatus(forceReload: true); // Re-check connection and reload data
     super.didPopNext();
   }
 

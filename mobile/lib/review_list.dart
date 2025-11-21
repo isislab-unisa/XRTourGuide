@@ -231,7 +231,7 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
             children: [
               if (widget.isTour)
                 Text(
-                  'Montevergine',
+                  widget.tourName ?? '',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 22,
