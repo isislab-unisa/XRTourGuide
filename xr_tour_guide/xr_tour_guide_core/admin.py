@@ -305,7 +305,6 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         
         return qs
     
-    # Organized fieldsets with clear descriptions
     fieldsets = (
         ('📍 Informazioni Base', {
             'fields': ('title', 'description'),
@@ -343,21 +342,8 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 '</div>'
             )
         }),
-        ('📝 Descrizione Dettagliata', {
-            'fields': ('readme_text',),
-            'classes': ('collapse',),
-            'description': (
-                '<div style="background: light-dark(#f3e8ff, #581c87); padding: 12px; border-radius: 6px; '
-                'margin-bottom: 12px; border-left: 4px solid light-dark(#8b5cf6, #a78bfa); '
-                'color: light-dark(#581c87, #f3e8ff);">'
-                '<strong>✍️ Scrivi con Markdown:</strong> '
-                'Usa la formattazione per rendere il testo più leggibile. '
-                'Puoi aggiungere titoli, elenchi puntati, grassetto, corsivo, ecc.'
-                '</div>'
-            )
-        }),
         ('🎬 Contenuti Multimediali (Opzionale)', {
-            'fields': ('pdf_item', 'video_item', 'audio_item'),
+            'fields': ('pdf_item', 'video_item', 'audio_item', 'readme_text'),
             'classes': ('collapse',),
             'description': (
                 '<div style="background: light-dark(#e0e7ff, #3730a3); padding: 12px; border-radius: 6px; '
