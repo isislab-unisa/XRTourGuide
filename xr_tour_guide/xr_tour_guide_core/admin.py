@@ -310,17 +310,22 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         ('📍 Informazioni Base', {
             'fields': ('title', 'description'),
             'description': (
-                '<div style="background: #f0f9ff; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-                '<strong>💡 Suggerimento:</strong> Inizia con un titolo chiaro e una descrizione breve. '
-                'Aggiungerai i dettagli dopo.'
+                '<div style="background: light-dark(#dbeafe, #1e3a8a); padding: 12px; border-radius: 6px; '
+                'margin-bottom: 12px; border-left: 4px solid light-dark(#3b82f6, #60a5fa); '
+                'color: light-dark(#1e3a8a, #dbeafe);">'
+                '<strong>💡 Suggerimento:</strong> '
+                'Inizia con un titolo chiaro e una descrizione breve. Aggiungerai i dettagli dopo.'
                 '</div>'
             )
         }),
         ('🗺️ Posizione sulla Mappa', {
             'fields': ('place', 'coordinates',),
             'description': (
-                '<div style="background: #fef3c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-                '<strong>📌 Come selezionare:</strong> Clicca sulla mappa nel punto esatto dove si trova il luogo. '
+                '<div style="background: light-dark(#fef3c7, #78350f); padding: 12px; border-radius: 6px; '
+                'margin-bottom: 12px; border-left: 4px solid light-dark(#f59e0b, #fbbf24); '
+                'color: light-dark(#78350f, #fef3c7);">'
+                '<strong>📌 Come selezionare:</strong> '
+                'Clicca sulla mappa nel punto esatto dove si trova il luogo. '
                 'Puoi trascinare il marker per regolarne la posizione.'
                 '</div>'
             )
@@ -329,8 +334,11 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             'fields': ('uploaded_images', 'display_existing_images'),
             'classes': ('collapse',),
             'description': (
-                '<div style="background: #f0fdf4; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-                '<strong>📷 Consiglio:</strong> Carica 3-5 immagini di buona qualità che mostrino il luogo '
+                '<div style="background: light-dark(#d1fae5, #065f46); padding: 12px; border-radius: 6px; '
+                'margin-bottom: 12px; border-left: 4px solid light-dark(#10b981, #34d399); '
+                'color: light-dark(#065f46, #d1fae5);">'
+                '<strong>📷 Consiglio:</strong> '
+                'Carica 3-5 immagini di buona qualità che mostrino il luogo '
                 'da diverse angolazioni. Le foto aiutano i visitatori a riconoscere il posto!'
                 '</div>'
             )
@@ -339,8 +347,11 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             'fields': ('readme_text',),
             'classes': ('collapse',),
             'description': (
-                '<div style="background: #fae8ff; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-                '<strong>✍️ Scrivi con Markdown:</strong> Usa la formattazione per rendere il testo più leggibile. '
+                '<div style="background: light-dark(#f3e8ff, #581c87); padding: 12px; border-radius: 6px; '
+                'margin-bottom: 12px; border-left: 4px solid light-dark(#8b5cf6, #a78bfa); '
+                'color: light-dark(#581c87, #f3e8ff);">'
+                '<strong>✍️ Scrivi con Markdown:</strong> '
+                'Usa la formattazione per rendere il testo più leggibile. '
                 'Puoi aggiungere titoli, elenchi puntati, grassetto, corsivo, ecc.'
                 '</div>'
             )
@@ -349,8 +360,11 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             'fields': ('pdf_item', 'video_item', 'audio_item'),
             'classes': ('collapse',),
             'description': (
-                '<div style="background: #ede9fe; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-                '<strong>🎥 Opzionale ma consigliato:</strong> Aggiungi contenuti extra per arricchire l\'esperienza. '
+                '<div style="background: light-dark(#e0e7ff, #3730a3); padding: 12px; border-radius: 6px; '
+                'margin-bottom: 12px; border-left: 4px solid light-dark(#6366f1, #818cf8); '
+                'color: light-dark(#3730a3, #e0e7ff);">'
+                '<strong>🎥 Opzionale ma consigliato:</strong> '
+                'Aggiungi contenuti extra per arricchire l\'esperienza. '
                 'Un PDF con info storiche, un video o una guida audio rendono il tour più completo.'
                 '</div>'
             )
@@ -362,8 +376,9 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         """Display existing images in a nice gallery format"""
         if not obj or not obj.pk:
             return mark_safe(
-                '<div style="background: #fef3c7; padding: 12px; border-radius: 6px; border-left: 4px solid #f59e0b;">'
-                '<p class="text-sm" style="margin: 0;">⚠️ Salva prima il punto di interesse per poter caricare le immagini</p>'
+                '<div style="background: light-dark(#fef3c7, #78350f); padding: 12px; border-radius: 6px; '
+                'border-left: 4px solid light-dark(#f59e0b, #fbbf24); color: light-dark(#78350f, #fef3c7);">'
+                '<p style="margin: 0; font-size: 0.875rem;">⚠️ Salva prima il punto di interesse per poter caricare le immagini</p>'
                 '</div>'
             )
         
@@ -371,16 +386,18 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         
         if not images.exists():
             return mark_safe(
-                '<div style="background: #f3f4f6; padding: 12px; border-radius: 6px;">'
-                '<p class="text-sm text-gray-500" style="margin: 0;">📷 Nessuna immagine caricata ancora</p>'
+                '<div style="background: light-dark(#f3f4f6, #1f2937); padding: 12px; border-radius: 6px; '
+                'color: light-dark(#6b7280, #9ca3af);">'
+                '<p style="margin: 0; font-size: 0.875rem;">📷 Nessuna immagine caricata ancora</p>'
                 '</div>'
             )
         
         # Build gallery HTML
         html_parts = [
-            '<div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">',
-            f'<p style="margin: 0 0 12px 0; font-weight: 600; color: #374151;">📷 {images.count()} immagini caricate</p>',
-            '<div class="flex flex-wrap gap-4" style="display: flex; flex-wrap: wrap; gap: 16px;">'
+            '<div style="background: light-dark(#ffffff, #1f2937); padding: 16px; border-radius: 8px; '
+            'border: 1px solid light-dark(#e5e7eb, #374151);">',
+            f'<p style="margin: 0 0 12px 0; font-weight: 600; color: light-dark(#374151, #e5e7eb);">📷 {images.count()} immagini caricate</p>',
+            '<div style="display: flex; flex-wrap: wrap; gap: 16px;">'
         ]
         
         for img in images:
@@ -391,8 +408,8 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 change_url = reverse(f'admin:{app_label}_{model_name}_change', args=[img.pk])
                 delete_link = (
                     f'<a href="{change_url}" '
-                    f'class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs font-medium" '
-                    f'target="_blank" style="color: #dc2626; font-size: 0.75rem; font-weight: 500;">🗑️ Gestisci</a>'
+                    f'style="color: light-dark(#dc2626, #f87171); font-size: 0.75rem; font-weight: 500; text-decoration: none;" '
+                    f'target="_blank">🗑️ Gestisci</a>'
                 )
             except:
                 delete_link = ''
@@ -400,16 +417,17 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             img_url = f"/stream_minio_resource/?tour={img.waypoint.tour.pk}&waypoint={img.waypoint.pk}&file={img.image.name}"
             
             html_parts.append(f'''
-                <div class="relative group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow" 
-                     style="width: 200px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+                <div style="width: 200px; border: 1px solid light-dark(#e5e7eb, #374151); border-radius: 8px; 
+                     overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
                     <img src="{img_url}" 
                          alt="View image" 
                          onclick="window.open('{img_url}', '_blank')"
                          style="width: 100%; height: 160px; object-fit: cover; cursor: pointer;"
                          title="Clicca per vedere l'immagine a schermo intero"
                     />
-                    <div style="padding: 8px; background: white; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.75rem; color: #6b7280;">ID: {img.pk}</span>
+                    <div style="padding: 8px; background: light-dark(#ffffff, #1f2937); display: flex; 
+                         justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: light-dark(#6b7280, #9ca3af);">ID: {img.pk}</span>
                         {delete_link}
                     </div>
                 </div>
@@ -466,50 +484,19 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         }),
         ('🎯 Informazioni Principali', {
             'fields': ('title', 'subtitle', 'category'),
-            # 'description': (
-            #     '<div style="background: #dbeafe; padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #3b82f6;">'
-            #     '<h4 style="margin: 0 0 8px 0; color: #1e40af;">👋 Benvenuto nella creazione del tour!</h4>'
-            #     '<p style="margin: 0;">Inizia con le informazioni base: dai un <strong>titolo accattivante</strong> '
-            #     'e scegli la <strong>categoria</strong> più appropriata. Il sottotitolo è opzionale ma consigliato.</p>'
-            #     '</div>'
-            # )
         }),
         ('📝 Descrizione Completa', {
             'fields': ('description',),
-            # 'description': (
-            #     '<div style="background: #f0fdf4; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-            #     '<strong>💡 Cosa scrivere:</strong> Racconta cosa rende speciale questo tour, cosa si vedrà, '
-            #     'quanto dura (indicativamente), e a chi è consigliato.'
-            #     '</div>'
-            # )
         }),
         ('📍 Posizione e Area', {
             'fields': ('place', 'coordinates'),
-            # 'description': (
-            #     '<div style="background: #fef3c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-            #     '<strong>🗺️ Posizione:</strong> Indica la località principale e seleziona sulla mappa '
-            #     'il punto di partenza o il centro dell\'area del tour.'
-            #     '</div>'
-            # )
         }),
         ('🖼️ Immagine di Copertina', {
             'fields': ('default_image',),
-            # 'description': (
-            #     '<div style="background: #fae8ff; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-            #     '<strong>📸 Suggerimento:</strong> Scegli un\'immagine rappresentativa e di qualità. '
-            #     'Questa sarà la prima cosa che vedranno gli utenti!'
-            #     '</div>'
-            # )
         }),
         ('🔗 Tour Interni (Opzionale)', {
             'fields': ('sub_tours',),
             'classes': ('collapse',),
-            # 'description': (
-            #     '<div style="background: #ede9fe; padding: 12px; border-radius: 6px; margin-bottom: 12px;">'
-            #     '<strong>ℹ️ Tour interni:</strong> Se questo tour è composto da più sezioni, '
-            #     'puoi includere altri tour come sotto-tour. Lascia vuoto se non necessario.'
-            #     '</div>'
-            # )
         }),
         ('⚙️ Informazioni di Sistema', {
             'fields': ('user', 'creation_time', 'status', 'is_subtour'),
@@ -566,46 +553,49 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     @admin.display(description="Stato del Tour")
     def status_info(self, obj):
         """Display comprehensive status information"""
-        # if not obj or not obj.pk:
-        #     return mark_safe(
-        #         '<div style="background: #dbeafe; padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">'
-        #         '<h3 style="margin: 0 0 8px 0; color: #1e40af;">🆕 Nuovo Tour</h3>'
-        #         '<p style="margin: 0;">Stai creando un nuovo tour. Compila i campi sottostanti e aggiungi i punti di interesse.</p>'
-        #         '</div>'
-        #     )
         
         status_info = {
             "READY": {
-                "color": "#dbeafe",
-                "border": "#3b82f6",
+                "bg_light": "#dbeafe",
+                "bg_dark": "#1e3a8a",
+                "border_light": "#3b82f6",
+                "border_dark": "#60a5fa",
                 "title": "✅ Pronto per la Pubblicazione",
                 "message": "Il tour è completo e pronto per essere pubblicato.",
                 "action": "Verrà elaborato e pubblicato automaticamente.",
             },
             "ENQUEUED": {
-                "color": "#fef3c7",
-                "border": "#f59e0b",
+                "bg_light": "#fef3c7",
+                "bg_dark": "#78350f",
+                "border_light": "#f59e0b",
+                "border_dark": "#fbbf24",
                 "title": "⏳ In Coda",
                 "message": "Il tour è in coda per essere elaborato.",
                 "action": "Attendi, sarà processato a breve. Non modificare durante questa fase.",
             },
             "BUILDING": {
-                "color": "#f3e8ff",
-                "border": "#8b5cf6",
+                "bg_light": "#f3e8ff",
+                "bg_dark": "#581c87",
+                "border_light": "#8b5cf6",
+                "border_dark": "#a78bfa",
                 "title": "🔨 In Costruzione",
                 "message": "Il tour è in fase di elaborazione.",
                 "action": "Non modificare il tour durante questa fase. Il processo potrebbe richiedere alcuni minuti.",
             },
             "FAILED": {
-                "color": "#fee2e2",
-                "border": "#ef4444",
+                "bg_light": "#fee2e2",
+                "bg_dark": "#7f1d1d",
+                "border_light": "#ef4444",
+                "border_dark": "#f87171",
                 "title": "❌ Errore",
                 "message": "Si è verificato un errore durante l'elaborazione del tour.",
                 "action": "Controlla i dati inseriti o contatta l'assistenza.",
             },
             "BUILT": {
-                "color": "#048504d8",
-                "border": "#83f302",
+                "bg_light": "#d1fae5",
+                "bg_dark": "#065f46",
+                "border_light": "#10b981",
+                "border_dark": "#34d399",
                 "title": "✅ Pronto per l'uso",
                 "message": "Modello Addestrato con successo e pronto per essere utilizzato.",
                 "action": "Puoi iniziare a servire il tour ai visitatori.",
@@ -618,20 +608,33 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         is_locked = obj.status in ['BUILDING', 'SERVING', 'ENQUEUED']
         lock_notice = ''
         if is_locked:
-            lock_notice = (
-                '<div style="background: #fee2e2; padding: 12px; border-radius: 6px; margin-top: 12px; border-left: 4px solid #ef4444;">'
-                '<strong>🔒 Tour Bloccato:</strong> Non puoi modificare il tour in questo stato.'
-                '</div>'
-            )
+            lock_notice = f'''
+                <div style="
+                    background: light-dark(#fee2e2, #7f1d1d);
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-top: 12px;
+                    border-left: 4px solid light-dark(#ef4444, #f87171);
+                    color: light-dark(#7f1d1d, #fecaca);
+                ">
+                    <strong>🔒 Tour Bloccato:</strong> Non puoi modificare il tour in questo stato.
+                </div>
+            '''
         
         return mark_safe(
-            f'<div style="background: {info["color"]}; padding: 16px; border-radius: 8px; '
-            f'border-left: 4px solid {info["border"]}; margin-bottom: 20px;">'
-            f'<h3 style="margin: 0 0 8px 0;">{info["title"]}</h3>'
-            f'<p style="margin: 0 0 8px 0;"><strong>{info["message"]}</strong></p>'
-            f'<p style="margin: 0; font-size: 0.875rem; opacity: 0.8;">{info["action"]}</p>'
-            f'{lock_notice}'
-            f'</div>'
+            f'''<div style="
+                background: light-dark({info["bg_light"]}, {info["bg_dark"]});
+                padding: 16px;
+                border-radius: 8px;
+                border-left: 4px solid light-dark({info["border_light"]}, {info["border_dark"]});
+                margin-bottom: 20px;
+                color: light-dark(#1f2937, #f9fafb);
+            ">
+                <h3 style="margin: 0 0 8px 0; font-size: 1.125rem; font-weight: 600;">{info["title"]}</h3>
+                <p style="margin: 0 0 8px 0; font-weight: 500;">{info["message"]}</p>
+                <p style="margin: 0; font-size: 0.875rem; opacity: 0.8;">{info["action"]}</p>
+                {lock_notice}
+            </div>'''
         )
         
     def get_form(self, request, obj=None, **kwargs):
@@ -758,19 +761,10 @@ class WaypointViewImageAdmin(ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-# class ReviewAdmin(ModelAdmin):
-#     """Admin for managing tour reviews"""
-#     list_display = ('tour', 'user', 'rating', 'created_at')
-#     list_filter = ('rating', 'created_at')
-#     search_fields = ('tour__title', 'user__username', 'comment')
-#     date_hierarchy = 'created_at'
-#     readonly_fields = ('created_at',)
-
 # ============================================================================
 # REGISTER MODELS
 # ============================================================================
 
-# admin.site.register(Review, ReviewAdmin)
 admin.site.register(Tour, TourAdmin)
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
 
@@ -778,5 +772,3 @@ admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
 admin.site.site_header = "🗺️ Tour Management System"
 admin.site.site_title = "Tour Admin"
 admin.site.index_title = "Benvenuto nel pannello di gestione tour"
-
-# FIXARE FILTRO SU WAYPOINT PER IMMAGINI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
