@@ -234,18 +234,29 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildOnlineBody(BuildContext context) {
-    if (_isLoadingOnlineData) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    // if (_isLoadingOnlineData) {
+    //   return const Center(child: CircularProgressIndicator());
+    // }
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeaderImage(context),
           _buildSearchBar(context),
-          _buildOfflineToursSection(context),
-          _buildNearbyToursSection(context),
-          _buildCategoriesSection(context),
+          // _buildOfflineToursSection(context),
+          // _buildNearbyToursSection(context),
+          // _buildCategoriesSection(context),
+          if (_isLoadingOnlineData)
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: const Center(child: CircularProgressIndicator()),
+            )
+          else ...[
+            _buildNearbyToursSection(context),
+            _buildCategoriesSection(context),
+            _buildOfflineToursSection(context),
+          ],
         ],
       ),
     );

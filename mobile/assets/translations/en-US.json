@@ -116,5 +116,6 @@
     "tours": "tours",
     "error_loading_offline_tours" : "Error loading offline tours",
     "offline_mode_message" : "You are in offline mode",
-    "offline_mode_user_details": "You are in offline mode. Go back online to visualize your own profile."
+    "offline_mode_user_details": "You are in offline mode. Go back online to visualize your own profile.",
+    "server_selection_description": "Select the server you want to connect to. Changing the server may affect data availability and performance."
 }

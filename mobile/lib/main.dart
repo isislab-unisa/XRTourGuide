@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import "package:easy_localization/easy_localization.dart";
+import "server_selection_screen.dart";
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
@@ -93,7 +94,8 @@ class MyApp extends StatelessWidget {
           bodyLarge: TextStyle(color: AppColors.textSecondary),
         ),
       ),
-      home: const AuthChecker(),
+      // home: const AuthChecker(),
+      home: const WelcomeScreen(),
     );
   }
 }
