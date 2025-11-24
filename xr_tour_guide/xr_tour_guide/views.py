@@ -15,14 +15,17 @@ class DashboardView(UnfoldModelAdminViewMixin, TemplateView):
     template_name = "admin/index.html"
     
 def dashboard_callback(request, context):
-    user_tours = Tour.objects.filter(parent_tours__isnull=True, is_subtour=False, user=request.user)
-    reviews = Review.objects.filter(user=request.user)
-
-    tour_stats = user_tours.annotate(
-        review_count=Count('reviews'),
-        avg_rating=Avg('reviews__rating'),
-        subtour_count=Count('sub_tours')
+    user_tours = (
+        Tour.objects
+            .filter(parent_tours__isnull=True, is_subtour=False, user=request.user)
+            .annotate(
+                review_count=Count('reviews'),
+                avg_rating=Avg('reviews__rating'),
+                subtour_count=Count('sub_tours')
+            )
     )
+
+    reviews = Review.objects.filter(user=request.user)
 
     paginator = Paginator(user_tours, 4)
     page_number = request.GET.get("page")
@@ -31,6 +34,5 @@ def dashboard_callback(request, context):
     context.update({
         "tours": page_obj,
         "reviews": reviews,
-        "tour_stats": tour_stats,
     })
     return context
