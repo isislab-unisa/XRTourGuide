@@ -251,6 +251,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       if (waypoint.id == waypointId && waypoint.subWaypoints == null) {
         widget.landmarkName = waypoint.title;
         widget.landmarkImages = waypoint.images;
+        widget.landmarkDescription = waypoint.description;
       }
     });
 
@@ -264,7 +265,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     setState(() {
       _recognizedWaypointId = waypointId;
       _availableResources = availableResources;
-      _currentMarkdownContent = "# ${widget.landmarkName}";
+      _currentMarkdownContent = "# ${widget.landmarkName}\n\n${widget.landmarkDescription}";
       _currentActiveContent = MarkdownWidget(
         data: _currentMarkdownContent,
         config: _buildMarkdownConfig(),
@@ -1581,6 +1582,22 @@ Widget _buildMiniMap(BuildContext context) {
       // Fallback: usa le coordinate del landmark originale
       mapCenter = LatLng(widget.latitude, widget.longitude);
     }
+
+    // List<LatLng> pointsForBounds = _waypoints
+    //     .map((w) => LatLng(w.latitude, w.longitude))
+    //     .toList();
+
+    //   if (_currentPosition != null) {
+    //     pointsForBounds.add(
+    //       LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+    //     );
+    //   }
+
+    //   if (pointsForBounds.isEmpty) {
+    //     pointsForBounds.add(LatLng(widget.latitude, widget.longitude));
+    //   }
+
+    //   final bounds = LatLngBounds.fromPoints(pointsForBounds);
 
     return FlutterMap(
       mapController: _mapController,

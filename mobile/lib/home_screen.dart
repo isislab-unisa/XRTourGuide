@@ -244,19 +244,19 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
         children: [
           _buildHeaderImage(context),
           _buildSearchBar(context),
-          // _buildOfflineToursSection(context),
-          // _buildNearbyToursSection(context),
-          // _buildCategoriesSection(context),
-          if (_isLoadingOnlineData)
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.4,
-              child: const Center(child: CircularProgressIndicator()),
-            )
-          else ...[
-            _buildNearbyToursSection(context),
-            _buildCategoriesSection(context),
-            _buildOfflineToursSection(context),
-          ],
+          _buildOfflineToursSection(context),
+          _buildNearbyToursSection(context),
+          _buildCategoriesSection(context),
+          // if (_isLoadingOnlineData)
+          //   SizedBox(
+          //     height: MediaQuery.of(context).size.height * 0.4,
+          //     child: const Center(child: CircularProgressIndicator()),
+          //   )
+          // else ...[
+          //   _buildNearbyToursSection(context),
+          //   _buildCategoriesSection(context),
+          //   _buildOfflineToursSection(context),
+          // ],
         ],
       ),
     );
@@ -359,14 +359,14 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildOfflineToursSection(BuildContext context) {
-    if (_isLoadingOfflineTours)
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    if (_offlineTours.isEmpty) return const SizedBox.shrink();
+    // if (_isLoadingOfflineTours)
+    //   return const Center(
+    //     child: Padding(
+    //       padding: EdgeInsets.all(8.0),
+    //       child: CircularProgressIndicator(),
+    //     ),
+    //   );
+    if (!_isLoadingOfflineTours && _offlineTours.isEmpty) return const SizedBox.shrink();
 
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
@@ -390,39 +390,45 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
               ),
             ),
           ),
-          SizedBox(
-            height: screenHeight * 0.25,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _offlineTours.length,
-              itemBuilder: (context, index) {
-                final tour = _offlineTours[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    left: index == 0 ? 20.0 : 0.0,
-                    right: 15.0,
-                  ),
-                  child: OfflineTourCard(
-                    tourData: tour,
-                    cardWidth: screenWidth * 0.6,
-                    imageHeight: 140,
-                    onTap:
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => TourDetailScreen(
-                                  tourId: tour['id'],
-                                  isGuest: widget.isGuest,
-                                  isOffline: true,
-                                ),
+          if(_isLoadingOfflineTours)
+            SizedBox(
+              height: screenHeight * 0.25,
+              child: const Center(child: CircularProgressIndicator()),
+            )
+          else
+            SizedBox(
+              height: screenHeight * 0.25,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _offlineTours.length,
+                itemBuilder: (context, index) {
+                  final tour = _offlineTours[index];
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      left: index == 0 ? 20.0 : 0.0,
+                      right: 15.0,
+                    ),
+                    child: OfflineTourCard(
+                      tourData: tour,
+                      cardWidth: screenWidth * 0.6,
+                      imageHeight: 140,
+                      onTap:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => TourDetailScreen(
+                                    tourId: tour['id'],
+                                    isGuest: widget.isGuest,
+                                    isOffline: true,
+                                  ),
+                            ),
                           ),
-                        ),
-                  ),
-                );
-              },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -451,47 +457,53 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
               ),
             ),
           ),
-          SizedBox(
-            height: screenHeight * 0.25,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _nearbyTours?.length ?? 0,
-              itemBuilder: (context, index) {
-                final tour = _nearbyTours![index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    left: index == 0 ? 20.0 : 0.0,
-                    right: 15.0,
-                  ),
-                  child: TravelListItemCard(
-                    tourId: tour.id,
-                    imagePath: tour.imagePath,
-                    title: tour.title,
-                    description: tour.description,
-                    cardWidth: screenWidth * 0.6,
-                    imageHeight: 140,
-                    category: tour.category,
-                    rating: tour.rating,
-                    reviewCount: tour.reviewCount,
-                    totViews: tour.totViews.toString(),
-                    creator: tour.creator,
-                    lastEdited: tour.lastEdited,
-                    onTap:
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => TourDetailScreen(
-                                  tourId: tour.id,
-                                  isGuest: widget.isGuest,
-                                ),
+          if (_isLoadingOnlineData)
+            SizedBox(
+              height: screenHeight * 0.25,
+              child: const Center(child: CircularProgressIndicator()),
+            )
+          else
+            SizedBox(
+              height: screenHeight * 0.25,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _nearbyTours?.length ?? 0,
+                itemBuilder: (context, index) {
+                  final tour = _nearbyTours![index];
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      left: index == 0 ? 20.0 : 0.0,
+                      right: 15.0,
+                    ),
+                    child: TravelListItemCard(
+                      tourId: tour.id,
+                      imagePath: tour.imagePath,
+                      title: tour.title,
+                      description: tour.description,
+                      cardWidth: screenWidth * 0.6,
+                      imageHeight: 140,
+                      category: tour.category,
+                      rating: tour.rating,
+                      reviewCount: tour.reviewCount,
+                      totViews: tour.totViews.toString(),
+                      creator: tour.creator,
+                      lastEdited: tour.lastEdited,
+                      onTap:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => TourDetailScreen(
+                                    tourId: tour.id,
+                                    isGuest: widget.isGuest,
+                                  ),
+                            ),
                           ),
-                        ),
-                  ),
-                );
-              },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );

@@ -1745,8 +1745,9 @@ Future<void> _loadWaypoints() async {
                       child: FlutterMap(
                         mapController: _mapController,
                         options: MapOptions(
-                          initialCenter: LatLng(_waypoints[0].latitude, _waypoints[0].longitude),
-                          initialZoom: 13.0,
+                          // initialCenter: LatLng(_waypoints[0].latitude, _waypoints[0].longitude),
+                          // initialZoom: 13.0,
+                          initialCameraFit: _getInitialCameraFit(),
                           maxZoom: 16.0,
                           interactionOptions: const InteractionOptions(
                             flags: InteractiveFlag.all,
@@ -1919,6 +1920,36 @@ Future<void> _loadWaypoints() async {
       ),
     );
   }
+
+CameraFit _getInitialCameraFit() {
+  List<LatLng> pointsForBounds = _waypoints
+      .map((waypoint) => LatLng(waypoint.latitude, waypoint.longitude))
+      .toList();
+
+  if (_currentPosition != null) {
+    pointsForBounds.add(
+      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+    );
+  }
+
+  if (pointsForBounds.isEmpty) {
+    if (_tourDetails != null) {
+      if (_currentPosition == null){
+        pointsForBounds.add(
+          LatLng(_tourDetails!.latitude, _tourDetails!.longitude),
+        );
+      }
+      return CameraFit.coordinates(
+        coordinates: pointsForBounds,
+      );
+    }
+  }
+
+  return CameraFit.bounds(
+    bounds: LatLngBounds.fromPoints(pointsForBounds),
+    padding: const EdgeInsets.all(50.0),
+  );
+}
 
 Widget _buildWaypointItem({
     required int waypointIndex,
