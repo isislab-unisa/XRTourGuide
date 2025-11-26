@@ -19,10 +19,6 @@ from django.db import models
 from django.urls import reverse
 from django.middleware.csrf import get_token
 
-# ============================================================================
-# CUSTOM USER ADMIN
-# ============================================================================
-
 @admin.register(CustomUser)
 class CustomUserAdmin(ModelAdmin, UserAdmin):
     """
@@ -69,11 +65,6 @@ class CustomUserAdmin(ModelAdmin, UserAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-
-# ============================================================================
-# CUSTOM WIDGETS
-# ============================================================================
-
 class MultipleClearableFileInput(ClearableFileInput):
     """Widget personalizzato per upload multiplo di immagini"""
     
@@ -98,11 +89,6 @@ class MultipleClearableFileInput(ClearableFileInput):
             </p>
         </div>
         """)
-
-
-# ============================================================================
-# FORMS
-# ============================================================================
 
 class WaypointForm(forms.ModelForm):
     """Form per la creazione/modifica di un Punto di Interesse"""
@@ -134,13 +120,17 @@ class WaypointForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Add custom CSS class for coordinates field
+        if self.instance and self.instance.pk and self.instance.readme_item:
+            try:
+                self.fields['readme_text'].initial = self.instance.readme_item.read().decode('utf-8')
+            except Exception as e:
+                print(f"Error loading readme: {e}")
+
         if 'coordinates' in self.fields:
             old_classes = self.fields['coordinates'].widget.attrs.get('class', '')
             new_classes = f"{old_classes} waypoint-coordinates-field".strip()
             self.fields['coordinates'].widget.attrs['class'] = new_classes
         
-        # Enhanced help texts with emojis for better visual recognition
         field_configs = {
             'title': {
                 'help_text': '🏛️ Il nome di questo punto di interesse (es: "Duomo di Milano", "Castello Sforzesco")',
@@ -187,13 +177,11 @@ class WaypointForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=commit)
         
-        # Handle multiple image uploads
         if commit and hasattr(self, 'cleaned_data'):
             uploaded_files = self.cleaned_data.get('uploaded_images', [])
             for uploaded_file in uploaded_files:
                 WaypointViewImage.objects.create(waypoint=instance, image=uploaded_file)
         
-        # Handle readme markdown file
         if commit and hasattr(self, 'cleaned_data'):
             readme_text = self.cleaned_data.get('readme_text')
             if readme_text:
@@ -242,12 +230,10 @@ class TourForm(forms.ModelForm):
         request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         
-        # Style the sub_tours field
         self.fields['sub_tours'].widget.attrs.update({
             'class': 'unfold-multiselect flex flex-col gap-2 p-2 border rounded-lg bg-white shadow-sm'
         })
         
-        # Add placeholders
         if 'title' in self.fields:
             self.fields['title'].widget.attrs['placeholder'] = 'Es: Tour del Centro Storico di Roma'
         if 'subtitle' in self.fields:
@@ -263,17 +249,11 @@ class TourForm(forms.ModelForm):
         if 'place' in self.fields:
             self.fields['place'].widget.attrs['placeholder'] = 'Es: Roma'
 
-        # Handle popup creation for internal tours
         if request and "_popup" in request.GET:
             self.fields['category'].initial = 'INSIDE'
             self.fields['category'].disabled = True
             self.fields['category'].widget = forms.HiddenInput()
             self.fields['is_subtour'].initial = True
-
-
-# ============================================================================
-# INLINE ADMINS
-# ============================================================================
 
 class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedInline):
     """Base class for nested stacked inlines with Unfold styling"""
@@ -378,7 +358,6 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 '</div>'
             )
         
-        # Build gallery HTML
         html_parts = [
             '<div style="background: light-dark(#ffffff, #1f2937); padding: 16px; border-radius: 8px; '
             'border: 1px solid light-dark(#e5e7eb, #374151);">',
@@ -442,11 +421,6 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             ]
         }
 
-
-# ============================================================================
-# MAIN TOUR ADMIN
-# ============================================================================
-
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     """
     Amministrazione principale per i Tour
@@ -462,7 +436,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     date_hierarchy = 'creation_time'
     form = TourForm
     
-    # Enhanced fieldsets with helpful descriptions and visual organization
     fieldsets = (
         (None, {
             'fields': ('status_info',),
@@ -508,9 +481,10 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             'admin/js/init_markdown_editor.js',
             'admin/js/hide_waypoint_coordinates.js',
             'admin/js/refresh_subtours_checkboxes.js',
-            'admin/js/loader.js'
+            'admin/js/fix_minio_preview.js',
+            'admin/js/loader.js',
         ]
-    
+        
     @admin.display(description="Status")
     def status_badge(self, obj):
         """Display status with colored badge"""
@@ -590,7 +564,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         
         info = status_info.get(obj.status)
         
-        # Check if editable
         is_locked = obj.status in ['BUILDING', 'SERVING', 'ENQUEUED']
         lock_notice = ''
         if is_locked:
@@ -711,11 +684,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             return False
         return True
 
-
-# ============================================================================
-# SIMPLE MODEL ADMINS
-# ============================================================================
-
 class WaypointViewImageAdmin(ModelAdmin):
     """Admin for managing waypoint images"""
     list_display = ('id', 'waypoint', 'image_preview')
@@ -746,15 +714,9 @@ class WaypointViewImageAdmin(ModelAdmin):
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-
-# ============================================================================
-# REGISTER MODELS
-# ============================================================================
-
 admin.site.register(Tour, TourAdmin)
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
 
-# Customize admin site header and title
 admin.site.site_header = "🗺️ Tour Management System"
 admin.site.site_title = "Tour Admin"
 admin.site.index_title = "Benvenuto nel pannello di gestione tour"

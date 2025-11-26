@@ -3,22 +3,32 @@ function initMarkdownEditors(context) {
 
     textareas.forEach(textarea => {
         if (textarea._simplemde) {
-            textarea._simplemde.toTextArea();
-            textarea._simplemde = null;
-        } else if (textarea.classList.contains("simplemde-loaded")) {
-            const wrapper = textarea.parentElement.querySelector(".editor-toolbar");
-            if (wrapper) wrapper.remove();
-            const codemirror = textarea.parentElement.querySelector(".CodeMirror");
-            if (codemirror) codemirror.remove();
-            textarea.classList.remove("simplemde-loaded");
+            return;
         }
 
-        const editor = new SimpleMDE({ element: textarea });
+        const initialValue = textarea.value;
+
+        const editor = new SimpleMDE({ 
+            element: textarea,
+            initialValue: initialValue,
+            spellChecker: false,
+            status: false,
+            toolbar: [
+                "bold", "italic", "heading", "|",
+                "quote", "unordered-list", "ordered-list", "|",
+                "link", "image", "|",
+                "preview", "side-by-side", "fullscreen", "|",
+                "guide"
+            ]
+        });
+        
         textarea._simplemde = editor;
         textarea.classList.add("simplemde-loaded");
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => initMarkdownEditors(document));
-document.addEventListener("formset:added", event => initMarkdownEditors(event.target));
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => initMarkdownEditors(document), 100);
+});
 
+document.addEventListener("formset:added", event => initMarkdownEditors(event.target));
