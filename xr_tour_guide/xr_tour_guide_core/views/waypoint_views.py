@@ -95,27 +95,19 @@ def get_waypoint_resources(request):
         return JsonResponse({"error": "Waypoint not found"}, status=404)
 
     if resource_type == "readme" and waypoint.readme_item:
-        try:
-            storage = MinioStorage()
-            file_content = storage.open(waypoint.readme_item.name, mode='r').read()
-            return JsonResponse({"readme": file_content}, status=200)
-        except Exception as e:
-            return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=readme"}, status=200)
+        return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=readme"}, status=200)
     elif resource_type == "video" and waypoint.video_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=video"}, status=200)
-
     elif resource_type == "audio" and waypoint.audio_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=audio"}, status=200)
-
     elif resource_type == "pdf" and waypoint.pdf_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=pdf"}, status=200)
     # elif resource_type == "links" and waypoint.links.exists():
     #     links = waypoint.links.all()
     #     readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
     #     return JsonResponse({"readme": readme_content}, status=200)
-
     elif resource_type == "images":
-        images = waypoint.images.all()[:10]
+        images = waypoint.images.all()
         if not images.exists():
             return JsonResponse({"error": "No images found"}, status=404)
 
