@@ -21,6 +21,7 @@ from .forms.waypoint_form import WaypointForm
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
+    list_filter = ()
 
     fieldsets = (
         ('Account', {
@@ -33,6 +34,11 @@ class CustomUserAdmin(UserAdmin):
         }),
     )
 
+    def get_list_display(self, request):
+        if request.user.is_superuser:
+            return ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser')
+        return ('username', 'email', 'first_name', 'last_name')
+    
     exclude = ('is_staff', 'is_superuser', 'groups', 'user_permissions', 'last_login', 'date_joined')
 
     def get_fieldsets(self, request, obj=None):
@@ -56,10 +62,10 @@ class CustomUserAdmin(UserAdmin):
             return True
         return obj is None or obj == request.user
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, obj=None):
         return request.user.is_superuser
 
-    def has_delete_permission(self, request):
+    def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
 
 class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedInline):
