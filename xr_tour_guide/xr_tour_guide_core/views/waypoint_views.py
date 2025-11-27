@@ -69,10 +69,12 @@ def stream_minio_resource(request):
         file_path = file_name
     else:
         return Response({"detail": "File non trovato"}, status=404)
-
-    if not storage.exists(file_path):
-        return Response({"detail": f"File {file_name}, {waypoint.pdf_item.name}, {file_path} non trovato"}, status=404)
-
+    
+    try:
+        if not storage.exists(file_path):
+            return Response({"detail": f"File {file_name}, {waypoint.pdf_item.name}, {file_path} non trovato"}, status=404)
+    except Exception as e:
+        return Response({"detail": "Resource not found"}, status=404)
     file = storage.open(file_path, mode='rb')
 
     content_type, _ = mimetypes.guess_type(file_path)

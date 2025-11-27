@@ -6,7 +6,6 @@ import nested_admin
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfoldTabularInline
-from unfold.decorators import display
 from .models import Tour, Waypoint, WaypointViewImage, Review
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
@@ -14,16 +13,13 @@ from django.utils.html import format_html
 from .models import CustomUser
 from django.contrib.auth.admin import UserAdmin
 from django.core.files.base import ContentFile
-from django.db.models import Q
 from django.db import models
 from django.urls import reverse
-from django.middleware.csrf import get_token
+from .forms.tour_forms import TourForm
+from .forms.waypoint_form import WaypointForm
 
 @admin.register(CustomUser)
-class CustomUserAdmin(ModelAdmin, UserAdmin):
-    """
-    Gestione profilo utente - puoi modificare solo il tuo profilo
-    """
+class CustomUserAdmin(UserAdmin):
     model = CustomUser
 
     fieldsets = (
@@ -39,6 +35,11 @@ class CustomUserAdmin(ModelAdmin, UserAdmin):
 
     exclude = ('is_staff', 'is_superuser', 'groups', 'user_permissions', 'last_login', 'date_joined')
 
+    def get_fieldsets(self, request, obj=None):
+        if request.user.is_superuser:
+            return super().get_fieldsets(request, obj)
+        return self.fieldsets
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
@@ -48,227 +49,28 @@ class CustomUserAdmin(ModelAdmin, UserAdmin):
     def has_change_permission(self, request, obj=None):
         if request.user.is_superuser:
             return True
-        if obj is not None and obj == request.user:
-            return True
-        return False
+        return obj == request.user
 
     def has_view_permission(self, request, obj=None):
         if request.user.is_superuser:
             return True
-        if obj is None or obj == request.user:
-            return True
-        return False
+        return obj is None or obj == request.user
 
     def has_add_permission(self, request):
-        return False
+        return request.user.is_superuser
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-class MultipleClearableFileInput(ClearableFileInput):
-    """Widget personalizzato per upload multiplo di immagini"""
-    
-    def __init__(self, attrs=None):
-        super().__init__(attrs)
-        if self.attrs is None:
-            self.attrs = {}
-        self.attrs['multiple'] = True
-        self.attrs['accept'] = 'image/*'
-        
-    def render(self, name, value, attrs=None, renderer=None):
-        input_html = super().render(name, value, attrs, renderer)
-        return mark_safe(f"""
-        <div class="image-upload-container">
-            <div class="flex w-full max-w-2xl items-center justify-between gap-2 rounded-default border border-base-200 px-3 py-2 shadow-xs dark:border-base-700">
-                <label class="text-sm font-medium text-base-700 dark:text-base-200">
-                    {input_html}
-                </label>
-            </div>
-            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                💡 Puoi selezionare più immagini contemporaneamente (formati: JPG, PNG, WebP)
-            </p>
-        </div>
-        """)
-
-class WaypointForm(forms.ModelForm):
-    """Form per la creazione/modifica di un Punto di Interesse"""
-    
-    uploaded_images = forms.FileField(
-        required=False,
-        label='📷 Aggiungi Immagini',
-        widget=MultipleClearableFileInput(),
-        help_text='Carica le foto che meglio rappresentano questo luogo'
-    )
-    
-    readme_text = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'class': 'markdown-editor', 
-            'rows': 10,
-            'placeholder': 'Scrivi qui la descrizione dettagliata usando Markdown...\n\n'
-                          '**Esempio:**\n'
-                          '# Titolo\n'
-                          '## Sottotitolo\n'
-                          '- Elenco puntato\n'
-                          '- Altro punto\n\n'
-                          'Testo normale con **grassetto** e *corsivo*'
-        }),
-        label="📝 Descrizione Dettagliata (Markdown)",
-        required=False,
-        help_text='Utilizza Markdown per formattare la descrizione completa. Puoi includere titoli, elenchi, grassetto, corsivo, ecc.'
-    )
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        if self.instance and self.instance.pk and self.instance.readme_item:
-            try:
-                self.fields['readme_text'].initial = self.instance.readme_item.read().decode('utf-8')
-            except Exception as e:
-                print(f"Error loading readme: {e}")
-
-        if 'coordinates' in self.fields:
-            old_classes = self.fields['coordinates'].widget.attrs.get('class', '')
-            new_classes = f"{old_classes} waypoint-coordinates-field".strip()
-            self.fields['coordinates'].widget.attrs['class'] = new_classes
-        
-        field_configs = {
-            'title': {
-                'help_text': '🏛️ Il nome di questo punto di interesse (es: "Duomo di Milano", "Castello Sforzesco")',
-                'widget_attrs': {'placeholder': 'Es: Duomo di Milano'}
-            },
-            'place': {
-                'help_text': '📍 Città o località (es: "Milano", "Firenze")',
-                'widget_attrs': {'placeholder': 'Es: Milano'}
-            },
-            'description': {
-                'help_text': '✍️ Una breve descrizione che apparirà nella lista dei punti (max 2-3 righe)',
-                'widget_attrs': {
-                    'placeholder': 'Es: Capolavoro dell\'architettura gotica, simbolo della città...',
-                    'rows': 3
-                }
-            },
-            'coordinates': {
-                'help_text': '🗺️ Clicca sulla mappa per selezionare la posizione esatta del punto'
-            },
-            'pdf_item': {
-                'help_text': '📄 Carica un PDF con informazioni aggiuntive (opzionale)'
-            },
-            'video_item': {
-                'help_text': '🎥 Carica un video descrittivo (opzionale)'
-            },
-            'audio_item': {
-                'help_text': '🎵 Carica una guida audio (opzionale)'
-            }
-        }
-        
-        for field_name, config in field_configs.items():
-            if field_name in self.fields:
-                self.fields[field_name].help_text = config['help_text']
-                if 'widget_attrs' in config:
-                    self.fields[field_name].widget.attrs.update(config['widget_attrs'])
-
-    def clean_uploaded_images(self):
-        field_name = self.add_prefix('uploaded_images')
-        try:
-            return self.files.getlist(field_name)
-        except Exception:
-            return []
-            
-    def save(self, commit=True):
-        instance = super().save(commit=commit)
-        
-        if commit and hasattr(self, 'cleaned_data'):
-            uploaded_files = self.cleaned_data.get('uploaded_images', [])
-            for uploaded_file in uploaded_files:
-                WaypointViewImage.objects.create(waypoint=instance, image=uploaded_file)
-        
-        if commit and hasattr(self, 'cleaned_data'):
-            readme_text = self.cleaned_data.get('readme_text')
-            if readme_text:
-                instance.readme_item = ContentFile(readme_text.encode('utf-8'), name='readme.md')
-                instance.save()
-        
-        return instance
-
-    class Meta:
-        model = Waypoint
-        fields = ['title', 'place', 'coordinates', 'description', 'pdf_item', 'video_item', 'audio_item']
-
-
-class TourForm(forms.ModelForm):
-    """Form per la creazione/modifica di un Tour"""
-    
-    class Meta:
-        model = Tour
-        fields = "__all__"
-        widgets = {
-            'is_subtour': forms.HiddenInput(),
-            'sub_tours': forms.CheckboxSelectMultiple(),
-            'description': forms.Textarea(attrs={'rows': 4}),
-        }
-        labels = {
-            'sub_tours': '🔗 Tour Interni',
-            'title': '🎯 Titolo del Tour',
-            'subtitle': '📌 Sottotitolo',
-            'description': '📝 Descrizione',
-            'place': '📍 Località',
-            'coordinates': '🗺️ Coordinate Mappa',
-            'default_image': '🖼️ Immagine Copertina',
-            'category': '🏷️ Categoria',
-        }
-        help_texts = {
-            'title': 'Un titolo accattivante e chiaro (es: "Tour del Centro Storico", "Viaggio tra Arte e Storia")',
-            'subtitle': 'Una frase che cattura l\'essenza del tour in poche parole',
-            'description': 'Descrizione completa: cosa si vedrà, quanto dura, cosa lo rende speciale',
-            'place': 'La città o area principale del tour',
-            'default_image': 'Un\'immagine suggestiva che rappresenti il tour',
-            'sub_tours': 'Puoi includere altri tour come sezioni di questo tour',
-            'category': 'Il tipo di esperienza offerta',
-        }
-
-    def __init__(self, *args, **kwargs):
-        request = kwargs.pop("request", None)
-        super().__init__(*args, **kwargs)
-        
-        self.fields['sub_tours'].widget.attrs.update({
-            'class': 'unfold-multiselect flex flex-col gap-2 p-2 border rounded-lg bg-white shadow-sm'
-        })
-        
-        if 'title' in self.fields:
-            self.fields['title'].widget.attrs['placeholder'] = 'Es: Tour del Centro Storico di Roma'
-        if 'subtitle' in self.fields:
-            self.fields['subtitle'].widget.attrs['placeholder'] = 'Es: Alla scoperta dei monumenti più iconici'
-        if 'description' in self.fields:
-            self.fields['description'].widget.attrs['placeholder'] = (
-                'Descrivi il tour in modo coinvolgente:\n'
-                '- Cosa si vedrà\n'
-                '- Durata stimata\n'
-                '- Cosa lo rende speciale\n'
-                '- A chi è consigliato'
-            )
-        if 'place' in self.fields:
-            self.fields['place'].widget.attrs['placeholder'] = 'Es: Roma'
-
-        if request and "_popup" in request.GET:
-            self.fields['category'].initial = 'INSIDE'
-            self.fields['category'].disabled = True
-            self.fields['category'].widget = forms.HiddenInput()
-            self.fields['is_subtour'].initial = True
+    def has_delete_permission(self, request):
+        return request.user.is_superuser
 
 class UnfoldNestedStackedInline(UnfoldStackedInline, nested_admin.NestedStackedInline):
-    """Base class for nested stacked inlines with Unfold styling"""
     pass
 
 
 class UnfoldNestedTabularInline(UnfoldStackedInline, nested_admin.NestedTabularInline):
-    """Base class for nested tabular inlines with Unfold styling"""
     pass
 
 
 class WaypointAdmin(UnfoldNestedStackedInline):
-    """
-    Inline admin per i Punti di Interesse all'interno di un Tour
-    """
     model = Waypoint
     form = WaypointForm
     extra = 0
@@ -277,7 +79,6 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     readonly_fields = ['display_existing_images']
     
     def get_queryset(self, request):
-        """Filter waypoints: users only see their own tour waypoints"""
         qs = super().get_queryset(request)
         
         if not request.user.is_superuser:
@@ -339,7 +140,6 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     
     @admin.display(description="🖼️ Galleria Immagini")
     def display_existing_images(self, obj):
-        """Display existing images in a nice gallery format"""
         if not obj or not obj.pk:
             return mark_safe(
                 '<div style="background: light-dark(#fef3c7, #78350f); padding: 12px; border-radius: 6px; '
@@ -422,9 +222,6 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         }
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
-    """
-    Amministrazione principale per i Tour
-    """
     show_facets = admin.ShowFacets.ALLOW
     hide_ordering_field = True
     compressed_fields = True
@@ -512,8 +309,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     
     @admin.display(description="Stato del Tour")
     def status_info(self, obj):
-        """Display comprehensive status information"""
-        
         status_info = {
             "READY": {
                 "bg_light": "#dbeafe",
