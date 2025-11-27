@@ -137,7 +137,6 @@ class Tour(models.Model):
         if is_new:
             super().save(*args, **kwargs)
 
-        self.last_edited = timezone.now()
         if self.default_image and "None" in self.default_image.name:
             storage = MinioStorage()
             old_path = self.default_image.name
