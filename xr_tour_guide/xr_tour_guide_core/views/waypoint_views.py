@@ -8,6 +8,8 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.response import Response
+import zlib
+from django.http import HttpResponse
 
 @swagger_auto_schema(
     method='get',
@@ -81,8 +83,10 @@ def stream_minio_resource(request):
     if content_type is None:
         content_type = 'application/octet-stream'
 
-    response = FileResponse(file, as_attachment=True if attachment else False, filename=file_name)
-    response['Content-Type'] = content_type
+    response = HttpResponse(zlib.compress(file.read()), content_type=content_type)
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Disposition'] = f'{"attachment" if attachment else "inline"}; filename="{file_name}"'
+    
     return response
 
 @api_view(['GET'])
