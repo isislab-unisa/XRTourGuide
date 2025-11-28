@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django import forms
-from ..models import Waypoint, WaypointViewImage
+from ..models import Waypoint, WaypointViewImage, WaypointViewLink
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from django.core.files.base import ContentFile
@@ -23,9 +23,6 @@ class MultipleClearableFileInput(ClearableFileInput):
                     {input_html}
                 </label>
             </div>
-            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                💡 Puoi selezionare più immagini contemporaneamente (formati: JPG, PNG, WebP)
-            </p>
         </div>
         """)
 

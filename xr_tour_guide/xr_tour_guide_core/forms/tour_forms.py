@@ -9,7 +9,6 @@ class TourForm(forms.ModelForm):
         widgets = {
             'is_subtour': forms.HiddenInput(),
             'sub_tours': forms.CheckboxSelectMultiple(),
-            'description': forms.Textarea(attrs={'rows': 4}),
         }
         labels = {
             'sub_tours': '🔗 Tour Interni',

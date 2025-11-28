@@ -170,23 +170,19 @@ class Waypoint(models.Model):
     description = models.TextField(blank=True, null=True)
     model_path = models.CharField(max_length=200, blank=True, null=True)
     
-    # tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
-    # default_image = models.ImageField(upload_to=default_image_waypoint, storage=MinioStorage(), null=True, blank=True)
     
     pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
-    # text_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INSIDE:
             self.coordinates = self.tour.coordinates
         is_new = self.pk is None
         old_files = {
-            # 'default_image': self.default_image,
             'pdf_item': self.pdf_item,
             'readme_item': self.readme_item,
             'video_item': self.video_item,
@@ -237,6 +233,13 @@ class WaypointViewImage(models.Model):
     def __str__(self):
         return f"Image for {self.waypoint.title}"
 
+class WaypointViewLink(models.Model):
+    waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE, null=True, blank=True)
+    link = models.URLField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Link for {self.waypoint.title}"
+    
 class Review(models.Model):
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='reviews')
