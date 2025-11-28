@@ -47,7 +47,6 @@ class CustomUserAdmin(UserAdmin):
         return obj is None or obj == request.user
 
     def has_add_permission(self, request):
-        """Fixed: removed obj parameter - UserAdmin expects only request"""
         return request.user.is_superuser
 
     def has_delete_permission(self, request, obj=None):

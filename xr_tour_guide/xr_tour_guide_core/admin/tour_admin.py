@@ -8,8 +8,6 @@ from django.utils.html import format_html
 from django.db import models
 from ..forms.tour_forms import TourForm
 from .waypoint_admin import WaypointAdmin
-# Removed: from ..admin import UnfoldNestedStackedInline, UnfoldTabularInline
-# No longer needed because WaypointAdmin imports from base.py
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
@@ -74,7 +72,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         
     @admin.display(description="Status")
     def status_badge(self, obj):
-        """Display status with colored badge"""
         status_colors = {
             'READY': '#3b82f6',      # Blue
             'ENQUEUED': '#f59e0b',   # Amber
@@ -191,7 +188,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         return form_wrapper
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
-        """Customize sub_tours field to show only available tours"""
         if db_field.name == "sub_tours":
             tour_id = request.resolver_match.kwargs.get("object_id")
             available = Tour.objects.filter(
@@ -211,7 +207,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def get_queryset(self, request):
-        """Filter queryset: non-superusers see only their tours, excluding subtours"""
         qs = super().get_queryset(request)
         qs = qs.filter(is_subtour=False)
         
@@ -221,7 +216,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         return qs
 
     def save_model(self, request, obj, form, change):
-        """Auto-assign user on creation and update status on edit"""
         if not change:
             obj.user = request.user
         if change:
@@ -229,13 +223,11 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def get_changeform_initial_data(self, request):
-        """Set initial data for new tours"""
         initial = super().get_changeform_initial_data(request)
         initial['user'] = request.user.pk
         return initial
 
     def save_related(self, request, form, formsets, change):
-        """Handle sub_tours relationships"""
         super().save_related(request, form, formsets, change)
 
         for subtour in form.instance.sub_tours.all():
@@ -246,7 +238,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                 subtour.parent_tours.add(form.instance)
 
     def has_change_permission(self, request, obj=None):
-        """Prevent editing tours in certain states"""
         has_permission = super().has_change_permission(request, obj)
         if not has_permission:
             return False
@@ -257,7 +248,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         return True
 
     def has_delete_permission(self, request, obj=None):
-        """Prevent deleting tours in certain states or by other users"""
         has_permission = super().has_delete_permission(request, obj)
         if not has_permission:
             return False

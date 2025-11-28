@@ -11,7 +11,7 @@ from django.utils.html import format_html
 from django.db import models
 from django.urls import reverse
 from ..forms.waypoint_form import WaypointForm
-from .base import UnfoldNestedStackedInline  # ← Import from base.py instead
+from .base import UnfoldNestedStackedInline
 
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
