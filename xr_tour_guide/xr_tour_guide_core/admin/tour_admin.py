@@ -20,6 +20,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     search_fields = ('title', 'subtitle', 'description', 'place')
     date_hierarchy = 'creation_time'
     form = TourForm
+    inlines = [WaypointAdmin]
     
     fieldsets = (
         (None, {
@@ -56,8 +57,6 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     widgets = {
         'is_subtour': forms.HiddenInput()
     }
-    
-    inlines = [WaypointAdmin]
 
     class Media:
         js = [

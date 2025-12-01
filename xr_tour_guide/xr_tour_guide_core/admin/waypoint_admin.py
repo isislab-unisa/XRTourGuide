@@ -102,11 +102,10 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             )
         
         html_parts = [
-            '<div style="background: light-dark(#ffffff, #1f2937); padding: 12px; border-radius: 8px; '
-            'border: 1px solid light-dark(#e5e7eb, #374151); max-width: 600px;">',
-            f'<p style="margin: 0 0 8px 0; font-weight: 600; color: light-dark(#374151, #e5e7eb); font-size: 0.875rem;">📷 {images.count()} immagini</p>',
-            '<div style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 300px; overflow-y: auto; '
-            'padding: 8px; background: light-dark(#f9fafb, #111827); border-radius: 4px;">'
+            '<div style="background: light-dark(#ffffff, #1f2937); padding: 16px; border-radius: 8px; '
+            'border: 1px solid light-dark(#e5e7eb, #374151);">',
+            f'<p style="margin: 0 0 12px 0; font-weight: 600; color: light-dark(#374151, #e5e7eb);">📷 {images.count()} immagini caricate</p>',
+            '<div style="display: flex; flex-wrap: wrap; gap: 16px;">'
         ]
         
         for img in images:
@@ -117,8 +116,8 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 change_url = reverse(f'admin:{app_label}_{model_name}_change', args=[img.pk])
                 delete_link = (
                     f'<a href="{change_url}" '
-                    f'style="color: light-dark(#dc2626, #f87171); font-size: 0.7rem; text-decoration: none;" '
-                    f'target="_blank" title="Gestisci immagine">🗑️</a>'
+                    f'style="color: light-dark(#dc2626, #f87171); font-size: 0.75rem; font-weight: 500; text-decoration: none;" '
+                    f'target="_blank">🗑️ Gestisci</a>'
                 )
             except:
                 delete_link = ''
@@ -126,17 +125,17 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             img_url = f"/stream_minio_resource/?tour={img.waypoint.tour.pk}&waypoint={img.waypoint.pk}&file={img.image.name}"
             
             html_parts.append(f'''
-                <div style="width: 120px; border: 1px solid light-dark(#e5e7eb, #374151); border-radius: 6px; 
-                    overflow: hidden; background: light-dark(#ffffff, #1f2937);">
+                <div style="width: 200px; border: 1px solid light-dark(#e5e7eb, #374151); border-radius: 8px; 
+                     overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
                     <img src="{img_url}" 
-                        alt="View image" 
-                        onclick="window.open('{img_url}', '_blank')"
-                        style="width: 100%; height: 90px; object-fit: cover; cursor: pointer; display: block;"
-                        title="Clicca per ingrandire"
+                         alt="View image" 
+                         onclick="window.open('{img_url}', '_blank')"
+                         style="width: 100%; height: 160px; object-fit: cover; cursor: pointer;"
+                         title="Clicca per vedere l'immagine a schermo intero"
                     />
-                    <div style="padding: 4px; display: flex; justify-content: space-between; align-items: center; 
-                        font-size: 0.7rem; color: light-dark(#6b7280, #9ca3af);">
-                        <span>#{img.pk}</span>
+                    <div style="padding: 8px; background: light-dark(#ffffff, #1f2937); display: flex; 
+                         justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: light-dark(#6b7280, #9ca3af);">ID: {img.pk}</span>
                         {delete_link}
                     </div>
                 </div>
@@ -179,37 +178,19 @@ class WaypointViewImageAdmin(ModelAdmin):
                 obj.image.url
             )
         return "Nessuna immagine"
-
+    
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+        
         if not request.user.is_superuser:
             qs = qs.filter(waypoint__tour__user=request.user)
+        
         return qs
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "waypoint":
-            obj_id = request.resolver_match.kwargs.get('object_id')
-            
-            if obj_id:
-                try:
-                    image = WaypointViewImage.objects.get(pk=obj_id)
-                    tour_id = image.waypoint.tour.id
-                except WaypointViewImage.DoesNotExist:
-                    tour_id = None
-            else:
-                tour_id = request.GET.get('tour_id')
-            
             if not request.user.is_superuser:
-                queryset = Waypoint.objects.filter(tour__user=request.user)
-            else:
-                queryset = Waypoint.objects.all()
-            
-            if tour_id:
-                queryset = queryset.filter(tour_id=tour_id)
-            else:
-                queryset = queryset.none()
-            
-            kwargs["queryset"] = queryset
+                kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
