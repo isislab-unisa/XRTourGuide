@@ -67,7 +67,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             )
         }),
         ('🎬 Contenuti Multimediali (Opzionale)', {
-            'fields': ('pdf_item', 'video_item', 'audio_item', 'readme_text'),
+            'fields': ('pdf_item', 'video_item', 'audio_item', 'readme_text', 'additional_images'),
             'classes': ('collapse',),
             'description': (
                 '<div style="background: light-dark(#e0e7ff, #3730a3); padding: 12px; border-radius: 6px; '
@@ -166,7 +166,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
 
 class WaypointViewImageAdmin(ModelAdmin):
 
-    list_display = ('id', 'waypoint', 'image_preview')
+    list_display = ('id', 'waypoint', 'image_preview', 'type_of_images')
     list_filter = ('waypoint__tour',)
     search_fields = ('waypoint__title', 'waypoint__tour__title')
     

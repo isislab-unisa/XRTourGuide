@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django import forms
-from ..models import Waypoint, WaypointViewImage, WaypointViewLink
+from ..models import Waypoint, WaypointViewImage, WaypointViewLink, TypeOfImage
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from django.core.files.base import ContentFile
@@ -34,6 +34,13 @@ class WaypointForm(forms.ModelForm):
         label='📷 Aggiungi Immagini',
         widget=MultipleClearableFileInput(),
         help_text='Carica le foto che meglio rappresentano questo luogo'
+    )
+
+    additional_images = forms.FileField(
+        required=False,
+        label='📷 Aggiungi Immagini Specifiche per questo tappa',
+        widget=MultipleClearableFileInput(),
+        help_text='Carica le foto che meglio rappresentano questa tappa'
     )
     
     readme_text = forms.CharField(
@@ -109,6 +116,13 @@ class WaypointForm(forms.ModelForm):
             return self.files.getlist(field_name)
         except Exception:
             return []
+    
+    def clean_additional_images(self):
+        field_name = self.add_prefix('additional_images')
+        try:
+            return self.files.getlist(field_name)
+        except Exception:
+            return []
             
     def save(self, commit=True):
         instance = super().save(commit=commit)
@@ -116,8 +130,13 @@ class WaypointForm(forms.ModelForm):
         if commit and hasattr(self, 'cleaned_data'):
             uploaded_files = self.cleaned_data.get('uploaded_images', [])
             for uploaded_file in uploaded_files:
-                WaypointViewImage.objects.create(waypoint=instance, image=uploaded_file)
+                WaypointViewImage.objects.create(waypoint=instance, image=uploaded_file, type_of_images=TypeOfImage.DEFAULT)
         
+        if commit and hasattr(self, 'cleaned_data'):
+            additional_images = self.cleaned_data.get('additional_images', [])
+            for additional_image in additional_images:
+                WaypointViewImage.objects.create(waypoint=instance, image=additional_image, type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
+
         if commit and hasattr(self, 'cleaned_data'):
             readme_text = self.cleaned_data.get('readme_text')
             if readme_text:

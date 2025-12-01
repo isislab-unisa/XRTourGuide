@@ -225,11 +225,16 @@ class Waypoint(models.Model):
 
     def __str__(self):
         return self.title
-    
+
+class TypeOfImage(models.TextChoices):
+    DEFAULT = "DEFAULT"
+    ADDITIONAL_IMAGES = "ADDITIONAL_IMAGES"
+
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
     image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
-    
+    type_of_images = models.CharField(max_length=20, choices=TypeOfImage.choices, default=TypeOfImage.DEFAULT)
+
     def __str__(self):
         return f"Image for {self.waypoint.title}"
 

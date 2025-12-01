@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse, FileResponse
 from rest_framework.decorators import api_view, permission_classes
 import mimetypes
-from ..models import MinioStorage, Waypoint, Tour
+from ..models import MinioStorage, Waypoint, Tour, TypeOfImage
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -113,7 +113,7 @@ def get_waypoint_resources(request):
     #     readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
     #     return JsonResponse({"readme": readme_content}, status=200)
     elif resource_type == "images":
-        images = waypoint.images.all()
+        images = waypoint.images.filter(type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
         if not images.exists():
             return JsonResponse({"error": "No images found"}, status=404)
 

@@ -45,7 +45,7 @@ def complete_build(request):
     if remote_ip != allowed_ip:
         return JsonResponse({"error": "Access denied"}, status=403)
 
-    print(f"Request data: {request.POST.get('poi_id')}")
+    storage = MinioStorage()
     tour_title = request.data.get('poi_name')
     tour_id = request.data.get('poi_id')
     model_url = request.data.get('model_url')
@@ -91,6 +91,12 @@ def complete_build(request):
             [tour.user.email],
             fail_silently=False,
         )
+
+        prefix = f"{tour_id}/data/"
+        objects_to_delete = storage.bucket.objects.filter(Prefix=prefix)
+        len(objects_to_delete, flush=True)
+        for obj in objects_to_delete:
+            obj.delete()
 
         try:
             redis_client.delete("build_lock")

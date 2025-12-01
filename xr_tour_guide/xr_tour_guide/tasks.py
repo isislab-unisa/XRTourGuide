@@ -1,6 +1,6 @@
 import requests
 from celery import shared_task
-from xr_tour_guide_core.models import Tour, MinioStorage, Status
+from xr_tour_guide_core.models import Tour, MinioStorage, Status, TypeOfImage
 from django.core.mail import send_mail
 import os
 import redis
@@ -46,23 +46,23 @@ def call_api_and_save(self, tour_id):
             for subtours in tour.sub_tours.all():
                 waipoints = subtours.waypoints.all()
                 for waypoint in waipoints:
-                    num_img = len(waypoint.images.all())
+                    num_img = len(waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value))
                     if num_img < 5:
-                        for i, image in enumerate(waypoint.images.all()):
+                        for i, image in enumerate(waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value)):
                             storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
                             if i == 1:
                                 storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
                     else:
                         train = int(num_img * 0.8)
                         test = num_img - train
-                        for image in waypoint.images.all()[:train]:
+                        for image in waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value)[:train]:
                             storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
-                        for image in waypoint.images.all()[train:]:
+                        for image in waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value)[train:]:
                             storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
                             
             waypoints = tour.waypoints.all()
             for waypoint in waypoints:
-                images = waypoint.images.all()
+                images = waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value)
                 num_img = len(images)
                 if num_img < 5:
                     for i, image in enumerate(images):
