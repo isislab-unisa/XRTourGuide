@@ -77,8 +77,18 @@ def complete_build(request):
         except Exception as e:
             print(f"Errore nell'eliminazione del lock: {e}")
 
-        return JsonResponse({"message": "Build completata"}, status=200)
 
+        try:
+            prefix = f"{tour_id}/data/"
+            bucket = storage.bucket
+            objects_to_delete = bucket.objects.filter(Prefix=prefix)
+            for obj in objects_to_delete:
+                obj.delete()
+                        
+        except Exception as e:
+            print(f"Errore nell'eliminazione degli oggetti: {e}", flush=True)
+
+        return JsonResponse({"message": "Build completata"}, status=200)
     else:
         tour = Tour.objects.get(pk=tour_id)
         tour.status = "FAILED"
@@ -91,12 +101,6 @@ def complete_build(request):
             [tour.user.email],
             fail_silently=False,
         )
-
-        prefix = f"{tour_id}/data/"
-        objects_to_delete = storage.bucket.objects.filter(Prefix=prefix)
-        len(objects_to_delete, flush=True)
-        for obj in objects_to_delete:
-            obj.delete()
 
         try:
             redis_client.delete("build_lock")
