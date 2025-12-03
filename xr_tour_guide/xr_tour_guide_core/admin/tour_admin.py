@@ -8,6 +8,7 @@ from django.utils.html import format_html
 from django.db import models
 from ..forms.tour_forms import TourForm
 from .waypoint_admin import WaypointAdmin
+from django.contrib.admin.views.main import ChangeList
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
@@ -207,12 +208,23 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.filter(is_subtour=False)
         
         if not request.user.is_superuser:
             qs = qs.filter(user=request.user)
 
         return qs
+    
+    def changelist_view(self, request, extra_context=None):
+        return super().changelist_view(request, extra_context)
+
+    def get_changelist(self, request, **kwargs):
+        
+        class SubtourFilteredChangeList(ChangeList):
+            def get_queryset(self, request):
+                qs = super().get_queryset(request)
+                return qs.filter(is_subtour=False)
+        
+        return SubtourFilteredChangeList
 
     def save_model(self, request, obj, form, change):
         if not change:
