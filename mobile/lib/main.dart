@@ -10,6 +10,8 @@ import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import "package:easy_localization/easy_localization.dart";
 import "server_selection_screen.dart";
+import "dart:io" show Platform;
+import "package:flutter/foundation.dart" show kIsWeb;
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
@@ -92,6 +94,12 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
           bodyLarge: TextStyle(color: AppColors.textSecondary),
+        ),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+          },
         ),
       ),
       // home: const AuthChecker(),

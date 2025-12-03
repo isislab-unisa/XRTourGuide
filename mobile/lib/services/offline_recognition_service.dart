@@ -364,7 +364,7 @@ class OfflineRecognitionService {
         qGray,
         cv.Mat.empty(),
         keypoints: qKp,
-        description: qDesc,
+        descriptors: qDesc,
       );
       // print("QDESC: ${qDesc.rows}x${qDesc.cols}, KPs: ${qKp.size()}");
       if (qDesc.isEmpty) {

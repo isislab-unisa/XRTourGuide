@@ -13,7 +13,7 @@ MINIO_PASSWORD = os.getenv("MINIO_ROOT_PASSWORD")
 MINIO_BUCKET = os.getenv("AWS_STORAGE_BUCKET_NAME", "pmtiles")
 
 client = Minio(
-    MINIO_URL,
+    endpoint=MINIO_URL,
     access_key=MINIO_USER,
     secret_key=MINIO_PASSWORD,
     secure=False
@@ -44,9 +44,9 @@ async def extract_pmtiles(data: ExtractRequest):
 
     try:
         client.fput_object(
-            f"{MINIO_BUCKET}",
-            f"{data.tour_id}/tour_{data.tour_id}.pmtiles",
-            output_path
+            bucket_name = f"{MINIO_BUCKET}",
+            object_name = f"{data.tour_id}/tour_{data.tour_id}.pmtiles",
+            file_path = output_path
         )
     except S3Error as err:
         raise HTTPException(status_code=500, detail=f"Failed to upload to MinIO: {err}")

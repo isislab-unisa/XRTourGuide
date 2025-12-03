@@ -147,7 +147,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
   Future<void> _initOfflineMap() async {
     final dir = await getApplicationDocumentsDirectory();
-    final path = '${dir.path}/offline_tours_data/tour_${widget.tourId}/map.pmtiles';
+    final path = '${dir.path}/offline_tours_data/tour_${widget.tourId}/tour_${widget.tourId}.pmtiles';
     if (await File(path).exists()) {
       setState(() {
         _pmtilesPath = path;
