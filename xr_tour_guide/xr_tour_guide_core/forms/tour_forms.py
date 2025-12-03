@@ -89,7 +89,7 @@ class TourForm(forms.ModelForm):
         if 'place' in self.fields:
             self.fields['place'].widget.attrs['placeholder'] = 'Es: Roma'
 
-        if request and "_popup" in request.GET or self.fields['is_subtour']:
+        if request and "_popup" in request.GET and not self.instance.pk:
             self.fields['category'].initial = 'INSIDE'
             self.fields['category'].disabled = True
             self.fields['category'].widget = forms.HiddenInput()
