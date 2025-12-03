@@ -4,7 +4,7 @@ from location_field.widgets import LocationWidget
 from location_field.models.plain import PlainLocationField
 import nested_admin
 from unfold.admin import ModelAdmin
-from ..models import Tour, Waypoint, WaypointViewImage
+from ..models import Tour, Waypoint, WaypointViewImage, WaypointViewLink
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
@@ -67,7 +67,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             )
         }),
         ('🎬 Contenuti Multimediali (Opzionale)', {
-            'fields': ('pdf_item', 'video_item', 'audio_item', 'readme_text', 'additional_images'),
+            'fields': ('pdf_item', 'video_item', 'audio_item', 'readme_text', 'additional_images', 'links'),
             'classes': ('collapse',),
             'description': (
                 '<div style="background: light-dark(#e0e7ff, #3730a3); padding: 12px; border-radius: 6px; '
@@ -195,3 +195,49 @@ class WaypointViewImageAdmin(ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
+
+class WaypointViewLinkAdmin(ModelAdmin):
+    list_display = ('id', 'waypoint', 'link_preview')
+    list_filter = ('waypoint__tour',)
+    search_fields = ('waypoint__title', 'waypoint__tour__title', 'link')
+    
+    fieldsets = (
+        ('🔗 Informazioni Link', {
+            'fields': ('waypoint', 'link'),
+            'description': (
+                '<div style="background: light-dark(#dbeafe, #1e3a8a); padding: 12px; border-radius: 6px; '
+                'margin-bottom: 12px; border-left: 4px solid light-dark(#3b82f6, #60a5fa); '
+                'color: light-dark(#1e3a8a, #dbeafe);">'
+                '<strong>🔗 Aggiungi Link:</strong> '
+                'Inserisci URL esterni per arricchire questo punto di interesse (es: sito ufficiale, Wikipedia, video YouTube)'
+                '</div>'
+            )
+        }),
+    )
+    
+    @admin.display(description="🔗 Link")
+    def link_preview(self, obj):
+        if obj.link:
+            return format_html(
+                '<a href="{}" target="_blank" style="color: #3b82f6; text-decoration: none;">{}</a>',
+                obj.link,
+                obj.link[:50] + '...' if len(obj.link) > 50 else obj.link
+            )
+        return "Nessun link"
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        
+        if not request.user.is_superuser:
+            qs = qs.filter(waypoint__tour__user=request.user)
+        
+        return qs
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "waypoint":
+            if not request.user.is_superuser:
+                kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
+        
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+admin.site.register(WaypointViewLink, WaypointViewLinkAdmin)

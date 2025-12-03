@@ -42,6 +42,21 @@ class WaypointForm(forms.ModelForm):
         widget=MultipleClearableFileInput(),
         help_text='Carica le foto che meglio rappresentano questa tappa'
     )
+
+    links = forms.CharField(
+        required=False,
+        label='🔗 Aggiungi Link',
+        widget=forms.Textarea(attrs={
+            'rows': 5,
+            'class': 'vTextField',
+            'placeholder': 'Inserisci un link per riga:\n\n'
+                        'https://it.wikipedia.org/wiki/Duomo_di_Milano\n'
+                        'https://www.duomomilano.it\n'
+                        'https://www.youtube.com/watch?v=example',
+        }),
+        help_text='🔗 Inserisci un link per riga. Ogni riga sarà salvata come link separato. '
+                'Puoi aggiungere siti ufficiali, Wikipedia, video YouTube, ecc.'
+    )
     
     readme_text = forms.CharField(
         widget=forms.Textarea(attrs={
@@ -68,6 +83,11 @@ class WaypointForm(forms.ModelForm):
                 self.fields['readme_text'].initial = self.instance.readme_item.read().decode('utf-8')
             except Exception as e:
                 print(f"Error loading readme: {e}")
+        
+        if self.instance and self.instance.pk:
+            existing_links = WaypointViewLink.objects.filter(waypoint=self.instance)
+            if existing_links.exists():
+                self.fields['links'].initial = '\n'.join([link.link for link in existing_links if link.link])
 
         if 'coordinates' in self.fields:
             old_classes = self.fields['coordinates'].widget.attrs.get('class', '')
@@ -123,6 +143,21 @@ class WaypointForm(forms.ModelForm):
             return self.files.getlist(field_name)
         except Exception:
             return []
+    
+    def clean_links(self):
+        links_text = self.cleaned_data.get('links', '')
+        if not links_text:
+            return []
+        
+        links = [link.strip() for link in links_text.strip().split('\n') if link.strip()]
+        
+        valid_links = []
+        for link in links:
+            if link and not link.startswith(('http://', 'https://')):
+                link = 'https://' + link
+            valid_links.append(link)
+        
+        return valid_links
             
     def save(self, commit=True):
         instance = super().save(commit=commit)
@@ -143,10 +178,17 @@ class WaypointForm(forms.ModelForm):
                 instance.readme_item = ContentFile(readme_text.encode('utf-8'), name='readme.md')
                 instance.save()
         
+        if commit and hasattr(self, 'cleaned_data'):
+            links = self.cleaned_data.get('links', [])
+            
+            WaypointViewLink.objects.filter(waypoint=instance).delete()
+            
+            for link in links:
+                if link:
+                    WaypointViewLink.objects.create(waypoint=instance, link=link)
+        
         return instance
 
     class Meta:
         model = Waypoint
         fields = ['title', 'place', 'coordinates', 'description', 'pdf_item', 'video_item', 'audio_item']
-
-
