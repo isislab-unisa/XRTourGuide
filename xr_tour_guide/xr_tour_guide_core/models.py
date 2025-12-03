@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import models
 from location_field.models.plain import PlainLocationField
 import dotenv
@@ -78,8 +79,8 @@ class TourQuerySet(models.QuerySet):
 class Tour(models.Model):
     title = models.CharField(max_length=200, blank=False, null=False, unique=False)
     subtitle = models.CharField(max_length=200, blank=True, null=True)
-    place = models.CharField(max_length=200, blank=True, null=True)
-    coordinates = PlainLocationField(zoom=7, null=True, blank=True, based_fields=['place'])
+    place = models.CharField(max_length=200, blank=False, null=False)
+    coordinates = PlainLocationField(zoom=7, null=False, blank=False, based_fields=['place'], default="0.0, 0.0")
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
@@ -164,28 +165,24 @@ class Tour(models.Model):
 class Waypoint(models.Model):
     title = models.CharField(max_length=200, blank=False, null=False)
     place = models.CharField(max_length=200, blank=True, null=True)
-    coordinates = PlainLocationField(zoom=7, null=True, blank=True, based_fields=['place'])
+    coordinates = PlainLocationField(zoom=7, null=False, blank=False, based_fields=['place'], default="0.0, 0.0")
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints')
     description = models.TextField(blank=True, null=True)
     model_path = models.CharField(max_length=200, blank=True, null=True)
     
-    # tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
-    # default_image = models.ImageField(upload_to=default_image_waypoint, storage=MinioStorage(), null=True, blank=True)
     
     pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
-    # text_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
     
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INSIDE:
             self.coordinates = self.tour.coordinates
         is_new = self.pk is None
         old_files = {
-            # 'default_image': self.default_image,
             'pdf_item': self.pdf_item,
             'readme_item': self.readme_item,
             'video_item': self.video_item,
@@ -228,14 +225,26 @@ class Waypoint(models.Model):
 
     def __str__(self):
         return self.title
-    
+
+class TypeOfImage(models.TextChoices):
+    DEFAULT = "DEFAULT"
+    ADDITIONAL_IMAGES = "ADDITIONAL_IMAGES"
+
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
     image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
-    
+    type_of_images = models.CharField(max_length=20, choices=TypeOfImage.choices, default=TypeOfImage.DEFAULT)
+
     def __str__(self):
         return f"Image for {self.waypoint.title}"
 
+class WaypointViewLink(models.Model):
+    waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE, null=True, blank=True)
+    link = models.URLField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Link for {self.waypoint.title}"
+    
 class Review(models.Model):
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='reviews')

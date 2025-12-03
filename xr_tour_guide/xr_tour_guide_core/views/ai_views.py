@@ -45,7 +45,7 @@ def complete_build(request):
     if remote_ip != allowed_ip:
         return JsonResponse({"error": "Access denied"}, status=403)
 
-    print(f"Request data: {request.POST.get('poi_id')}")
+    storage = MinioStorage()
     tour_title = request.data.get('poi_name')
     tour_id = request.data.get('poi_id')
     model_url = request.data.get('model_url')
@@ -77,8 +77,18 @@ def complete_build(request):
         except Exception as e:
             print(f"Errore nell'eliminazione del lock: {e}")
 
-        return JsonResponse({"message": "Build completata"}, status=200)
 
+        try:
+            prefix = f"{tour_id}/data/"
+            bucket = storage.bucket
+            objects_to_delete = bucket.objects.filter(Prefix=prefix)
+            for obj in objects_to_delete:
+                obj.delete()
+                        
+        except Exception as e:
+            print(f"Errore nell'eliminazione degli oggetti: {e}", flush=True)
+
+        return JsonResponse({"message": "Build completata"}, status=200)
     else:
         tour = Tour.objects.get(pk=tour_id)
         tour.status = "FAILED"

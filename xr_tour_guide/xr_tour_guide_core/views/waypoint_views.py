@@ -3,11 +3,13 @@ from rest_framework.response import Response
 from django.http import JsonResponse, FileResponse
 from rest_framework.decorators import api_view, permission_classes
 import mimetypes
-from ..models import MinioStorage, Waypoint, Tour
+from ..models import MinioStorage, Waypoint, Tour, TypeOfImage
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.response import Response
+import zlib
+from django.http import HttpResponse
 
 @swagger_auto_schema(
     method='get',
@@ -69,18 +71,22 @@ def stream_minio_resource(request):
         file_path = file_name
     else:
         return Response({"detail": "File non trovato"}, status=404)
-
-    if not storage.exists(file_path):
-        return Response({"detail": f"File {file_name}, {waypoint.pdf_item.name}, {file_path} non trovato"}, status=404)
-
+    
+    try:
+        if not storage.exists(file_path):
+            return Response({"detail": f"File {file_name}, {waypoint.pdf_item.name}, {file_path} non trovato"}, status=404)
+    except Exception as e:
+        return Response({"detail": "Resource not found"}, status=404)
     file = storage.open(file_path, mode='rb')
 
     content_type, _ = mimetypes.guess_type(file_path)
     if content_type is None:
         content_type = 'application/octet-stream'
 
-    response = FileResponse(file, as_attachment=True if attachment else False, filename=file_name)
-    response['Content-Type'] = content_type
+    response = HttpResponse(zlib.compress(file.read()), content_type=content_type)
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Disposition'] = f'{"attachment" if attachment else "inline"}; filename="{file_name}"'
+    
     return response
 
 @api_view(['GET'])
@@ -95,27 +101,19 @@ def get_waypoint_resources(request):
         return JsonResponse({"error": "Waypoint not found"}, status=404)
 
     if resource_type == "readme" and waypoint.readme_item:
-        try:
-            storage = MinioStorage()
-            file_content = storage.open(waypoint.readme_item.name, mode='r').read()
-            return JsonResponse({"readme": file_content}, status=200)
-        except Exception as e:
-            return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=readme"}, status=200)
+        return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=readme"}, status=200)
     elif resource_type == "video" and waypoint.video_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=video"}, status=200)
-
     elif resource_type == "audio" and waypoint.audio_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=audio"}, status=200)
-
     elif resource_type == "pdf" and waypoint.pdf_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=pdf"}, status=200)
     # elif resource_type == "links" and waypoint.links.exists():
     #     links = waypoint.links.all()
     #     readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
     #     return JsonResponse({"readme": readme_content}, status=200)
-
     elif resource_type == "images":
-        images = waypoint.images.all()[:10]
+        images = waypoint.images.filter(type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
         if not images.exists():
             return JsonResponse({"error": "No images found"}, status=404)
 
