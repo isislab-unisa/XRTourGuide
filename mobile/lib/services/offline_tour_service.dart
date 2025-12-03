@@ -55,6 +55,8 @@ class OfflineStorageService {
         await tourDir.create(recursive: true);
       }
 
+      await _downloadMap(tourId, tourDir);
+
       // 4. Download tour default image
       await _downloadImage("${ApiService.basicUrl}/stream_minio_resource/?attachment=True&tour=${tour.id}", '${tourDir.path}/default_image.jpg');
 
@@ -110,8 +112,12 @@ class OfflineStorageService {
       //Save training_data
       await _downloadOfflineIndex(tourId, tourDir);
 
+
+
       // 8. Update offline tours list
       await _updateOfflineToursList(tourId, tour);
+
+
 
       return true;
     } catch (e) {
@@ -228,6 +234,28 @@ class OfflineStorageService {
       await file.writeAsString(jsonEncode(data));
     } catch (e) {
       print('Error downloading offline index: $e');
+    }
+  }
+
+  Future<void> _downloadMap(int tourId, Directory tourDir) async {
+    try {
+      final url = '${ApiService.basicUrl}/cut_map/$tourId/';
+      final localPath = '${tourDir.path}/tour_$tourId.pmtiles';
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      await _dio.download(
+        url,
+        localPath,
+        options: Options(
+          method: 'POST',
+          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+        ),
+      );
+      print("Map downloaded successfully to $localPath");
+    } catch (e) {
+      print("Error downloading map: $e");
     }
   }
 

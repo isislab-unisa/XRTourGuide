@@ -18,10 +18,11 @@ class ApiService {
   '/api/token/refresh/',
   '/register/',
   '/tour_list/',
+  '/get_waypoint_resources/',
   ];
 
   // static const String basicUrl = 'http://172.16.15.145:80';
-  static const String basicUrl = 'http://172.16.15.198:80';
+  static const String basicUrl = 'http://172.16.15.138:80';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
@@ -406,7 +407,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to fetch tour categories: $e');
+      print('Failed to fetch tour resources: $e');
       rethrow;
     }
   }

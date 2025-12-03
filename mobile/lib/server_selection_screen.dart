@@ -135,7 +135,7 @@ class WelcomeScreen extends StatelessWidget {
                     SizedBox(height: screenHeight * 0.1), // Spazio centrale
                     // --- SEZIONE PULSANTI ---
                     _buildPrimaryButton(
-                      text: 'Morigerati',
+                      text: 'Comunità Montana del Bussento',
                       context: context,
                       onPressed:
                           () => _selectServerAndProceed(

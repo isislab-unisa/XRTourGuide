@@ -51,5 +51,13 @@
 	<string>This app needs access to your location to show your position on the map and guide you through the tour waypoints, even when in the background.</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>This app needs access to your location even when in the background to provide continuous guidance during the tour.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>XR Tour Guide necessita della fotocamera per il riconoscimento.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>XR Tour Guide necessita del microfono per registrare audio nei video.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>XR Tour Guide necessita della libreria foto per selezionare/salvare media.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>XR Tour Guide necessita di salvare foto/video nella libreria.</string>
 </dict>
 </plist>

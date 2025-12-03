@@ -25,6 +25,8 @@ import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
 import 'services/offline_recognition_service.dart';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
+import 'package:permission_handler/permission_handler.dart';
+
 
 
 
@@ -220,6 +222,20 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   // Initialize camera
   Future<void> _initializeCamera() async {
     try {
+
+      final status = await Permission.camera.status;
+      if (status.isPermanentlyDenied) {
+        _showError('Camera permission is permanently denied. Please enable it from settings.');
+        await openAppSettings();
+        return;
+      }
+      final camStatus = await Permission.camera.request();
+      print("Camera permission status: $camStatus");
+      if (!camStatus.isGranted) {
+        _showError('Camera permission is required for recognition.');
+        return;
+      }
+
       _cameras = await availableCameras();
       if (_cameras != null && _cameras!.isNotEmpty) {
         _cameraController = CameraController(
