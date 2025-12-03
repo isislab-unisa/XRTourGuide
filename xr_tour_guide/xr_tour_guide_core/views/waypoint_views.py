@@ -108,10 +108,10 @@ def get_waypoint_resources(request):
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=audio"}, status=200)
     elif resource_type == "pdf" and waypoint.pdf_item:
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=pdf"}, status=200)
-    # elif resource_type == "links" and waypoint.links.exists():
-    #     links = waypoint.links.all()
-    #     readme_content = "\n".join([f"[{link.title}]: {link.link}" for link in links])
-    #     return JsonResponse({"readme": readme_content}, status=200)
+    elif resource_type == "links" and waypoint.links.exists():
+        links = waypoint.links.all()
+        readme_content = "\n".join([f"[{link.id}]: {link.link}" for link in links])
+        return JsonResponse({"readme": readme_content}, status=200)
     elif resource_type == "images":
         images = waypoint.images.filter(type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
         if not images.exists():
