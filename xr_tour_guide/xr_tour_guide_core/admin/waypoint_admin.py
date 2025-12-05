@@ -4,7 +4,7 @@ from location_field.widgets import LocationWidget
 from location_field.models.plain import PlainLocationField
 import nested_admin
 from unfold.admin import ModelAdmin
-from ..models import Tour, Waypoint, WaypointViewImage, WaypointViewLink
+from ..models import Tour, Waypoint, WaypointViewImage, WaypointViewLink, TypeOfImage
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
@@ -91,7 +91,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 '</div>'
             )
         
-        images = WaypointViewImage.objects.filter(waypoint=obj)
+        images = WaypointViewImage.objects.filter(waypoint=obj, type_of_images=TypeOfImage.DEFAULT)
         
         if not images.exists():
             return mark_safe(
