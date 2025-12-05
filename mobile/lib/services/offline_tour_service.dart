@@ -245,12 +245,14 @@ class OfflineStorageService {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
+      print("TOKEN: $token");
+
       await _dio.download(
         url,
         localPath,
         options: Options(
           method: 'POST',
-          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+          // headers: token != null ? {'Authorization': 'Bearer $token'} : {},
         ),
       );
       print("Map downloaded successfully to $localPath");

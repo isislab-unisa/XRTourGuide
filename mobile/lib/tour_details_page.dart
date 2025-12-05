@@ -21,7 +21,9 @@ import 'services/local_state_service.dart';
 import 'services/offline_tour_service.dart';
 import "dart:io";
 import "package:path_provider/path_provider.dart";
-import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart'; 
+import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
+import 'elements/zlib_image.dart'; // Aggiungi questo import
+
 
 
 class TourDetailScreen extends ConsumerStatefulWidget {
@@ -882,8 +884,15 @@ Future<void> _loadWaypoints() async {
                                             )
                                           : _offlineImagePlaceholder())
                                       : (selectedWaypoint.images.isNotEmpty
-                                          ? Image.network(
-                                              "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                          // ? Image.network(
+                                          //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                          //     width: 80,
+                                          //     height: 80,
+                                          //     fit: BoxFit.cover,
+                                          //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                          //   )
+                                          ? ZlibImage(
+                                              url: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,
@@ -1061,13 +1070,20 @@ Future<void> _loadWaypoints() async {
                                               )
                                             : _offlineImagePlaceholder())
                                         : (selectedWaypoint.images.isNotEmpty
-                                            ? Image.network(
-                                                "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
-                                                width: 80,
-                                                height: 80,
+                                            // ? Image.network(
+                                            //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
+                                            //     width: 80,
+                                            //     height: 80,
+                                            //     fit: BoxFit.cover,
+                                            //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                            //   )
+                                            ? ZlibImage(
+                                                url: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
+                                                width: 250,
+                                                height: 200,
                                                 fit: BoxFit.cover,
                                                 errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                              )
+                                            )
                                             : _offlineImagePlaceholder()),
                                       ),
                                     );
@@ -1202,8 +1218,14 @@ Future<void> _loadWaypoints() async {
                         );
                       } else if (_tourDetails != null) {
                         // Modalità Online: carica l'immagine dalla rete
-                        return Image.network(
-                          "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
+                        // return Image.network(
+                        //   "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
+                        //   fit: BoxFit.cover,
+                        //   errorBuilder: (context, error, stackTrace) =>
+                        //       _offlineImagePlaceholder(),
+                        // );
+                        return ZlibImage(
+                          url: "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               _offlineImagePlaceholder(),
@@ -2259,26 +2281,49 @@ Widget _buildWaypointItem({
                                       );
                                       }
                                     })()
-                                    : Image.network(
-                                      "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
-                                      height: 100,
+                                    // : Image.network(
+                                    //   "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
+                                    //   height: 100,
+                                    //   width: 150,
+                                    //   fit: BoxFit.cover,
+                                    //   errorBuilder: (context, error, stackTrace) {
+                                    //   return Container(
+                                    //     height: 100,
+                                    //     width: 150,
+                                    //     decoration: BoxDecoration(
+                                    //     color: Colors.grey.shade300,
+                                    //     borderRadius: BorderRadius.circular(8.0),
+                                    //     ),
+                                    //     child: Icon(
+                                    //     Icons.image_not_supported,
+                                    //     color: Colors.grey.shade600,
+                                    //     ),
+                                    //   );
+                                    //   },
+                                    // ),
+                                    : ZlibImage(
+                                      url:
+                                        "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
                                       width: 150,
+                                      height: 100,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        height: 100,
-                                        width: 150,
-                                        decoration: BoxDecoration(
-                                        color: Colors.grey.shade300,
-                                        borderRadius: BorderRadius.circular(8.0),
-                                        ),
-                                        child: Icon(
-                                        Icons.image_not_supported,
-                                        color: Colors.grey.shade600,
-                                        ),
-                                      );
-                                      },
-                                    ),
+                                      errorBuilder:
+                                        (context, error, stackTrace) {
+                                          return Container(
+                                            height: 100,
+                                            width: 150,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade300,
+                                              borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            ),
+                                            child: Icon(
+                                              Icons.image_not_supported,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          );
+                                        },
+                                ),
                                 ),
                                 );
                             },
