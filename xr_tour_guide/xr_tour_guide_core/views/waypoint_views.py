@@ -45,8 +45,9 @@ def stream_minio_resource(request):
             if content_type is None:
                 content_type = 'application/octet-stream'
 
-            response = FileResponse(file, as_attachment=False, filename=file_name)
-            response['Content-Type'] = content_type
+            response = HttpResponse(zlib.compress(file.read()), content_type=content_type)
+            response['Content-Encoding'] = 'deflate'
+            response['Content-Disposition'] = f'{"attachment" if attachment else "inline"}; filename="{file_name}"'
             return response
     except Exception as e:
         return Response({"detail": tour.default_image.name}, status=404)
