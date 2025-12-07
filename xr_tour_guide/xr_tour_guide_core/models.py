@@ -32,9 +32,12 @@ def upload_media_item(instance, filename):
         'video_item': 'video',
         'audio_item': 'audio',
         # 'text_item': 'text',
-    }.get(field_name, 'other')
+    }.get(field_name)
 
-    return f"{poi_id}/{instance.id}/data/{subfolder}/{filename}"
+    if subfolder:
+        return f"{poi_id}/{instance.id}/data/{subfolder}/{filename}"
+    else:
+        return f"{poi_id}/{instance.id}/data/{filename}"
 
 # def default_image_waypoint(instance, file_name):
 #     return f"{instance.tour.id}/{instance.id}/default_image/{file_name}"

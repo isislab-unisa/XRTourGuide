@@ -3,3 +3,5 @@
 __pycache__/
 migrations/**/*.py
 certbot/
+z_file/
+z_populate_db.py
