@@ -287,6 +287,11 @@ UNFOLD = {
                         "icon": "person",
                         "link": reverse_lazy("admin:xr_tour_guide_core_customuser_changelist"),
                     },
+                    {
+                        "title": _("Reviews"),
+                        "icon": "message-circle",
+                        "link": reverse_lazy("admin:xr_tour_guide_core_review_changelist"),
+                    }
                 ],
             },
         ],

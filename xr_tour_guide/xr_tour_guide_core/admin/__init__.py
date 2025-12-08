@@ -8,12 +8,13 @@ from .base import UnfoldNestedStackedInline, UnfoldNestedTabularInline
 from .user_admin import CustomUserAdmin
 from .waypoint_admin import WaypointAdmin, WaypointViewImageAdmin
 from .tour_admin import TourAdmin
+from .review_admin import ReviewAdmin
 
 __all__ = [
     'UnfoldNestedStackedInline',
     'UnfoldNestedTabularInline',
     'CustomUserAdmin',
-    # 'WaypointAdmin',
+    'ReviewAdmin',
     'WaypointViewImageAdmin',
     'TourAdmin',
 ]

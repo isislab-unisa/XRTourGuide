@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Crea il gruppo User con i permessi associati'
 
     def handle(self, *args, **kwargs):
-        from xr_tour_guide_core.models import Tour, Waypoint, WaypointViewImage
+        from xr_tour_guide_core.models import Tour, Waypoint, WaypointViewImage, Review
         from xr_tour_guide_core.models import CustomUser
 
         user_group, created = Group.objects.get_or_create(name='User')
@@ -20,10 +20,13 @@ class Command(BaseCommand):
         image_ct = ContentType.objects.get_for_model(WaypointViewImage)
         image_perms = Permission.objects.filter(content_type=image_ct)
 
+        review_ct = ContentType.objects.get_for_model(Review)
+        review_perms = Permission.objects.filter(content_type=review_ct)
+
         user_ct = ContentType.objects.get_for_model(CustomUser)
         change_own_user_perm = Permission.objects.get(content_type=user_ct, codename='change_customuser')
 
-        all_perms = list(tour_perms) + list(waypoint_perms) + list(image_perms) + [change_own_user_perm]
+        all_perms = list(tour_perms) + list(waypoint_perms) + list(image_perms) + [change_own_user_perm] + list(review_perms)
 
         user_group.permissions.set(all_perms)
 
