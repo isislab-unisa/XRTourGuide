@@ -402,15 +402,23 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         ),
         ImgConfig(
           builder: (url, attributes) {
+            print("Loading image from URL: $url");
             // Gestisci immagini locali con protocollo file://
             if (url.startsWith('file://')) {
-              final localPath = url.substring(7); // Rimuovi 'file://'
+              String localPath;
+              // final localPath = url.substring(7); // Rimuovi 'file://'
+              try{
+                localPath = Uri.parse(url).toFilePath();
+              } catch(e) {
+                localPath = url.substring(7);
+              }
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: Image.file(
                   File(localPath),
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
+                    print("Error loading local image: $error");
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -788,22 +796,19 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         //   _currentMarkdownContent = content['links'] ?? '';
         // }
 
-        final linksPath = content['links'] ?? '';
-        print("Links path: $linksPath");
-        if (linksPath.isNotEmpty) {
-          File? linksFile = await _loadAndDecompressResource(
-            linksPath,
-            widget.isOffline,
-            'md',
-          );
+        final linksList = (content['links'] as List?)?.cast<String>() ?? [];
+        print("Links list: $linksList");
 
-          if(linksFile != null){
-            _currentMarkdownContent = await linksFile.readAsString();
-          } else {
-            _currentMarkdownContent = 'Error loading links content.';
+        if(linksList.isNotEmpty) {
+          StringBuffer mdBuffer = StringBuffer("# ${widget.landmarkName} Links\n\n");
+
+          for (String link in linksList) {
+            mdBuffer.writeln("- [${link}](${link})\n");
           }
+
+          _currentMarkdownContent = mdBuffer.toString();
         } else {
-          _currentMarkdownContent = 'No links available for this waypoint.';
+          _currentMarkdownContent = "# ${widget.landmarkName}\n\nNo links available for this waypoint.";
         }
 
         contentToDisplay = MarkdownWidget(
@@ -845,8 +850,12 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
             );
 
             if (imageFile != null) {
-              mdBuffer.writeln("![Image](${imageFile.path})\n\n");
+              final fileUri = Uri.file(imageFile.path).toString();
+              print("Image file URI: $fileUri");
+              mdBuffer.writeln("![Image]($fileUri)\n\n");
             }
+
+            _currentMarkdownContent = mdBuffer.toString();
 
           }
         } else {
