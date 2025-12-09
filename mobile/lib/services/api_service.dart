@@ -22,7 +22,7 @@ class ApiService {
   ];
 
   // static const String basicUrl = 'http://172.16.15.145:80';
-  static const String basicUrl = 'http://172.16.15.138:80';
+  static const String basicUrl = 'http://192.168.178.149:80';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {

@@ -26,11 +26,7 @@ import 'services/offline_recognition_service.dart';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
-
-
-
-
-
+import 'package:dio/dio.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -134,6 +130,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   String? _pmtilesPath;
   late Future<PmTilesTileProvider> _futureTileProvider;
 
+  //LISTA PER MANTENERE TRACCIA DEI FILE TEMPORANEI SCARICATI E DECOMPRESSI
+  final List<File> _tempFiles = [];
+
 
   @override
   void initState() {
@@ -161,6 +160,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _successAnimationController.dispose();
     _failureAnimationController.dispose();
     _offlineRecognitionService?.dispose();
+    _clearTempFiles();
     super.dispose();
   }
 
@@ -175,6 +175,65 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     } else {
       print("PMTiles file not found at $path");
     }
+  }
+
+  Future<File?> _loadAndDecompressResource(String sourcePath, bool isLocal, String extension) async {
+    try {
+      List<int> compressedBytes;
+
+      if (isLocal) {
+        //OFFLINE
+        final file = File(sourcePath);
+        if(!await file.exists()) {
+          throw Exception("File not found at $sourcePath");
+        }
+        compressedBytes = await file.readAsBytes();
+      } else {
+        //ONLINE
+        String url = sourcePath.startsWith("http") ? sourcePath : "${ApiService.basicUrl}$sourcePath";
+
+        final response = await Dio().get(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+        );
+
+        if (response.statusCode == 200){
+          compressedBytes = response.data;
+        }else{
+          throw Exception("Failed to download resource from $sourcePath, status code: ${response.statusCode}");
+        }
+      }
+
+      //DECOMPRESSIONE
+      final List<int> decompressedBytes = zlib.decode(compressedBytes);
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/decompressed_resource_${DateTime.now().millisecondsSinceEpoch}.$extension');
+      await tempFile.writeAsBytes(decompressedBytes, flush: true);
+
+      _tempFiles.add(tempFile);
+
+      print("Decompressed resource saved to ${tempFile.path}");
+      return tempFile;
+
+    } catch(e) {
+      print("Error during handling of ZLib Resource: $e");
+      _showError( "Error during handling of ZLib Resource");
+      return null;
+    }
+  }
+
+  Future<void> _clearTempFiles() async {
+    for(var file in _tempFiles) {
+      try{
+        if (await file.exists()) {
+          await file.delete();
+          print("Deleted temp file: ${file.path}");
+        }
+      } catch(e) {
+        print("Error deleting temp file ${file.path}: $e");
+      }
+    }
+    _tempFiles.clear();
   }
 
   Widget _baseMapLayer() {
@@ -611,6 +670,28 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       type = 'error';
     }
 
+    setState(() {
+      _currentActiveContent = const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Loading content...',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+          ],
+        ),
+      );
+    });
+
+    _sheetController.animateTo(
+      _initialSheetSize + 0.25,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+
     switch (type) {
       case 'text':
         if (widget.isOffline) {
@@ -705,80 +786,157 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         break;
 
       case 'video':
-        if (widget.isOffline) {
-          final videoPath = content['video'] ?? '';
-          if (videoPath.isNotEmpty) {
+        // if (widget.isOffline) {
+        //   final videoPath = content['video'] ?? '';
+        //   if (videoPath.isNotEmpty) {
+        //     contentToDisplay = VideoPlayerWidget(
+        //       videoUrl: videoPath,
+        //       isLocalFile: true,
+        //     );
+        //   } else {
+        //     contentToDisplay = const Center(
+        //       child: Text(
+        //         'No video available for this waypoint.',
+        //         style: TextStyle(color: AppColors.textPrimary),
+        //       ),
+        //     );
+        //   }
+
+        // } else {
+        //   contentToDisplay = VideoPlayerWidget(
+        //     videoUrl:
+        //         content['video'] ?? 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+        //         isLocalFile: false,
+        //   );
+        // }
+
+        final videoPath = content['video'] ?? '';
+        if (videoPath.isNotEmpty) {
+          File? videoFile = await _loadAndDecompressResource(
+              videoPath,
+              widget.isOffline,
+              'mp4',
+          );
+
+          if (videoFile != null) {
             contentToDisplay = VideoPlayerWidget(
-              videoUrl: videoPath,
-              isLocalFile: true,
+              videoUrl: videoFile.path,
+              isLocalFile: true, //Sempre true perché è un file locale temporaneo
             );
           } else {
-            contentToDisplay = const Center(
-              child: Text(
-                'No video available for this waypoint.',
-                style: TextStyle(color: AppColors.textPrimary),
-              ),
-            );
+            contentToDisplay = const Center(child: Text("Errore nel caricamento del video"));
           }
 
         } else {
-          contentToDisplay = VideoPlayerWidget(
-            videoUrl:
-                content['video'] ?? 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-                isLocalFile: false,
+          contentToDisplay = const Center(
+            child: Text(
+              'No video available for this waypoint.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
           );
         }
         break;
 
       case 'document':
-        if (widget.isOffline) {
-          final pdfPath = content['pdf'] ?? '';
-          if (pdfPath.isNotEmpty) {
+        // if (widget.isOffline) {
+        //   final pdfPath = content['pdf'] ?? '';
+        //   if (pdfPath.isNotEmpty) {
+        //     contentToDisplay = PdfViewerWidget(
+        //       pdfUrl: pdfPath,
+        //       isLocalFile: true,
+        //     );
+        //   } else {
+        //     contentToDisplay = const Center(
+        //       child: Text(
+        //         'No PDF document available for this waypoint.',
+        //         style: TextStyle(color: AppColors.textPrimary),
+        //       ),
+        //     );
+        //   }
+
+        // } else {
+        //   contentToDisplay = PdfViewerWidget(
+        //     pdfUrl:
+        //         content['pdf'] ?? 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf',
+        //     isLocalFile: false,
+        //   );
+        // }
+
+        final pdfPath = content['pdf'] ?? '';
+        if (pdfPath.isNotEmpty) {
+          File? pdfFile = await _loadAndDecompressResource(
+            pdfPath,
+            widget.isOffline,
+            'pdf',
+          );
+
+          if (pdfFile != null) {
             contentToDisplay = PdfViewerWidget(
-              pdfUrl: pdfPath,
-              isLocalFile: true,
+              pdfUrl: pdfFile.path,
+              isLocalFile: true, //Sempre true perché è un file locale temporaneo
             );
           } else {
-            contentToDisplay = const Center(
-              child: Text(
-                'No PDF document available for this waypoint.',
-                style: TextStyle(color: AppColors.textPrimary),
-              ),
-            );
+            contentToDisplay = const Center(child: Text("Errore nel caricamento del PDF"));
           }
 
         } else {
-          contentToDisplay = PdfViewerWidget(
-            pdfUrl:
-                content['pdf'] ?? 'https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf',
-            isLocalFile: false,
+          contentToDisplay = const Center(
+            child: Text(
+              'No PDF document available for this waypoint.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
           );
         }
         break;
 
       case 'audio':
-        if (widget.isOffline) {
-          final audioPath = content['audio'] ?? '';
-          if (audioPath.isNotEmpty) {
-            contentToDisplay = AudioPlayerWidget(
-              audioUrl: audioPath,
-              isLocalFile: true,
-            );
-          } else {
-            contentToDisplay = const Center(
-              child: Text(
-                'No audio available for this waypoint.',
-                style: TextStyle(color: AppColors.textPrimary),
-              ),
-            );
-          }
-        } else {
-          contentToDisplay = AudioPlayerWidget(
-            audioUrl:
-                content['audio'] ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-            isLocalFile: false,
+        // if (widget.isOffline) {
+        //   final audioPath = content['audio'] ?? '';
+        //   if (audioPath.isNotEmpty) {
+        //     contentToDisplay = AudioPlayerWidget(
+        //       audioUrl: audioPath,
+        //       isLocalFile: true,
+        //     );
+        //   } else {
+        //     contentToDisplay = const Center(
+        //       child: Text(
+        //         'No audio available for this waypoint.',
+        //         style: TextStyle(color: AppColors.textPrimary),
+        //       ),
+        //     );
+        //   }
+        // } else {
+        //   contentToDisplay = AudioPlayerWidget(
+        //     audioUrl:
+        //         content['audio'] ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        //     isLocalFile: false,
+        //   );
+        // }
+
+        final audioPath = content['audio'] ?? '';
+        if (audioPath.isNotEmpty) {
+          File? audioFile = await _loadAndDecompressResource(
+            audioPath,
+            widget.isOffline,
+            'mp3',
           );
 
+          if (audioFile != null) {
+            contentToDisplay = AudioPlayerWidget(
+              audioUrl: audioFile.path,
+              isLocalFile: true, //Sempre true perché è un file locale temporaneo
+            );
+          } else {
+            contentToDisplay = const Center(child: Text("Errore nel caricamento dell'audio"));
+          }
+
+        } else {
+          contentToDisplay = const Center(
+            child: Text(
+              'No audio available for this waypoint.',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+          );
         }
         break;
 
@@ -791,15 +949,19 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         );
     }
 
-    _sheetController.animateTo(
-      _initialSheetSize + 0.25,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-
-    setState(() {
-      _currentActiveContent = contentToDisplay;
-    });
+    // _sheetController.animateTo(
+    //   _initialSheetSize + 0.25,
+    //   duration: const Duration(milliseconds: 300),
+    //   curve: Curves.easeInOut,
+    // );
+    if (mounted && contentToDisplay != null){
+      setState(() {
+        _currentActiveContent = contentToDisplay;
+      });
+    }
+    // setState(() {
+    //   _currentActiveContent = contentToDisplay;
+    // });
   }
 
   // Initialize animations
