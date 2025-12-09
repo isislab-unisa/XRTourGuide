@@ -195,7 +195,7 @@ def inference(request):
         "readme": int(bool(waypoint.readme_item and waypoint.readme_item.name)),
         "video": int(bool(waypoint.video_item and waypoint.video_item.name)),
         "audio": int(bool(waypoint.audio_item and waypoint.audio_item.name)),
-        # "links": waypoint.links.exists()
+        "links": int(waypoint.links.exists())
     }
 
     return JsonResponse({

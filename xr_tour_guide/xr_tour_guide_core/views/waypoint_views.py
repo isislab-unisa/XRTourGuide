@@ -111,17 +111,14 @@ def get_waypoint_resources(request):
         return JsonResponse({"url": f"/stream_minio_resource?waypoint={waypoint_id}&file=pdf"}, status=200)
     elif resource_type == "links" and waypoint.links.exists():
         links = waypoint.links.all()
-        readme_content = "\n".join([f"[{link.id}]: {link.link}" for link in links])
-        return JsonResponse({"readme": readme_content}, status=200)
+        links = [link.link for link in links]
+        return JsonResponse({"links": links}, status=200)
     elif resource_type == "images":
         images = waypoint.images.filter(type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
         if not images.exists():
             return JsonResponse({"error": "No images found"}, status=404)
-
-        readme_content = "\n".join(
-            [f"![{i+1}](/stream_minio_resource/?waypoint={waypoint_id}&file={img.image.name})" for i, img in enumerate(images)]
-        )
-        return JsonResponse({"readme": readme_content}, status=200)
+        images = [f"/stream_minio_resource/?waypoint={waypoint_id}&file={img.image.name}" for img in images]
+        return JsonResponse({"images": images}, status=200)
 
     else:
         return JsonResponse({"error": "Invalid resource type"}, status=400)
