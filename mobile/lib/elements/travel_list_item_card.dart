@@ -3,6 +3,7 @@ import '../models/app_colors.dart';
 import '../services/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/local_state_service.dart';
+import 'zlib_image.dart';
 
 
 class TravelListItemCard extends ConsumerWidget {
@@ -77,18 +78,26 @@ class TravelListItemCard extends ConsumerWidget {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(10.0),
                         ), // Rounded top corners for the image
-                        child: Image.network(
-                          // imagePath, // Use the imagePath parameter
-                          "${ApiService.basicUrl}/stream_minio_resource/?tour=${tourId!}",
-                          fit:
-                              BoxFit
-                                  .cover, // Cover the available space, potentially cropping
-                          width:
-                              double
-                                  .infinity, // Make the image take the full width of the card
+                        // child: Image.network(
+                        //   // imagePath, // Use the imagePath parameter
+                        //   "${ApiService.basicUrl}/stream_minio_resource/?tour=${tourId!}",
+                        //   fit:
+                        //       BoxFit
+                        //           .cover, // Cover the available space, potentially cropping
+                        //   width:
+                        //       double
+                        //           .infinity, // Make the image take the full width of the card
+                        //   height:
+                        //       imageHeight ??
+                        //       (height != null ? height! * 0.7 : null),
+                        // ),
+                        child: ZlibImage(
+                          url:
+                              "${ApiService.basicUrl}/stream_minio_resource/?tour=${tourId!}",
+                          width: double.infinity,
                           height:
-                              imageHeight ??
-                              (height != null ? height! * 0.7 : null),
+                              imageHeight ?? (height != null ? height! * 0.7 : null),
+                          fit: BoxFit.cover,
                         ),
                       ),
                       if (isCompleted)

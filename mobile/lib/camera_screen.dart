@@ -27,6 +27,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:dio/dio.dart';
+import 'package:archive/archive.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -177,9 +178,22 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     }
   }
 
+  List<int> _decompressBytes(List<int> rawBytes) {
+    if (rawBytes.isEmpty) return [];
+    try{
+      return ZLibDecoder().decodeBytes(rawBytes);
+    } catch (e) {
+      try {
+        return GZipDecoder().decodeBytes(rawBytes);
+      } catch (e2) {
+        return rawBytes;
+      }
+    }
+  }
+
   Future<File?> _loadAndDecompressResource(String sourcePath, bool isLocal, String extension) async {
     try {
-      List<int> compressedBytes;
+      List<int> rawBytes;
 
       if (isLocal) {
         //OFFLINE
@@ -187,7 +201,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         if(!await file.exists()) {
           throw Exception("File not found at $sourcePath");
         }
-        compressedBytes = await file.readAsBytes();
+        rawBytes = await file.readAsBytes();
       } else {
         //ONLINE
         String url = sourcePath.startsWith("http") ? sourcePath : "${ApiService.basicUrl}$sourcePath";
@@ -198,14 +212,14 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         );
 
         if (response.statusCode == 200){
-          compressedBytes = response.data;
+          rawBytes = response.data ?? [];
         }else{
           throw Exception("Failed to download resource from $sourcePath, status code: ${response.statusCode}");
         }
       }
 
       //DECOMPRESSIONE
-      final List<int> decompressedBytes = zlib.decode(compressedBytes);
+      final List<int> decompressedBytes = _decompressBytes(rawBytes);
       final tempDir = await getTemporaryDirectory();
       final tempFile = File('${tempDir.path}/decompressed_resource_${DateTime.now().millisecondsSinceEpoch}.$extension');
       await tempFile.writeAsBytes(decompressedBytes, flush: true);
@@ -664,6 +678,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           queryType,
         );
         content = response as Map<String, dynamic>;
+        if(content.containsKey("url")){
+          content[queryType] = content["url"];
+        }
+        print("Retrieved content for waypoint $waypointId, type $queryType: $content");
       }
     } catch (e) {
       print("error retrieving content: $e");
@@ -694,28 +712,46 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     switch (type) {
       case 'text':
-        if (widget.isOffline) {
-          final readmePath = content['readme'] ?? '';
-          String readmeContent = '';
+        // if (widget.isOffline) {
+        //   final readmePath = content['readme'] ?? '';
+        //   String readmeContent = '';
 
-          if (readmePath.isNotEmpty) {
-            try {
-              final file = File(readmePath);
-              if (await file.exists()) {
-                readmeContent = await file.readAsString();
-              } else {
-                readmeContent = 'No readme file found offline.';
-              }
-            } catch (e) {
-              print("Error reading readme file: $e");
-              readmeContent = 'Error reading readme file: $e';
-            }
+        //   if (readmePath.isNotEmpty) {
+        //     try {
+        //       final file = File(readmePath);
+        //       if (await file.exists()) {
+        //         readmeContent = await file.readAsString();
+        //       } else {
+        //         readmeContent = 'No readme file found offline.';
+        //       }
+        //     } catch (e) {
+        //       print("Error reading readme file: $e");
+        //       readmeContent = 'Error reading readme file: $e';
+        //     }
+        //   } else {
+        //     readmeContent = 'No readme available for this waypoint.';
+        //   }
+        //   _currentMarkdownContent = readmeContent;
+        // } else {
+        //   _currentMarkdownContent = content['readme'] ?? '';
+        // }
+
+        final readmePath = content['readme'] ?? '';
+        print("Readme path: $readmePath");
+        if (readmePath.isNotEmpty) {
+          File? textFile = await _loadAndDecompressResource(
+            readmePath,
+            widget.isOffline,
+            'md',
+          );
+
+          if(textFile != null){
+            _currentMarkdownContent = await textFile.readAsString();
           } else {
-            readmeContent = 'No readme available for this waypoint.';
+            _currentMarkdownContent = 'Error loading readme content.';
           }
-          _currentMarkdownContent = readmeContent;
         } else {
-          _currentMarkdownContent = content['readme'] ?? '';
+          _currentMarkdownContent = 'No readme available for this waypoint.';
         }
 
         contentToDisplay = MarkdownWidget(
@@ -727,29 +763,47 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         break;
 
       case 'link':
-        if (widget.isOffline) {
-          final linksPath = content['links'] ?? '';
-          String linksContent = '';
+        // if (widget.isOffline) {
+        //   final linksPath = content['links'] ?? '';
+        //   String linksContent = '';
 
-          if (linksPath.isNotEmpty) {
-            try {
-              final file = File(linksPath);
-              if (await file.exists()) {
-                linksContent = await file.readAsString();
-              } else {
-                linksContent = 'No links file found offline.';
-              }
-            } catch (e) {
-              print("Error reading links file: $e");
-              linksContent = 'Error reading links file: $e';
-            }
+        //   if (linksPath.isNotEmpty) {
+        //     try {
+        //       final file = File(linksPath);
+        //       if (await file.exists()) {
+        //         linksContent = await file.readAsString();
+        //       } else {
+        //         linksContent = 'No links file found offline.';
+        //       }
+        //     } catch (e) {
+        //       print("Error reading links file: $e");
+        //       linksContent = 'Error reading links file: $e';
+        //     }
+        //   } else {
+        //     linksContent = 'No links available for this waypoint.';
+        //   }
+        //   _currentMarkdownContent = linksContent;
+
+        // } else {
+        //   _currentMarkdownContent = content['links'] ?? '';
+        // }
+
+        final linksPath = content['links'] ?? '';
+        print("Links path: $linksPath");
+        if (linksPath.isNotEmpty) {
+          File? linksFile = await _loadAndDecompressResource(
+            linksPath,
+            widget.isOffline,
+            'md',
+          );
+
+          if(linksFile != null){
+            _currentMarkdownContent = await linksFile.readAsString();
           } else {
-            linksContent = 'No links available for this waypoint.';
+            _currentMarkdownContent = 'Error loading links content.';
           }
-          _currentMarkdownContent = linksContent;
-
         } else {
-          _currentMarkdownContent = content['links'] ?? '';
+          _currentMarkdownContent = 'No links available for this waypoint.';
         }
 
         contentToDisplay = MarkdownWidget(
@@ -761,20 +815,42 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         break;
 
       case 'image':
-        if (widget.isOffline) {
-          final localImages = content['images'] as List<String>? ?? [];
-          if (localImages.isNotEmpty) {
-            String imageContent = "#${widget.landmarkName}\n\n";
-            for (int i = 0; i < localImages.length; i++) {
-              final imagePath = localImages[i];
-              imageContent += "![Image ${i + 1}](file://$imagePath)\n\n";
+        // if (widget.isOffline) {
+        //   final localImages = content['images'] as List<String>? ?? [];
+        //   if (localImages.isNotEmpty) {
+        //     String imageContent = "#${widget.landmarkName}\n\n";
+        //     for (int i = 0; i < localImages.length; i++) {
+        //       final imagePath = localImages[i];
+        //       imageContent += "![Image ${i + 1}](file://$imagePath)\n\n";
+        //     }
+        //     _currentMarkdownContent = imageContent;
+        //   } else {
+        //     _currentMarkdownContent = "#${widget.landmarkName}\n\nNo images available for this waypoint.";
+        //   }
+        // } else {
+        //   _currentMarkdownContent = _processImageContent(content['readme'] ?? '');
+        // }
+
+        final imagesList = (content['images'] as List?)?.cast<String>() ?? [];
+        print("Images list: $imagesList");
+
+        if (imagesList.isNotEmpty) {
+          StringBuffer mdBuffer = StringBuffer("# ${widget.landmarkName}\n\n");
+
+          for (String imgPath in imagesList) {
+            File? imageFile = await _loadAndDecompressResource(
+              imgPath,
+              widget.isOffline,
+              'jpg',
+            );
+
+            if (imageFile != null) {
+              mdBuffer.writeln("![Image](${imageFile.path})\n\n");
             }
-            _currentMarkdownContent = imageContent;
-          } else {
-            _currentMarkdownContent = "#${widget.landmarkName}\n\nNo images available for this waypoint.";
+
           }
         } else {
-          _currentMarkdownContent = _processImageContent(content['readme'] ?? '');
+          _currentMarkdownContent = "# ${widget.landmarkName}\n\nNo images available for this waypoint.";
         }
 
         contentToDisplay = MarkdownWidget(
@@ -811,6 +887,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         // }
 
         final videoPath = content['video'] ?? '';
+        print("Video path: $videoPath");
         if (videoPath.isNotEmpty) {
           File? videoFile = await _loadAndDecompressResource(
               videoPath,
@@ -863,6 +940,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         // }
 
         final pdfPath = content['pdf'] ?? '';
+        print("PDF path: $pdfPath");
         if (pdfPath.isNotEmpty) {
           File? pdfFile = await _loadAndDecompressResource(
             pdfPath,
@@ -914,6 +992,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         // }
 
         final audioPath = content['audio'] ?? '';
+        print("Audio path: $audioPath");
         if (audioPath.isNotEmpty) {
           File? audioFile = await _loadAndDecompressResource(
             audioPath,
@@ -1099,6 +1178,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         final result = await _apiService.inference(base64Image, widget.tourId);
         waypointId = result.data["result"] ?? -1;
         availableResources = result.data["available_resources"] ?? {};
+        print("AVAILABLE RESOURCES: $availableResources");
       }
 
       _pulseAnimationController.stop();
