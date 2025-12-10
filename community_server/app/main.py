@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request as FastAPIRequest
 import httpx
+from auth import verify_token
 
 dotenv.load_dotenv()
 
@@ -173,3 +174,62 @@ async def get_services(db: Session = Depends(get_db)):
 @app.get("/get_service/{service_id}")
 async def get_service(service_id: int, db: Session = Depends(get_db)):
     return db.query(models.Services).filter(models.Services.id == service_id).first().domain
+
+@app.post("/api/register/")
+async def api_register(
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    existing = db.query(models.User).filter(models.User.email == email).first()
+    if existing:
+        raise HTTPException(400, "Email already in use")
+
+    user = models.User(username=username, email=email)
+    user.set_password(password)
+    db.add(user)
+    db.commit()
+
+    return {"message": "User registered successfully"}
+
+from auth import create_access_token, create_refresh_token
+
+@app.post("/api/login/")
+async def api_login(
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user or not user.verify_password(password):
+        raise HTTPException(401, "Invalid credentials")
+
+    access_token = create_access_token({"user_id": user.id})
+    refresh_token = create_refresh_token({"user_id": user.id})
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+        }
+    }
+
+@app.post("/api/refresh/")
+async def refresh(refresh_token: str = Form(...)):
+    payload = verify_token(refresh_token)
+    if payload.get("type") != "refresh":
+        raise HTTPException(400, "Invalid refresh token")
+
+    new_access_token = create_access_token({"user_id": payload["user_id"]})
+
+    return {"access_token": new_access_token}
+
+@app.post("/api/verify/")
+async def api_verify(token: str = Form(...)):
+    payload = verify_token(token)
+    return {"valid": True, "user_id": payload.get("user_id")}
