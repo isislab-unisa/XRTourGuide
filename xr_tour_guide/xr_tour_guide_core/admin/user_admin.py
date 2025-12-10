@@ -1,6 +1,8 @@
 from django.contrib import admin
 from ..models import CustomUser
 from django.contrib.auth.admin import UserAdmin
+import requests
+from django.contrib import messages
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -49,5 +51,43 @@ class CustomUserAdmin(UserAdmin):
     def has_add_permission(self, request):
         return request.user.is_superuser
 
-    def has_delete_permission(self, request, obj=None):
-        return request.user.is_superuser
+    def save_model(self, request, obj, form, change):
+        if change:
+            try:
+                payload = {
+                    "user_email": obj.email,
+                    "username": obj.username,
+                    "name": obj.first_name,
+                    "surname": obj.last_name,
+                    "city": obj.city,
+                    "description": obj.description,
+                }
+
+                response = requests.post(
+                    "http://172.16.15.162:8002/update_user",
+                    data=payload,
+                    timeout=5
+                )
+
+                if response.status_code != 200:
+                    self.message_user(
+                        request,
+                        f"Errore nel sincronizzare l'utente con il Community Server: {response.text}",
+                        level=messages.ERROR
+                    )
+                else:
+                    self.message_user(
+                        request,
+                        "✔ Utente sincronizzato correttamente con il Community Server.",
+                        level=messages.SUCCESS
+                    )
+                    super().save_model(request, obj, form, change)
+
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f"Errore di connessione con il Community Server: {e}",
+                    level=messages.ERROR
+                )
+        else:
+            super().save_model(request, obj, form, change)

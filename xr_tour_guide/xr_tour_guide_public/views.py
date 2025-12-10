@@ -32,12 +32,16 @@ def login(request):
             except User.DoesNotExist:
                 temp_password = ''.join(secrets.choice(
                     string.ascii_letters + string.digits + string.punctuation
-                ) for _ in range(12))
+                ) for _ in range(42))
                 
                 user = User.objects.create_user(
                     username=data["user"]["username"],
                     email=email,
                     password=temp_password,
+                    first_name=data["user"].get("name", ""),
+                    last_name=data["user"].get("surname", ""),
+                    city=data["user"].get("city", ""),
+                    description=data["user"].get("description", "")
                 )
             
             user.is_staff = True
