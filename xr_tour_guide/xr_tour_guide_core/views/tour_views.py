@@ -1,11 +1,10 @@
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from ..serializers import TourSerializer, WaypointSerializer
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse, FileResponse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
 import mimetypes
 from ..models import MinioStorage, Tour, Category
@@ -15,6 +14,7 @@ from drf_yasg import openapi
 from rest_framework import status
 from rest_framework.response import Response
 import requests
+from ..authentication import JWTFastAPIAuthentication
 
 @swagger_auto_schema(
     method='get',
@@ -35,8 +35,6 @@ def tour_list(request):
     category = request.GET.get('category', '')
     sort_param = request.GET.get('sorted', '').lower()
     num_tours = request.GET.get('num_tours', None)
-    
-    print("DIOCANE", num_tours, flush=True)
 
     queryset = Tour.objects.filter(parent_tours__isnull=True, is_subtour=False)
 
@@ -128,6 +126,7 @@ def increment_view_count(request):
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def cut_map(request, tour_id):
     storage = MinioStorage()

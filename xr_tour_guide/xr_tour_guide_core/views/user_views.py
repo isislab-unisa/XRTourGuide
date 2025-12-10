@@ -1,9 +1,8 @@
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from ..serializers import PasswordResetSerializer, PasswordResetConfirmSerializer, RegisterSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
@@ -21,6 +20,7 @@ from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
 from django.views import View
+from ..authentication import JWTFastAPIAuthentication
 
 @swagger_auto_schema(
     method='get',
@@ -28,6 +28,7 @@ from django.views import View
     responses={200: UserSerializer()}
 )
 @api_view(['GET'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def profile_details(request):
     user = request.user
@@ -49,6 +50,7 @@ def profile_details(request):
     responses={200: openapi.Response(description="Profile updated successfully")}
 )
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
     user = request.user
@@ -86,6 +88,7 @@ def update_profile(request):
     }
 )
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def update_password(request):
     user = request.user
@@ -115,6 +118,7 @@ def update_password(request):
     }
 )
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def delete_account(request):
     user = request.user
@@ -128,6 +132,7 @@ def delete_account(request):
 
 
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def forgot_password(request):
     return Response({"detail": "Password reset email sent successfully."}, status=status.HTTP_200_OK)

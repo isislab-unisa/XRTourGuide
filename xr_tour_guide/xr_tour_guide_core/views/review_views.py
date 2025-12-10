@@ -3,13 +3,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from ..serializers import ReviewSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from ..models import Tour, Review
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework import status
 from rest_framework.response import Response
+from ..authentication import JWTFastAPIAuthentication
 
 @swagger_auto_schema(
     method='get',
@@ -50,6 +51,7 @@ def get_reviews_by_tour_id(request, tour_id):
     }
 )
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def create_review(request):
     tour_id = request.data.get('tour_id')
@@ -72,6 +74,7 @@ def create_review(request):
     }
 )
 @api_view(['GET'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def get_reviews_by_user(request):
     reviews = Review.objects.filter(user=request.user)

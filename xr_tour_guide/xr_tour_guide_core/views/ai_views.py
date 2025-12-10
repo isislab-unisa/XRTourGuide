@@ -2,7 +2,7 @@ import os
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse, FileResponse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
 from ..models import MinioStorage, Tour
 from rest_framework.permissions import AllowAny
@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 import requests
 import redis
+from ..authentication import JWTFastAPIAuthentication
 
 redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
 
@@ -37,6 +38,7 @@ def build(request):
     return redirect('/admin/')
 
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([AllowAny])
 def complete_build(request):
     allowed_ip = "172.28.0.20"
@@ -110,6 +112,7 @@ def complete_build(request):
         return JsonResponse({"error": "Cromo POI not found"}, status=404)
 
 @api_view(["GET"])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def load_model(request, tour_id):
     try:
@@ -130,6 +133,7 @@ def load_model(request, tour_id):
     return JsonResponse({"message": "Model loaded"}, status=200)
 
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def inference(request):
     tour_id = request.data.get('tour_id')
@@ -207,8 +211,10 @@ def inference(request):
 @permission_classes([AllowAny])
 def download_model(request):
     storage = MinioStorage()
-
     tour_id = request.GET.get('tour_id')
-    model = storage.open(f"/{tour_id}/training_data.json", mode='r').read()
-
+    try:
+        with storage.open(f"{tour_id}/training_data.json", mode='rb') as f:
+            model = f.read().decode()
+    except Exception as e:
+        print(f"Errore nell'apertura del file: {e}")
     return HttpResponse(model, content_type='application/json')

@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request as FastAPIRequest
 import httpx
-from auth import verify_token
+from .auth import create_access_token, create_refresh_token, verify_token
 
 dotenv.load_dotenv()
 
@@ -192,8 +192,6 @@ async def api_register(
     db.commit()
 
     return {"message": "User registered successfully"}
-
-from auth import create_access_token, create_refresh_token
 
 @app.post("/api/login/")
 async def api_login(
