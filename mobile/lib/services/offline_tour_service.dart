@@ -145,19 +145,41 @@ class OfflineStorageService {
     final imagesResponse = await apiService.loadResource(waypoint.id, "images");
     Map<String, dynamic> imagesContent = imagesResponse.data as Map<String, dynamic>;
     print("Images content: $imagesContent");
-    if (imagesContent['readme'] != null) {
-      List<String> imagesLinks = extractMarkdownLinks(imagesContent['readme']);
-      print("Extracted image links: $imagesLinks");
+    // if (imagesContent['readme'] != null) {
+    //   List<String> imagesLinks = extractMarkdownLinks(imagesContent['readme']);
+    //   print("Extracted image links: $imagesLinks");
+    //   for (int i = 0; i < imagesLinks.length; i++) {
+    //     final imageUrl = imagesLinks[i];
+    //     print("Downloading image: $imageUrl");
+    //     final localPath = '${waypointDir.path}/image_$i.jpg';
+
+    //     if (await _downloadImage(imageUrl, localPath)) {
+    //       localImages.add(localPath);
+    //     }
+    //   }
+    //   processedWaypoint['local_images'] = localImages;
+    // }
+
+    try {
+      List<String> imagesLinks = [];
+      if (imagesContent["images"] != null && imagesContent["images"] is List) {
+        imagesLinks = (imagesContent["images"] as List).cast<String>();
+      }else if(imagesContent["url"] != null) {
+        imagesLinks.add(imagesContent["url"]);
+      }
+
       for (int i = 0; i < imagesLinks.length; i++) {
-        final imageUrl = imagesLinks[i];
+        final imageUrl = _addAttachmentParam(_toAbsoluteUrl(imagesLinks[i]));
         print("Downloading image: $imageUrl");
-        final localPath = '${waypointDir.path}/image_$i.jpg';
+        final localPath = '${waypointDir.path}/image_$i.jpg.zlib';
 
         if (await _downloadImage(imageUrl, localPath)) {
           localImages.add(localPath);
         }
       }
       processedWaypoint['local_images'] = localImages;
+    }catch (e) {
+      print("Error extracting image links: $e");
     }
 
     // Download resources if available
@@ -167,60 +189,108 @@ class OfflineStorageService {
     return processedWaypoint;
   }
 
+
   // Download waypoint resources (text, audio, video, pdf)
-  Future<Map<String, String?>> _downloadWaypointResources(
+  Future<Map<String, dynamic?>> _downloadWaypointResources(
     Waypoint waypoint,
     Directory waypointDir,
   ) async {
     Map<String, String?> localResources = {
       'readme': null,
+      "links": null,
       'audio': null,
       'video': null,
       'pdf': null,
     };
 
-    // Download text/readme and links
-    try {
-      final readmeResponse = await apiService.loadResource(
-        waypoint.id,
-        'readme',
-      );
-      Map<String, dynamic> content = readmeResponse.data as Map<String, dynamic>;
-
-      if (content['readme'] != null) {
-        final readmeFile = File('${waypointDir.path}/readme.md');
-        await readmeFile.writeAsString(content['readme']);
-        localResources['readme'] = readmeFile.path;
-      }
-
-      final responseLink = await apiService.loadResource(waypoint.id, "links");
-      Map<String, dynamic> linksContent = responseLink.data as Map<String, dynamic>;
-      if (linksContent['links'] != null) {
-        final linksFile = File('${waypointDir.path}/links.json');
-        await linksFile.writeAsString(jsonEncode(linksContent['links']));
-        localResources['links'] = linksFile.path;
-      }
-
-    } catch (e) {
-      print('No readme for waypoint ${waypoint.id}');
-    }
-
-    // Download other resources (audio, video, pdf)
-    final resourceTypes = ['audio', 'video', 'pdf'];
-    for (String type in resourceTypes) {
+    Future<void> _downloadGenericResource(String type, String extension) async {
       try {
         final response = await apiService.loadResource(waypoint.id, type);
         Map<String, dynamic> content = response.data as Map<String, dynamic>;
-        final resourceUrl = _addAttachmentParam(content[type]);
-        final localPath = '${waypointDir.path}/$type.$type';
 
-        if (await _downloadFile(resourceUrl, localPath)) {
-          localResources[type] = localPath;
+        String? url;
+        if (content.containsKey('url')) {
+          url = content['url'];
+        } else if (content.containsKey(type) && content[type] is String) {
+          final val = content[type] as String;
+          if (val.startsWith('/')) {
+            url = val;
+          }
+        }
+
+        if (url != null) {
+          final resourceUrl = _addAttachmentParam(_toAbsoluteUrl(url));
+          final localPath = '${waypointDir.path}/$type.$extension';
+
+          if (await _downloadFile(resourceUrl, localPath)) {
+            localResources[type] = localPath;
+          }
         }
       } catch (e) {
         print('No $type for waypoint ${waypoint.id}');
       }
     }
+
+    // Download text/readme and links
+    // try {
+    //   final readmeResponse = await apiService.loadResource(
+    //     waypoint.id,
+    //     'readme',
+    //   );
+    //   Map<String, dynamic> content = readmeResponse.data as Map<String, dynamic>;
+
+    //   if (content['readme'] != null) {
+    //     final readmeFile = File('${waypointDir.path}/readme.md');
+    //     await readmeFile.writeAsString(content['readme']);
+    //     localResources['readme'] = readmeFile.path;
+    //   }
+
+    //   final responseLink = await apiService.loadResource(waypoint.id, "links");
+    //   Map<String, dynamic> linksContent = responseLink.data as Map<String, dynamic>;
+    //   if (linksContent['links'] != null) {
+    //     final linksFile = File('${waypointDir.path}/links.json');
+    //     await linksFile.writeAsString(jsonEncode(linksContent['links']));
+    //     localResources['links'] = linksFile.path;
+    //   }
+
+    // } catch (e) {
+    //   print('No readme for waypoint ${waypoint.id}');
+    // }
+
+    // // Download other resources (audio, video, pdf)
+    // final resourceTypes = ['audio', 'video', 'pdf'];
+    // for (String type in resourceTypes) {
+    //   try {
+    //     final response = await apiService.loadResource(waypoint.id, type);
+    //     Map<String, dynamic> content = response.data as Map<String, dynamic>;
+    //     final resourceUrl = _addAttachmentParam(content[type]);
+    //     final localPath = '${waypointDir.path}/$type.$type';
+
+    //     if (await _downloadFile(resourceUrl, localPath)) {
+    //       localResources[type] = localPath;
+    //     }
+    //   } catch (e) {
+    //     print('No $type for waypoint ${waypoint.id}');
+    //   }
+    // }
+
+    await _downloadGenericResource("readme", "md");
+
+    try {
+      final responseLink = await apiService.loadResource(waypoint.id, "links");
+      Map<String, dynamic> linksContent = responseLink.data as Map<String, dynamic>;
+      if (linksContent['links'] != null && linksContent['links'] is List) {
+        final linksFile = File('${waypointDir.path}/links.json');
+        await linksFile.writeAsString(jsonEncode(linksContent['links']));
+        localResources['links'] = linksFile.path;
+      }
+    } catch (e) {
+      print('No links for waypoint ${waypoint.id}');
+    }
+
+    await _downloadGenericResource("audio", "mp4");
+    await _downloadGenericResource("video", "mp4");
+    await _downloadGenericResource("pdf", "pdf");
 
     return localResources;
   }

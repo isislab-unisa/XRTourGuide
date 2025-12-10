@@ -18,6 +18,7 @@ import 'services/offline_tour_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
+import "elements/zlib_image.dart";
 
 class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
@@ -665,8 +666,19 @@ class _OfflineTourCardState extends State<OfflineTourCard> {
                   color: Colors.grey.shade200,
                   child:
                       _imagePath != null
-                          ? Image.file(
-                            File(_imagePath!),
+                          // ? Image.file(
+                          //   File(_imagePath!),
+                          //   fit: BoxFit.cover,
+                          //   errorBuilder:
+                          //       (context, error, stackTrace) => Icon(
+                          //         Icons.broken_image,
+                          //         color: Colors.grey.shade400,
+                          //       ),
+                          // )
+                          ? ZlibImage(
+                            filePath: _imagePath!,
+                            // width: widget.cardWidth,
+                            // height: widget.imageHeight,
                             fit: BoxFit.cover,
                             errorBuilder:
                                 (context, error, stackTrace) => Icon(
