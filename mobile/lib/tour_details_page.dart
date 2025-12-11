@@ -151,6 +151,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     final dir = await getApplicationDocumentsDirectory();
     final path = '${dir.path}/offline_tours_data/tour_${widget.tourId}/tour_${widget.tourId}.pmtiles';
     if (await File(path).exists()) {
+      print("PMTiles file found at $path");
       setState(() {
         _pmtilesPath = path;
         _futureTileProvider = PmTilesTileProvider.fromSource(_pmtilesPath!);
@@ -168,7 +169,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
           if (snapshot.hasData) {
             return TileLayer(
               tileProvider: snapshot.data!,
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: '',
             );
           }
           // You might want to show a loader or a fallback here
@@ -2270,7 +2271,6 @@ Widget _buildWaypointItem({
                                   child: widget.isOffline
                                     ? (() {
                                       final offlineList = _offlineImagesByWaypoint[waypointIndex] ?? const <String>[];
-                                      print("Offline images for waypoint $waypointIndex: $offlineList");
                                       if (imageIndex < offlineList.length && offlineList[imageIndex].isNotEmpty) {
                                       // return Image.file(
                                       //   File(offlineList[imageIndex]),
