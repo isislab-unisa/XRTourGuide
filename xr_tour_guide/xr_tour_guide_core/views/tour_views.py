@@ -85,7 +85,7 @@ def tour_list(request):
             else:
                 tour.distance = float('inf')
         
-        tours_list.sort(key=lambda x: x.distance)
+        tours_list.sort(key=lambda x: x.distance)[:10]
 
     print("Tours list: ", tours_list, flush=True)
     serializer = TourSerializer(tours_list, many=True)
