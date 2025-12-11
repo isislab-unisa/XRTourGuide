@@ -90,7 +90,7 @@ class Tour(models.Model):
         choices=Category.choices,
         default=Category.INSIDE,
     )
-    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False, validators=[FileExtensionValidator(['image/*'])])
+    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])])
     description = models.TextField(null=True, blank=True)
     objects = TourQuerySet.as_manager()
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -236,7 +236,7 @@ class TypeOfImage(models.TextChoices):
 
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
-    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['image/*'])])
+    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])])
     type_of_images = models.CharField(max_length=20, choices=TypeOfImage.choices, default=TypeOfImage.DEFAULT)
 
     def __str__(self):

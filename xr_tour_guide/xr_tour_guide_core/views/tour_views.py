@@ -15,7 +15,18 @@ from drf_yasg import openapi
 from rest_framework import status
 from rest_framework.response import Response
 import requests
+import math
 
+def distance(x1, x2, y1, y2):
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+def parse_coordinates(coord_str):
+    try:
+        lat_str, lon_str = coord_str.split(',')
+        return float(lat_str.strip()), float(lon_str.strip())
+    except Exception:
+        return None, None
+    
 @swagger_auto_schema(
     method='get',
     operation_summary="List tours by category with optional search term",
@@ -35,10 +46,22 @@ def tour_list(request):
     category = request.GET.get('category', '')
     sort_param = request.GET.get('sorted', '').lower()
     num_tours = request.GET.get('num_tours', None)
-    
-    print("DIOCANE", num_tours, flush=True)
+    lat = request.GET.get('lat', None)
+    lon = request.GET.get('lon', None)
 
     queryset = Tour.objects.filter(parent_tours__isnull=True, is_subtour=False)
+
+    tours_list = list(queryset)
+    if lat and lon:
+        lat = float(lat)
+        lon = float(lon)
+        for tour in tours_list:
+            tour_lat, tour_lon = parse_coordinates(tour.coordinates)
+            if tour_lat is not None and tour_lon is not None:
+                tour.distance = distance(lat, lon, tour_lat, tour_lon)
+            else:
+                tour.distance = float('inf')
+        tours_list.sort(key=lambda x: x.distance)
 
     if category:
         queryset = queryset.filter(category__iexact=category)
@@ -127,15 +150,15 @@ def increment_view_count(request):
 
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def cut_map(request, tour_id):
     storage = MinioStorage()
 
     try:
         tour = Tour.objects.get(pk=tour_id)
     except Tour.DoesNotExist:
-        return JsonResponse({"error": "Tour not found"}, status=404)
+        return JsonResponse({"error": "Tour not found"}, status=400)
 
     waypoints = tour.waypoints.all()
     if not waypoints.exists():
@@ -156,7 +179,9 @@ def cut_map(request, tour_id):
 
     min_lon, max_lon = min(lons), max(lons)
     min_lat, max_lat = min(lats), max(lats)
-    bbox = f"{min_lon},{min_lat},{max_lon},{max_lat}"
+    print("BBOX: ", min_lon, min_lat, max_lon, max_lat, flush=True)
+    bbox = f"{min_lon - 0.1},{min_lat - 0.1},{max_lon + 0.1},{max_lat + 0.1}"
+    print("BBOX: ", bbox, flush=True)
 
     payload = {
         "tour_id": str(tour_id),
