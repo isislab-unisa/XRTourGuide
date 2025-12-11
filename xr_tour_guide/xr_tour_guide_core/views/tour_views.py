@@ -150,8 +150,8 @@ def increment_view_count(request):
 
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def cut_map(request, tour_id):
     storage = MinioStorage()
 
