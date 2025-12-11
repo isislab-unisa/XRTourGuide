@@ -134,6 +134,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   //LISTA PER MANTENERE TRACCIA DEI FILE TEMPORANEI SCARICATI E DECOMPRESSI
   final List<File> _tempFiles = [];
 
+  final Map<String, File> _cachedResources = {};
+
 
   @override
   void initState() {
@@ -192,6 +194,16 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   }
 
   Future<File?> _loadAndDecompressResource(String sourcePath, bool isLocal, String extension) async {
+    if (_cachedResources.containsKey(sourcePath)) {
+      final cachedFile = _cachedResources[sourcePath]!;
+      if(await cachedFile.exists()) {
+        print("Using cached resource for $sourcePath");
+        return cachedFile;
+      } else {
+        _cachedResources.remove(sourcePath);
+      }
+    }
+
     try {
       List<int> rawBytes;
 
@@ -225,6 +237,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       await tempFile.writeAsBytes(decompressedBytes, flush: true);
 
       _tempFiles.add(tempFile);
+      _cachedResources[sourcePath] = tempFile;
 
       print("Decompressed resource saved to ${tempFile.path}");
       return tempFile;

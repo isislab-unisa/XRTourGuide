@@ -875,14 +875,22 @@ Future<void> _loadWaypoints() async {
                                   borderRadius: BorderRadius.circular(12),
                                   child: widget.isOffline
                                       ? (_getWaypointImagesFor(selectedWaypoint).isNotEmpty
-                                          ? Image.file(
-                                              File(_getWaypointImagesFor(selectedWaypoint)[0]),
+                                          // ? Image.file(
+                                          //     File(_getWaypointImagesFor(selectedWaypoint)[0]),
+                                          //     width: 80,
+                                          //     height: 80,
+                                          //     fit: BoxFit.cover,
+                                          //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                          //   )
+                                          // : _offlineImagePlaceholder())
+                                          ? ZlibImage(
+                                              filePath: _getWaypointImagesFor(selectedWaypoint)[0],
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,
+                                              useCache: false,
                                               errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                            )
-                                          : _offlineImagePlaceholder())
+                                            ) : _offlineImagePlaceholder())
                                       : (selectedWaypoint.images.isNotEmpty
                                           // ? Image.network(
                                           //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
@@ -896,6 +904,7 @@ Future<void> _loadWaypoints() async {
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,
+                                              useCache: false,
                                               errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
                                             )
                                           : _offlineImagePlaceholder()),
@@ -1061,14 +1070,22 @@ Future<void> _loadWaypoints() async {
                                         borderRadius: BorderRadius.circular(12),
                                         child: widget.isOffline ?
                                         (_getWaypointImagesFor(selectedWaypoint).isNotEmpty
-                                            ? Image.file(
-                                                File(_getWaypointImagesFor(selectedWaypoint)[0]),
-                                                width: 80,
-                                                height: 80,
+                                            // ? Image.file(
+                                            //     File(_getWaypointImagesFor(selectedWaypoint)[0]),
+                                            //     width: 80,
+                                            //     height: 80,
+                                            //     fit: BoxFit.cover,
+                                            //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
+                                            //   )
+                                            // : _offlineImagePlaceholder())
+                                            ? ZlibImage(
+                                                filePath: _getWaypointImagesFor(selectedWaypoint)[index],
+                                                width: 250,
+                                                height: 200,
                                                 fit: BoxFit.cover,
+                                                useCache: false,
                                                 errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                              )
-                                            : _offlineImagePlaceholder())
+                                            ) : _offlineImagePlaceholder())
                                         : (selectedWaypoint.images.isNotEmpty
                                             // ? Image.network(
                                             //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
@@ -1082,6 +1099,7 @@ Future<void> _loadWaypoints() async {
                                                 width: 250,
                                                 height: 200,
                                                 fit: BoxFit.cover,
+                                                useCache: false,
                                                 errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
                                             )
                                             : _offlineImagePlaceholder()),
@@ -1210,8 +1228,14 @@ Future<void> _loadWaypoints() async {
                           _offlineTourImagePath != null &&
                           File(_offlineTourImagePath!).existsSync()) {
                         // Modalità Offline: carica l'immagine dal file locale
-                        return Image.file(
-                          File(_offlineTourImagePath!),
+                        // return Image.file(
+                        //   File(_offlineTourImagePath!),
+                        //   fit: BoxFit.cover,
+                        //   errorBuilder: (context, error, stackTrace) =>
+                        //       _offlineImagePlaceholder(),
+                        // );
+                        return ZlibImage(
+                          filePath: _offlineTourImagePath!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               _offlineImagePlaceholder(),
@@ -2236,7 +2260,8 @@ Widget _buildWaypointItem({
                           height: 100,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            itemCount: images.length,
+                            itemCount: widget.isOffline ? _offlineImagesByWaypoint[waypointIndex]?.length : images.length,
+                            addAutomaticKeepAlives: true,
                             itemBuilder: (context, imageIndex) {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8.0),
@@ -2245,26 +2270,50 @@ Widget _buildWaypointItem({
                                   child: widget.isOffline
                                     ? (() {
                                       final offlineList = _offlineImagesByWaypoint[waypointIndex] ?? const <String>[];
+                                      print("Offline images for waypoint $waypointIndex: $offlineList");
                                       if (imageIndex < offlineList.length && offlineList[imageIndex].isNotEmpty) {
-                                      return Image.file(
-                                        File(offlineList[imageIndex]),
-                                        height: 100,
+                                      // return Image.file(
+                                      //   File(offlineList[imageIndex]),
+                                      //   height: 100,
+                                      //   width: 150,
+                                      //   fit: BoxFit.cover,
+                                      //   errorBuilder: (context, error, stackTrace) {
+                                      //   return Container(
+                                      //     height: 100,
+                                      //     width: 150,
+                                      //     decoration: BoxDecoration(
+                                      //     color: Colors.grey.shade300,
+                                      //     borderRadius: BorderRadius.circular(8.0),
+                                      //     ),
+                                      //     child: Icon(
+                                      //     Icons.image_not_supported,
+                                      //     color: Colors.grey.shade600,
+                                      //     ),
+                                      //   );
+                                      //   },
+                                      // );
+                                      return ZlibImage(
+                                        filePath: offlineList[imageIndex],
                                         width: 150,
+                                        height: 100,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          height: 100,
-                                          width: 150,
-                                          decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius: BorderRadius.circular(8.0),
-                                          ),
-                                          child: Icon(
-                                          Icons.image_not_supported,
-                                          color: Colors.grey.shade600,
-                                          ),
-                                        );
-                                        },
+                                        useCache: false,
+                                        errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Container(
+                                              height: 100,
+                                              width: 150,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade300,
+                                                borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              ),
+                                              child: Icon(
+                                                Icons.image_not_supported,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            );
+                                          },
                                       );
                                       } else {
                                       return Container(
@@ -2307,6 +2356,7 @@ Widget _buildWaypointItem({
                                       width: 150,
                                       height: 100,
                                       fit: BoxFit.cover,
+                                      useCache: false,
                                       errorBuilder:
                                         (context, error, stackTrace) {
                                           return Container(
