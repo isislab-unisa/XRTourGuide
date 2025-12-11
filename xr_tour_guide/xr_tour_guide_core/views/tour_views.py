@@ -62,7 +62,7 @@ def tour_list(request):
             else:
                 tour.distance = float('inf')
         tours_list.sort(key=lambda x: x.distance)
-
+        queryset = Tour.objects.filter(id__in=[tour.id for tour in tours_list])
     if category:
         queryset = queryset.filter(category__iexact=category)
 
