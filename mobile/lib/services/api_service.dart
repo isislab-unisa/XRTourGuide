@@ -22,7 +22,7 @@ class ApiService {
   ];
 
   // static const String basicUrl = 'http://172.16.15.145:80';
-  static const String basicUrl = 'http://192.168.178.149:80';
+  static const String basicUrl = 'http://172.16.15.145:80';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
@@ -258,7 +258,7 @@ class ApiService {
     }
   }
   
-  Future<Response> getNearbyTours(int timeout) async {
+  Future<Response> getAllNearbyTours(int timeout) async {
     try {
       Response response;
       if (timeout > 0) {
@@ -272,6 +272,25 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<Response> getNearbyTours(int timeout, double latitude, double longitude) async {
+    try {
+      Response response;
+      if (timeout > 0) {
+        response = await dio.get(
+          "/tour_list/?lon=$longitude&lat=$latitude",
+          options: Options(sendTimeout: Duration(seconds: timeout)),
+        );
+      } else {
+        response = await dio.get('/tour_list/?lon=$longitude&lat=$latitude');
+      }
+      return response;
+    } catch (e) {
+      print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
 
   Future<Response> getTourBySearchTerm(String searchTerm) async {
     try {

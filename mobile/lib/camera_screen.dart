@@ -43,6 +43,38 @@ enum RecognitionState {
   failure, // Recognition failed,
 }
 
+Future<Uint8List> _processImageInIsolate(Map<String, dynamic> params) async {
+  final Uint8List bytes = params['bytes'];
+  final int orientation = params['orientation'];
+
+  img.Image? capturedImage = img.decodeImage(bytes);
+  if (capturedImage == null) {
+    throw Exception("Failed to decode image");
+  }
+
+  if (orientation != 0) {
+    capturedImage = img.copyRotate(capturedImage, angle: orientation);
+  }
+
+  const int targetShortestSide = 1024;
+  final int shortestSide = min(capturedImage.width, capturedImage.height);
+
+  if (shortestSide > targetShortestSide) {
+    final double scale = targetShortestSide / shortestSide;
+    capturedImage = img.copyResize(
+      capturedImage,
+      width: (capturedImage.width * scale).round(),
+      height: (capturedImage.height * scale).round(),
+      interpolation: img.Interpolation.linear
+    );
+  }
+
+  // capturedImage = img.copyResize(capturedImage, width: 224, height: 224);
+
+  return Uint8List.fromList(img.encodeJpg(capturedImage, quality: 85));
+}
+
+
 // _currentMarkdownContent is kept to build markdown strings for MarkdownWidget
 String _currentMarkdownContent = "";
 // This new variable will hold the actual Widget to display in the sheet
@@ -1182,17 +1214,17 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       final XFile file = await _cameraController!.takePicture();
       var bytes = await file.readAsBytes();
 
-      img.Image? capturedImage = img.decodeImage(bytes);
-      if (capturedImage == null) {
-        throw Exception("Failed to decode captured image");
-      }
+      // img.Image? capturedImage = img.decodeImage(bytes);
+      // if (capturedImage == null) {
+      //   throw Exception("Failed to decode captured image");
+      // }
 
-      final int orientation = _cameraController!.description.sensorOrientation;
-      print("Sensor Orientation: $orientation");
+      // final int orientation = _cameraController!.description.sensorOrientation;
+      // print("Sensor Orientation: $orientation");
 
-      if (orientation != 0) {
-        capturedImage = img.copyRotate(capturedImage, angle: orientation.toDouble());
-      }
+      // if (orientation != 0) {
+      //   capturedImage = img.copyRotate(capturedImage, angle: orientation.toDouble());
+      // }
 
 
       // final dir = await getApplicationDocumentsDirectory();
@@ -1208,8 +1240,14 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         if(_offlineRecognitionService == null) {
           throw Exception("Offline Recognition Service not initialized");
         }
-        final rotatedBytes = Uint8List.fromList(img.encodeJpg(capturedImage));
-        waypointId = await _offlineRecognitionService!.matchFromImageBytes(bytes, sensorOrientation: 0);
+        // final rotatedBytes = Uint8List.fromList(img.encodeJpg(capturedImage));
+        final int orientation = _cameraController!.description.sensorOrientation;
+        final rotatedBytes = await compute(_processImageInIsolate, {
+          'bytes': bytes,
+          'orientation': orientation,
+        });
+
+        waypointId = await _offlineRecognitionService!.matchFromImageBytes(rotatedBytes, sensorOrientation: 0);
         print("WAYPOINT ID: ${waypointId}");
         if (waypointId != -1) {
           availableResources = {
@@ -1233,7 +1271,11 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
           }
       } else {
-        final String base64Image = base64Encode(bytes);
+        final rotatedBytes = await compute(_processImageInIsolate, {
+          'bytes': bytes,
+          'orientation': _cameraController!.description.sensorOrientation,
+        });
+        final String base64Image = base64Encode(rotatedBytes);
         final result = await _apiService.inference(base64Image, widget.tourId);
         waypointId = result.data["result"] ?? -1;
         availableResources = result.data["available_resources"] ?? {};

@@ -19,6 +19,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import "elements/zlib_image.dart";
+import 'package:geolocator/geolocator.dart';
 
 class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
@@ -141,10 +142,47 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     }
   }
 
+  Future<Position?> _getCurrentPosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return null;
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.medium,
+    );
+  }
+
   Future<void> _loadNearbyTours() async {
     try {
-      final tours = await _tourService.getNearbyTours(0);
-      if (mounted) setState(() => _nearbyTours = tours);
+      Position? position = await _getCurrentPosition();
+      if (position != null) {
+        final tours = await _tourService.getNearbyTours(
+          0,
+          position.latitude,
+          position.longitude,
+        );
+        if (mounted) setState(() => _nearbyTours = tours);
+        return;
+      } else {
+        final tours = await _tourService.getAllNearbyTours(0);
+        if (mounted) setState(() => _nearbyTours = tours);
+      }
     } catch (e) {
       // Error is handled by reachability check, no need for snackbar here
     }
