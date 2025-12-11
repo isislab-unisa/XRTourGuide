@@ -297,7 +297,7 @@ class OfflineStorageService {
 
   Future<void> _downloadOfflineIndex(int tourId, Directory tourDir) async {
     try {
-      final url = '${ApiService.basicUrl}/download_model?tour=$tourId';
+      final url = '${ApiService.basicUrl}/download_model?tour_id=$tourId';
       final file = File('${tourDir.path}/training_data.json');
       final response = await _dio.get(url, options: Options(responseType: ResponseType.json));
       final data = response.data;
@@ -309,20 +309,14 @@ class OfflineStorageService {
 
   Future<void> _downloadMap(int tourId, Directory tourDir) async {
     try {
-      final url = '${ApiService.basicUrl}/cut_map/$tourId/';
+      final url = '/cut_map/$tourId/';
       final localPath = '${tourDir.path}/tour_$tourId.pmtiles';
 
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
-      print("TOKEN: $token");
-
-      await _dio.download(
+      await apiService.dio.download(
         url,
         localPath,
         options: Options(
           method: 'POST',
-          // headers: token != null ? {'Authorization': 'Bearer $token'} : {},
         ),
       );
       print("Map downloaded successfully to $localPath");

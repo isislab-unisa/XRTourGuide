@@ -92,7 +92,14 @@ def create_training_index_with_tflite(
             continue
         waypoint_name = waypoint_dir.name
         print(f"\n📁 Waypoint: {waypoint_name}")
-        for img_path in sorted(waypoint_dir.glob("*.jpg")):
+        
+        valid_extensions = {".jpg", ".jpeg", ".png"}
+        image_files = [
+            p for p in sorted(waypoint_dir.iterdir())
+            if p.is_file() and p.suffix.lower() in valid_extensions
+        ]
+        
+        for img_path in image_files:
             try:
                 pil_image = Image.open(img_path)
                 processed_array = preprocess_image_dart_compatible(pil_image)
@@ -290,15 +297,15 @@ if __name__ == "__main__":
         train_dir = input_dir / "train"
         pt_cache_path = output_dir / "model.pt"
         json_path = output_dir / "training_data.json"
-        
+
         if not input_dir.exists():
             raise FileNotFoundError(f"Cartella di input non trovata: {input_dir}")
-        
+
         if not train_dir.exists():
             raise FileNotFoundError(f"Cartella di training non trovata: {train_dir}")
 
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         tflite_model_path = Path(args.tflite_model)
         if not tflite_model_path.exists():
             raise FileNotFoundError(f"Modello TFLite non trovato: {tflite_model_path}")
@@ -323,7 +330,7 @@ if __name__ == "__main__":
 
         print("Done.")
         sys.exit(0)
-        
+
     except Exception as e:
         print(f"FATAL ERROR: {e}", flush=True)
         traceback.print_exc()

@@ -28,6 +28,7 @@ import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:dio/dio.dart';
 import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -166,6 +167,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _clearTempFiles();
     super.dispose();
   }
+
 
   Future<void> _initOfflineMap() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -809,7 +811,40 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         //   _currentMarkdownContent = content['links'] ?? '';
         // }
 
-        final linksList = (content['links'] as List?)?.cast<String>() ?? [];
+        List<String> linksList = [];
+
+
+        if (widget.isOffline) {
+          final linksData = content['links'];
+          String linksContent = '';
+
+          if (linksData is String && linksData.isNotEmpty) {
+            // È un percorso file, proviamo a leggerlo
+            try {
+              final file = File(linksData);
+              if (await file.exists()) {
+                String fileContent = await file.readAsString();
+                try {
+                  var decoded = jsonDecode(fileContent);
+                  if (decoded is List) {
+                    linksList = decoded.map((e) => e.toString()).toList();
+                  }
+                } catch (e) {
+                  print("Error decoding links JSON: $e");
+                  if (fileContent.isNotEmpty) {
+                    linksList = fileContent.split('\n').where((line) => line.trim().isNotEmpty).toList();
+                  }
+                }
+              } 
+              } catch (e) {
+                print("Error reading links file: $e");
+              }
+            }
+          } else {
+            linksList = (content['links'] as List?)?.cast<String>() ?? [];
+          }
+
+        // final linksList = (content['links'] as List?)?.cast<String>() ?? [];
         print("Links list: $linksList");
 
         if(linksList.isNotEmpty) {
@@ -823,6 +858,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         } else {
           _currentMarkdownContent = "# ${widget.landmarkName}\n\nNo links available for this waypoint.";
         }
+        
+
 
         contentToDisplay = MarkdownWidget(
           data: _currentMarkdownContent,
@@ -1158,10 +1195,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       }
 
 
-      final dir = await getApplicationDocumentsDirectory();
-      final testPath = '${dir.path}/test_flutter_photo.jpg';
-      await File(testPath).writeAsBytes(img.encodeJpg(capturedImage));
-      print("Saved test image to $testPath");
+      // final dir = await getApplicationDocumentsDirectory();
+      // final testPath = '${dir.path}/test_flutter_photo.jpg';
+      // await File(testPath).writeAsBytes(img.encodeJpg(capturedImage));
+      // print("Saved test image to $testPath");
 
       int waypointId = -1;
       Map<String, dynamic> availableResources = {};
