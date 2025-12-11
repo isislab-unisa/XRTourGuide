@@ -16,9 +16,11 @@ from rest_framework import status
 from rest_framework.response import Response
 import requests
 import math
+from django.db.models import Case, When
+
 
 def distance(x1, x2, y1, y2):
-    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    return math.sqrt((x1 - y1)**2 + (x2 - y2)**2)
 
 def parse_coordinates(coord_str):
     try:
@@ -51,18 +53,6 @@ def tour_list(request):
 
     queryset = Tour.objects.filter(parent_tours__isnull=True, is_subtour=False)
 
-    tours_list = list(queryset)
-    if lat and lon:
-        lat = float(lat)
-        lon = float(lon)
-        for tour in tours_list:
-            tour_lat, tour_lon = parse_coordinates(tour.coordinates)
-            if tour_lat is not None and tour_lon is not None:
-                tour.distance = distance(lat, lon, tour_lat, tour_lon)
-            else:
-                tour.distance = float('inf')
-        tours_list.sort(key=lambda x: x.distance)
-        queryset = Tour.objects.filter(id__in=[tour.id for tour in tours_list])
     if category:
         queryset = queryset.filter(category__iexact=category)
 
@@ -83,7 +73,22 @@ def tour_list(request):
         except (ValueError, TypeError):
             pass
 
-    serializer = TourSerializer(queryset, many=True)
+    tours_list = list(queryset)
+
+    if lat and lon:
+        lat = float(lat)
+        lon = float(lon)
+        for tour in tours_list:
+            tour_lat, tour_lon = parse_coordinates(tour.coordinates)
+            if tour_lat is not None and tour_lon is not None:
+                tour.distance = distance(lat, lon, tour_lat, tour_lon)
+            else:
+                tour.distance = float('inf')
+        
+        tours_list.sort(key=lambda x: x.distance)
+
+    print("Tours list: ", tours_list, flush=True)
+    serializer = TourSerializer(tours_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
