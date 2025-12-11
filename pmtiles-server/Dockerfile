@@ -17,12 +17,20 @@ RUN mkdir -p /maps /data
 COPY maps/salerno_provincia.pmtiles /maps/
 
 # Builda il binario go-pmtiles
-RUN git clone https://github.com/protomaps/go-pmtiles.git /go-pmtiles \
-    && cd /go-pmtiles && go build -o /usr/local/bin/go-pmtiles
+# RUN git clone https://github.com/protomaps/go-pmtiles.git /go-pmtiles \
+#     && cd /go-pmtiles && go build -o /usr/local/bin/go-pmtiles
 
+# Scarica release specifica di go-pmtiles
+ARG PMTILES_VERSION=1.28.2
+RUN wget -q https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz \
+    && tar -xzf go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz \
+    && rm go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz \
+    && mv pmtiles /usr/local/bin/go-pmtiles \
+    && chmod +x /usr/local/bin/go-pmtiles
+        
 # Ritaglia il PMTiles durante la build
-RUN /usr/local/bin/go-pmtiles extract /maps/salerno_provincia.pmtiles /maps/fisciano.pmtiles \
-    --bbox=14.770088,40.759318,14.813561,40.781094
+# RUN /usr/local/bin/go-pmtiles extract /maps/salerno_provincia.pmtiles /maps/fisciano.pmtiles \
+#     --bbox=14.770088,40.759318,14.813561,40.781094
 
 EXPOSE 8081
 

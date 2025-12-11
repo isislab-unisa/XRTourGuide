@@ -30,6 +30,8 @@ async def extract_pmtiles(data: ExtractRequest):
 
     if not os.path.exists(input_path):
         raise HTTPException(status_code=404, detail="Input PMTiles file not found")
+    
+    print(f"Extracting PMTiles for tour_id: {data.tour_id} with bbox: {data.bbox}", flush = True)
 
     try:
         subprocess.run([
@@ -38,7 +40,7 @@ async def extract_pmtiles(data: ExtractRequest):
             input_path,
             output_path,
             "--bbox", data.bbox
-        ], check=True)
+        ], check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Failed to extract PMTiles: {e}")
 
