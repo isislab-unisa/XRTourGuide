@@ -137,10 +137,6 @@ def cut_map(request, tour_id):
     except Tour.DoesNotExist:
         return JsonResponse({"error": "Tour not found"}, status=404)
 
-    if storage.exists(f"{tour_id}/tour_{tour_id}.pmtiles"):
-        file = storage.open(f"/{tour_id}/tour_{tour_id}.pmtiles", mode='rb')
-        return FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}.pmtiles")
-    
     waypoints = tour.waypoints.all()
     if not waypoints.exists():
         return JsonResponse({"error": "No waypoints found for this tour"}, status=400)
