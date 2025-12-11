@@ -10,6 +10,7 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import FileExtensionValidator
 
 dotenv.load_dotenv()
 
@@ -89,7 +90,7 @@ class Tour(models.Model):
         choices=Category.choices,
         default=Category.INSIDE,
     )
-    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False)
+    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False, validators=[FileExtensionValidator(['image/*'])])
     description = models.TextField(null=True, blank=True)
     objects = TourQuerySet.as_manager()
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -176,10 +177,10 @@ class Waypoint(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     build_started_at = models.DateTimeField(null=True, blank=True)
     
-    pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
-    readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
-    video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
-    audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True)
+    pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['pdf'])])
+    readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['md'])])
+    video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp4']), FileExtensionValidator(['mov']), FileExtensionValidator(['mkv'])])
+    audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp3']), FileExtensionValidator(['wav'])])
     
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INSIDE:
@@ -235,7 +236,7 @@ class TypeOfImage(models.TextChoices):
 
 class WaypointViewImage(models.Model):
     waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
-    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True)
+    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['image/*'])])
     type_of_images = models.CharField(max_length=20, choices=TypeOfImage.choices, default=TypeOfImage.DEFAULT)
 
     def __str__(self):

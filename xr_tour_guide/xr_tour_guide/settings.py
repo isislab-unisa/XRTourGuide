@@ -289,7 +289,7 @@ UNFOLD = {
                     },
                     {
                         "title": _("Reviews"),
-                        "icon": "message-circle",
+                        "icon": "message",
                         "link": reverse_lazy("admin:xr_tour_guide_core_review_changelist"),
                     }
                 ],
