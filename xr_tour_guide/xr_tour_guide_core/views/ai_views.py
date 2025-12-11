@@ -207,8 +207,10 @@ def inference(request):
 @permission_classes([AllowAny])
 def download_model(request):
     storage = MinioStorage()
-
     tour_id = request.GET.get('tour_id')
-    model = storage.open(f"/{tour_id}/training_data.json", mode='r').read()
-
+    try:
+        with storage.open(f"{tour_id}/training_data.json", mode='rb') as f:
+            model = f.read().decode()
+    except Exception as e:
+        print(f"Errore nell'apertura del file: {e}")
     return HttpResponse(model, content_type='application/json')
