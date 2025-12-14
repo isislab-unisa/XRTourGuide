@@ -19,10 +19,9 @@ class TourService {
   final ApiService apiService;
   TourService(this.apiService);
 
-  // Simulate API call to get nearby tours
-  Future<List<Tour>> getNearbyTours(int timeout) async {
+  Future<List<Tour>> getNearbyTours(int timeout, double latitude, double longitude) async {
     try {
-      final response = await apiService.getNearbyTours(timeout);
+      final response = await apiService.getNearbyTours(timeout, latitude, longitude);
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
@@ -34,6 +33,22 @@ class TourService {
       rethrow;
     }
   }
+
+    Future<List<Tour>> getAllNearbyTours(int timeout) async {
+    try {
+      final response = await apiService.getAllNearbyTours(timeout);
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        return data.map((tour) => Tour.fromJson(tour)).toList();
+      } else {
+        throw Exception('Failed to load tours');
+      }
+    } catch (e) {
+      print("Nearby Tours Retrieval error: $e");
+      rethrow;
+    }
+  }
+
 
     Future<Tour> getTourById(int tourId) async {
       try {
@@ -183,9 +198,9 @@ Future<User> getUserDetails() async {
       final data = response.data;
       return User(
         id: data['id'],
-        name: data['first_name'],
-        surname: data['last_name'],
-        mail: data['email'],
+        name: data['first_name'] ?? '',
+        surname: data['last_name'] ?? '',
+        mail: data['email']?? '',
         city: data['city'] ?? '',
         token: "abc",
         description: data['description'] ?? '',
