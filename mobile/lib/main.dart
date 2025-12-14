@@ -12,6 +12,9 @@ import "package:easy_localization/easy_localization.dart";
 import "server_selection_screen.dart";
 import "dart:io" show Platform;
 import "package:flutter/foundation.dart" show kIsWeb;
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
@@ -31,6 +34,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
 
   await EasyLocalization.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
