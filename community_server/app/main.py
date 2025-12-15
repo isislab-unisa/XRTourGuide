@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request as FastAPIRequest
 import httpx
-from auth import verify_token
+from .auth import create_access_token, create_refresh_token, verify_token
 
 dotenv.load_dotenv()
 
@@ -193,8 +193,6 @@ async def api_register(
 
     return {"message": "User registered successfully"}
 
-from auth import create_access_token, create_refresh_token
-
 @app.post("/api/login/")
 async def api_login(
     email: str = Form(...),
@@ -216,6 +214,10 @@ async def api_login(
             "id": user.id,
             "username": user.username,
             "email": user.email,
+            "name": user.name,
+            "surname": user.surname,
+            "city": user.city,
+            "description": user.description
         }
     }
 
@@ -233,3 +235,27 @@ async def refresh(refresh_token: str = Form(...)):
 async def api_verify(token: str = Form(...)):
     payload = verify_token(token)
     return {"valid": True, "user_id": payload.get("user_id")}
+
+@app.post("/update_user")
+def update_user(
+        user_email: str = Form(...),
+        username: str = Form(None),
+        name: str = Form(None),
+        surname: str = Form(None),
+        city: str = Form(None),
+        description: str = Form(None),
+        db: Session = Depends(get_db)
+    ):
+    user = db.query(models.User).filter(models.User.email == user_email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        user.username = username
+        user.name = name
+        user.surname = surname
+        user.city = city
+        user.description = description
+        db.commit()
+    except Exception as e:
+        HTTPException(status_code=500, detail=f"Errore nell'aggiornamento dell'utente")
+    return {"message": "User updated successfully"}

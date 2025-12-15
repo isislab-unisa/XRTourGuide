@@ -1,11 +1,10 @@
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from ..serializers import TourSerializer, WaypointSerializer
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse, FileResponse
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
 import mimetypes
 from ..models import MinioStorage, Tour, Category
@@ -156,6 +155,7 @@ def increment_view_count(request):
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def cut_map(request, tour_id):
     storage = MinioStorage()
