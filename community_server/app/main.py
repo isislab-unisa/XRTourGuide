@@ -12,6 +12,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.requests import Request as FastAPIRequest
 import httpx
 from .auth import create_access_token, create_refresh_token, verify_token
+from pydantic import BaseModel
+from fastapi import FastAPI, Depends, HTTPException, Body, Form
+from fastapi import Request
+
 
 dotenv.load_dotenv()
 
@@ -194,14 +198,16 @@ async def api_register(
     return {"message": "User registered successfully"}
 
 @app.post("/api/token/")
-async def api_login(
-    email: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
-):
+async def api_login(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    email = data.get("email")
+    password = data.get("password")
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password required")
+
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user or not user.verify_password(password):
-        raise HTTPException(401, "Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = create_access_token({"user_id": user.id})
     refresh_token = create_refresh_token({"user_id": user.id})
@@ -315,12 +321,20 @@ def delete_account(
     db: Session = Depends(get_db),
     request: Request = None
 ):
-    token = request.headers.get("Authorization")
-    if not token:
-        raise HTTPException(401, "Invalid token")
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    scheme, _, token = auth_header.partition(" ")
+
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="Invalid authorization format")
+
     payload = verify_token(token)
+
     if payload.get("type") != "access":
-        raise HTTPException(401, "Invalid access token")
+        raise HTTPException(status_code=401, detail="Invalid access token")
 
     user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
     if not user or not user.verify_password(password):
