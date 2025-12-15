@@ -55,30 +55,42 @@ class CustomUserAdmin(UserAdmin):
         if change:
             try:
                 payload = {
-                    "user_email": obj.email,
+                    "email": obj.email,
                     "username": obj.username,
-                    "name": obj.first_name,
-                    "surname": obj.last_name,
+                    "firstName": obj.first_name,
+                    "lastName": obj.last_name,
                     "city": obj.city,
                     "description": obj.description,
                 }
 
+                auth_header = request.headers.get('Authorization')
+                if not auth_header:
+                    return None
+
+                if not auth_header.startswith('Bearer '):
+                    return None
+
+                token = auth_header.split(' ')[1]
                 response = requests.post(
-                    "http://172.16.15.162:8002/update_user",
-                    data=payload,
-                    timeout=5
+                    "http://172.16.15.162:8002/update_profile",
+                    json=payload,
+                    timeout=5,
+                    headers={
+                        "Authorization": f"Bearer {token.json()['access']}"
+                    }
                 )
 
                 if response.status_code != 200:
+                    error_message = response.json().get("detail", "Errore di connessione con il Community Server")
                     self.message_user(
                         request,
-                        f"Errore nel sincronizzare l'utente con il Community Server: {response.text}",
+                        f"Errore nel sincronizzare l'utente con il Community Server: {error_message}",
                         level=messages.ERROR
                     )
                 else:
                     self.message_user(
                         request,
-                        "✔ Utente sincronizzato correttamente con il Community Server.",
+                        "Utente sincronizzato correttamente con il Community Server.",
                         level=messages.SUCCESS
                     )
                     super().save_model(request, obj, form, change)
