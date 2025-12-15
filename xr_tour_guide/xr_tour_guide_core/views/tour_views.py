@@ -16,7 +16,7 @@ from rest_framework.response import Response
 import requests
 import math
 from django.db.models import Case, When
-
+from ..authentication import JWTFastAPIAuthentication
 
 def distance(x1, x2, y1, y2):
     return math.sqrt((x1 - y1)**2 + (x2 - y2)**2)
