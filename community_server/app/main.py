@@ -163,7 +163,7 @@ async def get_services(db: Session = Depends(get_db)):
         results = []
         for s in services:
             try:
-                r = await client.get(s.domain)
+                r = await client.get(f"http://{s.domain}/health_check/")
                 if r.status_code == 200:
                     results.append(s)
             except Exception:
@@ -236,26 +236,88 @@ async def api_verify(token: str = Form(...)):
     payload = verify_token(token)
     return {"valid": True, "user_id": payload.get("user_id")}
 
-@app.post("/update_user")
-def update_user(
-        user_email: str = Form(...),
-        username: str = Form(None),
-        name: str = Form(None),
-        surname: str = Form(None),
-        city: str = Form(None),
-        description: str = Form(None),
-        db: Session = Depends(get_db)
-    ):
-    user = db.query(models.User).filter(models.User.email == user_email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+@app.post("/update_password/")
+def update_password(
+    old_password: str = Form(...),
+    new_password: str = Form(...),
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
     try:
-        user.username = username
-        user.name = name
-        user.surname = surname
-        user.city = city
-        user.description = description
-        db.commit()
-    except Exception as e:
-        HTTPException(status_code=500, detail=f"Errore nell'aggiornamento dell'utente")
-    return {"message": "User updated successfully"}
+        scheme, token = auth_header.split(" ")
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid auth scheme")
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+
+    payload = verify_token(token)
+
+    if payload.get("type") != "access":
+        raise HTTPException(status_code=401, detail="Invalid access token")
+
+    user = db.query(models.User).filter(
+        models.User.id == payload["user_id"]
+    ).first()
+
+    if not user or not user.verify_password(old_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    user.set_password(new_password)
+    db.commit()
+
+    return {"message": "Password updated successfully"}
+
+# delete acount, update password, reset password, 
+
+# update_password -> old_password, new_password
+@app.post("/update_password/")
+def update_password(
+    old_password: str = Form(...),
+    new_password: str = Form(...),
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    token = request.headers.get("Authorization")
+    if not token:
+        raise HTTPException(401, "Invalid token")
+    payload = verify_token(token)
+    if payload.get("type") != "access":
+        raise HTTPException(401, "Invalid access token")
+
+    user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+    if not user or not user.verify_password(old_password):
+        raise HTTPException(401, "Invalid credentials")
+
+    user.set_password(new_password)
+    db.commit()
+
+    return {"message": "Password updated successfully"}
+# forgot-password -> email
+
+# delete_account -> password
+app.post("/delete_account/")
+def delete_account(
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    token = request.headers.get("Authorization")
+    if not token:
+        raise HTTPException(401, "Invalid token")
+    payload = verify_token(token)
+    if payload.get("type") != "access":
+        raise HTTPException(401, "Invalid access token")
+
+    user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+    if not user or not user.verify_password(password):
+        raise HTTPException(401, "Invalid credentials")
+
+    user.delete()
+    return {"message": "Account deleted successfully"}
+
+# profile_detail -> token
