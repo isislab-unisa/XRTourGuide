@@ -243,12 +243,13 @@ async def api_verify(token: str = Form(...)):
     return {"valid": True, "user_id": payload.get("user_id")}
 
 @app.post("/update_password/")
-def update_password(
-    old_password: str = Form(...),
-    new_password: str = Form(...),
+async def update_password(
     db: Session = Depends(get_db),
     request: Request = None
 ):
+    data = await request.json()
+    old_password = data.get("oldPassword")
+    new_password = data.get("newPassword")
     auth_header = request.headers.get("Authorization")
 
     if not auth_header:
@@ -278,49 +279,13 @@ def update_password(
 
     return {"message": "Password updated successfully"}
 
-@app.post("/update_password/")
-def update_password(
-    request: Request,
-    old_password: str = Form(...),
-    new_password: str = Form(...),
-    db: Session = Depends(get_db),
-):
-    auth_header = request.headers.get("Authorization")
-
-    if not auth_header:
-        raise HTTPException(status_code=401, detail="Authorization header missing")
-
-    scheme, _, token = auth_header.partition(" ")
-
-    if scheme.lower() != "bearer" or not token:
-        raise HTTPException(status_code=401, detail="Invalid authorization format")
-
-    payload = verify_token(token)
-
-    if payload.get("type") != "access":
-        raise HTTPException(status_code=401, detail="Invalid access token")
-
-    user = db.query(models.User).filter(
-        models.User.id == payload["user_id"]
-    ).first()
-
-    if not user or not user.verify_password(old_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    user.set_password(new_password)
-    db.commit()
-
-    return {"message": "Password updated successfully"}
-
-
-# forgot-password -> email
-
-app.post("/delete_account/")
-def delete_account(
-    password: str = Form(...),
+@app.post("/delete_account/")
+async def delete_account(
     db: Session = Depends(get_db),
     request: Request = None
 ):
+    data = await request.json()
+    password = data.get("password")
     auth_header = request.headers.get("Authorization")
 
     if not auth_header:
@@ -342,8 +307,6 @@ def delete_account(
 
     user.delete()
     return {"message": "Account deleted successfully"}
-
-# profile_detail -> token
 
 @app.get("/profile_detail/")
 def api_profile_detail(request: Request, db: Session = Depends(get_db)):
@@ -376,3 +339,42 @@ def api_profile_detail(request: Request, db: Session = Depends(get_db)):
         "city": user.city,
         "description": user.description
     }
+
+@app.post("/update_profile/")
+async def update_profile(
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    data = await request.json()
+    
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    scheme, _, token = auth_header.partition(" ")
+
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="Invalid authorization format")
+
+    payload = verify_token(token)
+
+    if payload.get("type") != "access":
+        raise HTTPException(status_code=401, detail="Invalid access token")
+
+    user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    print(f"User: ", user)
+    user.username = data.get("username", user.username)
+    user.email = data.get("email", user.email)
+    user.name = data.get("firstName", user.name)
+    user.surname = data.get("lastName", user.surname)
+    user.city = data.get("city", user.city)
+    user.description = data.get("description", user.description)
+
+    db.commit()
+
+    return {"message": "Profile updated successfully"}
