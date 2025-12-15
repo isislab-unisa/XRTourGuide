@@ -22,7 +22,7 @@ def login(request):
         
         response = requests.post(
             'http://172.16.15.162:8002/api/token/',
-            data={'email': email, 'password': password}
+            json={'email': email, 'password': password}
         )
 
         if response.status_code == 200:
@@ -53,7 +53,7 @@ def login(request):
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             django_login(request, user)
 
-            request.session["cs_token"] = data["access_token"]
+            request.session["cs_token"] = data["access"]
             return redirect("/admin/")
         else:
             return render(request, "account/login.html", {"error": "Credenziali non valide"})
