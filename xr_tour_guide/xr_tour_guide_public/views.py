@@ -25,16 +25,23 @@ def login(request):
 
         if response.status_code == 200:
             data = response.json()
+            user_data = data["user"]
+            
             try:
                 user = User.objects.get(email=email)
+                user.username = user_data["username"]
+                user.first_name = user_data.get("name", "")
+                user.last_name = user_data.get("surname", "")
+                user.city = user_data.get("city", "")
+                user.description = user_data.get("description", "")
             except User.DoesNotExist:
                 user = User.objects.create_user(
-                    username=data["user"]["username"],
+                    username=user_data["username"],
                     email=email,
-                    first_name=data["user"].get("name", ""),
-                    last_name=data["user"].get("surname", ""),
-                    city=data["user"].get("city", ""),
-                    description=data["user"].get("description", "")
+                    first_name=user_data.get("name", ""),
+                    last_name=user_data.get("surname", ""),
+                    city=user_data.get("city", ""),
+                    description=user_data.get("description", "")
                 )
             
             user.is_staff = True
@@ -52,4 +59,3 @@ def login(request):
             return render(request, "account/login.html", {"error": "Credenziali non valide"})
 
     return render(request, "account/login.html")
-
