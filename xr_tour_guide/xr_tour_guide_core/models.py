@@ -179,8 +179,8 @@ class Waypoint(models.Model):
     
     pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['pdf'])])
     readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['md'])])
-    video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp4']), FileExtensionValidator(['mov']), FileExtensionValidator(['mkv'])])
-    audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp3']), FileExtensionValidator(['wav'])])
+    video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp4', 'mkv', 'mov'])])
+    audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp3', 'wav'])])
     
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INSIDE:
