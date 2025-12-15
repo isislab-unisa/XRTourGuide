@@ -3,11 +3,12 @@
 <div align="center">
 <img src="./assets/logo.png" width=20% heigth=20%>
 <br><br>
+
 ![XRTourGuide](https://img.shields.io/badge/XR-TourGuide-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![FUTURAL](https://img.shields.io/badge/EU-FUTURAL-yellow)
 
-**Guiding Real-Life Experiences with Community-Driven XR Content**
+**Guiding Real-Life Experiences with XR Content**
 
 *Enriching reality with immersive media insights using Extended Reality (XR) and Artificial Intelligence (AI) to empower rural communities.*
 
@@ -198,20 +199,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Research Group**: [ISISLab - UNISA](https://www.isislab.it/)
 - **GitHub Issues**: [Report bugs or request features](https://github.com/isislab-unisa/XRTourGuide/issues)
 
----
 
-<!-- ## 🏆 Acknowledgments
-
-<div align="center">
-
-**Co-funded by the European Union**
-
-*The views and opinions expressed are those of the author(s) only and do not necessarily reflect those of the European Union or European Research Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.*
-
---- -->
-
-**Made with ❤️ for rural communities**
-
-*Empowering the future of rural areas through innovative technology*
 
 </div>
