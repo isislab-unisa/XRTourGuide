@@ -1,17 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'models/app_colors.dart';
 import 'main.dart'; // Importiamo main per accedere a AuthFlowScreen
+import 'services/api_service.dart';
+import 'services/auth_service.dart';
 
-class WelcomeScreen extends StatelessWidget {
+
+class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
+
+  bool _isLoading = true;
+  List<dynamic> _servers = [];
+  String? _errorMessage;
+  late ApiService _apiService;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = ref.read(apiServiceProvider);
+    _fetchServers();
+  }
+
+  Future<void> _fetchServers() async {
+    try {
+      final response = await _apiService.getServersList();
+      print("Servers response: ${response.data}");
+      if (response.statusCode == 200) {
+        setState(() {
+          _servers = response.data; // Supponendo che la risposta sia una lista di server
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Errore nel caricamento dei server.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Errore di rete: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
   void _selectServerAndProceed(BuildContext context, String ip) {
     // 1. Imposta il server
-    // context.setLocale(locale);
+    print("Selected server IP: $ip");
+    _apiService.updateBaseUrl(ip);
 
     // 2. Naviga alla schermata di Auth/Onboarding
-    // Usiamo pushReplacement per non permettere di tornare indietro alla selezione lingua
+    // Usiamo pushReplacement per non permettere di tornare indietro alla selezione
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const AuthChecker()),
     );
@@ -134,26 +181,47 @@ class WelcomeScreen extends StatelessWidget {
 
                     SizedBox(height: screenHeight * 0.1), // Spazio centrale
                     // --- SEZIONE PULSANTI ---
-                    _buildPrimaryButton(
-                      text: 'Comunità Montana del Bussento',
-                      context: context,
-                      onPressed:
-                          () => _selectServerAndProceed(
-                            context,
-                            "",
-                          ),
-                    ),
+                    if (_isLoading)
+                      const CircularProgressIndicator()
+                    else
+                      if (_errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: [
+                              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                              ElevatedButton(
+                                onPressed: _fetchServers,
+                                child: const Text('Riprova'),
+                              )
+                            ],
+                          )
+                        )
+                      else 
+                        ..._servers.map((server) {
+                          final name = server['name'] ?? 'Unknown Server';
+                          final domain = server['domain'] ?? '';
+                          return _buildPrimaryButton(
+                            text: name,
+                            context: context,
+                            isOutlined: false,
+                            onPressed: () => _selectServerAndProceed(
+                              context,
+                              domain,
+                            ),
+                          );
+                        }).toList(),
 
-                    _buildPrimaryButton(
-                      text: 'Unisa',
-                      context: context,
-                      isOutlined: true, // Stile alternativo ma coerente
-                      onPressed:
-                          () => _selectServerAndProceed(
-                            context,
-                            "",
-                          ),
-                    ),
+                    // if (_servers.isEmpty && _errorMessage == null)
+                    //   Padding(
+                    //     padding: const EdgeInsets.all(16.0),
+                    //     child: Column(
+                    //       children: const [
+                    //         SizedBox(height: 16),
+                    //         Text('No servers available.'),
+                    //       ],
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),

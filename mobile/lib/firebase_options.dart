@@ -50,19 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC3z39h6WGYR037389h2BV1yEDtNjNVlb0',
-    appId: '1:87429007288:android:958c8a59125182bcc5714d',
-    messagingSenderId: '87429007288',
-    projectId: 'xrtourguide-dd483',
-    storageBucket: 'xrtourguide-dd483.firebasestorage.app',
+    apiKey: 'AIzaSyDH2QrpSHop8tIaKgRfz2Ci8FE69ui4Ngw',
+    appId: '1:386701849330:android:364d19e4166ee02c33d66b',
+    messagingSenderId: '386701849330',
+    projectId: 'xrtourguide-c8084',
+    storageBucket: 'xrtourguide-c8084.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCHrXFTlOjGXvPQMZpbJsFkyAXfmHz4BeE',
-    appId: '1:87429007288:ios:f57939f3cf3fabb2c5714d',
-    messagingSenderId: '87429007288',
-    projectId: 'xrtourguide-dd483',
-    storageBucket: 'xrtourguide-dd483.firebasestorage.app',
+    apiKey: 'AIzaSyAd4FeDiIAaV8fV0hDCFgHiar5Q09-7OVQ',
+    appId: '1:386701849330:ios:bad0d01ca6f1062233d66b',
+    messagingSenderId: '386701849330',
+    projectId: 'xrtourguide-c8084',
+    storageBucket: 'xrtourguide-c8084.firebasestorage.app',
     iosBundleId: 'com.isislab.xrTourGuide',
   );
 

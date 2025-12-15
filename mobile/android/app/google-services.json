@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "87429007288",
-    "project_id": "xrtourguide-dd483",
-    "storage_bucket": "xrtourguide-dd483.firebasestorage.app"
+    "project_number": "386701849330",
+    "project_id": "xrtourguide-c8084",
+    "storage_bucket": "xrtourguide-c8084.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:87429007288:android:958c8a59125182bcc5714d",
+        "mobilesdk_app_id": "1:386701849330:android:364d19e4166ee02c33d66b",
         "android_client_info": {
           "package_name": "com.isislab.xr_tour_guide"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC3z39h6WGYR037389h2BV1yEDtNjNVlb0"
+          "current_key": "AIzaSyDH2QrpSHop8tIaKgRfz2Ci8FE69ui4Ngw"
         }
       ],
       "services": {
