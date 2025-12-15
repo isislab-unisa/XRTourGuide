@@ -2,8 +2,6 @@ from django.shortcuts import render, redirect
 from xr_tour_guide_core.models import Tour
 import requests
 from django.contrib.auth import get_user_model, login as django_login
-import secrets
-import string
 from django.contrib.auth.models import Group
 
 User = get_user_model()
@@ -30,14 +28,9 @@ def login(request):
             try:
                 user = User.objects.get(email=email)
             except User.DoesNotExist:
-                temp_password = ''.join(secrets.choice(
-                    string.ascii_letters + string.digits + string.punctuation
-                ) for _ in range(42))
-                
                 user = User.objects.create_user(
                     username=data["user"]["username"],
                     email=email,
-                    password=temp_password,
                     first_name=data["user"].get("name", ""),
                     last_name=data["user"].get("surname", ""),
                     city=data["user"].get("city", ""),
