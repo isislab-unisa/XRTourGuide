@@ -21,7 +21,7 @@ class TourService {
 
   Future<List<Tour>> getNearbyTours(int timeout, double latitude, double longitude) async {
     try {
-      final response = await apiService.getNearbyTours(timeout, latitude, longitude);
+      final response = await apiService.getNearbyTours(timeout, latitude, longitude, baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
@@ -36,7 +36,7 @@ class TourService {
 
     Future<List<Tour>> getAllNearbyTours(int timeout) async {
     try {
-      final response = await apiService.getAllNearbyTours(timeout);
+      final response = await apiService.getAllNearbyTours(timeout, baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();

@@ -19,18 +19,25 @@ class ApiService {
   '/register/',
   '/tour_list/',
   '/get_waypoint_resources/',
+  '/health_check/',
   ];
 
+  static String basicUrl = 'http://';
   // static const String basicUrl = 'http://172.16.15.145:80';
-  static const String basicUrl = 'http://172.16.15.145:80';
+
+  static const String centralizedUrl = 'http://172.16.15.145:8002';
 
 
-  ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: basicUrl)) {
+  ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
 
-          print("Request: ${options.method} ${options.path}");
+          if (options.extra.containsKey('baseUrl') && options.extra['baseUrl'] != null) {
+            options.baseUrl = options.extra['baseUrl'];
+          }
+
+          print("Request: ${options.baseUrl} ${options.method} ${options.path}");
 
           if (excludedPaths.any((path) => options.path.startsWith(path))) {
             print("Skipping bearer token");
@@ -74,6 +81,22 @@ class ApiService {
 
   Dio get dio => _dio;
 
+  Options _getOptions({String? baseUrl, Options? options}) {
+    final opts = options ?? Options();
+    if (baseUrl != null) {
+      opts.extra = {...(opts.extra ?? {}), 'baseUrl': baseUrl};
+    }
+    return opts;
+  }
+
+  void updateBaseUrl(String newBaseUrl) {
+    basicUrl =  basicUrl + newBaseUrl;
+  }
+
+  String getCurrentBaseUrl() {
+    return basicUrl;
+  }
+
   Future<String?> _refreshToken() async {
     try {
       final refreshToken = await _storageService.getRefreshToken();
@@ -102,7 +125,7 @@ class ApiService {
     }
   }
 
-  Future<bool> pingServer({Duration timeout = const Duration(seconds: 2)}) async {
+  Future<bool> pingServer({Duration timeout = const Duration(seconds: 2), String urlToCheck = centralizedUrl}) async {
 
     final uri = Uri.parse(dio.options.baseUrl);
     final host = uri.host;
@@ -122,11 +145,14 @@ class ApiService {
 
     try {
       final response = await dio.head(
-        "/tour_list/",
-        options: Options(
-          sendTimeout: timeout,
-          receiveTimeout: timeout,
-          validateStatus: (status) => status != null && status < 600, // Accept any status code less than 500
+        "/get_services/",
+        options: _getOptions(
+          baseUrl: urlToCheck,
+          options: Options(
+            sendTimeout: timeout,
+            receiveTimeout: timeout,
+            validateStatus: (status) => status != null && status < 600, // Accept any status code less than 500
+          ),
         ),
       );
       return true;
@@ -144,10 +170,11 @@ class ApiService {
 
   }
 
-  Future<Response> getProfileDetails() async {
+  Future<Response> getProfileDetails({String? baseUrl}) async {
     try {
       final response = await dio.get(
         '/profile_details/',
+        options: _getOptions(baseUrl: baseUrl),
       );
       return response;
     } catch (e) {
@@ -160,7 +187,7 @@ class ApiService {
     try {
       final response = await dio.post(
         '/api/token/',
-        data: {'username': email, 'password': password},
+        data: {'email': email, 'password': password},
         options: Options(
           validateStatus: (status) => status == 200 || status == 401, // Allow 401 for invalid credentials
         ),
@@ -258,31 +285,41 @@ class ApiService {
     }
   }
   
-  Future<Response> getAllNearbyTours(int timeout) async {
+  Future<Response> getAllNearbyTours(int timeout, {String? baseUrl}) async {
     try {
       Response response;
       if (timeout > 0) {
-        response = await dio.get("/tour_list/", options: Options(sendTimeout: Duration(seconds: timeout)));
-      } else {
-        response = await dio.get('/tour_list/');
-      }
-      return response;
-    } catch (e) {
-      print('Failed to fetch tours: $e');
-      rethrow;
-    }
-  }
-
-  Future<Response> getNearbyTours(int timeout, double latitude, double longitude) async {
-    try {
-      Response response;
-      if (timeout > 0) {
-        response = await dio.get(
-          "/tour_list/?lon=$longitude&lat=$latitude",
+        final options = _getOptions(
+          baseUrl: baseUrl,
           options: Options(sendTimeout: Duration(seconds: timeout)),
         );
+        response = await dio.get("/tour_list/", options: options);
       } else {
-        response = await dio.get('/tour_list/?lon=$longitude&lat=$latitude');
+        final options = _getOptions(baseUrl: baseUrl);
+        response = await dio.get('/tour_list/', options: options);
+      }
+      return response;
+    } catch (e) {
+      print('Failed to fetch tours: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> getNearbyTours(int timeout, double latitude, double longitude, {String? baseUrl}) async {
+    try {
+      Response response;
+      if (timeout > 0) {
+        final options = _getOptions(
+          baseUrl: baseUrl,
+          options: Options(sendTimeout: Duration(seconds: timeout)),
+        );
+        response = await dio.get(
+          "/tour_list/?lon=$longitude&lat=$latitude",
+          options: options,
+        );
+      } else {
+        final options = _getOptions(baseUrl: baseUrl);
+        response = await dio.get('/tour_list/?lon=$longitude&lat=$latitude', options: options);
       }
       return response;
     } catch (e) {
@@ -292,9 +329,9 @@ class ApiService {
   }
 
 
-  Future<Response> getTourBySearchTerm(String searchTerm) async {
+  Future<Response> getTourBySearchTerm(String searchTerm, {String? baseUrl}) async {
     try {
-      final response = await dio.get("/tour_list/?searchTerm=$searchTerm");
+      final response = await dio.get("/tour_list/?searchTerm=$searchTerm", options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tours: $e');
@@ -303,9 +340,9 @@ class ApiService {
   }
 
 
-  Future<Response> getTourByCategory(String category) async {
+  Future<Response> getTourByCategory(String category, {String? baseUrl}) async {
     try {
-      final response = await dio.get("/tour_list/?category=$category");
+      final response = await dio.get("/tour_list/?category=$category", options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tours: $e');
@@ -314,9 +351,9 @@ class ApiService {
   }
 
 
-  Future<Response> getTourDetails(int tourId) async {
+  Future<Response> getTourDetails(int tourId, {String? baseUrl}) async {
     try {
-      final response = await dio.get('/tour_details/$tourId/');
+      final response = await dio.get('/tour_details/$tourId/', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tour details: $e');
@@ -324,9 +361,9 @@ class ApiService {
     }
   }
 
-  Future<Response> getTourReviews(int tourId) async {
+  Future<Response> getTourReviews(int tourId, {String? baseUrl}) async {
     try {
-      final response = await dio.get('/get_reviews_by_tour_id/$tourId/');
+      final response = await dio.get('/get_reviews_by_tour_id/$tourId/', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tour reviews: $e');
@@ -334,9 +371,9 @@ class ApiService {
     }
   }
 
-  Future<Response> getUserReviews() async {
+  Future<Response> getUserReviews({String? baseUrl}) async {
     try {
-      final response = await dio.get('/get_reviews_by_user');
+      final response = await dio.get('/get_reviews_by_user', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tour reviews: $e');
@@ -346,9 +383,9 @@ class ApiService {
 
 
 
-  Future<Response> getTourWaypoints(int tourId) async {
+  Future<Response> getTourWaypoints(int tourId, {String? baseUrl}) async {
     try {
-      final response = await dio.get('/tour_waypoints/$tourId');
+      final response = await dio.get('/tour_waypoints/$tourId', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tour categories: $e');
@@ -356,9 +393,9 @@ class ApiService {
     }
   }
 
-  Future<Response> incrementTourViews(int waypointId) async {
+  Future<Response> incrementTourViews(int waypointId, {String? baseUrl}) async {
     try {
-      final response = await dio.post('/increment_view_count/',
+      final response = await dio.post('/increment_view_count/', options: _getOptions(baseUrl: baseUrl),
       data: {
         'tour_id': waypointId,
       });
@@ -369,9 +406,9 @@ class ApiService {
     }
   }
 
-  Future<Response> leaveReview(int tourId, double rating, String comment) async {
+  Future<Response> leaveReview(int tourId, double rating, String comment, {String? baseUrl}) async {
     try {
-      final response = await dio.post('/create_review/',
+      final response = await dio.post('/create_review/', options: _getOptions(baseUrl: baseUrl),
       data: {
         'tour_id': tourId, 
         'rating': rating, 
@@ -384,9 +421,9 @@ class ApiService {
     }
   }
 
-  Future<Response> initializeInferenceModule(int tourId) async {
+  Future<Response> initializeInferenceModule(int tourId, {String? baseUrl}) async {
     try {
-      final response = await dio.get('/load_model/$tourId');
+      final response = await dio.get('/load_model/$tourId', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tour categories: $e');
@@ -394,7 +431,7 @@ class ApiService {
     }
   }
 
-  Future<Response> inference(String imageBase64, int tourId) async {
+  Future<Response> inference(String imageBase64, int tourId, {String? baseUrl}) async {
     try {
       final formData = FormData.fromMap({
         'img': imageBase64,
@@ -402,7 +439,7 @@ class ApiService {
       });
 
       var results_data = {};
-      final response = await dio.post('/inference/', data: formData);
+      final response = await dio.post('/inference/', data: formData, options: _getOptions(baseUrl: baseUrl));
       // if (response.data.get("result") == -1) {
       //   results_data["result"] = -1;
       //   results_data["available_resources"] = response.data.get("available_resources");
@@ -416,13 +453,14 @@ class ApiService {
     }
   }
     
-    Future<Response> loadResource(int waypointId, String resourceType) async {
+    Future<Response> loadResource(int waypointId, String resourceType, {String? baseUrl}) async {
     try {
       final response = await dio.get('/get_waypoint_resources/',
         queryParameters: {
           'waypoint_id': waypointId,
           'resource_type': resourceType,
-        }
+        },
+        options: _getOptions(baseUrl: baseUrl),
       );
       return response;
     } catch (e) {
@@ -431,6 +469,15 @@ class ApiService {
     }
   }
 
+  Future<Response> getServersList(){
+    try {
+      final response = dio.get("/get_services/");
+      return response;
+    } catch (e) {
+      print('Failed to fetch servers list: $e');
+      rethrow;
+    }
+  }
 
 
 
