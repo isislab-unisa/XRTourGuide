@@ -272,34 +272,43 @@ def update_password(
 
     return {"message": "Password updated successfully"}
 
-# delete acount, update password, reset password, 
-
-# update_password -> old_password, new_password
 @app.post("/update_password/")
 def update_password(
+    request: Request,
     old_password: str = Form(...),
     new_password: str = Form(...),
     db: Session = Depends(get_db),
-    request: Request = None
 ):
-    token = request.headers.get("Authorization")
-    if not token:
-        raise HTTPException(401, "Invalid token")
-    payload = verify_token(token)
-    if payload.get("type") != "access":
-        raise HTTPException(401, "Invalid access token")
+    auth_header = request.headers.get("Authorization")
 
-    user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    scheme, _, token = auth_header.partition(" ")
+
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="Invalid authorization format")
+
+    payload = verify_token(token)
+
+    if payload.get("type") != "access":
+        raise HTTPException(status_code=401, detail="Invalid access token")
+
+    user = db.query(models.User).filter(
+        models.User.id == payload["user_id"]
+    ).first()
+
     if not user or not user.verify_password(old_password):
-        raise HTTPException(401, "Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     user.set_password(new_password)
     db.commit()
 
     return {"message": "Password updated successfully"}
+
+
 # forgot-password -> email
 
-# delete_account -> password
 app.post("/delete_account/")
 def delete_account(
     password: str = Form(...),
@@ -321,3 +330,35 @@ def delete_account(
     return {"message": "Account deleted successfully"}
 
 # profile_detail -> token
+
+@app.get("/profile_detail/")
+def api_profile_detail(request: Request, db: Session = Depends(get_db)):
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    scheme, _, token = auth_header.partition(" ")
+
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="Invalid authorization format")
+
+    payload = verify_token(token)
+
+    if payload.get("type") != "access":
+        raise HTTPException(status_code=401, detail="Invalid access token")
+
+    user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "name": user.name,
+        "surname": user.surname,
+        "city": user.city,
+        "description": user.description
+    }
