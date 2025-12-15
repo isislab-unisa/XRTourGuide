@@ -383,58 +383,32 @@
                     <p>Accedi al tuo account</p>
                 </div>
 
-                <form method="post">
+                <form action="{% url 'login' %}" method="post">
                     {% csrf_token %}
-                    
-                    {% for error in form.non_field_errors %}
-                        <div class="alert alert-danger" role="alert">
-                            <strong>⚠️</strong> {{ error }}
+
+                    <div class="form-floating">
+                        <input 
+                            type="text" 
+                            name="email" 
+                            id="email" 
+                            placeholder="Email"
+                            class="form-control"
+                            autocomplete="email">
+                        <label for="email">Email</label>
+                    </div>
+
+                    <div class="password-field-wrapper">
+                        <div class="form-floating">
+                            <input 
+                                type="password" 
+                                name="password" 
+                                id="password" 
+                                placeholder="Password" 
+                                class="form-control"
+                                autocomplete="current-password">
+                            <label for="password">Password</label>
                         </div>
-                    {% endfor %}
-
-                    {% for field in form %}
-                        {% if field.name != "remember" %}
-                            {% if field.name == "password" %}
-                                <div class="password-field-wrapper">
-                                    <div class="form-floating">
-                                        <input 
-                                            type="password" 
-                                            name="{{ field.name }}" 
-                                            id="{{ field.id_for_label }}" 
-                                            placeholder="{{ field.label }}" 
-                                            class="form-control {% if field.errors %}is-invalid{% endif %}"
-                                            autocomplete="current-password">
-                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                        {% if field.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ field.errors|striptags }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <span class="password-toggle" onclick="togglePassword()">👁️</span>
-                                </div>
-                            {% else %}
-                                <div class="form-floating">
-                                    <input 
-                                        type="{{ field.field.widget.input_type }}" 
-                                        name="{{ field.name }}" 
-                                        id="{{ field.id_for_label }}" 
-                                        placeholder="{{ field.label }}" 
-                                        class="form-control {% if field.errors %}is-invalid{% endif %}"
-                                        autocomplete="{% if field.name == 'login' %}username{% endif %}">
-                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                    {% if field.errors %}
-                                        <div class="invalid-feedback">
-                                            {{ field.errors|striptags }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-
-                    <div class="forgot-password">
-                        <a href="{% url 'account_reset_password' %}">Password dimenticata?</a>
+                        <span class="password-toggle" onclick="togglePassword()">👁️</span>
                     </div>
 
                     <div class="d-grid mb-3">
@@ -478,7 +452,6 @@ function togglePassword() {
     }
 }
 
-// Add focus animations
 document.querySelectorAll('.form-control').forEach(input => {
     input.addEventListener('focus', function() {
         this.parentElement.style.transform = 'translateY(-2px)';
