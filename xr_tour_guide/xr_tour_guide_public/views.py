@@ -21,7 +21,7 @@ def login(request):
         password = request.POST.get('password')
         
         response = requests.post(
-            'http://172.16.15.162:8002/api/login/',
+            'http://172.16.15.162:8002/api/token/',
             data={'email': email, 'password': password}
         )
 

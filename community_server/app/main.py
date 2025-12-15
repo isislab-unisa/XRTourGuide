@@ -193,7 +193,7 @@ async def api_register(
 
     return {"message": "User registered successfully"}
 
-@app.post("/api/login/")
+@app.post("/api/token/")
 async def api_login(
     email: str = Form(...),
     password: str = Form(...),
@@ -207,8 +207,8 @@ async def api_login(
     refresh_token = create_refresh_token({"user_id": user.id})
 
     return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
+        "access": access_token,
+        "refresh": refresh_token,
         "token_type": "bearer",
         "user": {
             "id": user.id,
@@ -221,15 +221,15 @@ async def api_login(
         }
     }
 
-@app.post("/api/refresh/")
-async def refresh(refresh_token: str = Form(...)):
-    payload = verify_token(refresh_token)
+@app.post("/api/token/refresh/")
+async def refresh(refresh: str = Form(...)):
+    payload = verify_token(refresh)
     if payload.get("type") != "refresh":
         raise HTTPException(400, "Invalid refresh token")
 
     new_access_token = create_access_token({"user_id": payload["user_id"]})
 
-    return {"access_token": new_access_token}
+    return {"access": new_access_token}
 
 @app.post("/api/verify/")
 async def api_verify(token: str = Form(...)):
