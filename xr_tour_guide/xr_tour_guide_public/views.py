@@ -3,6 +3,7 @@ from xr_tour_guide_core.models import Tour
 import requests
 from django.contrib.auth import get_user_model, login as django_login
 from django.contrib.auth.models import Group
+from django.http import HttpResponse
 
 User = get_user_model()
 
@@ -59,3 +60,21 @@ def login(request):
             return render(request, "account/login.html", {"error": "Credenziali non valide"})
 
     return render(request, "account/login.html")
+
+def register(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        name = request.POST.get('name')
+        surname = request.POST.get('surname')
+        description = request.POST.get('description')
+        city = request.POST.get('city')
+        response = requests.post(
+            'http://172.16.15.162:8002/api/register/',
+            json={'email': email, 'password': password, 'firstName': name, 'lastName': surname, 'email': email, 'description': description, 'city': city}
+        )
+        if response.status_code == 200:
+            return HttpResponse("Registrazione avvenuta con successo", status=200)
+        else:
+            return HttpResponse("Credenziali non valide", status=response.status_code)
+    return render(request, "account/register.html")

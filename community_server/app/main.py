@@ -485,9 +485,11 @@ async def verify_email(
 
 @app.post("/resend-verification")
 async def resend_verification(
-    email: EmailStr,
+    request : Request,
     db: Session = Depends(get_db)
 ):
+    data = await request.json()
+    email = data.get("email")
     user = db.query(models.User).filter(
         models.User.email == email
     ).first()
