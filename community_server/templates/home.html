@@ -1,26 +1,599 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>Dashboard - Community Server</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2D3561;
+            --primary-light: #4A5C8F;
+            --accent: #FF6B9D;
+            --accent-glow: rgba(255, 107, 157, 0.4);
+            --bg-dark: #0F1419;
+            --bg-card: #1A1F2E;
+            --bg-elevated: #232938;
+            --text-primary: #E8EAF0;
+            --text-secondary: #9BA3B4;
+            --border-subtle: rgba(139, 148, 171, 0.15);
+            --success: #4ECDC4;
+            --success-glow: rgba(78, 205, 196, 0.3);
+            --warning: #FFB84D;
+            --danger: #FF6B6B;
+            --danger-glow: rgba(255, 107, 107, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(77, 89, 149, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 85% 80%, rgba(255, 107, 157, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(78, 205, 196, 0.05) 0%, transparent 60%);
+            animation: breathe 10s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.9; }
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background: rgba(26, 31, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-small {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), var(--primary-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .container-main {
+            position: relative;
+            z-index: 10;
+            padding: 2rem 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Section */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        /* Buttons */
+        .btn-custom {
+            padding: 0.75rem 1.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-custom::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-custom:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--accent), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(135deg, var(--success), #3BA89F);
+            color: white;
+            box-shadow: 0 4px 16px var(--success-glow);
+        }
+
+        .btn-success-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--success-glow);
+        }
+
+        .btn-danger-custom {
+            background: linear-gradient(135deg, var(--danger), #E85555);
+            color: white;
+            box-shadow: 0 4px 12px var(--danger-glow);
+        }
+
+        .btn-danger-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--danger-glow);
+        }
+
+        .btn-warning-custom {
+            background: linear-gradient(135deg, var(--warning), #E5A445);
+            color: var(--bg-dark);
+            box-shadow: 0 4px 12px rgba(255, 184, 77, 0.3);
+        }
+
+        .btn-warning-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 184, 77, 0.4);
+        }
+
+        .btn-sm-custom {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        /* Card */
+        .card-custom {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(139, 148, 171, 0.08) inset;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .card-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .card-title-custom {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .services-count {
+            background: var(--bg-elevated);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Table */
+        .table-custom {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-custom thead {
+            background: var(--bg-elevated);
+        }
+
+        .table-custom thead th {
+            padding: 1rem 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-subtle);
+        }
+
+        .table-custom thead th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        .table-custom thead th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        .table-custom tbody tr {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .table-custom tbody tr:hover {
+            background: rgba(139, 148, 171, 0.05);
+            transform: translateX(4px);
+        }
+
+        .table-custom tbody td {
+            padding: 1.25rem 1.25rem;
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+
+        .table-custom tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 12px;
+        }
+
+        .table-custom tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 12px;
+        }
+
+        /* Service ID Badge */
+        .service-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        /* Service Name */
+        .service-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Domain */
+        .service-domain {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active {
+            background: rgba(78, 205, 196, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+
+        .status-inactive {
+            background: rgba(155, 163, 180, 0.15);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .status-active .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-inactive .status-dot {
+            background: var(--text-secondary);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Actions */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .card-custom {
+                padding: 1.5rem;
+            }
+
+            .table-custom {
+                font-size: 0.9rem;
+            }
+
+            .table-custom thead th,
+            .table-custom tbody td {
+                padding: 0.875rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-sm-custom {
+                width: 100%;
+            }
+        }
+
+        /* Scroll Container for Table on Mobile */
+        .table-scroll {
+            overflow-x: auto;
+            margin: 0 -2rem;
+            padding: 0 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .table-scroll {
+                margin: 0 -1.5rem;
+                padding: 0 1.5rem;
+            }
+        }
+
+        /* User Menu */
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-light), var(--success));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 1rem;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+            border-color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.2;
+            float: right;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-custom">
+        <div class="container-fluid px-4">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <div class="navbar-brand">
+                    <div class="logo-small">C</div>
+                    <span>Community Server</span>
+                </div>
+                <div class="user-menu">
+                    <div class="user-avatar">U</div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-<div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{{ message }}</h1>
-        <a href="/register_service" class="btn btn-success">Add Service</a>
-    </div>
+    <!-- Main Content -->
+    <div class="container-main">
+        <!-- Header -->
+        <div class="header-section">
+            <h1 class="page-title">{{ message }}</h1>
+            <a href="/register_service" class="btn-custom btn-primary-custom">
+                <span>➕</span>
+                <span>Add Service</span>
+            </a>
+        </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Servizi disponibili</h5>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-label">Total Services</div>
+                <div class="stat-value">{{ services|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-label">Active</div>
+                <div class="stat-value">{{ services|selectattr('active')|list|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏸️</div>
+                <div class="stat-label">Inactive</div>
+                <div class="stat-value">{{ services|rejectattr('active')|list|length }}</div>
+            </div>
+        </div>
+
+        <!-- Services Table Card -->
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h2 class="card-title-custom">Available Services</h2>
+                <div class="services-count">
+                    {{ services|length }} services
+                </div>
+            </div>
+
+            {% if services %}
+            <div class="table-scroll">
+                <table class="table-custom">
+                    <thead>
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
@@ -32,38 +605,83 @@
                     <tbody>
                         {% for service in services %}
                         <tr>
-                            <td>{{ service.id }}</td>
-                            <td>{{ service.name }}</td>
-                            <td>{{ service.domain }}</td>
-                            <td>{{ service.active }}</td>
                             <td>
-                                <form action="/delete_service/{{ service.id }}" method="post" style="display:inline;">
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                </form>
+                                <span class="service-id">#{{ service.id }}</span>
+                            </td>
+                            <td>
+                                <span class="service-name">{{ service.name }}</span>
+                            </td>
+                            <td>
+                                <span class="service-domain">{{ service.domain }}</span>
+                            </td>
+                            <td>
                                 {% if service.active %}
-                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
-                                        <button type="submit" class="btn btn-warning btn-sm">Deactivate</button>
-                                    </form>
+                                <span class="status-badge status-active">
+                                    <span class="status-dot"></span>
+                                    Active
+                                </span>
                                 {% else %}
-                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
-                                        <button type="submit" class="btn btn-success btn-sm">Activate</button>
-                                    </form>
+                                <span class="status-badge status-inactive">
+                                    <span class="status-dot"></span>
+                                    Inactive
+                                </span>
                                 {% endif %}
                             </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="3" class="text-center">Nessun servizio presente</td>
+                            <td>
+                                <div class="action-buttons">
+                                    {% if service.active %}
+                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn-custom btn-warning-custom btn-sm-custom">
+                                            ⏸ Disable
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn-custom btn-success-custom btn-sm-custom">
+                                            ▶ Enable
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <form action="/delete_service/{{ service.id }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn-custom btn-danger-custom btn-sm-custom" onclick="return confirm('Are you sure you want to delete this service?')">
+                                            🗑 Eliminate
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <h3 class="empty-state-title">No Services Available</h3>
+                <p class="empty-state-text">Start adding your first service to the community</p>
+                <a href="/register_service" class="btn-custom btn-primary-custom">
+                    <span>➕</span>
+                    <span>Add First Service</span>
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
-</div>
 
-<!-- Bootstrap 5 JS (opzionale) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Add smooth scroll behavior
+        document.documentElement.style.scrollBehavior = 'smooth';
+        
+        // Add confirmation for delete actions
+        document.querySelectorAll('form[action*="/delete_service/"]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                if (!confirm('Are you sure you want to delete this service?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
