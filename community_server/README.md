@@ -1,123 +1,280 @@
 # XRTourGuide Community Server
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x200?text=XRTourGuide+Community+Server" alt="XRTourGuide Community Server Banner" />
+  <img src="../assets/logo.png" alt="XRTourGuide Community Server" width="200"/>
+</p>
+
+<h3 align="center">An open-source identity provider for XRTourGuide</h3>
+
+<p align="center">
+  Empowering rural communities through secure, scalable authentication infrastructure
 </p>
 
 <p align="center">
-  <strong>The open-source identity provider powering unified XR rural communities.</strong>
+  <a href="#-features">Features</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-documentation">Documentation</a> •
+  <a href="#-contributing">Contributing</a> •
+  <a href="#-community">Community</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/isislab-unisa/XRTourGuide/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+  </a>
+  <a href="https://github.com/isislab-unisa/XRTourGuide/stargazers">
+    <img src="https://img.shields.io/github/stars/isislab-unisa/XRTourGuide?style=social" alt="Stars">
+  </a>
+  <a href="https://github.com/isislab-unisa/XRTourGuide/network/members">
+    <img src="https://img.shields.io/github/forks/isislab-unisa/XRTourGuide?style=social" alt="Forks">
+  </a>
+  <a href="https://github.com/isislab-unisa/XRTourGuide/issues">
+    <img src="https://img.shields.io/github/issues/isislab-unisa/XRTourGuide" alt="Issues">
+  </a>
+  <a href="https://github.com/isislab-unisa/XRTourGuide/pulls">
+    <img src="https://img.shields.io/github/issues-pr/isislab-unisa/XRTourGuide" alt="Pull Requests">
+  </a>
 </p>
 
 ---
 
-## 🚀 Overview
+## 🌟 Overview
 
-The **XRTourGuide Community Server** is an open-source identity provider designed to unify and empower communities built around XRTourGuide servers. Its mission is to strengthen the visibility and impact of rural communities by providing secure, scalable, and user‑friendly tools.
+**XRTourGuide Community Server** is an open-source identity provider built to unify and empower communities around XRTourGuide servers. Our mission is to strengthen the visibility and impact of rural communities by providing secure, scalable, and user-friendly authentication tools.
 
-Built with **FastAPI**, secured with **OAuth 2.0**, and backed by **MySQL**, the Community Server provides:
+### Why XRTourGuide Community Server?
 
-* 🔐 User authentication & authorization
-* ⚙️ Community management APIs
-* 🗄️ Secure data storage
-* 🖥️ A modern, user-friendly administration interface
-
-The server is fully open-source and licensed under the **MIT License**, so you're free to use, modify, and contribute.
-
----
-
-## 📦 Features
-
-* **FastAPI‑powered REST APIs** for high performance
-* **OAuth 2.0 authentication** for secure access
-* **MySQL database** support
-* **Docker-ready deployment**
-* **Automatic default admin user creation**
-* **Extensible & Community‑focused** architecture
+- 🔒 **Secure by Design** - OAuth 2.0 authentication with industry best practices
+- 🚀 **Fast & Modern** - Built on FastAPI for high performance
+- 🌐 **Community-First** - Designed with rural communities in mind
+- 🔧 **Developer-Friendly** - Clear APIs, great documentation, easy to extend
+- 🐳 **Deploy Anywhere** - Docker-ready for seamless deployment
 
 ---
 
-## 🛠️ Getting Started
+## ✨ Features
 
-Follow these steps to run the Community Server locally.
+### Core Capabilities
 
-### 1️⃣ Clone the repository
+- 🔐 **User Authentication & Authorization** - Secure OAuth 2.0 implementation
+- 👥 **Community Management** - Comprehensive APIs for community operations
+- 🗄️ **Reliable Data Storage** - MySQL-backed persistence layer
+- 🖥️ **Admin Dashboard** - Modern, intuitive administration interface
+- 📱 **RESTful APIs** - Clean, well-documented endpoints
+- 🔄 **Scalable Architecture** - Built to grow with your community
+
+### Technical Stack
+
+- **Backend:** FastAPI (Python 3.9+)
+- **Database:** MySQL 8.0+
+- **Authentication:** OAuth 2.0 / JWT
+- **Containerization:** Docker & Docker Compose
+- **Documentation:** OpenAPI (Swagger)
+
+---
+
+## 🚀 Quick Start
+
+Get up and running in minutes with Docker!
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) (20.10+)
+- [Docker Compose](https://docs.docker.com/compose/install/) (1.29+)
+- Git
+
+### Installation
+
+1. **Clone the repository**
 
 ```bash
-git clone https://github.com/isislab-unisa/XRTourGuide
-cd community-server
+git clone https://github.com/isislab-unisa/XRTourGuide.git
+cd XRTourGuide/community-server
 ```
 
-### 2️⃣ Install Docker
+2. **Configure environment variables**
 
-Download and install Docker from the official website.
-
-### 3️⃣ Install Python requirements
+Create a `.env` file in the project root:
 
 ```bash
-pip install -r requirements.txt
+# Database Configuration
+DB_NAME=xrtourguide
+DB_USER=admin
+DB_PASSWORD=your_secure_password_here
+DB_HOST=db
+DB_PORT=3306
+
+# Default Admin User
+DEFAULT_USER_NAME=admin
+DEFAULT_USER_EMAIL=admin@example.com
+DEFAULT_USER_PASSWORD=change_me_immediately
+
+# Security
+SECRET_KEY=your_secret_key_here_generate_with_openssl_rand_hex_32
 ```
 
-### 4️⃣ Create your `.env` file
+> 💡 **Tip:** Generate a secure secret key with: `openssl rand -hex 32`
 
-Create a `.env` file in the project root and include:
-
-```
-DB_NAME="your_db_name"
-DB_USER="your_user"
-DB_PASSWORD="your_password"
-DB_HOST="your_host"
-DB_PORT="your_port"
-
-DEFAULT_USER_NAME="admin"
-DEFAULT_USER_EMAIL="admin@example.com"
-DEFAULT_USER_PASSWORD="change_me"
-
-SECRET_KEY="your_secret_key"
-```
-
-### 5️⃣ Start the server with Docker
+3. **Launch with Docker**
 
 ```bash
 docker-compose up -d --build
 ```
 
-Once running, you can access:
+4. **Verify installation**
 
-* **API Docs:** `http://localhost:8002/docs`
-* **Admin Interface:** `http://localhost:8002`
+- 📚 **API Documentation:** http://localhost:8002/docs
+- 🎛️ **Admin Interface:** http://localhost:8002
+- 🔍 **Health Check:** http://localhost:8002/health
 
 ---
 
-## 📁 Project Structure
+## 📖 Documentation
+
+### API Reference
+
+Once running, explore the interactive API documentation:
+
+- **Swagger UI:** http://localhost:8002/docs
+- **ReDoc:** http://localhost:8002/redoc
+
+### Project Structure
 
 ```
 community-server/
-├── app/
-│   ├── api/
-│   ├── models/
-│   ├── core/
-│   └── ...
-├── docker-compose.yml
-├── requirements.txt
-└── .env
+├── app/               # API endpoints
+├── model/            # Database models
+│   └── models/          # Pydantic schemas
+    └── database         # DB
+├── templates/             # HTML templates
+├── docker-compose.yml     # Docker orchestration
+├── Dockerfile            # Container definition
+├── requirements.txt      # Python dependencies
+├── .env.example         # Environment template
+└── README.md            # This file
 ```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Whether you're fixing bugs, improving documentation, or adding new features:
+We love contributions! Whether you're fixing bugs, improving docs, or proposing new features, your help is welcome.
 
-1. Fork the repository
-2. Create a new branch
-3. Submit a pull request
+### How to Contribute
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Make your changes**
+4. **Commit with clear messages**
+   ```bash
+   git commit -m "Add amazing feature"
+   ```
+5. **Push to your fork**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+6. **Open a Pull Request**
+
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/isislab-unisa/XRTourGuide.git
+
+cd community_server/
+
+sudo docker compose up -d --build
+```
+
+---
+
+## 🐛 Issues & Support
+
+### Reporting Bugs
+
+Found a bug? Please [open an issue](https://github.com/isislab-unisa/XRTourGuide/issues/new) with:
+
+- Clear description of the problem
+- Steps to reproduce
+- Expected vs actual behavior
+- Your environment (OS, Python version, etc.)
+
+### Feature Requests
+
+Have an idea? We'd love to hear it! [Create a feature request](https://github.com/isislab-unisa/XRTourGuide/issues/new) and let's discuss.
+
+---
+
+## 💬 Community
+
+Join our community and connect with other contributors!
+
+- 💻 **GitHub Discussions:** [Join the conversation](https://github.com/isislab-unisa/XRTourGuide/discussions)
+- 🐛 **Issue Tracker:** [Report bugs or request features](https://github.com/isislab-unisa/XRTourGuide/issues)
+- 📧 **Contact:** [isislab@unisa.it](mailto:isislab@unisa.it)
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Multi-language support
+- [ ] Advanced role-based access control (RBAC)
+- [ ] Two-factor authentication (2FA)
+- [ ] API rate limiting and throttling
+- [ ] Comprehensive audit logging
+- [ ] Integration with popular identity providers
+- [ ] Mobile app support
+- [ ] Community analytics dashboard
+
+Want to help with any of these? Check out our [contributing guide](#-contributing)!
 
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License** — free to use and modify.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2024 ISISLab - University of Salerno
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ---
 
-<p align="center">Made with ❤️ for the XRTourGuide</p>
+## 🙏 Acknowledgments
+
+- Built with ❤️ by [ISISLab](https://www.isislab.it/) at the University of Salerno
+- Powered by the amazing [FastAPI](https://fastapi.tiangolo.com/) framework
+- Thanks to all our [contributors](https://github.com/isislab-unisa/XRTourGuide/graphs/contributors)!
+
+---
+
+<p align="center">
+  <sub>Made with ❤️ for rural communities worldwide</sub>
+</p>
+
+<p align="center">
+  <a href="#xrtourguide-community-server">Back to Top ↑</a>
+</p>
