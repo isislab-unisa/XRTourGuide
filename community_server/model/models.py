@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from .database import Base
 from passlib.context import CryptContext
 from datetime import datetime
+from enum import Enum
+from sqlalchemy import Enum as SAEnum
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -11,6 +13,10 @@ class Services(Base):
     name = Column(String(50), nullable=False)
     domain = Column(String(100), nullable=False, unique=True)
     active = Column(Boolean, default=True, nullable=True)
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
 
 class User(Base):
     __tablename__ = "users"
@@ -26,6 +32,11 @@ class User(Base):
     email_verified = Column(Boolean, default=False, nullable=True)
     verification_token = Column(String(200), nullable=True)
     verification_token_expires = Column(DateTime, nullable=True)
+    role = Column(
+        SAEnum(UserRole, name="user_role_enum"),
+        nullable=False,
+        default=UserRole.USER
+    )
 
     def __repr__(self):
         return f"User(username={self.username}, email={self.email})"

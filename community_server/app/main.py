@@ -27,47 +27,36 @@ dotenv.load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     db = SessionLocal()
-#     try:
-#         default_name = os.getenv("DEFAULT_USER_NAME")
-#         default_email = os.getenv("DEFAULT_USER_EMAIL")
-#         default_password = os.getenv("DEFAULT_USER_PASSWORD")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db = SessionLocal()
+    try:
+        default_name = os.getenv("DEFAULT_USER_NAME")
+        default_email = os.getenv("DEFAULT_USER_EMAIL")
+        default_password = os.getenv("DEFAULT_USER_PASSWORD")
 
-#         if default_name and default_email and default_password:
-#             existing_user = db.query(models.User).filter(models.User.email == default_email).first()
-#             if not existing_user:
-#                 new_user = models.User(
-#                     username=default_name,
-#                     email=default_email,
-#                 )
-#                 new_user.set_password(default_password)
-#                 db.add(new_user)
-#                 print("Utente di default aggiunto")
-#             else:
-#                 print("Utente di default già presente")
-#         else:
-#             print("Variabili di default utente non settate")
+        if default_name and default_email and default_password:
+            existing_user = db.query(models.User).filter(models.User.email == default_email).first()
+            if not existing_user:
+                new_user = models.User(
+                    username=default_name,
+                    email=default_email,
+                    role = models.UserRole.ADMIN
+                )
+                new_user.set_password(default_password)
+                db.add(new_user)
+                print("Utente di default aggiunto")
+            else:
+                print("Utente di default già presente")
+        else:
+            print("Variabili di default utente non settate")
 
-#         existing_service = db.query(models.Services).filter(models.Services.domain == "default").first()
-#         if not existing_service:
-#             new_service = models.Services(
-#                 name="default",
-#                 domain="default",
-#                 active=True
-#             )
-#             db.add(new_service)
-#             print("Servizio di default aggiunto")
-#         else:
-#             print("Servizio di default già presente")
+        db.commit()
+        yield
+    finally:
+        db.close()
 
-#         db.commit()
-#         yield
-#     finally:
-#         db.close()
-
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -104,7 +93,7 @@ async def login(
     db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(models.User.email == email).first()
-    if not user or not user.verify_password(password):
+    if not user or not user.verify_password(password) or user.active or user.role == models.UserRole.USER:
         return templates.TemplateResponse("login.html", {"request": request, "message": "Invalid credentials"})
 
     services = db.query(models.Services).all()
