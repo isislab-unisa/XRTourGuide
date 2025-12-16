@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from .database import Base
 from passlib.context import CryptContext
+from datetime import datetime
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -19,9 +20,12 @@ class User(Base):
     password = Column(String(100), nullable=False)
     name = Column(String(100), nullable=True)
     surname = Column(String(100), nullable=True)
-    active = Column(Boolean, default=True, nullable=True)
+    active = Column(Boolean, default=False, nullable=True)
     city = Column(String(100), nullable=True)
     description = Column(String(100), nullable=True)
+    email_verified = Column(Boolean, default=False, nullable=True)
+    verification_token = Column(String(200), nullable=True)
+    verification_token_expires = Column(DateTime, nullable=True)
 
     def __repr__(self):
         return f"User(username={self.username}, email={self.email})"

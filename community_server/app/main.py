@@ -15,53 +15,59 @@ from .auth import create_access_token, create_refresh_token, verify_token
 from pydantic import BaseModel
 from fastapi import FastAPI, Depends, HTTPException, Body, Form
 from fastapi import Request
-
+from .email_utils import *
+from fastapi import HTTPException, Depends
+from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+import secrets
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 dotenv.load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    db = SessionLocal()
-    try:
-        default_name = os.getenv("DEFAULT_USER_NAME")
-        default_email = os.getenv("DEFAULT_USER_EMAIL")
-        default_password = os.getenv("DEFAULT_USER_PASSWORD")
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     db = SessionLocal()
+#     try:
+#         default_name = os.getenv("DEFAULT_USER_NAME")
+#         default_email = os.getenv("DEFAULT_USER_EMAIL")
+#         default_password = os.getenv("DEFAULT_USER_PASSWORD")
 
-        if default_name and default_email and default_password:
-            existing_user = db.query(models.User).filter(models.User.email == default_email).first()
-            if not existing_user:
-                new_user = models.User(
-                    username=default_name,
-                    email=default_email,
-                )
-                new_user.set_password(default_password)
-                db.add(new_user)
-                print("Utente di default aggiunto")
-            else:
-                print("Utente di default già presente")
-        else:
-            print("Variabili di default utente non settate")
+#         if default_name and default_email and default_password:
+#             existing_user = db.query(models.User).filter(models.User.email == default_email).first()
+#             if not existing_user:
+#                 new_user = models.User(
+#                     username=default_name,
+#                     email=default_email,
+#                 )
+#                 new_user.set_password(default_password)
+#                 db.add(new_user)
+#                 print("Utente di default aggiunto")
+#             else:
+#                 print("Utente di default già presente")
+#         else:
+#             print("Variabili di default utente non settate")
 
-        existing_service = db.query(models.Services).filter(models.Services.domain == "default").first()
-        if not existing_service:
-            new_service = models.Services(
-                name="default",
-                domain="default",
-                active=True
-            )
-            db.add(new_service)
-            print("Servizio di default aggiunto")
-        else:
-            print("Servizio di default già presente")
+#         existing_service = db.query(models.Services).filter(models.Services.domain == "default").first()
+#         if not existing_service:
+#             new_service = models.Services(
+#                 name="default",
+#                 domain="default",
+#                 active=True
+#             )
+#             db.add(new_service)
+#             print("Servizio di default aggiunto")
+#         else:
+#             print("Servizio di default già presente")
 
-        db.commit()
-        yield
-    finally:
-        db.close()
+#         db.commit()
+#         yield
+#     finally:
+#         db.close()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -378,3 +384,143 @@ async def update_profile(
     db.commit()
 
     return {"message": "Profile updated successfully"}
+
+class UserRegister(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    city: Optional[str] = None
+    description: Optional[str] = None
+
+@app.post("/api_register/")
+async def api_register(
+    data: UserRegister,
+    db: Session = Depends(get_db)
+):
+    existing = db.query(models.User).filter(
+        (models.User.email == data.email) |
+        (models.User.username == data.username)
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Email o username già in uso"
+        )
+
+    verification_token = secrets.token_urlsafe(32)
+    token_expires = datetime.utcnow() + timedelta(hours=24)
+
+    user = models.User(
+        username=data.username,
+        email=data.email,
+        name=data.firstName,
+        surname=data.lastName,
+        city=data.city,
+        description=data.description,
+        active=False, 
+        email_verified=False,
+        verification_token=verification_token,
+        verification_token_expires=token_expires
+    )
+
+    user.set_password(data.password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    email_sent = send_verification_email(
+        email=data.email,
+        token=verification_token,
+        username=data.username
+    )
+
+    if not email_sent:
+        db.delete(user)
+        db.commit()
+        raise HTTPException(
+            status_code=500,
+            detail="Errore nell'invio dell'email di verifica"
+        )
+
+    return {
+        "message": "Registrazione completata! Controlla la tua email per confermare l'account.",
+        "email": data.email
+    }
+
+@app.get("/verify-email")
+async def verify_email(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    user = db.query(models.User).filter(
+        models.User.verification_token == token
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="Token di verifica non valido"
+        )
+
+    if user.verification_token_expires < datetime.utcnow():
+        raise HTTPException(
+            status_code=400,
+            detail="Token di verifica scaduto. Richiedi un nuovo link."
+        )
+
+    user.email_verified = True
+    user.active = True
+    user.verification_token = None
+    user.verification_token_expires = None
+    
+    db.commit()
+
+    return {
+        "message": "Email verificata con successo! Ora puoi effettuare il login."
+    }
+
+
+@app.post("/resend-verification")
+async def resend_verification(
+    email: EmailStr,
+    db: Session = Depends(get_db)
+):
+    user = db.query(models.User).filter(
+        models.User.email == email
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="Email non trovata"
+        )
+
+    if user.email_verified:
+        raise HTTPException(
+            status_code=400,
+            detail="Email già verificata"
+        )
+
+    verification_token = secrets.token_urlsafe(32)
+    token_expires = datetime.utcnow() + timedelta(hours=24)
+
+    user.verification_token = verification_token
+    user.verification_token_expires = token_expires
+    db.commit()
+
+    email_sent = send_verification_email(
+        email=user.email,
+        token=verification_token,
+        username=user.username
+    )
+
+    if not email_sent:
+        raise HTTPException(
+            status_code=500,
+            detail="Errore nell'invio dell'email"
+        )
+
+    return {"message": "Email di verifica inviata nuovamente"}

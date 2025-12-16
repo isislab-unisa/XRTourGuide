@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import HTTPException, status
 
-SECRET_KEY = os.getenv("JWT_SECRET", "changeme")
+SECRET_KEY = os.getenv("JWT_SECRET")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 REFRESH_TOKEN_EXPIRE_DAYS = 30
