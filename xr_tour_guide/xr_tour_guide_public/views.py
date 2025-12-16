@@ -4,7 +4,10 @@ import requests
 from django.contrib.auth import get_user_model, login as django_login
 from django.contrib.auth.models import Group
 from django.http import HttpResponse
+import dotenv
+import os
 
+load_dotenv()
 User = get_user_model()
 
 def landing_page(request):
@@ -20,7 +23,7 @@ def login(request):
         password = request.POST.get('password')
         
         response = requests.post(
-            'http://172.16.15.162:8002/api/token/',
+            f"http://{os.loadenv('COMMUNITY_SERVER')}/api/token/",
             json={'email': email, 'password': password}
         )
 
@@ -70,7 +73,7 @@ def register(request):
         description = request.POST.get('description')
         city = request.POST.get('city')
         response = requests.post(
-            'http://172.16.15.162:8002/api/register/',
+            f"http://{os.loadenv('COMMUNITY_SERVER')}/api/token/",
             json={'email': email, 'password': password, 'firstName': name, 'lastName': surname, 'email': email, 'description': description, 'city': city}
         )
         if response.status_code == 200:

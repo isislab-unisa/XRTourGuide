@@ -413,18 +413,25 @@ async def api_register(
     verification_token = secrets.token_urlsafe(32)
     token_expires = datetime.utcnow() + timedelta(hours=24)
 
-    user = models.User(
-        username=data.username,
-        email=data.email,
-        name=data.firstName,
-        surname=data.lastName,
-        city=data.city,
-        description=data.description,
-        active=False, 
-        email_verified=False,
-        verification_token=verification_token,
-        verification_token_expires=token_expires
-    )
+    try:
+        user = models.User(
+            username=data.username,
+            email=data.email,
+            name=data.firstName,
+            surname=data.lastName,
+            city=data.city,
+            description=data.description,
+            active=False, 
+            email_verified=False,
+            verification_token=verification_token,
+            verification_token_expires=token_expires
+        )
+    except Exception as e:
+        print(f"Errore nell'inserimento dell'utente: {e}", flush=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Errore nell'inserimento dell'utente"
+        )
 
     user.set_password(data.password)
     db.add(user)
