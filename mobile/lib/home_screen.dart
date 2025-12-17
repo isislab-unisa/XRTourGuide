@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import "elements/zlib_image.dart";
 import 'package:geolocator/geolocator.dart';
+import 'providers/home_providers.dart'; // Importa i nuovi provider
 
 class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
@@ -37,12 +38,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   late TourService _tourService;
   late OfflineStorageService _offlineService;
 
-  // State for online data
-  List<Tour>? _nearbyTours;
-  List<Category>? _categories = [];
-  bool _isLoadingOnlineData = true;
-
-  // State for offline data
+  // State for offline data (local state is fine for offline as it's fast)
   List<Map<String, dynamic>> _offlineTours = [];
   bool _isLoadingOfflineTours = true;
 
@@ -61,6 +57,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
       (_) => _updateConnectionStatus(),
     );
+
+    // Carica i dati offline all'avvio
+    _loadOfflineTours();
   }
 
   Future<void> _checkInitialConnectivity() async {
@@ -81,29 +80,31 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     // 2. If device is connected, check server reachability
     bool serverReachable = false;
     if (deviceConnected) {
-      print("CHECKING SERVER REACHABILITY");
+      // print("CHECKING SERVER REACHABILITY");
       serverReachable = await _checkServerReachability();
     }
 
     final isNowOnline = deviceConnected && serverReachable;
-    print("ONLINE?: ${isNowOnline}");
+    // print("ONLINE?: ${isNowOnline}");
 
-    if (wasOnline != isNowOnline || _isCheckingConnection || forceReload) {
-      if (mounted) {
-        setState(() {
-          _isOnline = isNowOnline;
-        });
-        await _loadData();
-      }
+    if (mounted) {
+      setState(() {
+        _isOnline = isNowOnline;
+      });
+    }
+
+    // Se siamo tornati online o è la prima volta, proviamo a caricare i dati (se non ci sono già)
+    if (isNowOnline &&
+        (wasOnline != isNowOnline || _isCheckingConnection || forceReload)) {
+      _loadOnlineData(forceRefresh: forceReload);
     }
   }
 
   Future<bool> _checkServerReachability() async {
     try {
-      // Use a lightweight, public endpoint. getNearbyTours is a good candidate.
-      return await _tourService.apiService.pingServer(
-        timeout: const Duration(seconds: 2),
-      ).timeout(const Duration(seconds: 2), onTimeout: () => false);
+      return await _tourService.apiService
+          .pingServer(timeout: const Duration(seconds: 2))
+          .timeout(const Duration(seconds: 2), onTimeout: () => false);
     } catch (_) {
       return false;
     }
@@ -117,7 +118,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
 
   @override
   void didPopNext() {
-    _updateConnectionStatus(forceReload: true); // Re-check connection and reload data
+    _updateConnectionStatus(
+      forceReload: false,
+    ); // Non forzare il reload, controlla solo connessione
     super.didPopNext();
   }
 
@@ -128,18 +131,28 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    if (_isOnline) {
-      if (mounted) setState(() => _isLoadingOnlineData = true);
-      await Future.wait([
-        _loadNearbyTours(),
-        _loadCategories(),
-        _loadOfflineTours(),
-      ]);
-      if (mounted) setState(() => _isLoadingOnlineData = false);
-    } else {
-      await _loadOfflineTours();
+  Future<void> _loadOnlineData({bool forceRefresh = false}) async {
+    if (!_isOnline) return;
+
+    // Carica categorie (il provider gestisce il caching se non invalidato)
+    if (forceRefresh) {
+      ref.refresh(categoriesProvider);
     }
+
+    // Carica tour
+    Position? position = await _getCurrentPosition();
+    ref
+        .read(nearbyToursProvider.notifier)
+        .loadTours(
+          forceRefresh: forceRefresh,
+          lat: position?.latitude,
+          lon: position?.longitude,
+        );
+  }
+
+  Future<void> _handleRefresh() async {
+    await _updateConnectionStatus(forceReload: true);
+    await _loadOfflineTours();
   }
 
   Future<Position?> _getCurrentPosition() async {
@@ -166,35 +179,6 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     return await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.medium,
     );
-  }
-
-  Future<void> _loadNearbyTours() async {
-    try {
-      Position? position = await _getCurrentPosition();
-      if (position != null) {
-        final tours = await _tourService.getNearbyTours(
-          0,
-          position.latitude,
-          position.longitude,
-        );
-        if (mounted) setState(() => _nearbyTours = tours);
-        return;
-      } else {
-        final tours = await _tourService.getAllNearbyTours(0);
-        if (mounted) setState(() => _nearbyTours = tours);
-      }
-    } catch (e) {
-      // Error is handled by reachability check, no need for snackbar here
-    }
-  }
-
-  Future<void> _loadCategories() async {
-    try {
-      final categories = await _tourService.getCategories();
-      if (mounted) setState(() => _categories = categories);
-    } catch (e) {
-      // Error is handled by reachability check
-    }
   }
 
   Future<void> _loadOfflineTours() async {
@@ -240,7 +224,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
         centerTitle: true,
       ),
       body: RefreshIndicator(
-        onRefresh: _updateConnectionStatus,
+        onRefresh: _handleRefresh,
         child:
             _isOnline ? _buildOnlineBody(context) : _buildOfflineBody(context),
       ),
@@ -263,7 +247,11 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
           if (index == 1) {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => UserDetailScreen(isGuest: widget.isGuest, isOffline: !_isOnline),
+                builder:
+                    (context) => UserDetailScreen(
+                      isGuest: widget.isGuest,
+                      isOffline: !_isOnline,
+                    ),
               ),
             );
           }
@@ -273,9 +261,6 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildOnlineBody(BuildContext context) {
-    // if (_isLoadingOnlineData) {
-    //   return const Center(child: CircularProgressIndicator());
-    // }
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
@@ -286,16 +271,6 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
           _buildOfflineToursSection(context),
           _buildNearbyToursSection(context),
           _buildCategoriesSection(context),
-          // if (_isLoadingOnlineData)
-          //   SizedBox(
-          //     height: MediaQuery.of(context).size.height * 0.4,
-          //     child: const Center(child: CircularProgressIndicator()),
-          //   )
-          // else ...[
-          //   _buildNearbyToursSection(context),
-          //   _buildCategoriesSection(context),
-          //   _buildOfflineToursSection(context),
-          // ],
         ],
       ),
     );
@@ -321,6 +296,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
         ),
         Expanded(
           child: SingleChildScrollView(
+            physics:
+                const AlwaysScrollableScrollPhysics(), // Importante per il RefreshIndicator
             child: _buildOfflineToursSection(context),
           ),
         ),
@@ -398,14 +375,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildOfflineToursSection(BuildContext context) {
-    // if (_isLoadingOfflineTours)
-    //   return const Center(
-    //     child: Padding(
-    //       padding: EdgeInsets.all(8.0),
-    //       child: CircularProgressIndicator(),
-    //     ),
-    //   );
-    if (!_isLoadingOfflineTours && _offlineTours.isEmpty) return const SizedBox.shrink();
+    if (!_isLoadingOfflineTours && _offlineTours.isEmpty)
+      return const SizedBox.shrink();
 
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
@@ -429,7 +400,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
               ),
             ),
           ),
-          if(_isLoadingOfflineTours)
+          if (_isLoadingOfflineTours)
             SizedBox(
               height: screenHeight * 0.25,
               child: const Center(child: CircularProgressIndicator()),
@@ -477,6 +448,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // Usa il provider per ottenere lo stato
+    final nearbyToursState = ref.watch(nearbyToursProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Column(
@@ -496,7 +470,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
               ),
             ),
           ),
-          if (_isLoadingOnlineData)
+          if (nearbyToursState.isLoading &&
+              (nearbyToursState.tours == null ||
+                  nearbyToursState.tours!.isEmpty))
             SizedBox(
               height: screenHeight * 0.25,
               child: const Center(child: CircularProgressIndicator()),
@@ -506,9 +482,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
               height: screenHeight * 0.25,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _nearbyTours?.length ?? 0,
+                itemCount: nearbyToursState.tours?.length ?? 0,
                 itemBuilder: (context, index) {
-                  final tour = _nearbyTours![index];
+                  final tour = nearbyToursState.tours![index];
                   return Padding(
                     padding: EdgeInsets.only(
                       left: index == 0 ? 20.0 : 0.0,
@@ -552,6 +528,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // Usa il provider per le categorie
+    final categoriesAsyncValue = ref.watch(categoriesProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Column(
@@ -573,63 +552,70 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
           ),
           SizedBox(
             height: screenHeight * 0.12,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories?.length ?? 0,
-              itemBuilder: (context, index) {
-                final category = _categories![index];
-                return GestureDetector(
-                  onTap:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => CategoryDetailScreen(
-                                isGuest: widget.isGuest,
-                                categoryName: category.name,
-                                tours: const [],
+            child: categoriesAsyncValue.when(
+              data:
+                  (categories) => ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      return GestureDetector(
+                        onTap:
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => CategoryDetailScreen(
+                                      isGuest: widget.isGuest,
+                                      categoryName: category.name,
+                                      tours: const [],
+                                    ),
                               ),
-                        ),
-                      ),
-                  child: Container(
-                    width: screenWidth * 0.4,
-                    margin: EdgeInsets.only(
-                      left: index == 0 ? 20.0 : 0.0,
-                      right: 10.0,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.0),
-                      image: DecorationImage(
-                        image: AssetImage(category.image),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.0),
-                              color: AppColors.darkOverlay,
+                            ),
+                        child: Container(
+                          width: screenWidth * 0.4,
+                          margin: EdgeInsets.only(
+                            left: index == 0 ? 20.0 : 0.0,
+                            right: 10.0,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10.0),
+                            image: DecorationImage(
+                              image: AssetImage(category.image),
+                              fit: BoxFit.cover,
                             ),
                           ),
-                        ),
-                        Center(
-                          child: Text(
-                            category.name[0].toUpperCase() +
-                                category.name.substring(1).toLowerCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                    color: AppColors.darkOverlay,
+                                  ),
+                                ),
+                              ),
+                              Center(
+                                child: Text(
+                                  category.name[0].toUpperCase() +
+                                      category.name.substring(1).toLowerCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error:
+                  (err, stack) =>
+                      Center(child: Text('Error loading categories')),
             ),
           ),
           const SizedBox(height: 20),

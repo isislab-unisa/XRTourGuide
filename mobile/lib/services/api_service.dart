@@ -18,8 +18,12 @@ class ApiService {
   '/api/token/refresh/',
   '/register/',
   '/tour_list/',
+  '/tour_details/',
+  '/get_reviews_by_tour_id/',
+  '/tour_waypoints/',
   '/get_waypoint_resources/',
   '/health_check/',
+  '/stream_minio_resource/'
   ];
 
   static String basicUrl = 'http://';
@@ -39,23 +43,24 @@ class ApiService {
 
           print("Request: ${options.baseUrl} ${options.method} ${options.path}");
 
-          if (excludedPaths.any((path) => options.path.startsWith(path))) {
+          if (excludedPaths.any((path) => options.path.contains(path))) {
             print("Skipping bearer token");
             return handler.next(options); // Skip adding token for excluded paths
           }
 
           final accessToken = await _storageService.getAccessToken();
+          print("Access Token: $accessToken");
           if (accessToken != null) {
             options.headers['Authorization'] = 'Bearer $accessToken';
           }
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
-          if (excludedPaths.any((path) => e.requestOptions.path.startsWith(path))) {
+          if (excludedPaths.any((path) => e.requestOptions.path.contains(path))) {
               return handler.next(e); // Salta il refresh per questi endpoint
           }
 
-          print("Error Refresh: ${e.message}");
+          print("Error: ${e.message}, Status Code: ${e.response?.statusCode}");
           if (e.response?.statusCode == 401) {
             String? newAccessToken = "";
             try {
@@ -173,7 +178,7 @@ class ApiService {
   Future<Response> getProfileDetails({String? baseUrl}) async {
     try {
       final response = await dio.get(
-        '/profile_details/',
+        '/profile_detail/',
         options: _getOptions(baseUrl: baseUrl),
       );
       return response;
@@ -202,12 +207,12 @@ class ApiService {
   Future<Response> register(String username, String password, String name, String surname, String mail, String description, String city) async {
     try {
       final response = await dio.post(
-        '/register/',
+        '/api_register/',
         data: {
           'username': username,
           'password': password,
-          'first_name': name,
-          'last_name': surname,
+          'firstName': name,
+          'lastName': surname,
           'email': mail,
           'description': description,
           'city': city,
@@ -454,6 +459,7 @@ class ApiService {
   }
     
     Future<Response> loadResource(int waypointId, String resourceType, {String? baseUrl}) async {
+    print("Loading resource type: $resourceType for waypoint ID: $waypointId from baseUrl: $baseUrl");
     try {
       final response = await dio.get('/get_waypoint_resources/',
         queryParameters: {

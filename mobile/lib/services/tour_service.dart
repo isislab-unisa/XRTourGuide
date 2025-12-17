@@ -52,7 +52,7 @@ class TourService {
 
     Future<Tour> getTourById(int tourId) async {
       try {
-        final response = await apiService.getTourDetails(tourId);
+        final response = await apiService.getTourDetails(tourId, baseUrl: apiService.getCurrentBaseUrl());
         if (response.statusCode == 200) {
           final data = response.data;
           return Tour.fromJson(data);
@@ -67,7 +67,7 @@ class TourService {
 
   Future<List<Tour>> getToursByCategory(String category) async {
     try {
-      final response = await apiService.getTourByCategory(category);
+      final response = await apiService.getTourByCategory(category, baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
@@ -84,6 +84,7 @@ class TourService {
     try {
       final response = await apiService.getTourBySearchTerm(
         searchTerm.toLowerCase(),
+        baseUrl: apiService.getCurrentBaseUrl(),
       );
       if (response.statusCode == 200) {
         final data = response.data as List;
@@ -99,7 +100,7 @@ class TourService {
 
 Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
     try {
-      final response = await apiService.getTourWaypoints(tourId);
+      final response = await apiService.getTourWaypoints(tourId, baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
         final data = response.data;
         final waypointData = data["waypoints"] as List;
@@ -151,7 +152,7 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
   Future<List<Review>> getReviewByTour({int? tourId, int? userId, required int max}) async {
     List<Review> reviews = [];
     try {
-      final response = await apiService.getTourReviews(tourId!);
+      final response = await apiService.getTourReviews(tourId!, baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
         final data = response.data as List;
         reviews = data.map((review) => Review.fromJson(review)).toList();
@@ -219,7 +220,7 @@ Future<User> getUserDetails() async {
   Future<List<Review>> getReviewByUser(int max) async {
     List<Review> reviews = [];
     try {
-      final response = await apiService.getUserReviews();
+      final response = await apiService.getUserReviews(baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
         final data = response.data as List;
         reviews = data.map((review) => Review.fromJson(review)).toList();
@@ -251,7 +252,7 @@ Future<User> getUserDetails() async {
   Future<Map<String, dynamic>> getResourceByWaypointAndType(int waypointId, String type) async {
     Map<String, dynamic> resource = {};
     try {
-      final response = await apiService.loadResource(waypointId, type);
+      final response = await apiService.loadResource(waypointId, type, baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
         resource = response.data as Map<String, dynamic>;
       } else {

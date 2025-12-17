@@ -250,7 +250,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         rawBytes = await file.readAsBytes();
       } else {
         //ONLINE
-        String url = sourcePath.startsWith("http") ? sourcePath : "${ApiService.basicUrl}$sourcePath";
+        String url = sourcePath.startsWith("http") ? sourcePath : "${_apiService.getCurrentBaseUrl()}$sourcePath";
 
         final response = await Dio().get(
           url,
@@ -652,7 +652,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     if (content.isEmpty) return content;
 
     // Definisci il prefisso che vuoi aggiungere (ad esempio il base URL del tuo server)
-    String baseUrl = ApiService.basicUrl;
+    String baseUrl = _apiService.getCurrentBaseUrl();
 
     // Split il contenuto in righe
     List<String> lines = content.split('\n');
@@ -1276,7 +1276,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           'orientation': _cameraController!.description.sensorOrientation,
         });
         final String base64Image = base64Encode(rotatedBytes);
-        final result = await _apiService.inference(base64Image, widget.tourId);
+        final result = await _apiService.inference(base64Image, widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
         waypointId = result.data["result"] ?? -1;
         availableResources = result.data["available_resources"] ?? {};
         print("AVAILABLE RESOURCES: $availableResources");

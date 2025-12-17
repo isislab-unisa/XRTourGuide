@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/app_colors.dart';
-import '../services/api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/auth_service.dart';
 import '../services/local_state_service.dart';
 import 'zlib_image.dart';
 
@@ -48,6 +48,7 @@ class TravelListItemCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final localStateService = ref.read(localStateServiceProvider);
+    final _apiService = ref.read(apiServiceProvider);
 
     return FutureBuilder<bool>(
       future: localStateService.isTourCompleted(tourId!),
@@ -93,7 +94,7 @@ class TravelListItemCard extends ConsumerWidget {
                         // ),
                         child: ZlibImage(
                           url:
-                              "${ApiService.basicUrl}/stream_minio_resource/?tour=${tourId!}",
+                              "${_apiService.getCurrentBaseUrl()}/stream_minio_resource/?tour=${tourId!}",
                           width: double.infinity,
                           height:
                               imageHeight ?? (height != null ? height! * 0.7 : null),

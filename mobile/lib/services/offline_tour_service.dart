@@ -39,11 +39,11 @@ class OfflineStorageService {
     //TODO: Download della mappa in pmtiles
     try {
       // 1. Get tour details
-      final tourResponse = await apiService.getTourDetails(tourId);
+      final tourResponse = await apiService.getTourDetails(tourId, baseUrl: apiService.getCurrentBaseUrl());
       final tour = Tour.fromJson(tourResponse.data);
 
       // 2. Get tour waypoints
-      final waypointsResponse = await apiService.getTourWaypoints(tourId);
+      final waypointsResponse = await apiService.getTourWaypoints(tourId, baseUrl: apiService.getCurrentBaseUrl());
       final waypointsData = waypointsResponse.data;
 
       // 3. Create tour directory
@@ -58,7 +58,7 @@ class OfflineStorageService {
       await _downloadMap(tourId, tourDir);
 
       // 4. Download tour default image
-      await _downloadImage("${ApiService.basicUrl}/stream_minio_resource/?attachment=True&tour=${tour.id}", '${tourDir.path}/default_image.jpg');
+      await _downloadImage("${apiService.getCurrentBaseUrl()}/stream_minio_resource/?attachment=True&tour=${tour.id}", '${tourDir.path}/default_image.jpg');
 
       // 5. Process waypoints and download their resources
       List<Map<String, dynamic>> processedWaypoints = [];
@@ -133,6 +133,7 @@ class OfflineStorageService {
     Waypoint waypoint,
     Directory tourDir,
   ) async {
+    print("Processing waypoint ${waypoint.id} for offline storage");
     final waypointDir = Directory('${tourDir.path}/waypoint_${waypoint.id}');
     if (!await waypointDir.exists()) {
       await waypointDir.create(recursive: true);
@@ -142,7 +143,7 @@ class OfflineStorageService {
 
     // Download waypoint images
     List<String> localImages = [];
-    final imagesResponse = await apiService.loadResource(waypoint.id, "images");
+    final imagesResponse = await apiService.loadResource(waypoint.id, "images", baseUrl: apiService.getCurrentBaseUrl());
     Map<String, dynamic> imagesContent = imagesResponse.data as Map<String, dynamic>;
     print("Images content: $imagesContent");
     // if (imagesContent['readme'] != null) {
@@ -205,7 +206,8 @@ class OfflineStorageService {
 
     Future<void> _downloadGenericResource(String type, String extension) async {
       try {
-        final response = await apiService.loadResource(waypoint.id, type);
+        print("Downloading $type for waypoint ${waypoint.id}");
+        final response = await apiService.loadResource(waypoint.id, type, baseUrl: apiService.getCurrentBaseUrl());
         Map<String, dynamic> content = response.data as Map<String, dynamic>;
 
         String? url;
@@ -277,7 +279,7 @@ class OfflineStorageService {
     await _downloadGenericResource("readme", "md");
 
     try {
-      final responseLink = await apiService.loadResource(waypoint.id, "links");
+      final responseLink = await apiService.loadResource(waypoint.id, "links", baseUrl: apiService.getCurrentBaseUrl());
       Map<String, dynamic> linksContent = responseLink.data as Map<String, dynamic>;
       if (linksContent['links'] != null && linksContent['links'] is List) {
         final linksFile = File('${waypointDir.path}/links.json');
@@ -297,7 +299,7 @@ class OfflineStorageService {
 
   Future<void> _downloadOfflineIndex(int tourId, Directory tourDir) async {
     try {
-      final url = '${ApiService.basicUrl}/download_model?tour_id=$tourId';
+      final url = '${apiService.getCurrentBaseUrl()}/download_model?tour_id=$tourId';
       final file = File('${tourDir.path}/training_data.json');
       final response = await _dio.get(url, options: Options(responseType: ResponseType.json));
       final data = response.data;
@@ -309,7 +311,7 @@ class OfflineStorageService {
 
   Future<void> _downloadMap(int tourId, Directory tourDir) async {
     try {
-      final url = '/cut_map/$tourId/';
+      final url = _toAbsoluteUrl('/cut_map/$tourId/');
       final localPath = '${tourDir.path}/tour_$tourId.pmtiles';
 
       await apiService.dio.download(
@@ -317,6 +319,7 @@ class OfflineStorageService {
         localPath,
         options: Options(
           method: 'POST',
+          // extra: {'base_url': apiService.getCurrentBaseUrl()},
         ),
       );
       print("Map downloaded successfully to $localPath");
@@ -341,7 +344,7 @@ class OfflineStorageService {
   // Converte URL relativo in assoluto usando ApiService.basicUrl
   String _toAbsoluteUrl(String url) {
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    final base = ApiService.basicUrl; // es: https://example.com
+    final base = apiService.getCurrentBaseUrl(); // es: https://example.com
     if (url.startsWith('/')) return '$base$url';
     return '$base/$url';
   }

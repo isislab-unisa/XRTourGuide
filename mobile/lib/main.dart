@@ -801,7 +801,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       ),
                       SizedBox(height: screenHeight * 0.04),
                       _buildInputField(
-                        label: 'Username',
+                        label: 'Email',
                         controller: _emailController,
                         icon: Icons.email_outlined,
                         isEmail: true,

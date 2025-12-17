@@ -107,7 +107,7 @@ class AuthService extends ChangeNotifier {
       final response = await apiService.login(email, password);
       if (response.statusCode == 401) {
         // _authStatus = AuthStatus.unauthenticated;
-        _loginErrorMessage = "Username or password is incorrect";
+        _loginErrorMessage = "Email or password is incorrect";
         // notifyListeners();
         throw Exception(_loginErrorMessage);
       }

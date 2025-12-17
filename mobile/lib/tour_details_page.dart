@@ -377,7 +377,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
   Future<void> _incrementViewCount() async {
     try {
-      await _apiService.incrementTourViews(widget.tourId);
+      await _apiService.incrementTourViews(widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
     } catch (e) {
       print('Error incrementing view count: $e');
     }
@@ -805,7 +805,7 @@ Future<void> _loadWaypoints() async {
                   icon: const Icon(Icons.camera_alt, color: Colors.white, size: 28,),
                   onPressed: () {
                     if (!widget.isOffline){
-                      _apiService.initializeInferenceModule(widget.tourId);
+                      _apiService.initializeInferenceModule(widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
                     }
                     //Initialize the inference module for the tour
                     Navigator.push(
@@ -1457,7 +1457,7 @@ Future<void> _loadWaypoints() async {
                             child: ElevatedButton(
                               onPressed: () {
                                 if (!widget.isOffline) {
-                                  _apiService.initializeInferenceModule(_tourDetails!.id);
+                                  _apiService.initializeInferenceModule(_tourDetails!.id, baseUrl: _apiService.getCurrentBaseUrl());
                                 }
                                 Navigator.push(
                                   context,
@@ -2781,7 +2781,7 @@ void _showLeaveReviewSheet(int tourId) {
                             final rating = _userRating;
                             final comment = _reviewController.text;
 
-                            _apiService.leaveReview(tourId, rating, comment);
+                            _apiService.leaveReview(tourId, rating, comment, baseUrl: _apiService.getCurrentBaseUrl());
                             _loadData();
 
                             Navigator.pop(context); // Close the sheet
