@@ -224,7 +224,8 @@ async def api_login(request: Request, db: Session = Depends(get_db)):
 
 @app.post("/api/token/refresh/")
 async def refresh(request:Request):
-    refresh = await request.json().get("refresh")
+    data = await request.json()
+    refresh = data.get("refresh")
     payload = verify_token(refresh)
     if payload.get("type") != "refresh":
         raise HTTPException(400, "Invalid refresh token")
