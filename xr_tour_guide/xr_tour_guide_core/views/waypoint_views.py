@@ -116,6 +116,7 @@ def get_waypoint_resources(request):
     elif resource_type == "images":
         images = waypoint.images.filter(type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
         if not images.exists():
+            images = waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT)[:2]
             return JsonResponse({"error": "No images found"}, status=404)
         images = [f"/stream_minio_resource/?waypoint={waypoint_id}&file={img.image.name}" for img in images]
         return JsonResponse({"images": images}, status=200)
