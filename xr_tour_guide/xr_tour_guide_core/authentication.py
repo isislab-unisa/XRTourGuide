@@ -2,7 +2,10 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model
 import requests
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 User = get_user_model()
 
 class JWTFastAPIAuthentication(BaseAuthentication):
@@ -18,23 +21,25 @@ class JWTFastAPIAuthentication(BaseAuthentication):
 
         try:
             response = requests.post(
-                "http://172.16.15.162:8002/api/verify/",
+                f"http://{os.getenv("COMMUNITY_SERVER")}/api/verify/",
                 data={"token": token}
             )
+
             if response.status_code != 200:
-                raise AuthenticationFailed("Invalid token")
+                raise AuthenticationFailed("Invalid token", status_code=401)
 
             payload = response.json()
             user_id = payload.get("user_id")
             if not user_id:
-                raise AuthenticationFailed("Invalid token payload")
+                raise AuthenticationFailed("Invalid token payload", status_code=401)
 
         except Exception:
-            raise AuthenticationFailed("Token verify failed")
+            raise AuthenticationFailed("Token verify failed", status_code=401)
 
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
-            raise AuthenticationFailed("User not found in Django")
+            raise AuthenticationFailed("User not found in Django", status_code=401)
 
         return (user, None)
+

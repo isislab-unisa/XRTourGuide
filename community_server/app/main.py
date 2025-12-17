@@ -237,6 +237,8 @@ async def refresh(request:Request):
 @app.post("/api/verify/")
 async def api_verify(token: str = Form(...)):
     payload = verify_token(token)
+    if payload is None:
+        return {"valid": False, "status": 401}
     return {"valid": True, "user_id": payload.get("user_id")}
 
 @app.post("/update_password/")
