@@ -329,8 +329,8 @@ def api_profile_detail(request: Request, db: Session = Depends(get_db)):
         "id": user.id,
         "username": user.username,
         "email": user.email,
-        "name": user.name,
-        "surname": user.surname,
+        "first_name": user.name,
+        "last_name": user.surname,
         "city": user.city,
         "description": user.description
     }
@@ -363,11 +363,11 @@ async def update_profile(
         raise HTTPException(status_code=404, detail="User not found")
 
     print(f"User: ", user)
-    user.username = data.get("username", user.username)
+    # user.username = data.get("username", user.username)
     user.email = data.get("email", user.email)
     user.name = data.get("firstName", user.name)
     user.surname = data.get("lastName", user.surname)
-    user.city = data.get("city", user.city)
+    # user.city = data.get("city", user.city)
     user.description = data.get("description", user.description)
 
     db.commit()
