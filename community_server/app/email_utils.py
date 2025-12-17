@@ -14,7 +14,6 @@ FROM_EMAIL = os.getenv("EMAIL_HOST_USER")
 BASE_URL = os.getenv("BASE_URL")
 
 def send_verification_email(email: str, token: str, username: str):
-    
     verification_link = f"{BASE_URL}/verify-email?token={token}"
     
     subject = "Conferma la tua registrazione"

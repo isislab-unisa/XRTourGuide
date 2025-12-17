@@ -387,7 +387,7 @@
         </form>
 
         <div class="login-link">
-            <p>Hai già un account? <a href="{% url 'account_login' %}">Accedi qui</a></p>
+            <p>Hai già un account? <a href="{% url 'login' %}">Accedi qui</a></p>
         </div>
     </section>
 </div>
@@ -415,65 +415,14 @@ document.getElementById("register-form").addEventListener("submit", async functi
 
     // Disable button and show loading state
     submitBtn.disabled = true;
-    btnText.innerHTML = '<span class="spinner"></span>Resend in corso...';
-
-    const data = {
-        email: document.getElementById("email").value.trim(),
-    };
-
-    // Reset message
-    messageBox.style.display = "none";
-    messageBox.textContent = "";
-    messageBox.classList.remove("text-danger", "text-success");
-
-    try {
-        const response = await fetch("{% url 'send_verification_email' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-        });
-
-        const responseData = await response.json();
-
-        if (response.ok) {
-            messageBox.style.display = "block";
-            messageBox.textContent = responseData.message;
-            messageBox.classList.add("text-success");
-        } else {
-            messageBox.style.display = "block";
-            messageBox.textContent = responseData.message;
-            messageBox.classList.add("text-danger");
-        }
-    } catch (error) {
-        console.error(error);
-        messageBox.style.display = "block";
-        messageBox.textContent = "Si è verificato un errore durante la registrazione.";
-        messageBox.classList.add("text-danger");
-    } finally {
-        submitBtn.disabled = false;
-        btnText.innerHTML = "Invia";
-    }
-});
-
-document.getElementById("register-form").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const submitBtn = document.getElementById("submit-btn");
-    const btnText = document.getElementById("btn-text");
-    const messageBox = document.getElementById("register-message");
-
-    // Disable button and show loading state
-    submitBtn.disabled = true;
     btnText.innerHTML = '<span class="spinner"></span>Registrazione in corso...';
 
     const data = {
         username: document.getElementById("username").value.trim(),
         email: document.getElementById("email").value.trim(),
         password: document.getElementById("password").value,
-        first_name: document.getElementById("first_name").value.trim(),
-        last_name: document.getElementById("last_name").value.trim(),
+        firstName: document.getElementById("first_name").value.trim(),
+        lastName: document.getElementById("last_name").value.trim(),
         city: document.getElementById("city").value.trim(),
         description: document.getElementById("description").value.trim(),
     };

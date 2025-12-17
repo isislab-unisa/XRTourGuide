@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 from .views.ai_views import *
-from .views.user_views import *
+# from .views.user_views import *
 from .views.tour_views import *
 from .views.waypoint_views import *
 from .views.review_views import *
@@ -25,10 +25,10 @@ schema_view = get_schema_view(
 urlpatterns = [
     path("tour_list/", tour_list, name="tour_list"),
     path("tour_details/<int:pk>/", tour_details, name="tour_details"),
-    path("profile_details/", profile_details, name="profile_details"),
-    path("update_profile/", update_profile, name="update_profile"),
-    path("delete_account/", delete_account, name="delete_account"),
-    path("update_password/", update_password, name="update_password"),
+    # path("profile_details/", profile_details, name="profile_details"),
+    # path("update_profile/", update_profile, name="update_profile"),
+    # path("delete_account/", delete_account, name="delete_account"),
+    # path("update_password/", update_password, name="update_password"),
     path("stream_minio_resource/", stream_minio_resource, name="stream_minio_resource"),
     path(
         "get_reviews_by_tour_id/<int:tour_id>/",
@@ -38,27 +38,27 @@ urlpatterns = [
     re_path(
         r"^docs/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
     ),
-    path("register/", RegisterView.as_view(), name="register"),
-    path(
-        "activate/<uidb64>/<token>/",
-        ActivateAccountView.as_view(),
-        name="activate-account",
-    ),
+    # path("register/", RegisterView.as_view(), name="register"),
+    # path(
+    #     "activate/<uidb64>/<token>/",
+    #     ActivateAccountView.as_view(),
+    #     name="activate-account",
+    # ),
     path("tour_waypoints/<int:tour_id>/", tour_waypoints, name="tour_waypoints"),
     path("create_review/", create_review, name="create_review"),
     path("get_reviews_by_user/", get_reviews_by_user, name="get_reviews_by_user"),
     path("increment_view_count/", increment_view_count, name="increment_view_count"),
-    path("forgot-password/", PasswordResetView.as_view(), name="forgot-password"),
-    path(
-        "reset-password-confirm/<uidb64>/<token>/",
-        PasswordResetConfirmPage.as_view(),
-        name="reset-password-confirm-page",
-    ),
-    path(
-        "reset-password-confirm/<uidb64>/<token>/submit/",
-        PasswordResetConfirmSubmit.as_view(),
-        name="reset-password-confirm-submit",
-    ),
+    # path("forgot-password/", PasswordResetView.as_view(), name="forgot-password"),
+    # path(
+    #     "reset-password-confirm/<uidb64>/<token>/",
+    #     PasswordResetConfirmPage.as_view(),
+    #     name="reset-password-confirm-page",
+    # ),
+    # path(
+    #     "reset-password-confirm/<uidb64>/<token>/submit/",
+    #     PasswordResetConfirmSubmit.as_view(),
+    #     name="reset-password-confirm-submit",
+    # ),
     path("build/", build, name="build"),
     path("complete_build/", complete_build, name="complete_build"),
     path("load_model/<int:tour_id>/", load_model, name="load_model"),

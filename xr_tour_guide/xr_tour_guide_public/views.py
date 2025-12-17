@@ -60,27 +60,39 @@ def login(request):
             request.session["cs_token"] = data["access"]
             return redirect("/admin/")
         else:
-            return render(request, "account/login.html", {"error": "Credenziali non valide"})
+            return render(request, "login.html", {"error": "Credenziali non valide"})
 
     return render(request, "account/login.html")
 
+import json
 def register(request):
     if request.method == "POST":
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        name = request.POST.get('name')
-        surname = request.POST.get('surname')
-        description = request.POST.get('description')
-        city = request.POST.get('city')
+        data = json.loads(request.body)
+        username = data.get("username")
+        email = data.get("email")
+        password = data.get("password")
+        name = data.get("firstName")
+        surname = data.get("lastName")
+        description = data.get("description")
+        city = data.get("city")
+
         response = requests.post(
-            f"http://{os.getenv('COMMUNITY_SERVER')}/api/token/",
-            json={'email': email, 'password': password, 'firstName': name, 'lastName': surname, 'email': email, 'description': description, 'city': city}
+            f"http://{os.getenv('COMMUNITY_SERVER')}/api_register/",
+            json={
+                "username": username,
+                "email": email,
+                "password": password,
+                "firstName": name,
+                "lastName": surname,
+                "description": description,
+                "city": city
+            }
         )
         if response.status_code == 200:
             return HttpResponse("Registrazione avvenuta con successo", status=200)
         else:
             return HttpResponse("Credenziali non valide", status=response.status_code)
-    return render(request, "account/register.html")
+    return render(request, "register.html")
 
 def send_verification_email(request):
     email = request.POST.get('email')
