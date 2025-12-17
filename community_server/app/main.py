@@ -174,23 +174,23 @@ async def get_services(db: Session = Depends(get_db)):
 async def get_service(service_id: int, db: Session = Depends(get_db)):
     return db.query(models.Services).filter(models.Services.id == service_id).first().domain
 
-@app.post("/api/register/")
-async def api_register(
-    username: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    existing = db.query(models.User).filter(models.User.email == email).first()
-    if existing:
-        raise HTTPException(400, "Email already in use")
+# @app.post("/api/register/")
+# async def api_register(
+#     username: str = Form(...),
+#     email: str = Form(...),
+#     password: str = Form(...),
+#     db: Session = Depends(get_db)
+# ):
+#     existing = db.query(models.User).filter(models.User.email == email).first()
+#     if existing:
+#         raise HTTPException(400, "Email already in use")
 
-    user = models.User(username=username, email=email)
-    user.set_password(password)
-    db.add(user)
-    db.commit()
+#     user = models.User(username=username, email=email)
+#     user.set_password(password)
+#     db.add(user)
+#     db.commit()
 
-    return {"message": "User registered successfully"}
+#     return {"message": "User registered successfully"}
 
 @app.post("/api/token/")
 async def api_login(request: Request, db: Session = Depends(get_db)):
@@ -223,7 +223,8 @@ async def api_login(request: Request, db: Session = Depends(get_db)):
     }
 
 @app.post("/api/token/refresh/")
-async def refresh(refresh: str = Form(...)):
+async def refresh(request:Request):
+    refresh = await request.json().get("refresh")
     payload = verify_token(refresh)
     if payload.get("type") != "refresh":
         raise HTTPException(400, "Invalid refresh token")
