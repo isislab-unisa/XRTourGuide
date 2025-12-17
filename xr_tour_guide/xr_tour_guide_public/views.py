@@ -4,7 +4,7 @@ import requests
 from django.contrib.auth import get_user_model, login as django_login
 from django.contrib.auth.models import Group
 from django.http import HttpResponse
-import dotenv
+from dotenv import load_dotenv
 import os
 
 load_dotenv()
@@ -23,7 +23,7 @@ def login(request):
         password = request.POST.get('password')
         
         response = requests.post(
-            f"http://{os.loadenv('COMMUNITY_SERVER')}/api/token/",
+            f"http://{os.getenv('COMMUNITY_SERVER')}/api/token/",
             json={'email': email, 'password': password}
         )
 
@@ -73,7 +73,7 @@ def register(request):
         description = request.POST.get('description')
         city = request.POST.get('city')
         response = requests.post(
-            f"http://{os.loadenv('COMMUNITY_SERVER')}/api/token/",
+            f"http://{os.getenv('COMMUNITY_SERVER')}/api/token/",
             json={'email': email, 'password': password, 'firstName': name, 'lastName': surname, 'email': email, 'description': description, 'city': city}
         )
         if response.status_code == 200:
@@ -81,3 +81,14 @@ def register(request):
         else:
             return HttpResponse("Credenziali non valide", status=response.status_code)
     return render(request, "account/register.html")
+
+def send_verification_email(request):
+    email = request.POST.get('email')
+    response = requests.post(
+        f"http://{os.getenv('COMMUNITY_SERVER')}/resend-verification/",
+        json={'email': email}
+    )
+    if response.status_code == 200:
+        return HttpResponse("Email di verifica inviata con successo", status=200)
+    else:
+        return HttpResponse("Email non valida", status=response.status_code)

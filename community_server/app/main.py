@@ -479,7 +479,7 @@ async def verify_email(
     }
 
 
-@app.post("/resend-verification")
+@app.post("/resend-verification/")
 async def resend_verification(
     request : Request,
     db: Session = Depends(get_db)
