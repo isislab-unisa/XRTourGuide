@@ -477,6 +477,7 @@ document.getElementById("register-form").addEventListener("submit", async functi
             btnText.textContent = "Registrati";
         }
     } catch (error) {
+        console.log(error);
         messageBox.textContent = "❌ Errore di rete. Controlla la connessione e riprova.";
         messageBox.classList.add("text-danger");
         messageBox.style.display = "block";

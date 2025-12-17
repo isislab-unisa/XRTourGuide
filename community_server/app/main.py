@@ -8,7 +8,7 @@ import model.models as models
 from model.database import SessionLocal, engine
 import dotenv
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.requests import Request as FastAPIRequest
 import httpx
 from .auth import create_access_token, create_refresh_token, verify_token
@@ -445,10 +445,10 @@ async def api_register(
             detail="Errore nell'invio dell'email di verifica"
         )
 
-    return {
-        "message": "Registrazione completata! Controlla la tua email per confermare l'account.",
-        "email": data.email
-    }
+    return JSONResponse(
+        status_code=201,
+        content={"message": "Account creato con successo! Verifica la tua email per attivare il tuo account."}
+    )
 
 @app.get("/verify-email")
 async def verify_email(
