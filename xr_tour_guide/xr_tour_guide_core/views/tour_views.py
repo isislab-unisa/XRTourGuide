@@ -138,6 +138,7 @@ def tour_waypoints(request, tour_id):
 
 
 @api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([AllowAny])
 @swagger_auto_schema(
     operation_summary="Increment the view count for a specific tour",
