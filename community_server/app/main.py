@@ -201,7 +201,7 @@ async def api_login(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email and password required")
 
     user = db.query(models.User).filter(models.User.email == email).first()
-    if not user or not user.verify_password(password):
+    if not user or not user.verify_password(password) or not user.active:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = create_access_token({"user_id": user.id})
@@ -304,7 +304,8 @@ async def delete_account(
     if not user or not user.verify_password(password):
         raise HTTPException(401, "Invalid credentials")
 
-    user.delete()
+    user.active = False
+    db.commit()
     return {"message": "Account deleted successfully"}
 
 @app.get("/profile_detail/")
@@ -397,15 +398,45 @@ async def api_register(
         (models.User.username == data.username)
     ).first()
 
-    if existing:
+    if existing and existing.active:
         raise HTTPException(
             status_code=400,
             detail="Email o username già in uso"
         )
 
+    if existing and existing.email_verified:
+        raise HTTPException(
+            status_code=400,
+            detail="Email già verificata"
+        )
+    
     verification_token = secrets.token_urlsafe(32)
     token_expires = datetime.utcnow() + timedelta(hours=24)
 
+    if existing and not existing.active:
+        existing.verification_token = verification_token
+        existing.verification_token_expires = token_expires
+        db.commit()
+
+        email_sent = send_verification_email(
+            email=data.email,
+            token=verification_token,
+            username=data.username
+        )
+
+        if not email_sent:
+            db.delete(user)
+            db.commit()
+            raise HTTPException(
+                status_code=500,
+                detail="Errore nell'invio dell'email di verifica"
+            )
+    
+        return JSONResponse(
+            status_code=201,
+            content={"message": "Account creato con successo! Verifica la tua email per attivare il tuo account."}
+        )
+    
     try:
         user = models.User(
             username=data.username,

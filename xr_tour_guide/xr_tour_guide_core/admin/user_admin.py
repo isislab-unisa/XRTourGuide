@@ -3,7 +3,10 @@ from ..models import CustomUser
 from django.contrib.auth.admin import UserAdmin
 import requests
 from django.contrib import messages
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -52,7 +55,9 @@ class CustomUserAdmin(UserAdmin):
         return request.user.is_superuser
 
     def save_model(self, request, obj, form, change):
+        print("Salvataggio dell'utente", change,flush=True)
         if change:
+            print("Sincronizzazione con il Community Server", flush=True)
             try:
                 payload = {
                     "email": obj.email,
@@ -63,20 +68,29 @@ class CustomUserAdmin(UserAdmin):
                     "description": obj.description,
                 }
 
-                auth_header = request.headers.get('Authorization')
+                auth_header = request.session.get('cs_token')
                 if not auth_header:
-                    return None
+                    print("Non ho l'header", auth_header, flush=True)
+                    return self.message_user(
+                    request,
+                    f"Errore di connessione con il Community Server: {e}",
+                    level=messages.ERROR
+                )
 
                 if not auth_header.startswith('Bearer '):
-                    return None
+                    if not auth_header:
+                        return self.message_user(
+                                request,
+                                f"Errore di connessione con il Community Server: {e}",
+                                level=messages.ERROR
+                            )
 
-                token = auth_header.split(' ')[1]
                 response = requests.post(
-                    "http://172.16.15.162:8002/update_profile",
+                    f"http://{os.getenv('COMMUNITY_SERVER')}/update_profile",
                     json=payload,
                     timeout=5,
                     headers={
-                        "Authorization": f"Bearer {token.json()['access']}"
+                        "Authorization": f"Bearer {auth_header}"
                     }
                 )
 

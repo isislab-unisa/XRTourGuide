@@ -120,83 +120,83 @@ class ReviewSerializer(serializers.ModelSerializer):
     def get_creation_date(self, obj):
         return obj.timestamp.strftime("%Y-%m-%d")
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+# class RegisterSerializer(serializers.ModelSerializer):
+#     password = serializers.CharField(write_only=True)
 
-    class Meta:
-        model = get_user_model()
-        fields = ['username', 'email', 'password', 'first_name', 'last_name', 'city', 'description']
+#     class Meta:
+#         model = get_user_model()
+#         fields = ['username', 'email', 'password', 'first_name', 'last_name', 'city', 'description']
 
-    def validate_email(self, value):
-        if get_user_model().objects.filter(email=value).exists():
-            raise serializers.ValidationError("Questo indirizzo email è già in uso.")
-        return value
+#     def validate_email(self, value):
+#         if get_user_model().objects.filter(email=value).exists():
+#             raise serializers.ValidationError("Questo indirizzo email è già in uso.")
+#         return value
     
-    def create(self, validated_data):
-        user = get_user_model().objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-            city=validated_data['city'],
-            description=validated_data['description'],
-            is_active=False,
-            is_staff = True
-        )
+#     def create(self, validated_data):
+#         user = get_user_model().objects.create_user(
+#             username=validated_data['username'],
+#             email=validated_data['email'],
+#             password=validated_data['password'],
+#             first_name=validated_data['first_name'],
+#             last_name=validated_data['last_name'],
+#             city=validated_data['city'],
+#             description=validated_data['description'],
+#             is_active=False,
+#             is_staff = True
+#         )
         
-        try:
-            user_group = Group.objects.get(name="User")
-            user.groups.add(user_group)
-        except Group.DoesNotExist:
-            raise serializers.ValidationError("Il gruppo 'User' non esiste.")
+#         try:
+#             user_group = Group.objects.get(name="User")
+#             user.groups.add(user_group)
+#         except Group.DoesNotExist:
+#             raise serializers.ValidationError("Il gruppo 'User' non esiste.")
         
-        return user
+#         return user
 
-class PasswordResetSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+# class PasswordResetSerializer(serializers.Serializer):
+#     email = serializers.EmailField()
 
-    def validate_email(self, value):
-        if not get_user_model().objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email non trovata.")
-        return value
+#     def validate_email(self, value):
+#         if not get_user_model().objects.filter(email=value).exists():
+#             raise serializers.ValidationError("Email non trovata.")
+#         return value
 
-    def save(self):
-        email = self.validated_data['email']
-        user = get_user_model().objects.get(email=email)
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
+#     def save(self):
+#         email = self.validated_data['email']
+#         user = get_user_model().objects.get(email=email)
+#         token = default_token_generator.make_token(user)
+#         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-        reset_link = self.context['request'].build_absolute_uri(
-            reverse('reset-password-confirm-page', kwargs={'uidb64': uid, 'token': token})
-        )
+#         reset_link = self.context['request'].build_absolute_uri(
+#             reverse('reset-password-confirm-page', kwargs={'uidb64': uid, 'token': token})
+#         )
 
-        subject = "Password Reset Request"
-        message = f"Clicca sul link per resettare la tua password: {reset_link}"
+#         subject = "Password Reset Request"
+#         message = f"Clicca sul link per resettare la tua password: {reset_link}"
         
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+#         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
 
-class PasswordResetConfirmSerializer(serializers.Serializer):
-    uidb64 = serializers.CharField()
-    token = serializers.CharField()
-    new_password = serializers.CharField(min_length=8)
+# class PasswordResetConfirmSerializer(serializers.Serializer):
+#     uidb64 = serializers.CharField()
+#     token = serializers.CharField()
+#     new_password = serializers.CharField(min_length=8)
 
-    def validate(self, attrs):
-        try:
-            uid = urlsafe_base64_decode(attrs['uidb64']).decode()
-            user = get_user_model().objects.get(pk=uid)
-        except Exception:
-            raise serializers.ValidationError("Link non valido.")
+#     def validate(self, attrs):
+#         try:
+#             uid = urlsafe_base64_decode(attrs['uidb64']).decode()
+#             user = get_user_model().objects.get(pk=uid)
+#         except Exception:
+#             raise serializers.ValidationError("Link non valido.")
 
-        if not default_token_generator.check_token(user, attrs['token']):
-            raise serializers.ValidationError("Token non valido o scaduto.")
+#         if not default_token_generator.check_token(user, attrs['token']):
+#             raise serializers.ValidationError("Token non valido o scaduto.")
 
-        attrs['user'] = user
-        return attrs
+#         attrs['user'] = user
+#         return attrs
 
-    def save(self, **kwargs):
-        user = self.validated_data['user']
-        new_password = self.validated_data['new_password']
-        user.set_password(new_password)
-        user.save()
+#     def save(self, **kwargs):
+#         user = self.validated_data['user']
+#         new_password = self.validated_data['new_password']
+#         user.set_password(new_password)
+#         user.save()
