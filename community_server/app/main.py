@@ -557,3 +557,84 @@ async def resend_verification(
         )
 
     return {"message": "Email di verifica inviata nuovamente"}
+
+@app.post("/reset-password/")
+async def request_reset_password(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    data = await request.json()
+    email = data.get("email")
+
+    user = db.query(models.User).filter(
+        models.User.email == email
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Email non trovata")
+
+    token = secrets.token_urlsafe(32)
+    expires = datetime.utcnow() + timedelta(hours=24)
+
+    user.verification_token = token
+    user.verification_token_expires = expires
+    db.commit()
+
+    email_sent = send_forgot_password(
+        email=user.email,
+        token=token,
+        username=user.username
+    )
+
+    if not email_sent:
+        user.verification_token = None
+        user.verification_token_expires = None
+        db.commit()
+        raise HTTPException(status_code=500, detail="Errore invio email")
+
+    return {"message": "Email di reset inviata"}
+
+@app.get("/reset-password/")
+def get_reset_form(
+    token: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    user = db.query(models.User).filter(
+        models.User.verification_token == token
+    ).first()
+
+    if not user or user.verification_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Token non valido o scaduto")
+
+    return templates.TemplateResponse(
+        "reset_password.html",
+        {
+            "request": request,
+            "token": token
+        }
+    )
+
+@app.post("/verify-reset-password/")
+def verify_reset_password(
+    token: str = Form(...),
+    password: str = Form(...),
+    confirm_password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    if password != confirm_password:
+        raise HTTPException(status_code=400, detail="Le password non coincidono")
+
+    user = db.query(models.User).filter(
+        models.User.verification_token == token
+    ).first()
+
+    if not user or user.verification_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Token non valido o scaduto")
+
+    user.set_password(password)
+    user.verification_token = None
+    user.verification_token_expires = None
+    db.commit()
+
+    return {"message": "Password cambiata con successo"}

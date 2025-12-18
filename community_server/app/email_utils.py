@@ -72,3 +72,60 @@ def send_verification_email(email: str, token: str, username: str):
     except Exception as e:
         print(f"Errore invio email: {e}")
         return False
+
+def send_forgot_password(email: str, token: str, username: str):
+    reset_link = f"{BASE_URL}/reset-password/?token={token}"
+
+    subject = "Reimposta la tua password"
+
+    html_content = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2>Ciao {username}!</h2>
+            <p>Abbiamo ricevuto una richiesta di reimpostazione della password.</p>
+
+            <p style="margin: 30px 0;">
+                <a href="{reset_link}"
+                   style="background-color: #e53935; color: white; padding: 14px 20px;
+                          text-decoration: none; border-radius: 4px; display: inline-block;">
+                    Reimposta Password
+                </a>
+            </p>
+
+            <p>Oppure copia questo link:</p>
+            <p style="color: #666; font-size: 14px;">{reset_link}</p>
+
+            <p style="color: #999; font-size: 12px; margin-top: 40px;">
+                Il link scade tra 24 ore.<br>
+                Se non hai richiesto il reset, ignora questa email.
+            </p>
+        </body>
+    </html>
+    """
+
+    text_content = f"""
+    Ciao {username},
+
+    Per reimpostare la password visita il link seguente:
+    {reset_link}
+
+    Il link scade tra 24 ore.
+    """
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = FROM_EMAIL
+    msg["To"] = email
+
+    msg.attach(MIMEText(text_content, "plain"))
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        print(f"Errore invio email: {e}")
+        return False
