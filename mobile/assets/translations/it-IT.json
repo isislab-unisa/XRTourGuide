@@ -1,6 +1,6 @@
 {
     "app_name": "XR Tour Guide",
-    "register_success_message": "Registrato con successo, ora verifica la tua email per accedere",
+    "register_success_message": "Registrato con successo! Ora puoi accedere al tuo account.",
     "onboarding_title": "Iniziamo",
     "onboarding_subtitle": "Benvenuto nel tuo viaggio! Siamo felici di averti qui.",
     "google_log": "Continua con Google",

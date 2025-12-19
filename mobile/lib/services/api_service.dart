@@ -26,10 +26,10 @@ class ApiService {
   '/stream_minio_resource/'
   ];
 
-  static String basicUrl = 'http://';
+  static String basicUrl = 'https://';
   // static const String basicUrl = 'http://172.16.15.145:80';
 
-  static const String centralizedUrl = 'http://172.16.15.145:8002';
+  static const String centralizedUrl = 'http://xrtourguide.di.unisa.it:8002';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {

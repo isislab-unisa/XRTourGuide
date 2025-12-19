@@ -121,6 +121,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     _updateConnectionStatus(
       forceReload: false,
     ); // Non forzare il reload, controlla solo connessione
+    _loadOfflineTours();
     super.didPopNext();
   }
 
@@ -182,7 +183,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Future<void> _loadOfflineTours() async {
-    if (mounted) setState(() => _isLoadingOfflineTours = true);
+    if (_offlineTours.isEmpty && mounted) setState(() => _isLoadingOfflineTours = true);
     try {
       final tours = await _offlineService.getOfflineTours();
       if (mounted) setState(() => _offlineTours = tours);

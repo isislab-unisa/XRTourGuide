@@ -33,6 +33,7 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
   List<Review> _reviews = [];
   bool _isLoadingReviews = true;
   String? _error; // Renamed from _error to _errorMessage for clarity with _showError
+  int? _totalReviewCount = 0;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
 
   Future<void> _loadReviews() async {
     List<Review> reviews;
+    int totalCount = 0;
     try {
       if (widget.isTour) {
         reviews = await _tourService.getReviewByTour(
@@ -62,14 +64,17 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
           max: widget.reviewCount,
         ); // Use reviewCount or default to 10 
       }else {
-        reviews = await _tourService.getReviewByUser(
+        final result = await _tourService.getReviewByUser(
           widget.reviewCount,
         ); // Use reviewCount or default to 10
+        reviews = result.reviews;
+        totalCount = result.totalCount;
       }
       if (mounted) {
         setState(() {
           _reviews = reviews;
           _isLoadingReviews = false;
+          _totalReviewCount = totalCount;
         });
       }
     } catch (e) {

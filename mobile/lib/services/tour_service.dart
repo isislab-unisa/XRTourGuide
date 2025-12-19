@@ -217,13 +217,17 @@ Future<User> getUserDetails() async {
   //TODO: Gestire errore 401 per token non riconosciuto
 }
 
-  Future<List<Review>> getReviewByUser(int max) async {
+  Future<({List<Review> reviews, int totalCount})> getReviewByUser(int max) async {
     List<Review> reviews = [];
+    int totalCount = 0;
     try {
       final response = await apiService.getUserReviews(baseUrl: apiService.getCurrentBaseUrl());
       if (response.statusCode == 200) {
-        final data = response.data as List;
-        reviews = data.map((review) => Review.fromJson(review)).toList();
+        //Dizionario con reviews (lista) e review_count (intero)
+        final data = response.data;
+        final reviews_raw = data['reviews'] as List;
+        totalCount = data['review_count'] as int? ?? 0;
+        reviews = reviews_raw.map((review) => Review.fromJson(review)).toList();
       } else {
         throw Exception('Failed to load user reviews');
       }
@@ -232,7 +236,7 @@ Future<User> getUserDetails() async {
       rethrow;
     }
 
-        // Return only the first 'max' reviews
+    // Return only the first 'max' reviews
     if (max > reviews.length) {
       max =
           reviews
@@ -241,12 +245,17 @@ Future<User> getUserDetails() async {
     if (max < 0) {
       max = 0; // Ensure max is not negative
     }
+
+    List<Review> finalReviews;
+
     if (max == 0) {
       //return all reviews if max is 0
-      return reviews.toList();
+      finalReviews = reviews.toList();
     } else {
-      return reviews.take(max).toList();
+      finalReviews = reviews.take(max).toList();
     }
+
+    return (reviews: finalReviews, totalCount: totalCount);
   }
 
   Future<Map<String, dynamic>> getResourceByWaypointAndType(int waypointId, String type) async {

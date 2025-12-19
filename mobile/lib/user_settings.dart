@@ -449,11 +449,11 @@ void _handleBack(BuildContext context) {
                   ),
 
                   // Help & Support
-                  _buildMenuItemTile(
-                    title: 'help_support_title'.tr(),
-                    icon: Icons.help_outline,
-                    onTap: _navigateToHelpSupport,
-                  ),
+                  // _buildMenuItemTile(
+                  //   title: 'help_support_title'.tr(),
+                  //   icon: Icons.help_outline,
+                  //   onTap: _navigateToHelpSupport,
+                  // ),
 
                   // Logout - with different styling
                   _buildMenuItemTile(

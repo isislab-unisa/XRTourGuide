@@ -43,6 +43,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
   bool _isLoadingUserDetails = true;
 
   List<Review> _reviews = [];
+  int _totalReviewCount = 0;
   bool _isLoadingReviews = true;
 
   // Controllers for text fields
@@ -91,10 +92,13 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
 
   Future<void> _loadUserReviews() async {
     try {
-      final reviews = await _tourService.getReviewByUser(3);
+      final result = await _tourService.getReviewByUser(3);
+      final reviews = result.reviews;
+      final totalCount = result.totalCount;
       if (mounted) {
         setState(() {
           _reviews = reviews;
+          _totalReviewCount = totalCount;
           _isLoadingReviews = false;
         });
       }
@@ -307,7 +311,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '(${_user!.reviewCount})',
+                            '(${_totalReviewCount.toString()})',
                             style: const TextStyle(
                               fontSize: 16,
                               color: AppColors.textSecondary,
