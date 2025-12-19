@@ -41,7 +41,12 @@ async def lifespan(app: FastAPI):
                 new_user = models.User(
                     username=default_name,
                     email=default_email,
-                    role = models.UserRole.ADMIN
+                    role = models.UserRole.ADMIN,
+                    active = True,
+                    name = default_name,
+                    surname = default_name,
+                    description = default_name,
+                    city = default_name,
                 )
                 new_user.set_password(default_password)
                 db.add(new_user)
@@ -93,7 +98,8 @@ async def login(
     db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(models.User.email == email).first()
-    if not user or not user.verify_password(password) or user.active or user.role == models.UserRole.USER:
+
+    if not user or not user.verify_password(password) or not user.active or user.role == models.UserRole.USER:
         return templates.TemplateResponse("login.html", {"request": request, "message": "Invalid credentials"})
 
     services = db.query(models.Services).all()
@@ -235,11 +241,23 @@ async def refresh(request:Request):
     return {"access": new_access_token}
 
 @app.post("/api/verify/")
-async def api_verify(token: str = Form(...)):
+async def api_verify(token: str = Form(...), db: Session = Depends(get_db)):
     payload = verify_token(token)
     if payload is None:
         return {"valid": False, "status": 401}
-    return {"valid": True, "user_id": payload.get("user_id")}
+
+    user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+
+    payload["id"] = user.id
+    payload["username"] = user.username
+    payload["email"] = user.email
+    payload["name"] = user.name
+    payload["surname"] = user.surname
+    payload["city"] = user.city
+    payload["description"] = user.description
+    payload['valid'] = True
+
+    return JSONResponse(content=payload, media_type="application/json")
 
 @app.post("/update_password/")
 async def update_password(

@@ -119,7 +119,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     
     def get_creation_date(self, obj):
         return obj.timestamp.strftime("%Y-%m-%d")
-
+    
 # class RegisterSerializer(serializers.ModelSerializer):
 #     password = serializers.CharField(write_only=True)
 

@@ -1,6 +1,7 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 import requests
 import os
 from dotenv import load_dotenv
@@ -21,25 +22,50 @@ class JWTFastAPIAuthentication(BaseAuthentication):
 
         try:
             response = requests.post(
-                f"http://{os.getenv("COMMUNITY_SERVER")}/api/verify/",
+                f"http://{os.getenv('COMMUNITY_SERVER')}/api/verify/",
                 data={"token": token}
             )
 
             if response.status_code != 200:
-                raise AuthenticationFailed("Invalid token", status_code=401)
+                raise AuthenticationFailed("Invalid token")
 
             payload = response.json()
-            user_id = payload.get("user_id")
-            if not user_id:
-                raise AuthenticationFailed("Invalid token payload", status_code=401)
+            print(f"Payload: {payload}")
+            username = payload.get("username")
+            if not username:
+                raise AuthenticationFailed("Invalid token payload")
 
-        except Exception:
-            raise AuthenticationFailed("Token verify failed", status_code=401)
+        except requests.RequestException as e:
+            raise AuthenticationFailed("Token verify failed")
 
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.get(username=username)
+            user.email = payload.get("email", user.email)
+            user.first_name = payload.get("name", user.first_name)
+            user.last_name = payload.get("surname", user.last_name)
+            user.city = payload.get("city", user.city)
+            user.description = payload.get("description", user.description)
+            user.save()
         except User.DoesNotExist:
-            raise AuthenticationFailed("User not found in Django", status_code=401)
+            user = User.objects.create_user(
+                username=username,
+                email=payload.get("email", ""),
+                first_name=payload.get("name", ""),
+                last_name=payload.get("surname", ""),
+                city=payload.get("city", ""),
+                description=payload.get("description", "")
+            )
+            user.set_unusable_password()
+            user.is_staff = True
+            group_name = 'User'
+            try:
+                group = Group.objects.get(name=group_name)
+                user.groups.add(group)
+            except Group.DoesNotExist:
+                pass
+            user.save()
+
+        if hasattr(request, 'session'):
+            request.session["cs_token"] = token
 
         return (user, None)
-

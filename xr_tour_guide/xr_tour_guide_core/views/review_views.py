@@ -79,4 +79,10 @@ def create_review(request):
 def get_reviews_by_user(request):
     reviews = Review.objects.filter(user=request.user)
     serializer = ReviewSerializer(reviews, many=True)
-    return Response(serializer.data)
+
+    response_data = {
+        "review_count": len(serializer.data),
+        "reviews": serializer.data
+    }
+
+    return Response(response_data)
