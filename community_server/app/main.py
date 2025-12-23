@@ -168,7 +168,7 @@ async def get_services(db: Session = Depends(get_db)):
         results = []
         for s in services:
             try:
-                r = await client.get(f"http://{s.domain}/health_check/")
+                r = await client.get(f"https://{s.domain}/health_check/")
                 if r.status_code == 200:
                     results.append(s)
             except Exception:
