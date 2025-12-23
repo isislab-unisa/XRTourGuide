@@ -16,7 +16,7 @@ class ApiService {
   final excludedPaths = [
   '/api/token/',
   '/api/token/refresh/',
-  '/register/',
+  '/api_register/',
   '/tour_list/',
   '/tour_details/',
   '/get_reviews_by_tour_id/',
@@ -29,7 +29,7 @@ class ApiService {
   static String basicUrl = 'https://';
   // static const String basicUrl = 'http://172.16.15.145:80';
 
-  static const String centralizedUrl = 'http://xrtourguide.di.unisa.it:8002';
+  static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {

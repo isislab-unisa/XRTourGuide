@@ -183,13 +183,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     // --- SEZIONE PULSANTI ---
                     if (_isLoading)
                       const CircularProgressIndicator()
-                    else
-                      if (_errorMessage != null)
+                    else if (_errorMessage != null || _servers.isEmpty)
                         Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             children: [
-                              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                              Text(_errorMessage ?? "Nessun server disponibile", style: const TextStyle(color: Colors.red)),
                               ElevatedButton(
                                 onPressed: _fetchServers,
                                 child: const Text('Riprova'),
