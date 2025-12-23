@@ -21,8 +21,14 @@ def register_page(request):
 
 def login(request):
     if request.method == "POST":
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+        email = request.POST.get('email', None)
+        password = request.POST.get('password', None)
+        
+        if not email or "@" not in email:
+            return render(request, "account/login.html", {"error": "Email required"})
+        
+        if not password:
+            return render(request, "account/login.html", {"error": "Password required"})
         
         response = requests.post(
             f"http://{os.getenv('COMMUNITY_SERVER')}/api/token/",
@@ -62,7 +68,8 @@ def login(request):
             request.session["cs_token"] = data["access"]
             return redirect("/admin/")
         else:
-            return render(request, "login.html", {"error": "Credenziali non valide"})
+            print(f"DIOCANE: {response.json()}")
+            return render(request, "account/login.html", {"error": response.json()["detail"]})
 
     return render(request, "account/login.html")
 

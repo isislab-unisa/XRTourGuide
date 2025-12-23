@@ -556,7 +556,7 @@
         <!-- Header -->
         <div class="header-section">
             <h1 class="page-title">{{ message }}</h1>
-            <a href="/register_service" class="btn-custom btn-primary-custom">
+            <a href="/communityserver/register_service" class="btn-custom btn-primary-custom">
                 <span>➕</span>
                 <span>Add Service</span>
             </a>
@@ -630,19 +630,19 @@
                             <td>
                                 <div class="action-buttons">
                                     {% if service.active %}
-                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
+                                    <form action="/communityserver/status_service/{{ service.id }}" method="post" style="display:inline;">
                                         <button type="submit" class="btn-custom btn-warning-custom btn-sm-custom">
                                             ⏸ Disable
                                         </button>
                                     </form>
                                     {% else %}
-                                    <form action="/status_service/{{ service.id }}" method="post" style="display:inline;">
+                                    <form action="/communityserver/status_service/{{ service.id }}" method="post" style="display:inline;">
                                         <button type="submit" class="btn-custom btn-success-custom btn-sm-custom">
                                             ▶ Enable
                                         </button>
                                     </form>
                                     {% endif %}
-                                    <form action="/delete_service/{{ service.id }}" method="post" style="display:inline;">
+                                    <form action="/communityserver/delete_service/{{ service.id }}" method="post" style="display:inline;">
                                         <button type="submit" class="btn-custom btn-danger-custom btn-sm-custom" onclick="return confirm('Are you sure you want to delete this service?')">
                                             🗑 Eliminate
                                         </button>
@@ -659,7 +659,7 @@
                 <div class="empty-state-icon">📭</div>
                 <h3 class="empty-state-title">No Services Available</h3>
                 <p class="empty-state-text">Start adding your first service to the community</p>
-                <a href="/register_service" class="btn-custom btn-primary-custom">
+                <a href="/communityserver/register_service" class="btn-custom btn-primary-custom">
                     <span>➕</span>
                     <span>Add First Service</span>
                 </a>

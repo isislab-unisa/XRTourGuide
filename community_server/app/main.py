@@ -203,13 +203,22 @@ async def api_login(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
     email = data.get("email")
     password = data.get("password")
+
     if not email or not password:
         raise HTTPException(status_code=400, detail="Email and password required")
 
     user = db.query(models.User).filter(models.User.email == email).first()
-    if not user or not user.verify_password(password) or not user.active:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    if not user.active:
+        raise HTTPException(status_code=401, detail="Account not active, verify your email")
+    
+    if not user or not user.verify_password(password):
+        raise HTTPException(status_code=401, detail=f"Invalid credentials")
+    
+    
     access_token = create_access_token({"user_id": user.id})
     refresh_token = create_refresh_token({"user_id": user.id})
 
@@ -443,7 +452,7 @@ async def api_register(
         )
 
         if not email_sent:
-            db.delete(user)
+            db.delete(existing)
             db.commit()
             raise HTTPException(
                 status_code=500,
