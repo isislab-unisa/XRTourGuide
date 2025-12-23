@@ -42,7 +42,7 @@ CSRF_TRUSTED_ORIGINS = ['https://xrtourguide.di.unisa.it']
 CORS_ORIGIN_ALLOW = True
 
 SECURE_SSL_REDIRECT = False
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = [
     "*", "xrtourguide.di.unisa.it", "www.xrtourguide.di.unisa.it"
