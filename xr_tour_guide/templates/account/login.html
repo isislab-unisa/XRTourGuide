@@ -381,13 +381,19 @@
                     <h2>👋 Bentornato</h2>
                     <p>Accedi al tuo account</p>
                 </div>
+                
+                {% if error %}
+                    <div class="alert alert-danger">
+                        {{ error }}
+                    </div>
+                {% endif %}
 
                 <form action="{% url 'login' %}" method="post">
                     {% csrf_token %}
 
                     <div class="form-floating">
                         <input 
-                            type="text" 
+                            type="email" 
                             name="email" 
                             id="email" 
                             placeholder="Email"
@@ -415,7 +421,7 @@
                     </div>
                 </form>
 
-                <div class="divider">oppure</div>
+                <!-- <div class="divider">oppure</div> -->
 
                 <div class="signup-link">
                     <p>Non hai un account? <a href="{% url 'register_platform' %}">Registrati</a></p>
