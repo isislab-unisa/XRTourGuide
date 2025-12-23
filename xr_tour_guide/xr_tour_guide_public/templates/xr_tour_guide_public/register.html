@@ -359,24 +359,24 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="first_name" class="form-label">Nome</label>
-                    <input type="text" class="form-control" id="first_name" placeholder="Mario">
+                    <label for="first_name" class="form-label">Nome*</label>
+                    <input type="text" class="form-control" id="first_name" placeholder="Mario" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="last_name" class="form-label">Cognome</label>
-                    <input type="text" class="form-control" id="last_name" placeholder="Rossi">
+                    <label for="last_name" class="form-label">Cognome*</label>
+                    <input type="text" class="form-control" id="last_name" placeholder="Rossi" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="city" class="form-label">Città</label>
-                <input type="text" class="form-control" id="city" placeholder="Roma">
+                <label for="city" class="form-label">Città*</label>
+                <input type="text" class="form-control" id="city" placeholder="Roma" required>
             </div>
 
             <div class="form-group">
-                <label for="description" class="form-label">Descrizione</label>
-                <textarea class="form-control" id="description" rows="3" placeholder="Parlaci un po' di te..."></textarea>
+                <label for="description" class="form-label">Descrizione*</label>
+                <textarea class="form-control" id="description" rows="3" placeholder="Parlaci un po' di te..." required></textarea>
             </div>
 
             <p class="required-fields">* Campi obbligatori</p>
@@ -434,48 +434,43 @@ document.getElementById("register-form").addEventListener("submit", async functi
 
     try {
         const response = await fetch("{% url 'register' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token }}",
-            },
-            body: JSON.stringify(data),
-        });
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}",
+    },
+    body: JSON.stringify(data),
+});
 
-        if (response.status === 201) {
-            messageBox.textContent = "✅ Registrazione completata! Reindirizzamento in corso...";
-            messageBox.classList.add("text-success");
-            messageBox.style.display = "block";
+let errorMessage = "";
 
-            setTimeout(() => {
-                window.location.href = "{% url 'landing_page' %}";
-            }, 2000);
-        } else {
-            const errorData = await response.json();
-            let errorMessage = "";
-            
-            // Format error messages nicely
-            if (typeof errorData === 'object') {
-                errorMessage = Object.entries(errorData)
-                    .map(([field, messages]) => {
-                        const fieldName = field === 'username' ? 'Username' :
-                                        field === 'email' ? 'Email' :
-                                        field === 'password' ? 'Password' : field;
-                        return `${fieldName}: ${Array.isArray(messages) ? messages.join(' ') : messages}`;
-                    })
-                    .join('\n');
-            } else {
-                errorMessage = errorData;
-            }
+if (response.ok) { // 200-299
+    messageBox.textContent = "✅ Registrazione completata! Reindirizzamento in corso...";
+    messageBox.classList.add("text-success");
+    messageBox.style.display = "block";
 
-            messageBox.textContent = "❌ " + errorMessage;
-            messageBox.classList.add("text-danger");
-            messageBox.style.display = "block";
+    setTimeout(() => {
+        window.location.href = "{% url 'login' %}";
+    }, 2000);
+} else {
+    let errorData;
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        errorData = await response.json();
+        errorMessage = errorData.detail || errorData.message || "Errore sconosciuto";
+    } else {
+        errorMessage = await response.text();
+    }
 
-            // Re-enable button
-            submitBtn.disabled = false;
-            btnText.textContent = "Registrati";
-        }
+    messageBox.textContent = "❌ " + errorMessage;
+    messageBox.classList.add("text-danger");
+    messageBox.style.display = "block";
+
+    // Riabilita il pulsante
+    submitBtn.disabled = false;
+    btnText.textContent = "Registrati";
+}
+
     } catch (error) {
         console.log(error);
         messageBox.textContent = "❌ Errore di rete. Controlla la connessione e riprova.";

@@ -1,27 +1,36 @@
-version: "3.9"
+version: '3.8'
+
+networks:
+  backend_net:
+    external: true
+    
 services:
-  db:
+  db_cs:
     image: mysql:8.0
     container_name: mysql_community
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${CS_DB_NAME}
+      MYSQL_USER: ${CS_DB_USER}
+      MYSQL_PASSWORD: ${CS_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${CS_DB_PASSWORD}
     ports:
       - "3308:3306"
     volumes:
       - mysql_community:/var/lib/mysql
+    networks:
+      - backend_net
 
   app:
-    build: .
+    build: ../community_server
     container_name: community-server
     ports:
       - "8002:8002"
     env_file: 
       - .env
     depends_on:
-      - db
+      - db_cs
+    networks:
+      - backend_net
 
 volumes:
   mysql_community:

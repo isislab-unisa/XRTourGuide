@@ -17,5 +17,5 @@ RUN chmod +x wait-for-it.sh
 
 EXPOSE 8002
 
-CMD ["./wait-for-it.sh", "db", "3306", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+CMD ["./wait-for-it.sh", "db_cs", "3306", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
 

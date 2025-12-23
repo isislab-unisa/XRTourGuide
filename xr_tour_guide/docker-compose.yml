@@ -2,10 +2,7 @@ version: '3.8'
 
 networks:
   backend_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
+    external: true
 
 services:
   db:
@@ -204,7 +201,7 @@ services:
       - "8081:8081"
     networks:
       - backend_net
-      
+
 volumes:
   mysql_data_xr_tour_guide:
   minio_data:

@@ -6,6 +6,8 @@ from django.contrib.auth.models import Group
 from django.http import HttpResponse
 from dotenv import load_dotenv
 import os
+from django.http import JsonResponse
+import json, os, requests
 
 load_dotenv()
 User = get_user_model()
@@ -64,7 +66,6 @@ def login(request):
 
     return render(request, "account/login.html")
 
-import json
 def register(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -76,22 +77,40 @@ def register(request):
         description = data.get("description")
         city = data.get("city")
 
-        response = requests.post(
-            f"http://{os.getenv('COMMUNITY_SERVER')}/api_register/",
-            json={
-                "username": username,
-                "email": email,
-                "password": password,
-                "firstName": name,
-                "lastName": surname,
-                "description": description,
-                "city": city
-            }
-        )
-        if response.status_code == 200:
-            return HttpResponse("Registrazione avvenuta con successo", status=200)
-        else:
-            return HttpResponse("Credenziali non valide", status=response.status_code)
+        try:
+            response = requests.post(
+                f"http://{os.getenv('COMMUNITY_SERVER')}/api_register/",
+                json={
+                    "username": username,
+                    "email": email,
+                    "password": password,
+                    "firstName": name,
+                    "lastName": surname,
+                    "description": description,
+                    "city": city
+                },
+                timeout=10
+            )
+        except requests.exceptions.RequestException as e:
+            return JsonResponse(
+                {"detail": "Errore di connessione al server API."},
+                status=500
+            )
+
+        if response.status_code == 201:
+            try:
+                data = response.json()
+            except ValueError:
+                data = {"message": "Registrazione completata con successo"}
+            return JsonResponse(data, status=201)
+
+        try:
+            error_data = response.json()
+        except ValueError:
+            error_data = {"detail": response.text}
+
+        return JsonResponse(error_data, status=response.status_code)
+
     return render(request, "register.html")
 
 def send_verification_email(request):

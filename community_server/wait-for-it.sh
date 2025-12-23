@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
-HOST="$1"
-PORT="$2"
+CS_DB_HOST="$1"
+CS_DB_PORT="$2"
 
-if [ -z "$PORT" ]; then
-  echo "Usage: $0 host port command..."
+if [ -z "$CS_DB_PORT" ]; then
+  echo "Usage: $0 host CS_DB_PORT command..."
   exit 1
 fi
 
-echo "Waiting for $HOST:$PORT..."
+echo "Waiting for $CS_DB_HOST:$CS_DB_PORT..."
 
-while ! nc -z "$HOST" "$PORT"; do
+while ! nc -z "$CS_DB_HOST" "$CS_DB_PORT"; do
     sleep 1
 done
 
-echo "$HOST:$PORT is available!"
+echo "$CS_DB_HOST:$CS_DB_PORT is available!"
 exec "${@:3}"
