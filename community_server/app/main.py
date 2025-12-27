@@ -511,6 +511,7 @@ async def api_register(
 @app.get("/verify-email")
 async def verify_email(
     token: str,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(
@@ -536,9 +537,13 @@ async def verify_email(
     
     db.commit()
 
-    return {
-        "message": "Email verificata con successo! Ora puoi effettuare il login."
-    }
+    return templates.TemplateResponse(
+        "success.html",
+        {
+            "request": request,
+            "message": "Email verificata con successo!"
+        }
+    )
 
 
 @app.post("/resend-verification/")
