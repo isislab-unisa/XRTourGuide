@@ -30,7 +30,7 @@
 
     <uses-feature android:name="android.hardware.camera.any" />
 
-    <application android:label="xr_tour_guide" android:name="${applicationName}" android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true" android:icon="@mipmap/ic_launcher">
+    <application android:label="XRTourGuide" android:name="${applicationName}" android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true" android:icon="@mipmap/ic_launcher">
 
         <!-- Fix per il conflitto del provider -->
         <provider android:name="androidx.startup.InitializationProvider" android:authorities="${applicationId}.androidx-startup" android:exported="false" tools:node="merge">
