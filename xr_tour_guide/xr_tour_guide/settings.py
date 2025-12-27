@@ -45,7 +45,11 @@ SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = [
-    "*", "xrtourguide.di.unisa.it", "www.xrtourguide.di.unisa.it"
+    "localhost",
+    "127.0.0.1",
+    "xr_tour_guide_unisa",
+    "unisa.xrtourguide.di.unisa.it",
+    "xrtourguide.di.unisa.it"
 ]
 
 INSTALLED_APPS = [
