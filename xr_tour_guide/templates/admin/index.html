@@ -37,19 +37,15 @@
 .header-text,
 .stat-card,
 .chart-card,
-.tour-card,
+.analytics-section,
+.analytics-title,
+.analytics-subtitle,
 .section-title,
-.tour-title,
-.tour-description,
-.stat-label,
-.stat-value,
-.chart-title,
-.chart-subtitle,
-.tour-subtitle,
-.pagination,
-.empty-state,
+.section-actions,
 .quick-action-btn,
-.tour-action-btn {
+.view-all-btn,
+.pagination,
+.empty-state {
     font-family: 'Outfit', sans-serif;
 }
 
@@ -103,36 +99,6 @@
 
 .dark .header-text p {
     color: #9ca3af;
-}
-
-.quick-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.quick-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.btn-primary-action {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.btn-primary-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
 }
 
 /* Stats Grid */
@@ -241,14 +207,115 @@
     color: var(--danger);
 }
 
-/* Charts Section */
-.charts-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 1.5rem;
+/* Advanced Analytics Section (Collapsible) */
+.analytics-section {
     margin-bottom: 2rem;
     padding: 0 2rem;
     animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.analytics-toggle {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 1.5rem 1.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.dark .analytics-toggle {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.analytics-toggle:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.dark .analytics-toggle:hover {
+    border-color: #818cf8;
+}
+
+.analytics-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    flex-shrink: 0;
+}
+
+.analytics-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.dark .analytics-title {
+    color: #f9fafb;
+}
+
+.analytics-subtitle {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin: 0.25rem 0 0 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.dark .analytics-subtitle {
+    color: #9ca3af;
+}
+
+.toggle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.dark .toggle-icon {
+    background: var(--gray-700);
+    color: #d1d5db;
+}
+
+.toggle-icon.active {
+    transform: rotate(180deg);
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+}
+
+.dark .toggle-icon.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}
+
+.analytics-content {
+    margin-top: 1rem;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    padding-top: 0.5rem;
 }
 
 .chart-card {
@@ -300,6 +367,8 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding: 0 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .section-title {
@@ -312,6 +381,39 @@
     color: #f9fafb;
 }
 
+.section-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.quick-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-primary-action {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
 .view-all-btn {
     display: flex;
     align-items: center;
@@ -321,275 +423,185 @@
     font-size: 0.875rem;
     text-decoration: none;
     transition: all 0.2s ease;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
 }
 
 .view-all-btn:hover {
     gap: 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
 }
 
-.tours-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    animation: fadeInUp 0.6s ease-out 0.3s both;
-    margin-bottom: 2rem;
-    padding: 0 2rem;
+.dark .view-all-btn {
+    color: #818cf8;
 }
 
-.tour-card {
+.dark .view-all-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+}
+
+/* Tours Table */
+.tours-table-container .table-wrapper {
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    transition: all 0.3s ease;
     border: 1px solid var(--gray-200);
 }
 
-.dark .tour-card {
+.dark .tours-table-container .table-wrapper {
     background: var(--gray-800);
     border-color: var(--gray-700);
 }
 
-.tour-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+.tours-table-container table {
+    font-family: 'Outfit', sans-serif;
 }
 
-.tour-card-header {
-    position: relative;
-    height: 180px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    overflow: hidden;
+.tours-table-container thead {
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
 }
 
-.tour-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+.dark .tours-table-container thead {
+    background: var(--gray-900);
+    border-bottom-color: var(--gray-700);
 }
 
-.tour-card:hover .tour-image {
-    transform: scale(1.08);
-}
-
-.tour-status-badge {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 700;
+.tours-table-container thead th {
+    color: var(--gray-700);
+    font-size: 0.8125rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.status-ready {
-    background: rgba(16, 185, 129, 0.95);
-    color: white;
+.dark .tours-table-container thead th {
+    color: #9ca3af;
 }
 
-.status-building {
-    background: rgba(245, 158, 11, 0.95);
-    color: white;
+.tours-table-container tbody tr {
+    border-bottom: 1px solid var(--gray-200);
 }
 
-.status-built {
-    background: rgba(59, 130, 246, 0.95);
-    color: white;
+.dark .tours-table-container tbody tr {
+    border-bottom-color: var(--gray-700);
 }
 
-.status-default {
-    background: rgba(107, 114, 128, 0.95);
-    color: white;
+.tours-table-container tbody tr:hover {
+    background: var(--gray-50);
 }
 
-.tour-category-badge {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    background: rgba(255, 255, 255, 0.95);
+.dark .tours-table-container tbody tr:hover {
+    background: var(--gray-700);
+}
+
+/* Table text colors and sizes */
+.tours-table-container .tour-title {
     color: var(--gray-900);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.tour-card-body {
-    padding: 1.5rem;
-}
-
-.tour-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--gray-900);
-    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
     line-height: 1.3;
 }
 
-.dark .tour-title {
+.dark .tours-table-container .tour-title {
     color: #f9fafb;
 }
 
-.tour-subtitle {
+.tours-table-container .tour-subtitle,
+.tours-table-container .tour-location {
+    color: var(--gray-600);
     font-size: 0.875rem;
-    color: var(--primary);
+}
+
+.dark .tours-table-container .tour-subtitle,
+.dark .tours-table-container .tour-location {
+    color: #9ca3af;
+}
+
+.tours-table-container .stat-value {
+    color: var(--gray-900);
+    font-size: 1rem;
     font-weight: 600;
-    margin-bottom: 0.75rem;
 }
 
-.tour-description {
+.dark .tours-table-container .stat-value {
+    color: #f9fafb;
+}
+
+.tours-table-container .tour-date {
     color: var(--gray-700);
-    font-size: 0.875rem;
-    line-height: 1.6;
-    margin-bottom: 1rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: 0.9375rem;
+    font-weight: 500;
 }
 
-.dark .tour-description {
+.dark .tours-table-container .tour-date {
     color: #d1d5db;
 }
 
-.tour-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: var(--gray-50);
-    border-radius: 12px;
-}
-
-.dark .tour-stats {
-    background: var(--gray-900);
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.stat-item-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--gray-900);
-}
-
-.dark .stat-item-value {
-    color: #f9fafb;
-}
-
-.stat-item-label {
-    font-size: 0.75rem;
+.tours-table-container .category-badge {
+    background: var(--gray-100);
     color: var(--gray-700);
-    text-transform: uppercase;
+    font-size: 0.875rem;
     font-weight: 600;
+}
+
+.dark .tours-table-container .category-badge {
+    background: var(--gray-700);
+    color: #e5e7eb;
+}
+
+/* Status badges */
+.tours-table-container .status-badge-ready {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
-.dark .stat-item-label {
-    color: #9ca3af;
+.dark .tours-table-container .status-badge-ready {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
 }
 
-.tour-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--gray-200);
-    font-size: 0.875rem;
-    color: var(--gray-700);
+.tours-table-container .status-badge-building {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.dark .tour-meta {
-    border-color: var(--gray-700);
-    color: #9ca3af;
+.dark .tours-table-container .status-badge-building {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
 }
 
-.tour-actions {
-    display: flex;
-    gap: 0.75rem;
+.tours-table-container .status-badge-built {
+    background: rgba(59, 130, 246, 0.15);
+    color: #2563eb;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.tour-action-btn {
-    flex: 1;
-    padding: 0.75rem 1.25rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    text-decoration: none;
+.dark .tours-table-container .status-badge-built {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-    color: white;
-    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.25);
+.tours-table-container .status-badge-default {
+    background: rgba(107, 114, 128, 0.15);
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(99, 102, 241, 0.35);
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
-    color: white;
-    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.25);
-}
-
-.btn-warning:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(245, 158, 11, 0.35);
-}
-
-.btn-outline {
-    background: transparent;
-    border: 2px solid var(--gray-300);
-    color: var(--gray-700);
-}
-
-.dark .btn-outline {
-    border-color: var(--gray-600);
-    color: #d1d5db;
-}
-
-.btn-outline:hover {
-    background: var(--gray-50);
-    border-color: var(--gray-400);
-}
-
-.dark .btn-outline:hover {
-    background: var(--gray-700);
-    border-color: var(--gray-500);
-}
-
-.btn-disabled {
-    background: var(--gray-200);
-    color: var(--gray-700);
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.dark .btn-disabled {
-    background: var(--gray-700);
+.dark .tours-table-container .status-badge-default {
+    background: rgba(107, 114, 128, 0.2);
     color: #9ca3af;
 }
 
@@ -699,18 +711,6 @@
 }
 
 /* Responsive */
-@media (min-width: 640px) {
-    .tours-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px) {
-    .tours-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
 @media (max-width: 768px) {
     .dashboard-container {
         padding: 0;
@@ -718,9 +718,9 @@
     
     .dashboard-header,
     .stats-grid,
-    .charts-section,
+    .analytics-section,
     .section-header,
-    .tours-grid,
+    .tours-table-container,
     .pagination,
     .empty-state {
         padding-left: 1rem;
@@ -736,21 +736,37 @@
         font-size: 2rem;
     }
     
-    .quick-actions {
-        width: 100%;
+    .section-header {
         flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .section-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
     
     .quick-action-btn {
-        width: 100%;
+        flex: 1;
+        justify-content: center;
     }
     
-    .charts-section {
+    .charts-grid {
         grid-template-columns: 1fr;
     }
     
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Responsive table */
+    .tours-table-container table {
+        font-size: 0.875rem;
+    }
+    
+    .tours-table-container th,
+    .tours-table-container td {
+        padding: 1rem 0.75rem !important;
     }
 }
 </style>
@@ -765,12 +781,6 @@
             <div class="header-text">
                 <h1>Dashboard</h1>
                 <p>Benvenuto, {{ request.user.get_full_name|default:request.user.username }}</p>
-            </div>
-            <div class="quick-actions">
-                <a href="/admin/xr_tour_guide_core/tour/add/" class="quick-action-btn btn-primary-action">
-                    <i data-lucide="plus-circle" width="18" height="18"></i>
-                    Nuovo Tour
-                </a>
             </div>
         </div>
     </div>
@@ -832,25 +842,44 @@
         </div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="charts-section">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3 class="chart-title">Tour per Categoria</h3>
-                <p class="chart-subtitle">Distribuzione dei tuoi tour</p>
+    <!-- Advanced Analytics Section (Collapsible) -->
+    <div class="analytics-section">
+        <div class="analytics-toggle" onclick="toggleAnalytics()">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="analytics-icon">
+                    <i data-lucide="bar-chart-3" width="20" height="20"></i>
+                </div>
+                <div>
+                    <h3 class="analytics-title">Statistiche Avanzate</h3>
+                    <p class="analytics-subtitle">Visualizza grafici e analisi dettagliate</p>
+                </div>
             </div>
-            <div class="chart-container">
-                <canvas id="categoryChart"></canvas>
+            <div class="toggle-icon" id="toggleIcon">
+                <i data-lucide="chevron-down" width="20" height="20"></i>
             </div>
         </div>
+        
+        <div class="analytics-content" id="analyticsContent" style="display: none;">
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Tour per Categoria</h3>
+                        <p class="chart-subtitle">Distribuzione dei tuoi tour</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
 
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3 class="chart-title">Tour per Status</h3>
-                <p class="chart-subtitle">Stato attuale dei tour</p>
-            </div>
-            <div class="chart-container">
-                <canvas id="statusChart"></canvas>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Tour per Status</h3>
+                        <p class="chart-subtitle">Stato attuale dei tour</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -858,122 +887,124 @@
     <!-- Tours Section -->
     <div class="section-header">
         <h2 class="section-title">I Tuoi Tour</h2>
-        {% if tours.paginator.num_pages > 1 %}
-        <a href="#" class="view-all-btn">
-            Vedi tutti
-            <i data-lucide="arrow-right" width="16" height="16"></i>
-        </a>
-        {% endif %}
+        <div class="section-actions">
+            <a href="/admin/xr_tour_guide_core/tour/add/" class="quick-action-btn btn-primary-action">
+                <i data-lucide="plus-circle" width="18" height="18"></i>
+                Nuovo Tour
+            </a>
+            {% if tours.paginator.num_pages > 1 %}
+            <a href="#" class="view-all-btn">
+                Vedi tutti
+                <i data-lucide="arrow-right" width="16" height="16"></i>
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     {% if tours %}
-    <div class="tours-grid">
-        {% for tour in tours %}
-        <div class="tour-card">
-            <div class="tour-card-header">
-                <img data-tour-id="{{ tour.id }}"
-                     data-filename="{{ tour.default_image.name|urlencode }}"
-                     src="/static/images/placeholder.jpg"
-                     alt="{{ tour.title }}"
-                     class="tour-image">
-                
-                <div class="tour-category-badge">
-                    {{ tour.category }}
-                </div>
-                
-                <div class="tour-status-badge
-                    {% if tour.status == 'READY' %} status-ready
-                    {% elif tour.status == 'BUILDING' %} status-building
-                    {% elif tour.status == 'BUILT' %} status-built
-                    {% else %} status-default
-                    {% endif %}">
-                    {{ tour.status }}
-                </div>
-            </div>
-
-            <div class="tour-card-body">
-                <h3 class="tour-title">{{ tour.title }}</h3>
-                {% if tour.subtitle %}
-                <p class="tour-subtitle">{{ tour.subtitle }}</p>
-                {% endif %}
-                
-                <p class="tour-description">
-                    {{ tour.description|default:"Nessuna descrizione disponibile" }}
-                </p>
-
-                <div class="tour-stats">
-                    <div class="stat-item">
-                        <div class="stat-item-value">
-                            {% if tour.avg_rating %}
-                                {{ tour.avg_rating|floatformat:1 }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </div>
-                        <div class="stat-item-label">
-                            <i data-lucide="star" width="12" height="12"></i>
-                            Rating
-                        </div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-item-value">
-                            {{ tour.review_count|default:"0" }}
-                        </div>
-                        <div class="stat-item-label">
-                            <i data-lucide="message-circle" width="12" height="12"></i>
-                            Reviews
-                        </div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-item-value">
-                            {{ tour.waypoint_count|default:"0" }}
-                        </div>
-                        <div class="stat-item-label">
-                            <i data-lucide="map-pin" width="12" height="12"></i>
-                            Punti
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tour-meta">
-                    <span>
-                        <i data-lucide="calendar" width="14" height="14"></i>
-                        {{ tour.creation_time|date:"d M Y" }}
-                    </span>
-                    <span>
-                        <i data-lucide="map-pin" width="14" height="14"></i>
-                        {{ tour.place }}
-                    </span>
-                </div>
-
-                <div class="tour-actions">
-                    {% if tour.status == "READY" and tour.user == request.user %}
-                        <form method="post" action="{% url 'build' %}" style="flex: 1;">
-                            {% csrf_token %}
-                            <input type="hidden" name="tour_id" value="{{ tour.pk }}">
-                            <button type="submit" class="tour-action-btn btn-warning">
-                                <i data-lucide="cpu" width="16" height="16"></i>
-                                Addestra
-                            </button>
-                        </form>
-                    {% elif tour.status == "BUILDING" %}
-                        <button class="tour-action-btn btn-disabled" disabled style="flex: 1;">
-                            <i data-lucide="loader" width="16" height="16"></i>
-                            Building...
-                        </button>
-                    {% endif %}
-                    
-                    <a href="{% url 'admin:xr_tour_guide_core_tour_change' tour.pk %}"
-                        class="tour-action-btn btn-primary">
-                        <i data-lucide="eye" width="16" height="16"></i>
-                        Visualizza
-                    </a>
-                </div>
+    <div class="tours-table-container" style="padding: 0 2rem; margin-bottom: 2rem;">
+        <div class="table-wrapper" style="border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);">
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 1.125rem 1rem; text-align: left;">Tour</th>
+                            <th style="padding: 1.125rem 1rem; text-align: left;">Categoria</th>
+                            <th style="padding: 1.125rem 1rem; text-align: center;">Status</th>
+                            <th style="padding: 1.125rem 1rem; text-align: center;">Rating</th>
+                            <th style="padding: 1.125rem 1rem; text-align: center;">Reviews</th>
+                            <th style="padding: 1.125rem 1rem; text-align: center;">Waypoints</th>
+                            <th style="padding: 1.125rem 1rem; text-align: left;">Data</th>
+                            <th style="padding: 1.125rem 1rem; text-align: right;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tour in tours %}
+                        <tr>
+                            <td style="padding: 1.125rem 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <img data-tour-id="{{ tour.id }}"
+                                         data-filename="{{ tour.default_image.name|urlencode }}"
+                                         src="/static/images/placeholder.jpg"
+                                         alt="{{ tour.title }}"
+                                         style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">
+                                    <div style="min-width: 0;">
+                                        <div class="tour-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tour.title }}</div>
+                                        {% if tour.subtitle %}
+                                        <div class="tour-subtitle" style="margin-top: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tour.subtitle }}</div>
+                                        {% endif %}
+                                        <div class="tour-location" style="margin-top: 0.25rem; display: flex; align-items: center; gap: 0.25rem;">
+                                            <i data-lucide="map-pin" width="12" height="12"></i>
+                                            {{ tour.place }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 1.125rem 1rem;">
+                                <span class="category-badge" style="display: inline-flex; padding: 0.375rem 0.75rem; border-radius: 6px;">
+                                    {{ tour.category }}
+                                </span>
+                            </td>
+                            <td style="padding: 1.125rem 1rem; text-align: center;">
+                                {% if tour.status == 'READY' %}
+                                    <span class="status-badge-ready" style="display: inline-flex; padding: 0.375rem 0.75rem; border-radius: 6px;">{{ tour.status }}</span>
+                                {% elif tour.status == 'BUILDING' %}
+                                    <span class="status-badge-building" style="display: inline-flex; padding: 0.375rem 0.75rem; border-radius: 6px;">{{ tour.status }}</span>
+                                {% elif tour.status == 'BUILT' %}
+                                    <span class="status-badge-built" style="display: inline-flex; padding: 0.375rem 0.75rem; border-radius: 6px;">{{ tour.status }}</span>
+                                {% else %}
+                                    <span class="status-badge-default" style="display: inline-flex; padding: 0.375rem 0.75rem; border-radius: 6px;">{{ tour.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1.125rem 1rem; text-align: center;">
+                                <div class="stat-value" style="display: flex; align-items: center; justify-content: center; gap: 0.25rem;">
+                                    <i data-lucide="star" width="14" height="14" style="color: #f59e0b;"></i>
+                                    {% if tour.avg_rating %}
+                                        {{ tour.avg_rating|floatformat:1 }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td style="padding: 1.125rem 1rem; text-align: center;">
+                                <div class="stat-value">{{ tour.review_count|default:"0" }}</div>
+                            </td>
+                            <td style="padding: 1.125rem 1rem; text-align: center;">
+                                <div class="stat-value">{{ tour.waypoint_count|default:"0" }}</div>
+                            </td>
+                            <td style="padding: 1.125rem 1rem;">
+                                <div class="tour-date">{{ tour.creation_time|date:"d M Y" }}</div>
+                            </td>
+                            <td style="padding: 1.125rem 1rem; text-align: right;">
+                                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                    {% if tour.status == "READY" and tour.user == request.user %}
+                                        <form method="post" action="{% url 'build' %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="tour_id" value="{{ tour.pk }}">
+                                            <button type="submit" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.875rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; transition: all 0.2s ease; border: none; cursor: pointer; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); color: white; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.25);">
+                                                <i data-lucide="cpu" width="14" height="14"></i>
+                                                Addestra
+                                            </button>
+                                        </form>
+                                    {% elif tour.status == "BUILDING" %}
+                                        <button disabled style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.875rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; border: none; cursor: not-allowed; background: var(--gray-200); color: var(--gray-700); opacity: 0.6;">
+                                            <i data-lucide="loader" width="14" height="14"></i>
+                                            Building...
+                                        </button>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'admin:xr_tour_guide_core_tour_change' tour.pk %}" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.875rem; border-radius: 6px; font-weight: 600; font-size: 0.75rem; transition: all 0.2s ease; border: none; cursor: pointer; text-decoration: none; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);">
+                                        <i data-lucide="eye" width="14" height="14"></i>
+                                        Visualizza
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {% endfor %}
     </div>
 
     <!-- Pagination -->
@@ -1028,6 +1059,140 @@
 </script>
 
 <script>
+// Toggle Analytics Section
+function toggleAnalytics() {
+    const content = document.getElementById('analyticsContent');
+    const icon = document.getElementById('toggleIcon');
+    
+    if (content.style.display === 'none' || content.style.display === '') {
+        content.style.display = 'block';
+        icon.classList.add('active');
+        
+        // Initialize charts after opening if not already initialized
+        setTimeout(() => {
+            if (!window.chartsInitialized) {
+                initializeCharts();
+                window.chartsInitialized = true;
+            }
+        }, 100);
+    } else {
+        content.style.display = 'none';
+        icon.classList.remove('active');
+    }
+    
+    // Re-initialize Lucide icons
+    lucide.createIcons();
+}
+
+function initializeCharts() {
+    // Category Chart
+    const categoryData = JSON.parse('{{ category_data|escapejs }}');
+    if (categoryData && categoryData.labels && categoryData.labels.length > 0) {
+        const categoryCtx = document.getElementById('categoryChart');
+        if (categoryCtx) {
+            new Chart(categoryCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: categoryData.labels,
+                    datasets: [{
+                        data: categoryData.values,
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(236, 72, 153, 0.8)',
+                        ],
+                        borderColor: [
+                            'rgba(99, 102, 241, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(236, 72, 153, 1)',
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    family: 'Outfit',
+                                    size: 12,
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Status Chart
+    const statusData = JSON.parse('{{ status_data|escapejs }}');
+    if (statusData && statusData.labels && statusData.labels.length > 0) {
+        const statusCtx = document.getElementById('statusChart');
+        if (statusCtx) {
+            new Chart(statusCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: statusData.labels,
+                    datasets: [{
+                        label: 'Tour',
+                        data: statusData.values,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(107, 114, 128, 0.8)',
+                        ],
+                        borderColor: [
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(107, 114, 128, 1)',
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    family: 'Outfit'
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: 'Outfit',
+                                    weight: '600'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // Initialize Lucide icons
     lucide.createIcons();
@@ -1054,109 +1219,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
         }
     });
-
-    // Category Chart
-    const categoryData = JSON.parse('{{ category_data|escapejs }}');
-    if (categoryData && categoryData.labels && categoryData.labels.length > 0) {
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: {
-                labels: categoryData.labels,
-                datasets: [{
-                    data: categoryData.values,
-                    backgroundColor: [
-                        'rgba(99, 102, 241, 0.8)',
-                        'rgba(16, 185, 129, 0.8)',
-                        'rgba(245, 158, 11, 0.8)',
-                        'rgba(236, 72, 153, 0.8)',
-                    ],
-                    borderColor: [
-                        'rgba(99, 102, 241, 1)',
-                        'rgba(16, 185, 129, 1)',
-                        'rgba(245, 158, 11, 1)',
-                        'rgba(236, 72, 153, 1)',
-                    ],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            font: {
-                                family: 'Outfit',
-                                size: 12,
-                                weight: '600'
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Status Chart
-    const statusData = JSON.parse('{{ status_data|escapejs }}');
-    if (statusData && statusData.labels && statusData.labels.length > 0) {
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'bar',
-            data: {
-                labels: statusData.labels,
-                datasets: [{
-                    label: 'Tour',
-                    data: statusData.values,
-                    backgroundColor: [
-                        'rgba(16, 185, 129, 0.8)',
-                        'rgba(245, 158, 11, 0.8)',
-                        'rgba(59, 130, 246, 0.8)',
-                        'rgba(107, 114, 128, 0.8)',
-                    ],
-                    borderColor: [
-                        'rgba(16, 185, 129, 1)',
-                        'rgba(245, 158, 11, 1)',
-                        'rgba(59, 130, 246, 1)',
-                        'rgba(107, 114, 128, 1)',
-                    ],
-                    borderWidth: 2,
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            font: {
-                                family: 'Outfit'
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                family: 'Outfit',
-                                weight: '600'
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
 });
 </script>
 {% endcomponent %}
