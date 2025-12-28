@@ -148,7 +148,7 @@ def inference(request):
         "model_url": f"{tour.pk}/model.pt",
         "poi_name": tour.title,
     }
-    url = "http://ai_inference:8050/inference"
+    url = os.getenv("INFERENCE_ENDPOINT")
     headers = {"Content-type": "application/json"}
     response = requests.post(url, headers=headers, json=payload)
 

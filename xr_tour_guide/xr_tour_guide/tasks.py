@@ -87,7 +87,7 @@ def call_api_and_save(self, tour_id):
             }
 
             try:
-                url = f"http://ai_training:8090/train_model"
+                url = os.getenv("INFERENCE_ENDPOINT")
                 headers = {"Content-type": "application/json"}
                 response = requests.post(url, headers=headers, json=payload, verify=False)
             except Exception as e:  

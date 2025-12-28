@@ -9,8 +9,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('xr_tour_guide_core.urls')),
     path('nested_admin/', include('nested_admin.urls')),
-    # path('accounts/', include('allauth.urls')),
     path('', include('xr_tour_guide_public.urls')),
-    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
 ]
