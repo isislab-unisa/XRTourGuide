@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 import requests
 import redis
+from django.conf import settings
 from ..authentication import JWTFastAPIAuthentication
 
 redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
@@ -35,7 +36,7 @@ def build(request):
         call_api_and_save.apply_async(args=[tour.id], queue='api_tasks')
     else:
         return JsonResponse({"message": "Tour already built"}, status=400)
-    return redirect('/admin/')
+    return redirect(settings.LOGIN_REDIRECT_URL)
 
 @api_view(['POST'])
 @authentication_classes([JWTFastAPIAuthentication])
