@@ -87,7 +87,7 @@ def call_api_and_save(self, tour_id):
             }
 
             try:
-                url = os.getenv("INFERENCE_ENDPOINT")
+                url = os.getenv("TRAIN_ENDPOINT")
                 headers = {"Content-type": "application/json"}
                 response = requests.post(url, headers=headers, json=payload, verify=False)
             except Exception as e:  
@@ -197,8 +197,7 @@ def fail_stuck_builds():
         print(f"Errore nell'acquisizione del lock: {e}")
     
     try:
-        if build_lock.locked():
-            build_lock.release()
+        redis_client.delete("build_lock")
     except Exception as e:
         print(f"Errore nell'acquisizione del lock: {e}")
 

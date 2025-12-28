@@ -39,7 +39,7 @@ def build(request):
     return redirect(settings.LOGIN_REDIRECT_URL)
 
 @api_view(['POST'])
-@authentication_classes([JWTFastAPIAuthentication])
+# @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([AllowAny])
 def complete_build(request):
     allowed_ip = "172.28.0.20"
