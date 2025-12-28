@@ -14,8 +14,8 @@ dotenv.load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SITE_ID = int(os.getenv('SITE_ID'))
-LOGIN_REDIRECT_URL = '/admin/'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/admin/' if os.getenv('FORCE_SCRIPT_NAME') == "/" else os.getenv('FORCE_SCRIPT_NAME') + '/admin/'
+LOGOUT_REDIRECT_URL = os.getenv('FORCE_SCRIPT_NAME')
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -49,8 +49,8 @@ ALLOWED_HOSTS = [
 ]
 
 FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME')
-STATIC_URL = "/static/"
-MEDIA_URL = "/media/"
+STATIC_URL = "/static/" if os.getenv('FORCE_SCRIPT_NAME') == "/" else os.getenv('FORCE_SCRIPT_NAME') + '/static/'
+MEDIA_URL = "/media/" if os.getenv('FORCE_SCRIPT_NAME') == "/" else os.getenv('FORCE_SCRIPT_NAME') + '/media/'
 
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
