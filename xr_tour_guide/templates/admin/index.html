@@ -329,6 +329,7 @@
 
 .tours-grid {
     display: grid;
+    grid-template-columns: 1fr;
     gap: 1.5rem;
     animation: fadeInUp 0.6s ease-out 0.3s both;
     margin-bottom: 2rem;
@@ -620,23 +621,21 @@
     border-color: var(--gray-700);
 }
 
-.pagination-btn:hover {
+.pagination-btn:hover:not(.current) {
     background: var(--gray-50);
     border-color: var(--gray-400);
 }
 
-.dark .pagination-btn:hover {
+.dark .pagination-btn:hover:not(.current) {
     background: var(--gray-700);
     border-color: var(--gray-600);
 }
 
-.current {
-    font-weight: 600;
-    color: var(--gray-900);
-}
-
-.dark .current {
-    color: #f9fafb;
+.pagination-btn.current {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    border-color: var(--primary);
+    font-weight: 700;
 }
 
 /* Empty State */
@@ -989,9 +988,13 @@
             </a>
         {% endif %}
 
-        <span class="current">
-            Pagina {{ tours.number }} di {{ tours.paginator.num_pages }}
-        </span>
+        {% for page_num in tours.paginator.page_range %}
+            {% if page_num == tours.number %}
+                <span class="pagination-btn current">{{ page_num }}</span>
+            {% else %}
+                <a class="pagination-btn" href="?page={{ page_num }}">{{ page_num }}</a>
+            {% endif %}
+        {% endfor %}
 
         {% if tours.has_next %}
             <a class="pagination-btn" href="?page={{ tours.next_page_number }}">
@@ -1021,6 +1024,10 @@
 </div>
 
 <script>
+    const SCRIPT_NAME = "{{ request.META.SCRIPT_NAME }}";
+</script>
+
+<script>
 document.addEventListener("DOMContentLoaded", function () {
     // Initialize Lucide icons
     lucide.createIcons();
@@ -1032,7 +1039,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (tourId && filename) {
             const filenameOnly = filename.split("/").pop();
-            const url = `/stream_minio_resource/?tour=${tourId}&file=${filenameOnly}`;
+            const scriptPath = SCRIPT_NAME && SCRIPT_NAME !== '/' ? SCRIPT_NAME : '';
+            const url = `${scriptPath}/stream_minio_resource/?tour=${tourId}&file=${encodeURIComponent(filenameOnly)}`;
 
             fetch(url)
                 .then(response => {

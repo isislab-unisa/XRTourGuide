@@ -43,7 +43,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "web"
+    "web",
     "xr_tour_guide_unisa",
     "xrtourguide.di.unisa.it"
 ]

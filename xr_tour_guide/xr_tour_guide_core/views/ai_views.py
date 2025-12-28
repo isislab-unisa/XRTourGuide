@@ -42,7 +42,7 @@ def build(request):
 # @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([AllowAny])
 def complete_build(request):
-    allowed_ip = "172.28.0.20"
+    allowed_ip = os.getenv("COMPLETE_BUILD_ALLOWED_IP")
     remote_ip = request.META.get("REMOTE_ADDR")
 
     if remote_ip != allowed_ip:

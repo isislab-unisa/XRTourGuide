@@ -63,7 +63,7 @@ def dashboard_callback(request, context):
         'values': [item['count'] for item in status_distribution]
     }
 
-    paginator = Paginator(user_tours, 6)
+    paginator = Paginator(user_tours, 5)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
