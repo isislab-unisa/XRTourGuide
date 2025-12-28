@@ -966,8 +966,8 @@
                         </button>
                     {% endif %}
                     
-                    <a href="/admin/xr_tour_guide_core/tour/{{ tour.pk }}/change/"
-                       class="tour-action-btn btn-primary">
+                    <a href="{% url 'admin:xr_tour_guide_core_tour_change' tour.pk %}"
+                        class="tour-action-btn btn-primary">
                         <i data-lucide="eye" width="16" height="16"></i>
                         Visualizza
                     </a>
