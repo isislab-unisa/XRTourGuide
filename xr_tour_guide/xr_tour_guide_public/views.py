@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 from django.http import JsonResponse
 import json, os, requests
-
+from django.conf import settings
 load_dotenv()
 User = get_user_model()
 
@@ -66,9 +66,8 @@ def login(request):
             django_login(request, user)
 
             request.session["cs_token"] = data["access"]
-            return redirect("/admin/")
+            return redirect(settings.LOGIN_REDIRECT_URL)
         else:
-            print(f"DIOCANE: {response.json()}")
             return render(request, "account/login.html", {"error": response.json()["detail"]})
 
     return render(request, "account/login.html")

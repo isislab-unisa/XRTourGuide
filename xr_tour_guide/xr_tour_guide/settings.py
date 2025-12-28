@@ -13,16 +13,12 @@ dotenv.load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SITE_ID = 2
+SITE_ID = int(os.getenv('SITE_ID'))
 LOGIN_REDIRECT_URL = '/admin/'
 LOGOUT_REDIRECT_URL = '/'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -52,6 +48,13 @@ ALLOWED_HOSTS = [
     "xrtourguide.di.unisa.it"
 ]
 
+FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME')
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
+
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
 INSTALLED_APPS = [
     "unfold",  # before django.contrib.admin
     "unfold.contrib.filters",  # optional, if special filters are needed
@@ -76,10 +79,6 @@ INSTALLED_APPS = [
     'xr_tour_guide_core',
     'xr_tour_guide_public',
     'django.contrib.sites',
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
-    # 'allauth.socialaccount.providers.google',
 ]
 
 
@@ -104,7 +103,7 @@ MIDDLEWARE = [
 # SOCIALACCOUNT_AUTO_SIGNUP = True
 # SOCIALACCOUNT_ADAPTER = 'xr_tour_guide_core.accounts.adapters.CustomSocialAccountAdapter'
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
@@ -114,7 +113,7 @@ CACHES = {
     },
     "redis": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379",
+        "LOCATION": os.getenv('CELERY_BROKER_URL'),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -212,7 +211,7 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_ACCESS_KEY_ID = os.getenv("MINIO_ROOT_USER")
 AWS_SECRET_ACCESS_KEY = os.getenv("MINIO_ROOT_PASSWORD")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_ENDPOINT_URL = 'http://minio:9000'
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 AWS_S3_FILE_OVERWRITE = False
 AWS_S3_USE_SSL = False
 AWS_DEFAULT_ACL = None

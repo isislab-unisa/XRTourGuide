@@ -92,6 +92,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./staticfiles:/workspace/staticfiles
+      - ../xr_tour_guide_unisa/staticfiles:/workspace/staticfiles_unisa
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
