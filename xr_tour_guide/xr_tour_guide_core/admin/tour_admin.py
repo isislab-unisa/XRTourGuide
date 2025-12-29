@@ -10,6 +10,8 @@ from ..forms.tour_forms import TourForm
 from .waypoint_admin import WaypointAdmin
 from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import gettext_lazy as _
+from django.contrib import messages
+from django.shortcuts import redirect
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
@@ -249,6 +251,27 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             if form.instance not in subtour.parent_tours.all():
                 subtour.parent_tours.add(form.instance)
 
+    def delete_model(self, request, obj):
+        if obj.status in ['SERVING', 'BUILDING', 'ENQUEUED']:
+            self.message_user(
+                request, 
+                _("❌ Non puoi eliminare questo tour perché è in uno stato bloccato."), 
+                level=messages.ERROR
+            )
+        else:
+            super().delete_model(request, obj)
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        obj = self.get_object(request, object_id)
+        if obj and obj.status in ['BUILDING', 'SERVING', 'ENQUEUED']:
+            self.message_user(
+                request,
+                _("❌ Non puoi modificare questo tour perché è in uno stato bloccato."),
+                level=messages.ERROR
+            )
+            return redirect('admin:%s_%s_changelist' % (obj._meta.app_label, obj._meta.model_name))
+        return super().change_view(request, object_id, form_url, extra_context)
+    
     def has_change_permission(self, request, obj=None):
         has_permission = super().has_change_permission(request, obj)
         if not has_permission:
