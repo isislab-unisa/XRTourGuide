@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import FileExtensionValidator
-
+from django.utils.translation import gettext_lazy as _
 dotenv.load_dotenv()
 
 def upload_to(instance, file_name):
@@ -32,16 +32,12 @@ def upload_media_item(instance, filename):
         'readme_item': 'readme',
         'video_item': 'video',
         'audio_item': 'audio',
-        # 'text_item': 'text',
     }.get(field_name)
 
     if subfolder:
         return f"{poi_id}/{instance.id}/data/{subfolder}/{filename}"
     else:
         return f"{poi_id}/{instance.id}/data/{filename}"
-
-# def default_image_waypoint(instance, file_name):
-#     return f"{instance.tour.id}/{instance.id}/default_image/{file_name}"
 
 def default_image_tour(instance, file_name):
     return f"{instance.id}/default_image/{file_name}"
@@ -52,27 +48,27 @@ class CustomUser(AbstractUser):
         blank=True,
         null=True,
     )
-    city = models.CharField(max_length=100, blank=True)
-    description = models.TextField(blank=True)
-    email = models.EmailField(unique=True)
+    city = models.CharField(max_length=100, blank=True, verbose_name=_("City"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    email = models.EmailField(unique=True, verbose_name=_("Email"))
 
 class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
     custom_domain = False
     
 class Status(models.TextChoices):
-    READY = "READY", "Ready"
-    FAILED = "FAILED", "Failed"
-    BUILDING = "BUILDING", "Building"
-    BUILT = "BUILT", "Built"
-    SERVING = "SERVING", "Serving"
-    ENQUEUED = "ENQUEUED", "Enqueued"
+    READY = "READY", _("Ready")
+    FAILED = "FAILED", _("Failed")
+    BUILDING = "BUILDING", _("Building")
+    BUILT = "BUILT", _("Built")
+    SERVING = "SERVING", _("Serving")
+    ENQUEUED = "ENQUEUED", _("Enqueued")
 
 class Category(models.TextChoices):
-    INSIDE = "INSIDE", "Inside"
-    OUTSIDE = "OUTSIDE", "Outside"
-    THING = "THING", "Thing"
-    MIXED = "MIXED", "Mixed"
+    INSIDE = "INSIDE", _("Inside")
+    OUTSIDE = "OUTSIDE", _("Outside")
+    THING = "THING", _("Thing")
+    MIXED = "MIXED", _("Mixed")
         
 class TourQuerySet(models.QuerySet):
     def delete(self, *args, **kwargs):
@@ -81,36 +77,38 @@ class TourQuerySet(models.QuerySet):
         super().delete(*args, **kwargs)
 
 class Tour(models.Model):
-    title = models.CharField(max_length=200, blank=False, null=False, unique=False)
-    subtitle = models.CharField(max_length=200, blank=True, null=True)
-    place = models.CharField(max_length=200, blank=False, null=False)
-    coordinates = PlainLocationField(zoom=7, null=False, blank=False, based_fields=['place'], default="0.0, 0.0")
+    title = models.CharField(max_length=200, blank=False, null=False, unique=False, verbose_name=_("Title"))
+    subtitle = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Subtitle"))
+    place = models.CharField(max_length=200, blank=False, null=False, verbose_name=_("Place"))
+    coordinates = PlainLocationField(zoom=7, null=False, blank=False, based_fields=['place'], default="0.0, 0.0", verbose_name=_("Coordinates"))
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
         default=Category.INSIDE,
+        verbose_name=_("Category")
     )
-    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])])
-    description = models.TextField(null=True, blank=True)
+    default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])], verbose_name=_("Default Image"))
+    description = models.TextField(null=True, blank=True, verbose_name=_("Description"))
     objects = TourQuerySet.as_manager()
-    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    build_started_at = models.DateTimeField(null=True, blank=True)
-    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
-    creation_time = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name=_("Created At"))
+    build_started_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Build Started At"))
+    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("User"))
+    creation_time = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name=_("Creation Time"))
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
-        default=Status.READY
+        default=Status.READY,
+        verbose_name=_("Status")
     )
-    tot_view = models.IntegerField(default=0)
-    last_edited = models.DateTimeField(auto_now=True, null=True, blank=True)
-    sub_tours = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='parent_tours', null=True, verbose_name="Tour interno")
-    is_subtour = models.BooleanField(default=False, null=True, blank=True)
+    tot_view = models.IntegerField(default=0, verbose_name=_("Total Views"))
+    last_edited = models.DateTimeField(auto_now=True, null=True, blank=True, verbose_name=_("Last Edited"))
+    sub_tours = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='parent_tours', verbose_name=_("Internal Tour"))
+    is_subtour = models.BooleanField(default=False, null=True, blank=True, verbose_name=_("Is Subtour"))
 
     class Meta:
         db_table = "Tour"
-        verbose_name = "Tour"
-        verbose_name_plural = "Tours"
+        verbose_name = _("Tour")
+        verbose_name_plural = _("Tours")
                 
     def __str__(self):
         return self.title
@@ -167,20 +165,20 @@ class Tour(models.Model):
         super().save(*args, **kwargs)
 
 class Waypoint(models.Model):
-    title = models.CharField(max_length=200, blank=False, null=False)
-    place = models.CharField(max_length=200, blank=True, null=True)
-    coordinates = PlainLocationField(zoom=7, null=False, blank=False, based_fields=['place'], default="0.0, 0.0")
-    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints')
-    description = models.TextField(blank=True, null=True)
-    model_path = models.CharField(max_length=200, blank=True, null=True)
+    title = models.CharField(max_length=200, blank=False, null=False, verbose_name=_("Title"))
+    place = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Place"))
+    coordinates = PlainLocationField(zoom=7, null=False, blank=False, based_fields=['place'], default="0.0, 0.0", verbose_name=_("Coordinates"))
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints', verbose_name=_("Tour"))
+    description = models.TextField(blank=True, null=True, verbose_name=_("Description"))
+    model_path = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Model Path"))
     
-    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    build_started_at = models.DateTimeField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name=_("Timestamp"))
+    build_started_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Build Started At"))
     
-    pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['pdf'])])
-    readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['md'])])
-    video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp4', 'mkv', 'mov'])])
-    audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp3', 'wav'])])
+    pdf_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['pdf'])], verbose_name=_("PDF Item"))
+    readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['md'])], verbose_name=_("Readme Item"))
+    video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp4', 'mkv', 'mov'])], verbose_name=_("Video Item"))
+    audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp3', 'wav'])], verbose_name=_("Audio Item"))
     
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INSIDE:
@@ -224,34 +222,46 @@ class Waypoint(models.Model):
 
     class Meta:
         db_table = "Waypoint"
-        verbose_name = "Waypoint"
-        verbose_name_plural = "Waypoints"
+        verbose_name = _("Waypoint")
+        verbose_name_plural = _("Waypoints")
 
     def __str__(self):
         return self.title
 
 class TypeOfImage(models.TextChoices):
-    DEFAULT = "DEFAULT"
-    ADDITIONAL_IMAGES = "ADDITIONAL_IMAGES"
+    DEFAULT = "DEFAULT", _("Default")
+    ADDITIONAL_IMAGES = "ADDITIONAL_IMAGES", _("Additional Images")
 
 class WaypointViewImage(models.Model):
-    waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True)
-    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])])
-    type_of_images = models.CharField(max_length=20, choices=TypeOfImage.choices, default=TypeOfImage.DEFAULT)
+    waypoint = models.ForeignKey(Waypoint, related_name='images', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Waypoint"))
+    image = models.ImageField(upload_to=upload_to, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])], verbose_name=_("Image"))
+    type_of_images = models.CharField(max_length=20, choices=TypeOfImage.choices, default=TypeOfImage.DEFAULT, verbose_name=_("Type of Images"))
+
+    class Meta:
+        verbose_name = _("Waypoint View Image")
+        verbose_name_plural = _("Waypoint View Images")
 
     def __str__(self):
         return f"Image for {self.waypoint.title}"
 
 class WaypointViewLink(models.Model):
-    waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE, null=True, blank=True)
-    link = models.URLField(null=True, blank=True)
+    waypoint = models.ForeignKey(Waypoint, related_name='links', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Waypoint"))
+    link = models.URLField(null=True, blank=True, verbose_name=_("Link"))
     
+    class Meta:
+        verbose_name = _("Waypoint View Link")
+        verbose_name_plural = _("Waypoint View Links")
+
     def __str__(self):
         return f"Link for {self.waypoint.title}"
     
 class Review(models.Model):
-    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='reviews')
-    rating = models.IntegerField()
-    comment = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews', verbose_name=_("Tour"))
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='reviews', verbose_name=_("User"))
+    rating = models.IntegerField(verbose_name=_("Rating"))
+    comment = models.TextField(verbose_name=_("Comment"))
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name=_("Timestamp"))
+
+    class Meta:
+        verbose_name = _("Review")
+        verbose_name_plural = _("Reviews")

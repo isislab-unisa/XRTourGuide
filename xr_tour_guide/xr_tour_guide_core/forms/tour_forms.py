@@ -4,6 +4,7 @@ from ..models import Tour
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 class ClickableCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     
@@ -22,9 +23,10 @@ class ClickableCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
             original_label = option['label']
             option['label'] = format_html(
                 '{} <a href="{}" target="_blank" style="margin-left: 8px; color: #3b82f6; text-decoration: none; font-weight: 500;" '
-                'onclick="event.stopPropagation();">✏️ Modifica</a>',
+                'onclick="event.stopPropagation();">✏️ {}</a>',
                 original_label,
-                change_url
+                change_url,
+                _('Edit')
             )
         
         return option
@@ -47,23 +49,23 @@ class TourForm(forms.ModelForm):
             ),
         }
         labels = {
-            'sub_tours': '🔗 Tour Interni',
-            'title': '🎯 Titolo del Tour',
-            'subtitle': '📌 Sottotitolo',
-            'description': '📝 Descrizione',
-            'place': '📍 Località',
-            'coordinates': '🗺️ Coordinate Mappa',
-            'default_image': '🖼️ Immagine Copertina',
-            'category': '🏷️ Categoria',
+            'sub_tours': _('🔗 Internal Tours'),
+            'title': _('🎯 Tour Title'),
+            'subtitle': _('📌 Subtitle'),
+            'description': _('📝 Description'),
+            'place': _('📍 Location'),
+            'coordinates': _('🗺️ Map Coordinates'),
+            'default_image': _('🖼️ Cover Image'),
+            'category': _('🏷️ Category'),
         }
         help_texts = {
-            'title': 'Un titolo accattivante e chiaro (es: "Tour del Centro Storico", "Viaggio tra Arte e Storia")',
-            'subtitle': 'Una frase che cattura l\'essenza del tour in poche parole',
-            'description': 'Descrizione completa: cosa si vedrà, quanto dura, cosa lo rende speciale',
-            'place': 'La città o area principale del tour',
-            'default_image': 'Un\'immagine suggestiva che rappresenti il tour',
-            'sub_tours': 'Seleziona i tour interni. Clicca su "✏️ Modifica" per aprire e modificare ciascun tour.',
-            'category': 'Il tipo di esperienza offerta',
+            'title': _('A catchy and clear title (e.g.: "Historic Center Tour", "Journey Through Art and History")'),
+            'subtitle': _('A phrase that captures the essence of the tour in a few words'),
+            'description': _('Complete description: what will be seen, how long it lasts, what makes it special'),
+            'place': _('The main city or area of the tour'),
+            'default_image': _('A suggestive image that represents the tour'),
+            'sub_tours': _('Select internal tours. Click on "✏️ Edit" to open and modify each tour.'),
+            'category': _('The type of experience offered'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -75,19 +77,19 @@ class TourForm(forms.ModelForm):
         })
         
         if 'title' in self.fields:
-            self.fields['title'].widget.attrs['placeholder'] = 'Es: Tour del Centro Storico di Roma'
+            self.fields['title'].widget.attrs['placeholder'] = _('E.g.: Historic Center Tour of Rome')
         if 'subtitle' in self.fields:
-            self.fields['subtitle'].widget.attrs['placeholder'] = 'Es: Alla scoperta dei monumenti più iconici'
+            self.fields['subtitle'].widget.attrs['placeholder'] = _('E.g.: Discovering the most iconic monuments')
         if 'description' in self.fields:
-            self.fields['description'].widget.attrs['placeholder'] = (
-                'Descrivi il tour in modo coinvolgente:\n'
-                '- Cosa si vedrà\n'
-                '- Durata stimata\n'
-                '- Cosa lo rende speciale\n'
-                '- A chi è consigliato'
+            self.fields['description'].widget.attrs['placeholder'] = _(
+                'Describe the tour in an engaging way:\n'
+                '- What will be seen\n'
+                '- Estimated duration\n'
+                '- What makes it special\n'
+                '- Who it is recommended for'
             )
         if 'place' in self.fields:
-            self.fields['place'].widget.attrs['placeholder'] = 'Es: Roma'
+            self.fields['place'].widget.attrs['placeholder'] = _('E.g.: Rome')
 
         if request and "_popup" in request.GET and not self.instance.pk:
             self.fields['category'].initial = 'INSIDE'

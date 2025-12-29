@@ -1,5 +1,6 @@
 {% extends 'xr_tour_guide_public/base.html' %}
 {% load static %}
+{% load i18n %}
 {% block public_content %}
 
 <style>
@@ -49,6 +50,65 @@
         50% { transform: translateY(-30px) translateX(20px); }
     }
 
+    /* Language Switcher */
+    .language-switcher-wrapper {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        justify-content: flex-end;
+        margin: 0 auto 20px;
+        max-width: 550px;
+        padding: 0 20px;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .language-switcher {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        padding: 10px 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .language-switcher:hover {
+        background: white;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .language-switcher select {
+        border: none;
+        background: transparent;
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        outline: none;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .language-switcher select option {
+        background: white;
+        color: #2d3748;
+    }
+
+    .language-icon {
+        width: 18px;
+        height: 18px;
+        opacity: 0.7;
+    }
+
     .form-container {
         position: relative;
         z-index: 10;
@@ -56,7 +116,7 @@
         max-width: 550px;
         animation: slideUp 0.6s ease-out;
         margin: auto;
-        padding: 40px 20px;
+        padding: 0 20px 40px;
     }
 
     @keyframes slideUp {
@@ -264,9 +324,10 @@
         transform: translateY(-50%);
         cursor: pointer;
         color: #718096;
-        font-size: 1.1rem;
+        font-size: 0.85rem;
         user-select: none;
         transition: color 0.3s ease;
+        font-weight: 600;
     }
 
     .password-toggle:hover {
@@ -312,13 +373,21 @@
         }
         
         .form-container {
-            padding: 30px 20px;
+            padding: 0 20px 30px;
+        }
+        
+        .language-switcher-wrapper {
+            padding: 0 20px;
         }
     }
 
     @media (max-width: 480px) {
         .form-container {
-            padding: 20px 15px;
+            padding: 0 15px 20px;
+        }
+        
+        .language-switcher-wrapper {
+            padding: 0 15px;
         }
 
         .form-section {
@@ -331,78 +400,113 @@
     }
 </style>
 
+<!-- Language Switcher -->
+<div class="language-switcher-wrapper">
+    <form action="{% url 'set_language' %}" method="post" class="language-switcher">
+        {% csrf_token %}
+        <svg class="language-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+        </svg>
+        <select name="language" onchange="this.form.submit()">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            {% for lang_code, lang_name in LANGUAGES %}
+                <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                    {{ lang_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
 <div class="form-container">
-    <section class="form-section">
+    <div class="form-section">
         <div class="form-header">
-            <h2>✨ Crea il tuo account</h2>
-            <p>Inizia la tua esperienza con XR Tour Guide</p>
+            <h2>🚀 {% trans "Create Account" %}</h2>
+            <p>{% trans "Join us and start your journey" %}</p>
         </div>
 
-        <form id="register-form">
-            <div id="register-message" class="form-message" style="display: none;"></div>
+        <div id="register-message" class="form-message" style="display: none;"></div>
 
-            <div class="form-group">
-                <label for="username" class="form-label">Username*</label>
-                <input type="text" class="form-control" id="username" placeholder="es. mariorossi" required>
+        <form id="register-form">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name" class="form-label">{% trans "First Name" %} *</label>
+                    <input type="text" id="first_name" class="form-control" placeholder="{% trans 'John' %}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name" class="form-label">{% trans "Last Name" %} *</label>
+                    <input type="text" id="last_name" class="form-control" placeholder="{% trans 'Doe' %}" required>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="email" class="form-label">Email*</label>
-                <input type="email" class="form-control" id="email" placeholder="esempio@mail.com" required>
+                <label for="username" class="form-label">{% trans "Username" %} *</label>
+                <input type="text" id="username" class="form-control" placeholder="{% trans 'johndoe' %}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">{% trans "Email" %} *</label>
+                <input type="email" id="email" class="form-control" placeholder="{% trans 'your@email.com' %}" required>
             </div>
 
             <div class="form-group" style="position: relative;">
-                <label for="password" class="form-label">Password*</label>
-                <input type="password" class="form-control" id="password" placeholder="Minimo 8 caratteri" required>
-                <span class="password-toggle" onclick="togglePassword()">👁️</span>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="first_name" class="form-label">Nome*</label>
-                    <input type="text" class="form-control" id="first_name" placeholder="Mario" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="last_name" class="form-label">Cognome*</label>
-                    <input type="text" class="form-control" id="last_name" placeholder="Rossi" required>
-                </div>
+                <label for="password" class="form-label">{% trans "Password" %} *</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                <span class="password-toggle" onclick="togglePassword()">{% trans "Show" %}</span>
             </div>
 
             <div class="form-group">
-                <label for="city" class="form-label">Città*</label>
-                <input type="text" class="form-control" id="city" placeholder="Roma" required>
+                <label for="city" class="form-label">{% trans "City" %}</label>
+                <input type="text" id="city" class="form-control" placeholder="{% trans 'Your city' %}">
             </div>
 
             <div class="form-group">
-                <label for="description" class="form-label">Descrizione*</label>
-                <textarea class="form-control" id="description" rows="3" placeholder="Parlaci un po' di te..." required></textarea>
+                <label for="description" class="form-label">{% trans "Description" %}</label>
+                <textarea id="description" class="form-control" placeholder="{% trans 'Tell us about yourself...' %}"></textarea>
             </div>
 
-            <p class="required-fields">* Campi obbligatori</p>
+            <p class="required-fields">* {% trans "Required fields" %}</p>
 
-            <button type="submit" class="btn btn-primary w-100" id="submit-btn">
-                <span id="btn-text">Registrati</span>
-            </button>
+            <div class="d-grid">
+                <button type="submit" id="submit-btn" class="btn btn-primary">
+                    <span id="btn-text">{% trans "Register" %}</span>
+                </button>
+            </div>
         </form>
 
         <div class="login-link">
-            <p>Hai già un account? <a href="{% url 'login' %}">Accedi qui</a></p>
+            <p>{% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Sign In" %}</a></p>
         </div>
-    </section>
+    </div>
 </div>
 
 <script>
+// Translation strings for JavaScript
+const translations = {
+    show: "{% trans 'Show' %}",
+    hide: "{% trans 'Hide' %}",
+    registering: "{% trans 'Registering...' %}",
+    register: "{% trans 'Register' %}",
+    emailSent: "{% trans 'Email sent successfully! Registration in progress...' %}",
+    error: "{% trans 'Error' %}",
+    unknownError: "{% trans 'Unknown error' %}",
+    networkError: "{% trans 'Network error. Check your connection and try again.' %}"
+};
+
 function togglePassword() {
     const passwordInput = document.getElementById("password");
     const toggle = document.querySelector(".password-toggle");
     
     if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        toggle.textContent = "🙈";
+        toggle.textContent = translations.hide;
     } else {
         passwordInput.type = "password";
-        toggle.textContent = "👁️";
+        toggle.textContent = translations.show;
     }
 }
 
@@ -415,7 +519,7 @@ document.getElementById("register-form").addEventListener("submit", async functi
 
     // Disable button and show loading state
     submitBtn.disabled = true;
-    btnText.innerHTML = '<span class="spinner"></span>Registrazione in corso...';
+    btnText.innerHTML = '<span class="spinner"></span> ' + translations.registering;
 
     const data = {
         username: document.getElementById("username").value.trim(),
@@ -434,52 +538,51 @@ document.getElementById("register-form").addEventListener("submit", async functi
 
     try {
         const response = await fetch("{% url 'register' %}", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": "{{ csrf_token }}",
-    },
-    body: JSON.stringify(data),
-});
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify(data),
+        });
 
-let errorMessage = "";
+        let errorMessage = "";
 
-if (response.ok) { // 200-299
-    messageBox.textContent = "✅ Email inviata correttamente! Reindirizzamento in corso...";
-    messageBox.classList.add("text-success");
-    messageBox.style.display = "block";
+        if (response.ok) { // 200-299
+            messageBox.textContent = translations.emailSent;
+            messageBox.classList.add("text-success");
+            messageBox.style.display = "block";
 
-    setTimeout(() => {
-        window.location.href = "{% url 'login' %}";
-    }, 2000);
-} else {
-    let errorData;
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-        errorData = await response.json();
-        errorMessage = errorData.detail || errorData.message || "Errore sconosciuto";
-    } else {
-        errorMessage = await response.text();
-    }
+            setTimeout(() => {
+                window.location.href = "{% url 'login' %}";
+            }, 2000);
+        } else {
+            let errorData;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                errorData = await response.json();
+                errorMessage = errorData.detail || errorData.message || translations.unknownError;
+            } else {
+                errorMessage = await response.text();
+            }
 
-    messageBox.textContent = "❌ " + errorMessage;
-    messageBox.classList.add("text-danger");
-    messageBox.style.display = "block";
+            messageBox.textContent = translations.error + ": " + errorMessage;
+            messageBox.classList.add("text-danger");
+            messageBox.style.display = "block";
 
-    // Riabilita il pulsante
-    submitBtn.disabled = false;
-    btnText.textContent = "Registrati";
-}
-
+            // Re-enable button
+            submitBtn.disabled = false;
+            btnText.textContent = translations.register;
+        }
     } catch (error) {
         console.log(error);
-        messageBox.textContent = "❌ Errore di rete. Controlla la connessione e riprova.";
+        messageBox.textContent = translations.networkError;
         messageBox.classList.add("text-danger");
         messageBox.style.display = "block";
 
         // Re-enable button
         submitBtn.disabled = false;
-        btnText.textContent = "Registrati";
+        btnText.textContent = translations.register;
     }
 });
 

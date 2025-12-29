@@ -1,24 +1,30 @@
 {% extends 'xr_tour_guide_public/base.html' %}
+{% load i18n %}
 {% block public_content %}
 
 <style>
-    /* --- GENERALE --- */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+    /* --- RESET & BASE --- */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     body {
-        font-family: 'Inter', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         overflow-x: hidden;
+        background: #fafafa;
+        color: #2d3748;
+        line-height: 1.6;
     }
 
     h1, h2, h3, h4, h5 {
+        font-family: 'Playfair Display', serif;
         font-weight: 700;
-    }
-
-    p {
-        color: #555;
-        line-height: 1.7;
-    }
-
-    .section {
-        padding: 100px 20px;
+        line-height: 1.2;
+        color: #1a202c;
     }
 
     /* --- NAVIGATION --- */
@@ -28,48 +34,54 @@
         left: 0;
         right: 0;
         z-index: 1000;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-        padding: 20px 0;
-        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        padding: 24px 0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .navbar-custom.scrolled {
-        padding: 12px 0;
-        box-shadow: 0 2px 30px rgba(0, 0, 0, 0.1);
+        padding: 16px 0;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
     }
 
     .navbar-container {
         max-width: 1400px;
         margin: 0 auto;
-        padding: 0 40px;
+        padding: 0 60px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
     .navbar-brand {
+        font-family: 'Playfair Display', serif;
         font-size: 1.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-weight: 900;
+        color: #2d3748;
         text-decoration: none;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+        letter-spacing: -0.5px;
+        transition: all 0.3s ease;
     }
 
     .navbar-brand:hover {
-        opacity: 0.8;
+        color: #4a5568;
+        transform: translateX(-3px);
+    }
+
+    .navbar-brand-icon {
+        font-size: 1.8rem;
     }
 
     .navbar-menu {
         display: flex;
         align-items: center;
-        gap: 40px;
+        gap: 48px;
         list-style: none;
         margin: 0;
         padding: 0;
@@ -80,271 +92,735 @@
         text-decoration: none;
         font-weight: 500;
         font-size: 0.95rem;
-        transition: color 0.3s ease;
+        transition: all 0.3s ease;
         position: relative;
+        letter-spacing: 0.3px;
     }
 
     .navbar-menu a:hover {
-        color: #667eea;
+        color: #2d3748;
     }
 
-    .navbar-menu a::after {
+    .navbar-menu a::before {
         content: '';
         position: absolute;
-        bottom: -5px;
-        left: 0;
-        width: 0;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%) scaleX(0);
+        width: 80%;
         height: 2px;
-        background: #667eea;
-        transition: width 0.3s ease;
+        background: #4a5568;
+        transition: transform 0.3s ease;
     }
 
-    .navbar-menu a:hover::after {
-        width: 100%;
+    .navbar-menu a:hover::before {
+        transform: translateX(-50%) scaleX(1);
     }
 
     .navbar-actions {
         display: flex;
-        gap: 15px;
+        gap: 16px;
         align-items: center;
     }
 
-    .btn-nav-login {
-        padding: 10px 24px;
-        border: 2px solid #667eea;
-        color: #667eea;
+    /* Language Switcher in Navbar */
+    .language-switcher-nav {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         background: transparent;
-        border-radius: 8px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 14px;
+        transition: all 0.3s ease;
+    }
+
+    .language-switcher-nav:hover {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+    }
+
+    .language-switcher-nav select {
+        border: none;
+        background: transparent;
+        color: #4a5568;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        outline: none;
+        padding: 0;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .language-switcher-nav select option {
+        background: white;
+        color: #2d3748;
+    }
+
+    .language-icon {
+        width: 16px;
+        height: 16px;
+        opacity: 0.7;
+        color: #4a5568;
+    }
+
+    .btn-nav-login {
+        padding: 12px 28px;
+        border: 1.5px solid #e2e8f0;
+        color: #4a5568;
+        background: transparent;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
         transition: all 0.3s ease;
         text-decoration: none;
         display: inline-block;
+        letter-spacing: 0.5px;
     }
 
     .btn-nav-login:hover {
-        background: #667eea;
-        color: white;
+        background: #f7fafc;
+        border-color: #cbd5e0;
+        color: #2d3748;
         transform: translateY(-2px);
     }
 
     .btn-nav-register {
-        padding: 10px 24px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        padding: 12px 28px;
+        background: #2d3748;
+        color: #ffffff;
         border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.95rem;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.9rem;
         transition: all 0.3s ease;
         text-decoration: none;
         display: inline-block;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(45, 55, 72, 0.2);
     }
 
     .btn-nav-register:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        color: white;
+        box-shadow: 0 4px 12px rgba(45, 55, 72, 0.3);
+        background: #1a202c;
+        color: #ffffff;
     }
 
     .mobile-menu-toggle {
         display: none;
         background: none;
         border: none;
-        font-size: 1.5rem;
-        color: #4a5568;
+        font-size: 1.8rem;
+        color: #2d3748;
         cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .mobile-menu-toggle:hover {
+        transform: rotate(90deg);
     }
 
     /* Mobile Menu */
     .mobile-menu {
         display: none;
         position: fixed;
-        top: 70px;
+        top: 80px;
         left: 0;
         right: 0;
-        background: white;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        padding: 20px;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        padding: 30px 40px;
         z-index: 999;
+        transform: translateY(-20px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
 
     .mobile-menu.active {
         display: block;
+        transform: translateY(0);
+        opacity: 1;
     }
 
     .mobile-menu ul {
         list-style: none;
         padding: 0;
-        margin: 0 0 20px 0;
+        margin: 0 0 30px 0;
     }
 
     .mobile-menu ul li {
-        margin: 15px 0;
+        margin: 20px 0;
     }
 
     .mobile-menu ul li a {
         color: #4a5568;
         text-decoration: none;
         font-weight: 500;
-        font-size: 1rem;
+        font-size: 1.1rem;
         display: block;
-        padding: 10px;
+        padding: 12px 0;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-menu ul li a:hover {
+        color: #2d3748;
+        padding-left: 10px;
     }
 
     .mobile-menu-actions {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
+    }
+
+    /* Language Switcher in Mobile Menu */
+    .language-switcher-mobile {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+    }
+
+    .language-switcher-mobile select {
+        border: none;
+        background: transparent;
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        outline: none;
+        padding: 0;
+        font-family: 'DM Sans', sans-serif;
+        flex: 1;
     }
 
     /* --- HERO --- */
     .hero {
         min-height: 100vh;
-        padding: 180px 20px 100px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-        color: white;
-        text-align: center;
+        padding: 200px 60px 120px;
+        background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
-        justify-content: center;
     }
 
     .hero::before {
         content: "";
         position: absolute;
-        width: 600px;
-        height: 600px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 50%;
-        top: -300px;
-        right: -200px;
-        animation: float 20s ease-in-out infinite;
+        top: -50%;
+        right: -30%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(203, 213, 224, 0.3) 0%, transparent 70%);
+        animation: pulse 8s ease-in-out infinite;
     }
 
     .hero::after {
         content: "";
         position: absolute;
-        width: 400px;
-        height: 400px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 50%;
-        bottom: -150px;
-        left: -100px;
-        animation: float 15s ease-in-out infinite reverse;
+        bottom: -20%;
+        left: -20%;
+        width: 80%;
+        height: 80%;
+        background: radial-gradient(circle, rgba(226, 232, 240, 0.4) 0%, transparent 60%);
+        animation: pulse 10s ease-in-out infinite reverse;
     }
 
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) translateX(0px); }
-        50% { transform: translateY(-30px) translateX(20px); }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        50% { transform: scale(1.1) rotate(5deg); opacity: 0.8; }
+    }
+
+    .hero-grid {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+        position: relative;
+        z-index: 2;
     }
 
     .hero-content {
-        position: relative;
-        z-index: 2;
-        max-width: 900px;
-        animation: fadeInUp 1s ease-out;
+        animation: fadeInLeft 1s ease-out;
     }
 
-    @keyframes fadeInUp {
+    @keyframes fadeInLeft {
         from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateX(-40px);
         }
         to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(0);
         }
     }
 
-    .hero h1 {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        text-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        letter-spacing: -1px;
+    .hero-label {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #edf2f7;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+        animation: fadeIn 1s ease-out 0.3s both;
     }
 
-    .hero p {
-        font-size: 1.4rem;
-        opacity: 0.95;
-        margin-top: 15px;
-        color: rgba(255,255,255,0.95);
-        font-weight: 300;
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero h1 {
+        font-size: 5rem;
+        margin-bottom: 30px;
+        line-height: 1.1;
+        font-weight: 900;
+        color: #1a202c;
+        letter-spacing: -2px;
+        animation: fadeIn 1s ease-out 0.5s both;
+    }
+
+    .hero-description {
+        font-size: 1.25rem;
+        color: #4a5568;
+        margin-bottom: 50px;
+        line-height: 1.8;
+        max-width: 540px;
+        animation: fadeIn 1s ease-out 0.7s both;
     }
 
     .hero-cta {
-        margin-top: 40px;
         display: flex;
         gap: 20px;
-        justify-content: center;
-        flex-wrap: wrap;
+        animation: fadeIn 1s ease-out 0.9s both;
     }
 
     .btn-hero {
-        padding: 16px 40px;
-        font-size: 1.15rem;
-        border-radius: 50px;
-        font-weight: 600;
+        padding: 18px 42px;
+        font-size: 1.05rem;
+        border-radius: 6px;
+        font-weight: 700;
         transition: all 0.3s ease;
         border: none;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         text-decoration: none;
         display: inline-block;
+        letter-spacing: 0.5px;
+        cursor: pointer;
     }
 
     .btn-hero-primary {
-        background: white;
-        color: #667eea;
+        background: #2d3748;
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(45, 55, 72, 0.25);
     }
 
     .btn-hero-primary:hover {
         transform: translateY(-3px);
-        box-shadow: 0 12px 28px rgba(0,0,0,0.25);
-        background: #f8f9fa;
-        color: #667eea;
+        box-shadow: 0 8px 20px rgba(45, 55, 72, 0.35);
+        background: #1a202c;
+        color: #ffffff;
     }
 
     .btn-hero-secondary {
-        background: rgba(255,255,255,0.2);
-        color: white;
-        backdrop-filter: blur(10px);
+        background: transparent;
+        color: #4a5568;
+        border: 1.5px solid #e2e8f0;
     }
 
     .btn-hero-secondary:hover {
-        background: rgba(255,255,255,0.3);
+        background: #f7fafc;
+        border-color: #cbd5e0;
         transform: translateY(-3px);
-        color: white;
+        color: #2d3748;
+    }
+
+    .hero-visual {
+        position: relative;
+        animation: fadeInRight 1s ease-out 0.5s both;
+    }
+
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .hero-image-wrapper {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .hero-image-wrapper::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(45, 55, 72, 0.05) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-image-wrapper img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .hero-decorative-elements {
+        position: absolute;
+        inset: -20px;
+        pointer-events: none;
+    }
+
+    .decorative-dot {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #cbd5e0;
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: float 4s ease-in-out infinite;
+    }
+
+    .decorative-dot:nth-child(1) { top: 10%; left: -10px; animation-delay: 0s; }
+    .decorative-dot:nth-child(2) { top: 40%; left: -15px; animation-delay: 1s; }
+    .decorative-dot:nth-child(3) { top: 70%; left: -8px; animation-delay: 2s; }
+    .decorative-dot:nth-child(4) { top: 20%; right: -12px; animation-delay: 0.5s; }
+    .decorative-dot:nth-child(5) { top: 60%; right: -10px; animation-delay: 1.5s; }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); opacity: 0.4; }
+        50% { transform: translateY(-20px); opacity: 0.8; }
+    }
+
+    /* --- CHALLENGE SECTION --- */
+    .challenge {
+        background: #ffffff;
+        padding: 160px 60px;
+        position: relative;
+    }
+
+    .challenge::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.8), transparent);
+    }
+
+    .challenge-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .challenge-header {
+        text-align: center;
+        margin-bottom: 100px;
+    }
+
+    .challenge-label {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #edf2f7;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+    }
+
+    .challenge h2 {
+        font-size: 3.5rem;
+        margin-bottom: 24px;
+        color: #1a202c;
+        letter-spacing: -1px;
+    }
+
+    .challenge-subtitle {
+        font-size: 1.2rem;
+        color: #4a5568;
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    .challenge-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+    }
+
+    .challenge-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 50px 40px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .challenge-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #e53e3e;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+    }
+
+    .challenge-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .challenge-card:hover {
+        transform: translateY(-8px);
+        border-color: #cbd5e0;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    }
+
+    .challenge-icon {
+        font-size: 3rem;
+        margin-bottom: 30px;
+        display: inline-block;
+        transition: all 0.4s ease;
+    }
+
+    .challenge-card:hover .challenge-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .challenge-card h4 {
+        margin: 0 0 20px;
+        color: #1a202c;
+        font-size: 1.6rem;
+        letter-spacing: -0.5px;
+    }
+
+    .challenge-card p {
+        color: #4a5568;
+        font-size: 1.05rem;
+        line-height: 1.8;
+    }
+
+    /* --- SOLUTION SECTION --- */
+    .solution {
+        background: #f7fafc;
+        padding: 160px 60px;
+        position: relative;
+    }
+
+    .solution::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.8), transparent);
+    }
+
+    .solution-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .solution-header {
+        text-align: center;
+        margin-bottom: 100px;
+    }
+
+    .solution-label {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+    }
+
+    .solution h2 {
+        font-size: 3.5rem;
+        margin-bottom: 24px;
+        color: #1a202c;
+        letter-spacing: -1px;
+    }
+
+    .solution-subtitle {
+        font-size: 1.2rem;
+        color: #4a5568;
+        max-width: 700px;
+        margin: 0 auto 60px;
+        line-height: 1.8;
+    }
+
+    .solution-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+        margin-bottom: 80px;
+    }
+
+    .solution-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 50px 40px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .solution-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #48bb78;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+    }
+
+    .solution-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .solution-card:hover {
+        transform: translateY(-8px);
+        border-color: #cbd5e0;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    }
+
+    .solution-icon {
+        font-size: 3rem;
+        margin-bottom: 30px;
+        display: inline-block;
+        transition: all 0.4s ease;
+    }
+
+    .solution-card:hover .solution-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .solution-card h4 {
+        margin: 0 0 20px;
+        color: #1a202c;
+        font-size: 1.6rem;
+        letter-spacing: -0.5px;
+    }
+
+    .solution-card p {
+        color: #4a5568;
+        font-size: 1.05rem;
+        line-height: 1.8;
     }
 
     /* --- FEATURES --- */
     .features {
-        background: linear-gradient(180deg, #ffffff 0%, #f8f9fb 100%);
+        background: #ffffff;
+        padding: 160px 60px;
+        position: relative;
+    }
+
+    .features::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.8), transparent);
+    }
+
+    .features-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .features-header {
         text-align: center;
+        margin-bottom: 100px;
+    }
+
+    .features-label {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #edf2f7;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
     }
 
     .features h2 {
-        font-size: 2.8rem;
-        margin-bottom: 60px;
-        color: #2d3748;
+        font-size: 3.5rem;
+        margin-bottom: 24px;
+        color: #1a202c;
+        letter-spacing: -1px;
+    }
+
+    .features-subtitle {
+        font-size: 1.2rem;
+        color: #4a5568;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
     }
 
     .features-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 40px;
-        max-width: 1200px;
-        margin: 0 auto;
     }
 
     .feature-card {
-        background: white;
-        border-radius: 20px;
-        padding: 45px 35px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 50px 40px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
     }
@@ -355,10 +831,11 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 5px;
-        background: linear-gradient(90deg, #667eea, #764ba2);
+        height: 3px;
+        background: #4a5568;
         transform: scaleX(0);
-        transition: transform 0.3s ease;
+        transform-origin: left;
+        transition: transform 0.4s ease;
     }
 
     .feature-card:hover::before {
@@ -366,139 +843,302 @@
     }
 
     .feature-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        transform: translateY(-8px);
+        border-color: #cbd5e0;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
     }
 
     .feature-icon {
-        font-size: 3.5rem;
-        margin-bottom: 20px;
+        font-size: 3rem;
+        margin-bottom: 30px;
         display: inline-block;
-        animation: bounce 2s ease-in-out infinite;
-    }
-
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
+        transition: all 0.4s ease;
     }
 
     .feature-card:hover .feature-icon {
-        animation: none;
-        transform: scale(1.1);
-        transition: transform 0.3s ease;
+        transform: scale(1.1) rotate(5deg);
     }
 
     .feature-card h4 {
-        margin: 20px 0 15px;
-        color: #2d3748;
-        font-size: 1.5rem;
+        margin: 0 0 20px;
+        color: #1a202c;
+        font-size: 1.6rem;
+        letter-spacing: -0.5px;
     }
 
     .feature-card p {
-        color: #718096;
+        color: #4a5568;
         font-size: 1.05rem;
-        line-height: 1.7;
+        line-height: 1.8;
     }
 
-    /* --- GALLERY --- */
-    .gallery {
-        background: linear-gradient(180deg, #f8f9fb 0%, #ffffff 100%);
-        text-align: center;
-        padding: 100px 20px;
+    /* --- USE CASES --- */
+    .use-cases {
+        background: #f7fafc;
+        padding: 160px 60px;
+        position: relative;
     }
 
-    .gallery h2 {
-        font-size: 2.8rem;
-        margin-bottom: 20px;
-        color: #2d3748;
+    .use-cases::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.8), transparent);
     }
 
-    .gallery-subtitle {
-        font-size: 1.2rem;
-        color: #718096;
-        margin-bottom: 60px;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .compact-card {
-        background: white;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        transition: all 0.4s ease;
-        max-width: 420px;
+    .use-cases-container {
+        max-width: 1400px;
         margin: 0 auto;
     }
 
-    .compact-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    .use-cases-header {
+        text-align: center;
+        margin-bottom: 80px;
     }
 
-    .compact-card img {
-        height: 280px;
+    .use-cases-label {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+    }
+
+    .use-cases h2 {
+        font-size: 3.5rem;
+        margin-bottom: 24px;
+        color: #1a202c;
+        letter-spacing: -1px;
+    }
+
+    .use-cases-subtitle {
+        font-size: 1.2rem;
+        color: #4a5568;
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    .carousel-wrapper {
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .use-case-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .use-case-card:hover {
+        transform: translateY(-5px);
+        border-color: #cbd5e0;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
+    }
+
+    .use-case-card-image {
+        height: 450px;
         width: 100%;
         object-fit: cover;
-        transition: transform 0.5s ease;
+        transition: transform 0.6s ease;
     }
 
-    .compact-card:hover img {
-        transform: scale(1.1);
+    .use-case-card:hover .use-case-card-image {
+        transform: scale(1.05);
     }
 
-    .compact-card-body {
-        padding: 30px;
-        text-align: left;
+    .use-case-card-body {
+        padding: 50px 45px;
     }
 
-    .compact-card-body h5 {
+    .use-case-card-body h5 {
         font-weight: 700;
-        color: #667eea;
-        margin-bottom: 12px;
-        font-size: 1.4rem;
+        color: #1a202c;
+        margin-bottom: 16px;
+        font-size: 2rem;
+        letter-spacing: -0.5px;
     }
 
-    .compact-card-body p {
-        color: #718096;
-        font-size: 1rem;
-        line-height: 1.6;
+    .use-case-card-body p {
+        color: #4a5568;
+        font-size: 1.1rem;
+        line-height: 1.8;
     }
 
-    /* Carousel custom styling */
+    /* Carousel Controls */
     .carousel-control-prev,
     .carousel-control-next {
         width: 60px;
         height: 60px;
-        background: rgba(102, 126, 234, 0.9);
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #e2e8f0;
         border-radius: 50%;
         top: 50%;
         transform: translateY(-50%);
-        opacity: 0.8;
+        opacity: 1;
         transition: all 0.3s ease;
     }
 
     .carousel-control-prev:hover,
     .carousel-control-next:hover {
-        opacity: 1;
-        background: rgba(102, 126, 234, 1);
+        background: #ffffff;
+        border-color: #cbd5e0;
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .carousel-control-prev {
-        left: 20px;
+        left: -80px;
     }
 
     .carousel-control-next {
-        right: 20px;
+        right: -80px;
+    }
+
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        filter: invert(0.3);
+    }
+
+    /* --- IMPACT SECTION --- */
+    .impact {
+        background: #ffffff;
+        padding: 160px 60px;
+        position: relative;
+    }
+
+    .impact::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.8), transparent);
+    }
+
+    .impact-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .impact-header {
+        text-align: center;
+        margin-bottom: 100px;
+    }
+
+    .impact-label {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #edf2f7;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+    }
+
+    .impact h2 {
+        font-size: 3.5rem;
+        margin-bottom: 24px;
+        color: #1a202c;
+        letter-spacing: -1px;
+    }
+
+    .impact-subtitle {
+        font-size: 1.2rem;
+        color: #4a5568;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    .impact-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 40px;
+    }
+
+    .impact-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 50px 40px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+
+    .impact-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #805ad5;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+    }
+
+    .impact-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .impact-card:hover {
+        transform: translateY(-8px);
+        border-color: #cbd5e0;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    }
+
+    .impact-icon {
+        font-size: 3rem;
+        margin-bottom: 30px;
+        display: inline-block;
+        transition: all 0.4s ease;
+    }
+
+    .impact-card:hover .impact-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .impact-card h4 {
+        margin: 0 0 20px;
+        color: #1a202c;
+        font-size: 1.5rem;
+        letter-spacing: -0.5px;
+    }
+
+    .impact-card p {
+        color: #4a5568;
+        font-size: 1.05rem;
+        line-height: 1.8;
     }
 
     /* --- CTA --- */
     .cta {
         text-align: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 100px 20px;
+        background: #f7fafc;
+        padding: 180px 60px;
         position: relative;
         overflow: hidden;
     }
@@ -506,46 +1146,126 @@
     .cta::before {
         content: "";
         position: absolute;
-        width: 500px;
-        height: 500px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 50%;
-        top: -250px;
-        right: -150px;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.8), transparent);
+    }
+
+    .cta::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(237, 242, 247, 0.5) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .cta-content {
+        position: relative;
+        z-index: 2;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .cta-label {
+        display: inline-block;
+        padding: 8px 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 30px;
     }
 
     .cta h3 {
-        font-size: 2.5rem;
-        margin-bottom: 25px;
-        position: relative;
-        z-index: 2;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        font-size: 4rem;
+        margin-bottom: 30px;
+        color: #1a202c;
+        letter-spacing: -1.5px;
+        line-height: 1.2;
     }
 
     .cta p {
-        font-size: 1.2rem;
-        margin-bottom: 40px;
-        color: rgba(255,255,255,0.9);
-        position: relative;
-        z-index: 2;
+        font-size: 1.3rem;
+        margin-bottom: 50px;
+        color: #4a5568;
+        line-height: 1.8;
     }
 
     .cta-buttons {
-        position: relative;
-        z-index: 2;
         display: flex;
         gap: 20px;
         justify-content: center;
         flex-wrap: wrap;
     }
 
+    /* --- FOOTER --- */
+    .footer {
+        background: #ffffff;
+        padding: 60px 60px 40px;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .footer p {
+        color: #718096;
+        font-size: 0.95rem;
+        margin: 0 0 12px 0;
+    }
+
+    .footer-brand {
+        font-family: 'Playfair Display', serif;
+        color: #2d3748;
+        font-weight: 700;
+        margin-bottom: 12px;
+        font-size: 1.2rem;
+    }
+
+    .footer-note {
+        font-size: 0.85rem;
+        color: #a0aec0;
+        margin-top: 20px;
+        font-style: italic;
+    }
+
     /* --- RESPONSIVE --- */
-    @media (max-width: 968px) {
-        .navbar-menu {
-            display: none;
+    @media (max-width: 1200px) {
+        .carousel-control-prev {
+            left: 20px;
+        }
+        
+        .carousel-control-next {
+            right: 20px;
         }
 
-        .navbar-actions {
+        .features-grid,
+        .solution-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .impact-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 968px) {
+        .navbar-menu,
+        .navbar-actions .btn-nav-login,
+        .navbar-actions .btn-nav-register {
             display: none;
         }
 
@@ -554,36 +1274,98 @@
         }
 
         .navbar-container {
+            padding: 0 30px;
+        }
+
+        .hero-grid {
+            grid-template-columns: 1fr;
+            gap: 60px;
             padding: 0 20px;
+        }
+
+        .hero {
+            padding: 160px 30px 100px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+        }
+
+        .features-grid,
+        .solution-grid,
+        .challenge-grid {
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .impact-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .features,
+        .solution,
+        .challenge,
+        .use-cases,
+        .impact,
+        .cta {
+            padding: 100px 30px;
+        }
+
+        .features h2,
+        .solution h2,
+        .challenge h2,
+        .use-cases h2,
+        .impact h2 {
+            font-size: 2.5rem;
+        }
+
+        .cta h3 {
+            font-size: 2.8rem;
         }
     }
 
     @media (max-width: 768px) {
-        .hero {
-            padding: 140px 20px 100px;
-        }
-
         .hero h1 {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
         }
 
-        .hero p {
-            font-size: 1.1rem;
+        .hero-cta {
+            flex-direction: column;
         }
 
-        .features h2,
-        .gallery h2 {
-            font-size: 2rem;
-        }
-
-        .section {
-            padding: 60px 20px;
+        .btn-hero {
+            width: 100%;
+            text-align: center;
         }
 
         .carousel-control-prev,
         .carousel-control-next {
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
+        }
+
+        .use-case-card-image {
+            height: 300px;
+        }
+
+        .features h2,
+        .solution h2,
+        .challenge h2,
+        .use-cases h2,
+        .impact h2 {
+            font-size: 2rem;
+        }
+
+        .cta h3 {
+            font-size: 2.2rem;
+        }
+
+        .cta-buttons {
+            flex-direction: column;
         }
     }
 
@@ -597,17 +1379,37 @@
 <nav class="navbar-custom" id="mainNav">
     <div class="navbar-container">
         <a href="{% url 'landing_page' %}" class="navbar-brand">
-            <span>🌍</span> XR Tour Guide
+            <span class="navbar-brand-icon">🌍</span>
+            XR Tour Guide
         </a>
         
         <ul class="navbar-menu">
-            <li><a href="#features">Funzionalità</a></li>
-            <li><a href="#tours">Tour</a></li>
+            <li><a href="#challenge">{% trans "The Challenge" %}</a></li>
+            <li><a href="#solution">{% trans "Our Solution" %}</a></li>
+            <li><a href="#features">{% trans "Features" %}</a></li>
+            <li><a href="#tours">{% trans "Use Cases" %}</a></li>
         </ul>
 
         <div class="navbar-actions">
-            <a href="{% url 'login' %}" class="btn-nav-login">Accedi</a>
-            <a href="{% url 'register_platform' %}" class="btn-nav-register">Registrati</a>
+            <!-- Language Switcher -->
+            <form action="{% url 'set_language' %}" method="post" class="language-switcher-nav">
+                {% csrf_token %}
+                <svg class="language-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                </svg>
+                <select name="language" onchange="this.form.submit()">
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {% get_available_languages as LANGUAGES %}
+                    {% for lang_code, lang_name in LANGUAGES %}
+                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                            {{ lang_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+            
+            <a href="{% url 'login' %}" class="btn-nav-login">{% trans "Sign In" %}</a>
+            <a href="{% url 'register_platform' %}" class="btn-nav-register">{% trans "Register" %}</a>
         </div>
 
         <button class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -619,104 +1421,370 @@
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu">
     <ul>
-        <li><a href="#features">Funzionalità</a></li>
-        <li><a href="#tours">Tour</a></li>
+        <li><a href="#challenge">{% trans "The Challenge" %}</a></li>
+        <li><a href="#solution">{% trans "Our Solution" %}</a></li>
+        <li><a href="#features">{% trans "Features" %}</a></li>
+        <li><a href="#tours">{% trans "Use Cases" %}</a></li>
     </ul>
+    
+    <!-- Language Switcher for Mobile -->
+    <form action="{% url 'set_language' %}" method="post" class="language-switcher-mobile">
+        {% csrf_token %}
+        <svg class="language-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+        </svg>
+        <select name="language" onchange="this.form.submit()">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            {% for lang_code, lang_name in LANGUAGES %}
+                <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                    {{ lang_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+    
     <div class="mobile-menu-actions">
-        <a href="{% url 'login' %}" class="btn-nav-login" style="text-align: center;">Accedi</a>
-        <a href="{% url 'register_platform' %}" class="btn-nav-register" style="text-align: center;">Registrati</a>
+        <a href="{% url 'login' %}" class="btn-nav-login" style="text-align: center;">{% trans "Sign In" %}</a>
+        <a href="{% url 'register_platform' %}" class="btn-nav-register" style="text-align: center;">{% trans "Register" %}</a>
     </div>
 </div>
 
 <!-- HERO -->
 <section class="hero">
-    <div class="hero-content">
-        <h1>XR Tour Guide</h1>
-        <p class="lead">Esplora il patrimonio culturale con tour immersivi guidati da intelligenza artificiale</p>
-        <div class="hero-cta">
-            <a href="{% url 'register_platform' %}" class="btn btn-hero btn-hero-primary">Inizia Ora</a>
-            <a href="#tours" class="btn btn-hero btn-hero-secondary">Scopri i Tour</a>
+    <div class="hero-grid">
+        <div class="hero-content">
+            <div class="hero-label">{% trans "XR Experiences for Rural Communities" %}</div>
+            <h1>{% trans "Guiding Real-Life Experiences" %}</h1>
+            <p class="hero-description">
+                {% trans "Enriching reality with immersive media insights using Extended Reality (XR) and Artificial Intelligence (AI) to empower rural communities through community-driven XR content." %}
+            </p>
+            <div class="hero-cta">
+                <a href="{% url 'register_platform' %}" class="btn btn-hero btn-hero-primary">{% trans "Discover How" %}</a>
+                <a href="#features" class="btn btn-hero btn-hero-secondary">{% trans "Learn More" %}</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-decorative-elements">
+                <span class="decorative-dot"></span>
+                <span class="decorative-dot"></span>
+                <span class="decorative-dot"></span>
+                <span class="decorative-dot"></span>
+                <span class="decorative-dot"></span>
+            </div>
+            <div class="hero-image-wrapper">
+                {% if tours and tours.0.default_image %}
+                <img src="{% url 'stream_minio_resource' %}?tour={{ tours.0.id }}&file={{ tours.0.default_image.name|urlencode }}"
+                     alt="XR Tour Experience">
+                {% else %}
+                <img src="https://images.unsplash.com/photo-1531572753322-ad063cecc140?w=800&q=80"
+                     alt="Cultural Heritage Experience">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CHALLENGE -->
+<section class="challenge" id="challenge">
+    <div class="challenge-container">
+        <div class="challenge-header">
+            <div class="challenge-label">{% trans "Understanding the Problem" %}</div>
+            <h2>{% trans "The Challenge in Rural Areas" %}</h2>
+            <p class="challenge-subtitle">
+                {% trans "Many regions rich in cultural heritage face significant hurdles that limit tourism, community involvement, and local opportunities." %}
+            </p>
+        </div>
+        <div class="challenge-grid">
+            <div class="challenge-card">
+                <div class="challenge-icon">🚧</div>
+                <h4>{% trans "Access Difficulties" %}</h4>
+                <p>
+                    {% trans "Cultural sites in many rural areas struggle to remain open and accessible. Chronic staff shortages make it hard to keep museums and historical buildings operating, while minimal or deteriorating infrastructure further discourages attendance." %}
+                </p>
+            </div>
+            <div class="challenge-card">
+                <div class="challenge-icon">🏛️</div>
+                <h4>{% trans "Insufficient Essential Services" %}</h4>
+                <p>
+                    {% trans "Basic visitor amenities—such as restrooms, seating, shelter, and refreshments—are often missing or in disrepair in village centers. Without these fundamental comforts, tourists are less inclined to stay and explore." %}
+                </p>
+            </div>
+            <div class="challenge-card">
+                <div class="challenge-icon">📍</div>
+                <h4>{% trans "Low Visibility & Weak Regional Identity" %}</h4>
+                <p>
+                    {% trans "These communities frequently lack strong branding or promotional efforts. As a result, the area remains \"off the map\" for most travelers, leading to under-utilization of rich cultural and natural assets." %}
+                </p>
+            </div>
+            <div class="challenge-card">
+                <div class="challenge-icon">📢</div>
+                <h4>{% trans "Poor Dissemination of Local Information" %}</h4>
+                <p>
+                    {% trans "Even when interesting sites exist, details about their history, significance, and practical visiting tips are hard to find. Limited distribution channels and fragmented information hinder awareness of what the territory has to offer." %}
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SOLUTION -->
+<section class="solution" id="solution">
+    <div class="solution-container">
+        <div class="solution-header">
+            <div class="solution-label">{% trans "Our Solution" %}</div>
+            <h2>{% trans "XRTourGuide Platform" %}</h2>
+            <p class="solution-subtitle">
+                {% trans "An online platform empowering communities to create and share immersive XR virtual tours, enhancing real-world exploration." %}
+            </p>
+        </div>
+        <div class="solution-grid">
+            <div class="solution-card">
+                <div class="solution-icon">✏️</div>
+                <h4>{% trans "Authoring Platform" %}</h4>
+                <p>
+                    {% trans "A web-based tool allowing users (citizens, organizations) to easily create XR tours with text, images, audio, and video." %}
+                </p>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">📱</div>
+                <h4>{% trans "Mobile Application" %}</h4>
+                <p>
+                    {% trans "A multi-platform app for users to discover and experience tours. Point your phone at objects to unlock rich media insights." %}
+                </p>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🤝</div>
+                <h4>{% trans "Community Co-Creation" %}</h4>
+                <p>
+                    {% trans "Developed in collaboration with rural communities through the Active Rural Community Working Group (ARCO-WG)." %}
+                </p>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- FEATURES -->
-<section class="section features" id="features">
-    <h2>Perché Scegliere XR Tour Guide</h2>
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon">🌍</div>
-            <h4>Tour Immersivi</h4>
-            <p>Scopri ambienti indoor e outdoor con storytelling multimediale e navigazione basata sulla posizione GPS.</p>
+<section class="features" id="features">
+    <div class="features-container">
+        <div class="features-header">
+            <div class="features-label">{% trans "Key Features" %}</div>
+            <h2>{% trans "Cutting-Edge Technology" %}</h2>
+            <p class="features-subtitle">
+                {% trans "Leveraging advanced technology for engaging and immersive cultural experiences." %}
+            </p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">🤖</div>
-            <h4>Intelligenza Artificiale</h4>
-            <p>Interagisci con chatbot intelligenti e interfacce AR per un'esperienza personalizzata e coinvolgente.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🛠️</div>
-            <h4>Gestione Semplice</h4>
-            <p>Crea e gestisci tour personalizzati con pannelli intuitivi e strumenti avanzati di generazione contenuti.</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🥽</div>
+                <h4>{% trans "Extended Reality (XR)" %}</h4>
+                <p>
+                    {% trans "Augmenting real-world views with interactive digital content, blending physical and virtual experiences seamlessly." %}
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h4>{% trans "AI-Powered Recognition" %}</h4>
+                <p>
+                    {% trans "Visual Tagging module identifies objects (art, buildings, nature) to trigger relevant content automatically." %}
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎬</div>
+                <h4>{% trans "Multimodal Content" %}</h4>
+                <p>
+                    {% trans "Supports text, audio, video, and images, engaging insights that bring heritage to life." %}
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h4>{% trans "Cloud-Native Platform" %}</h4>
+                <p>
+                    {% trans "Scalable and accessible web-based authoring tool that works from anywhere, ensuring maximum reach and flexibility." %}
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎮</div>
+                <h4>{% trans "Gamification Elements" %}</h4>
+                <p>
+                    {% trans "Encouraging user engagement and social sharing within the mobile app through interactive challenges and rewards." %}
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h4>{% trans "Multi-Language Support" %}</h4>
+                <p>
+                    {% trans "Making tours accessible to a wider, international audience with comprehensive language localization." %}
+                </p>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- GALLERY -->
-<section class="section gallery" id="tours">
-    <h2>Esplora il Sud Italia</h2>
-    <p class="gallery-subtitle">Scopri tesori culturali nascosti attraverso esperienze immersive e coinvolgenti</p>
+<!-- USE CASES -->
+<section class="use-cases" id="tours">
+    <div class="use-cases-container">
+        <div class="use-cases-header">
+            <div class="use-cases-label">{% trans "Example Use Cases" %}</div>
+            <h2>{% trans "XRTourGuide in Action" %}</h2>
+            <p class="use-cases-subtitle">
+                {% trans "Demonstrating the versatility of XRTourGuide in the pilot region (Bussento, Lambro, Mingardo)." %}
+            </p>
+        </div>
 
-    {% if tours %}
-    <div id="tourCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-        <div class="carousel-inner">
-            {% for tour in tours %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <div class="d-flex justify-content-center">
-                    <div class="compact-card">
-                        <img src="{% url 'stream_minio_resource' %}?tour={{ tour.id }}&file={{ tour.default_image.name|urlencode }}"
-                             alt="{{ tour.title }}">
-                        <div class="compact-card-body">
-                            <h5>{{ tour.title }}</h5>
-                            <p>{{ tour.description|default:"Scopri questa meravigliosa esperienza culturale." }}</p>
+        <div class="carousel-wrapper">
+            <div id="useCaseCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+                <div class="carousel-inner">
+                    <!-- Nilus Trail -->
+                    <div class="carousel-item active">
+                        <div class="use-case-card">
+                            {% if tours and tours.0.default_image %}
+                            <img class="use-case-card-image"
+                                 src="{% url 'stream_minio_resource' %}?tour={{ tours.0.id }}&file={{ tours.0.default_image.name|urlencode }}"
+                                 alt="Nilus Trail">
+                            {% else %}
+                            <img class="use-case-card-image"
+                                 src="https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80"
+                                 alt="Nilus Trail">
+                            {% endif %}
+                            <div class="use-case-card-body">
+                                <h5>{% trans "Nilus Trail" %}</h5>
+                                <p>{% trans "Highlighting the historical route of Saint Nilus, increasing awareness of art, nature, and faith landmarks in the Byzantine Cilento (UNESCO site)." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Morigerati Heritage -->
+                    <div class="carousel-item">
+                        <div class="use-case-card">
+                            {% if tours and tours.1.default_image %}
+                            <img class="use-case-card-image"
+                                 src="{% url 'stream_minio_resource' %}?tour={{ tours.1.id }}&file={{ tours.1.default_image.name|urlencode }}"
+                                 alt="Morigerati Heritage">
+                            {% else %}
+                            <img class="use-case-card-image"
+                                 src="https://images.unsplash.com/photo-1566127444183-e0413778e08c?w=800&q=80"
+                                 alt="Morigerati Heritage">
+                            {% endif %}
+                            <div class="use-case-card-body">
+                                <h5>{% trans "Morigerati Heritage" %}</h5>
+                                <p>{% trans "Showcasing the Ethnographic Museum's collection, emphasizing local traditions and targeting diverse audiences." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- MushroomMate -->
+                    <div class="carousel-item">
+                        <div class="use-case-card">
+                            {% if tours and tours.2.default_image %}
+                            <img class="use-case-card-image"
+                                 src="{% url 'stream_minio_resource' %}?tour={{ tours.2.id }}&file={{ tours.2.default_image.name|urlencode }}"
+                                 alt="MushroomMate">
+                            {% else %}
+                            <img class="use-case-card-image"
+                                 src="https://images.unsplash.com/photo-1614252368597-39d90d7ff137?w=800&q=80"
+                                 alt="MushroomMate">
+                            {% endif %}
+                            <div class="use-case-card-body">
+                                <h5>{% trans "MushroomMate" %}</h5>
+                                <p>{% trans "Identifying local mushroom species and sharing traditional recipes, promoting food culture and knowledge transfer." %}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            {% endfor %}
-        </div>
 
-        <button class="carousel-control-prev" type="button" data-bs-target="#tourCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#tourCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-        </button>
+                <button class="carousel-control-prev" type="button" data-bs-target="#useCaseCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#useCaseCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+        </div>
     </div>
-    {% else %}
-        <p class="text-muted">Nessun tour disponibile al momento.</p>
-    {% endif %}
+</section>
+
+<!-- IMPACT -->
+<section class="impact" id="impact">
+    <div class="impact-container">
+        <div class="impact-header">
+            <div class="impact-label">{% trans "Expected Impact" %}</div>
+            <h2>{% trans "Creating Value" %}</h2>
+            <p class="impact-subtitle">
+                {% trans "Generating social and economic value by leveraging local knowledge and assets." %}
+            </p>
+        </div>
+        <div class="impact-grid">
+            <div class="impact-card">
+                <div class="impact-icon">📈</div>
+                <h4>{% trans "Boost Tourism" %}</h4>
+                <p>
+                    {% trans "Increase visitor flow year-round by offering new, engaging tours." %}
+                </p>
+            </div>
+            <div class="impact-card">
+                <div class="impact-icon">👥</div>
+                <h4>{% trans "Engage Community" %}</h4>
+                <p>
+                    {% trans "Raise cultural awareness and encourage citizen participation." %}
+                </p>
+            </div>
+            <div class="impact-card">
+                <div class="impact-icon">💼</div>
+                <h4>{% trans "Stimulate Economy" %}</h4>
+                <p>
+                    {% trans "Generate local job opportunities in content creation and tourism." %}
+                </p>
+            </div>
+            <div class="impact-card">
+                <div class="impact-icon">🌱</div>
+                <h4>{% trans "Promote Sustainability" %}</h4>
+                <p>
+                    {% trans "Support sustainable tourism and preserve cultural heritage." %}
+                </p>
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- CTA -->
-<section class="section cta">
-    <h3>Pronto per Iniziare?</h3>
-    <p>Unisciti a noi e trasforma il modo in cui esplori il patrimonio culturale</p>
-    <div class="cta-buttons">
-        <a href="{% url 'register_platform' %}" class="btn btn-hero btn-hero-primary">Registrati</a>
-        <a href="{% url 'login' %}" class="btn btn-hero btn-hero-secondary">Accedi</a>
+<section class="cta">
+    <div class="cta-content">
+        <div class="cta-label">{% trans "Get Involved" %}</div>
+        <h3>{% trans "Join the XRTourGuide Community" %}</h3>
+        <p>
+            {% trans "XRTourGuide is currently under development within the FUTURAL project. Follow our progress and discover how XR can transform rural tourism." %}
+        </p>
+        <div class="cta-buttons">
+            <a href="{% url 'register_platform' %}" class="btn btn-hero btn-hero-primary">{% trans "Create an Account" %}</a>
+            <a href="{% url 'login' %}" class="btn btn-hero btn-hero-secondary">{% trans "Sign In" %}</a>
+        </div>
     </div>
 </section>
 
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-content">
+        <p class="footer-brand">XR Tour Guide</p>
+        <p>{% trans "Part of the FUTURAL project, empowering the future through innovative smart solutions for rural areas." %}</p>
+        <p>&copy; 2025 XRTourGuide. {% trans "All rights reserved." %}</p>
+    </div>
+</footer>
+
 <script>
 // Navbar scroll effect
+let lastScroll = 0;
 window.addEventListener('scroll', function() {
     const navbar = document.getElementById('mainNav');
-    if (window.scrollY > 50) {
+    const currentScroll = window.pageYOffset;
+    
+    if (currentScroll > 50) {
         navbar.classList.add('scrolled');
     } else {
         navbar.classList.remove('scrolled');
     }
+    
+    lastScroll = currentScroll;
 });
 
 // Mobile menu toggle
@@ -724,8 +1792,8 @@ const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 const mobileMenu = document.getElementById('mobileMenu');
 
 mobileMenuToggle.addEventListener('click', function() {
-    mobileMenu.classList.toggle('active');
-    this.querySelector('span').textContent = mobileMenu.classList.contains('active') ? '✕' : '☰';
+    const isActive = mobileMenu.classList.toggle('active');
+    this.querySelector('span').textContent = isActive ? '✕' : '☰';
 });
 
 // Close mobile menu when clicking a link
@@ -742,7 +1810,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-            const offset = 80;
+            const offset = 100;
             const targetPosition = target.offsetTop - offset;
             window.scrollTo({
                 top: targetPosition,
@@ -750,6 +1818,29 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             });
         }
     });
+});
+
+// Intersection Observer for fade-in animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+// Observe all cards
+document.querySelectorAll('.feature-card, .solution-card, .challenge-card, .use-case-card, .impact-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(el);
 });
 </script>
 

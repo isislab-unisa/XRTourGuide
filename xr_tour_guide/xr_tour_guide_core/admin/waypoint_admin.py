@@ -12,13 +12,14 @@ from django.db import models
 from django.urls import reverse
 from ..forms.waypoint_form import WaypointForm
 from .base import UnfoldNestedStackedInline
+from django.utils.translation import gettext_lazy as _
 
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
     extra = 0
-    verbose_name = "Punto di Interesse"
-    verbose_name_plural = "Punti di Interesse del Tour"
+    verbose_name = _("Point of Interest")
+    verbose_name_plural = _("Tour Points of Interest")
     readonly_fields = ['display_existing_images']
     
     def get_queryset(self, request):
@@ -30,64 +31,61 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         return qs
     
     fieldsets = (
-        ('📍 Informazioni Base', {
+        (_('📍 Basic Information'), {
             'fields': ('title', 'description'),
             'description': (
                 '<div style="background: light-dark(#dbeafe, #1e3a8a); padding: 12px; border-radius: 6px; '
                 'margin-bottom: 12px; border-left: 4px solid light-dark(#3b82f6, #60a5fa); '
                 'color: light-dark(#1e3a8a, #dbeafe);">'
-                '<strong>💡 Suggerimento:</strong> '
-                'Inizia con un titolo chiaro e una descrizione breve. Aggiungerai i dettagli dopo.'
+                '<strong>💡 ' + str(_('Tip:')) + '</strong> ' +
+                str(_('Start with a clear title and a brief description. You\'ll add details later.')) +
                 '</div>'
             )
         }),
-        ('🗺️ Posizione sulla Mappa', {
+        (_('🗺️ Map Location'), {
             'fields': ('place', 'coordinates',),
             'description': (
                 '<div style="background: light-dark(#fef3c7, #78350f); padding: 12px; border-radius: 6px; '
                 'margin-bottom: 12px; border-left: 4px solid light-dark(#f59e0b, #fbbf24); '
                 'color: light-dark(#78350f, #fef3c7);">'
-                '<strong>📌 Come selezionare:</strong> '
-                'Clicca sulla mappa nel punto esatto dove si trova il luogo. '
-                'Puoi trascinare il marker per regolarne la posizione.'
+                '<strong>📌 ' + str(_('How to select:')) + '</strong> ' +
+                str(_('Click on the map at the exact point where the location is. You can drag the marker to adjust its position.')) +
                 '</div>'
             )
         }),
-        ('🖼️ Immagini', {
+        (_('🖼️ Images'), {
             'fields': ('uploaded_images', 'display_existing_images'),
             'classes': ('collapse',),
             'description': (
                 '<div style="background: light-dark(#d1fae5, #065f46); padding: 12px; border-radius: 6px; '
                 'margin-bottom: 12px; border-left: 4px solid light-dark(#10b981, #34d399); '
                 'color: light-dark(#065f46, #d1fae5);">'
-                '<strong>📷 Consiglio:</strong> '
-                'Carica 3-5 immagini di buona qualità che mostrino il luogo '
-                'da diverse angolazioni. Le foto aiutano i visitatori a riconoscere il posto!'
+                '<strong>📷 ' + str(_('Advice:')) + '</strong> ' +
+                str(_('Upload 3-5 good quality images showing the location from different angles. Photos help visitors recognize the place!')) +
                 '</div>'
             )
         }),
-        ('🎬 Contenuti Multimediali (Opzionale)', {
+        (_('🎬 Multimedia Content (Optional)'), {
             'fields': ('pdf_item', 'video_item', 'audio_item', 'readme_text', 'additional_images', 'links'),
             'classes': ('collapse',),
             'description': (
                 '<div style="background: light-dark(#e0e7ff, #3730a3); padding: 12px; border-radius: 6px; '
                 'margin-bottom: 12px; border-left: 4px solid light-dark(#6366f1, #818cf8); '
                 'color: light-dark(#3730a3, #e0e7ff);">'
-                '<strong>🎥 Opzionale ma consigliato:</strong> '
-                'Aggiungi contenuti extra per arricchire l\'esperienza. '
-                'Un PDF con info storiche, un video o una guida audio rendono il tour più completo.'
+                '<strong>🎥 ' + str(_('Optional but recommended:')) + '</strong> ' +
+                str(_('Add extra content to enrich the experience. A PDF with historical info, a video, or an audio guide make the tour more complete.')) +
                 '</div>'
             )
         }),
     )
     
-    @admin.display(description="🖼️ Galleria Immagini")
+    @admin.display(description=_("🖼️ Image Gallery"))
     def display_existing_images(self, obj):
         if not obj or not obj.pk:
             return mark_safe(
                 '<div style="background: light-dark(#fef3c7, #78350f); padding: 12px; border-radius: 6px; '
                 'border-left: 4px solid light-dark(#f59e0b, #fbbf24); color: light-dark(#78350f, #fef3c7);">'
-                '<p style="margin: 0; font-size: 0.875rem;">⚠️ Salva prima il punto di interesse per poter caricare le immagini</p>'
+                '<p style="margin: 0; font-size: 0.875rem;">⚠️ ' + str(_('Save the point of interest first to upload images')) + '</p>'
                 '</div>'
             )
         
@@ -97,14 +95,14 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             return mark_safe(
                 '<div style="background: light-dark(#f3f4f6, #1f2937); padding: 12px; border-radius: 6px; '
                 'color: light-dark(#6b7280, #9ca3af);">'
-                '<p style="margin: 0; font-size: 0.875rem;">📷 Nessuna immagine caricata ancora</p>'
+                '<p style="margin: 0; font-size: 0.875rem;">📷 ' + str(_('No images uploaded yet')) + '</p>'
                 '</div>'
             )
         
         html_parts = [
             '<div style="background: light-dark(#ffffff, #1f2937); padding: 16px; border-radius: 8px; '
             'border: 1px solid light-dark(#e5e7eb, #374151);">',
-            f'<p style="margin: 0 0 12px 0; font-weight: 600; color: light-dark(#374151, #e5e7eb);">📷 {images.count()} immagini caricate</p>',
+            f'<p style="margin: 0 0 12px 0; font-weight: 600; color: light-dark(#374151, #e5e7eb);">📷 {images.count()} ' + str(_('images uploaded')) + '</p>',
             '<div style="display: flex; flex-wrap: wrap; gap: 16px;">'
         ]
         
@@ -117,7 +115,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 delete_link = (
                     f'<a href="{change_url}" '
                     f'style="color: light-dark(#dc2626, #f87171); font-size: 0.75rem; font-weight: 500; text-decoration: none;" '
-                    f'target="_blank">🗑️ Gestisci</a>'
+                    f'target="_blank">🗑️ {_("Manage")}</a>'
                 )
             except:
                 delete_link = ''
@@ -131,7 +129,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                          alt="View image" 
                          onclick="window.open('{img_url}', '_blank')"
                          style="width: 100%; height: 160px; object-fit: cover; cursor: pointer;"
-                         title="Clicca per vedere l'immagine a schermo intero"
+                         title="{_('Click to view image in full screen')}"
                     />
                     <div style="padding: 8px; background: light-dark(#ffffff, #1f2937); display: flex; 
                          justify-content: space-between; align-items: center;">
@@ -170,14 +168,14 @@ class WaypointViewImageAdmin(ModelAdmin):
     list_filter = ('waypoint__tour',)
     search_fields = ('waypoint__title', 'waypoint__tour__title')
     
-    @admin.display(description="Anteprima")
+    @admin.display(description=_("Preview"))
     def image_preview(self, obj):
         if obj.image:
             return format_html(
                 '<img src="{}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;" />',
                 obj.image.url
             )
-        return "Nessuna immagine"
+        return _("No image")
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -202,20 +200,20 @@ class WaypointViewLinkAdmin(ModelAdmin):
     search_fields = ('waypoint__title', 'waypoint__tour__title', 'link')
     
     fieldsets = (
-        ('🔗 Informazioni Link', {
+        (_('🔗 Link Information'), {
             'fields': ('waypoint', 'link'),
             'description': (
                 '<div style="background: light-dark(#dbeafe, #1e3a8a); padding: 12px; border-radius: 6px; '
                 'margin-bottom: 12px; border-left: 4px solid light-dark(#3b82f6, #60a5fa); '
                 'color: light-dark(#1e3a8a, #dbeafe);">'
-                '<strong>🔗 Aggiungi Link:</strong> '
-                'Inserisci URL esterni per arricchire questo punto di interesse (es: sito ufficiale, Wikipedia, video YouTube)'
+                '<strong>🔗 ' + str(_('Add Link:')) + '</strong> ' +
+                str(_('Insert external URLs to enrich this point of interest (e.g.: official website, Wikipedia, YouTube video)')) +
                 '</div>'
             )
         }),
     )
     
-    @admin.display(description="🔗 Link")
+    @admin.display(description=_("🔗 Link"))
     def link_preview(self, obj):
         if obj.link:
             return format_html(
@@ -223,7 +221,7 @@ class WaypointViewLinkAdmin(ModelAdmin):
                 obj.link,
                 obj.link[:50] + '...' if len(obj.link) > 50 else obj.link
             )
-        return "Nessun link"
+        return _("No link")
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)

@@ -5,6 +5,7 @@ import requests
 from django.contrib import messages
 import os
 from dotenv import load_dotenv
+from django.utils.translation import gettext_lazy as _
 
 load_dotenv()
 @admin.register(CustomUser)
@@ -13,13 +14,13 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ()
 
     fieldsets = (
-        ('Account', {
+        (_('Account'), {
             'fields': ('username', 'password'),
-            'description': 'Credenziali di accesso'
+            'description': _('Login credentials')
         }),
-        ('Informazioni Personali', {
+        (_('Personal Information'), {
             'fields': ('first_name', 'last_name', 'email', 'city', 'description'),
-            'description': 'I tuoi dati personali'
+            'description': _('Your personal data')
         }),
     )
 
@@ -55,9 +56,9 @@ class CustomUserAdmin(UserAdmin):
         return request.user.is_superuser
 
     def save_model(self, request, obj, form, change):
-        print("Salvataggio dell'utente", change,flush=True)
+        print(_("Saving user"), change, flush=True)
         if change:
-            print("Sincronizzazione con il Community Server", flush=True)
+            print(_("Synchronizing with Community Server"), flush=True)
             try:
                 payload = {
                     "email": obj.email,
@@ -70,10 +71,10 @@ class CustomUserAdmin(UserAdmin):
 
                 auth_header = request.session.get('cs_token')
                 if not auth_header:
-                    print("Non ho l'header", auth_header, flush=True)
+                    print(_("No header"), auth_header, flush=True)
                     return self.message_user(
                     request,
-                    f"Errore di connessione con il Community Server: {e}",
+                    _("Connection error with Community Server: {error}").format(error=e),
                     level=messages.ERROR
                 )
 
@@ -81,7 +82,7 @@ class CustomUserAdmin(UserAdmin):
                     if not auth_header:
                         return self.message_user(
                                 request,
-                                f"Errore di connessione con il Community Server: {e}",
+                                _("Connection error with Community Server: {error}").format(error=e),
                                 level=messages.ERROR
                             )
 
@@ -95,16 +96,16 @@ class CustomUserAdmin(UserAdmin):
                 )
 
                 if response.status_code != 200:
-                    error_message = response.json().get("detail", "Errore di connessione con il Community Server")
+                    error_message = response.json().get("detail", _("Connection error with Community Server"))
                     self.message_user(
                         request,
-                        f"Errore nel sincronizzare l'utente con il Community Server: {error_message}",
+                        _("Error synchronizing user with Community Server: {error}").format(error=error_message),
                         level=messages.ERROR
                     )
                 else:
                     self.message_user(
                         request,
-                        "Utente sincronizzato correttamente con il Community Server.",
+                        _("User successfully synchronized with Community Server."),
                         level=messages.SUCCESS
                     )
                     super().save_model(request, obj, form, change)
@@ -112,7 +113,7 @@ class CustomUserAdmin(UserAdmin):
             except Exception as e:
                 self.message_user(
                     request,
-                    f"Errore di connessione con il Community Server: {e}",
+                    _("Connection error with Community Server: {error}").format(error=e),
                     level=messages.ERROR
                 )
         else:

@@ -233,15 +233,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'it'
+LANGUAGE_CODE = 'en'
 LANGUAGES = [
-    ('it', 'Italiano'),
     ('en', 'English'),
+    ('it', 'Italiano'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
 ]
 
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
+
+USE_L10N = True
 
 USE_TZ = True
 
@@ -274,7 +280,7 @@ UNFOLD = {
                 ],
             },
             {
-                "title": _("Funzionalità"),
+                "title": _("Functionalities"),
                 "separator": False,
                 "collapsible": True,
                 "default_open": True,

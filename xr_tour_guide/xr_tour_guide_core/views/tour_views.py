@@ -17,6 +17,10 @@ import requests
 import math
 from django.db.models import Case, When
 from ..authentication import JWTFastAPIAuthentication
+import os
+import dotenv
+
+dotenv.load_dotenv()
 
 def distance(x1, x2, y1, y2):
     return math.sqrt((x1 - y1)**2 + (x2 - y2)**2)
@@ -194,7 +198,7 @@ def cut_map(request, tour_id):
         "tour_id": str(tour_id),
         "bbox": bbox
     }
-    url = "http://pmtiles-server:8081/extract"
+    url = os.getenv("PMTILES_URL")
     headers = {"Content-type": "application/json"}
     response = requests.post(url, headers=headers, json=payload)
     if response.status_code != 200:

@@ -4,6 +4,7 @@ from ..models import Waypoint, WaypointViewImage, WaypointViewLink, TypeOfImage
 from django.forms.widgets import ClearableFileInput
 from django.utils.safestring import mark_safe
 from django.core.files.base import ContentFile
+from django.utils.translation import gettext_lazy as _
 
 class MultipleClearableFileInput(ClearableFileInput):
     
@@ -31,48 +32,48 @@ class WaypointForm(forms.ModelForm):
     
     uploaded_images = forms.FileField(
         required=False,
-        label='📷 Aggiungi Immagini',
+        label=_('📷 Add Images'),
         widget=MultipleClearableFileInput(),
-        help_text='Carica le foto che meglio rappresentano questo luogo'
+        help_text=_('Upload photos that best represent this location')
     )
 
     additional_images = forms.FileField(
         required=False,
-        label='📷 Aggiungi Immagini Specifiche per questo tappa',
+        label=_('📷 Add Specific Images for this Waypoint'),
         widget=MultipleClearableFileInput(),
-        help_text='Carica le foto che meglio rappresentano questa tappa'
+        help_text=_('Upload photos that best represent this waypoint')
     )
 
     links = forms.CharField(
         required=False,
-        label='🔗 Aggiungi Link',
+        label=_('🔗 Add Links'),
         widget=forms.Textarea(attrs={
             'rows': 5,
             'class': 'vTextField',
-            'placeholder': 'Inserisci un link per riga:\n\n'
-                        'https://it.wikipedia.org/wiki/Duomo_di_Milano\n'
+            'placeholder': _('Enter one link per line:\n\n'
+                        'https://en.wikipedia.org/wiki/Milan_Cathedral\n'
                         'https://www.duomomilano.it\n'
-                        'https://www.youtube.com/watch?v=example',
+                        'https://www.youtube.com/watch?v=example'),
         }),
-        help_text='🔗 Inserisci un link per riga. Ogni riga sarà salvata come link separato. '
-                'Puoi aggiungere siti ufficiali, Wikipedia, video YouTube, ecc.'
+        help_text=_('🔗 Enter one link per line. Each line will be saved as a separate link. '
+                'You can add official websites, Wikipedia, YouTube videos, etc.')
     )
     
     readme_text = forms.CharField(
         widget=forms.Textarea(attrs={
             'class': 'markdown-editor', 
             'rows': 10,
-            'placeholder': 'Scrivi qui la descrizione dettagliata usando Markdown...\n\n'
-                          '**Esempio:**\n'
-                          '# Titolo\n'
-                          '## Sottotitolo\n'
-                          '- Elenco puntato\n'
-                          '- Altro punto\n\n'
-                          'Testo normale con **grassetto** e *corsivo*'
+            'placeholder': _('Write the detailed description here using Markdown...\n\n'
+                          '**Example:**\n'
+                          '# Title\n'
+                          '## Subtitle\n'
+                          '- Bullet list\n'
+                          '- Another point\n\n'
+                          'Normal text with **bold** and *italic*')
         }),
-        label="📝 Descrizione Dettagliata (Markdown)",
+        label=_("📝 Detailed Description (Markdown)"),
         required=False,
-        help_text='Utilizza Markdown per formattare la descrizione completa. Puoi includere titoli, elenchi, grassetto, corsivo, ecc.'
+        help_text=_('Use Markdown to format the complete description. You can include titles, lists, bold, italic, etc.')
     )
     
     def __init__(self, *args, **kwargs):
@@ -96,31 +97,31 @@ class WaypointForm(forms.ModelForm):
         
         field_configs = {
             'title': {
-                'help_text': '🏛️ Il nome di questo punto di interesse (es: "Duomo di Milano", "Castello Sforzesco")',
-                'widget_attrs': {'placeholder': 'Es: Duomo di Milano'}
+                'help_text': _('🏛️ The name of this point of interest (e.g.: "Milan Cathedral", "Sforza Castle")'),
+                'widget_attrs': {'placeholder': _('E.g.: Milan Cathedral')}
             },
             'place': {
-                'help_text': '📍 Città o località (es: "Milano", "Firenze")',
-                'widget_attrs': {'placeholder': 'Es: Milano'}
+                'help_text': _('📍 City or location (e.g.: "Milan", "Florence")'),
+                'widget_attrs': {'placeholder': _('E.g.: Milan')}
             },
             'description': {
-                'help_text': '✍️ Una breve descrizione che apparirà nella lista dei punti (max 2-3 righe)',
+                'help_text': _('✍️ A brief description that will appear in the list of points (max 2-3 lines)'),
                 'widget_attrs': {
-                    'placeholder': 'Es: Capolavoro dell\'architettura gotica, simbolo della città...',
+                    'placeholder': _('E.g.: Masterpiece of Gothic architecture, symbol of the city...'),
                     'rows': 3
                 }
             },
             'coordinates': {
-                'help_text': '🗺️ Clicca sulla mappa per selezionare la posizione esatta del punto'
+                'help_text': _('🗺️ Click on the map to select the exact position of the point')
             },
             'pdf_item': {
-                'help_text': '📄 Carica un PDF con informazioni aggiuntive (opzionale)'
+                'help_text': _('📄 Upload a PDF with additional information (optional)')
             },
             'video_item': {
-                'help_text': '🎥 Carica un video descrittivo (opzionale)'
+                'help_text': _('🎥 Upload a descriptive video (optional)')
             },
             'audio_item': {
-                'help_text': '🎵 Carica una guida audio (opzionale)'
+                'help_text': _('🎵 Upload an audio guide (optional)')
             }
         }
         

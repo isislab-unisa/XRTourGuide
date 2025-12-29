@@ -9,6 +9,7 @@ from django.db import models
 from ..forms.tour_forms import TourForm
 from .waypoint_admin import WaypointAdmin
 from django.contrib.admin.views.main import ChangeList
+from django.utils.translation import gettext_lazy as _
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
@@ -28,26 +29,26 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             'fields': ('status_info',),
             'classes': ('wide',),
         }),
-        ('🎯 Informazioni Principali', {
+        (_('🎯 Main Information'), {
             'fields': ('title', 'subtitle', 'category'),
         }),
-        ('📝 Descrizione Completa', {
+        (_('📝 Full Description'), {
             'fields': ('description',),
         }),
-        ('📍 Posizione e Area', {
+        (_('📍 Location and Area'), {
             'fields': ('place', 'coordinates'),
         }),
-        ('🖼️ Immagine di Copertina', {
+        (_('🖼️ Cover Image'), {
             'fields': ('default_image',),
         }),
-        ('🔗 Tour Interni (Opzionale)', {
+        (_('🔗 Internal Tours (Optional)'), {
             'fields': ('sub_tours',),
             'classes': ('collapse',),
         }),
-        ('⚙️ Informazioni di Sistema', {
+        (_('⚙️ System Information'), {
             'fields': ('user', 'creation_time', 'status', 'is_subtour'),
             'classes': ('collapse',),
-            'description': 'Informazioni tecniche gestite automaticamente dal sistema'
+            'description': _('Technical information automatically managed by the system')
         }),
     )
 
@@ -70,19 +71,19 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             'admin/js/loader.js',
         ]
         
-    @admin.display(description="Status")
+    @admin.display(description=_("Status"))
     def status_badge(self, obj):
         status_colors = {
-            'READY': '#3b82f6',      # Blue
-            'ENQUEUED': '#f59e0b',   # Amber
-            'BUILDING': '#8b5cf6',   # Purple
-            'FAILED': '#ef4444',      # Red
+            'READY': '#3b82f6',
+            'ENQUEUED': '#f59e0b',
+            'BUILDING': '#8b5cf6',
+            'FAILED': '#ef4444',
         }
         status_labels = {
-            'READY': '✅ Pronto',
-            'ENQUEUED': '⏳ In Coda',
-            'BUILDING': '🔨 In Costruzione',
-            'FAILED': '❌ Errore',
+            'READY': _('✅ Ready'),
+            'ENQUEUED': _('⏳ Queued'),
+            'BUILDING': _('🔨 Building'),
+            'FAILED': _('❌ Error'),
         }
         color = status_colors.get(obj.status, '#6b7280')
         label = status_labels.get(obj.status, obj.status)
@@ -94,7 +95,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             color, label
         )
     
-    @admin.display(description="Stato del Tour")
+    @admin.display(description=_("Tour Status"))
     def status_info(self, obj):
         status_info = {
             "READY": {
@@ -102,45 +103,45 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                 "bg_dark": "#1e3a8a",
                 "border_light": "#3b82f6",
                 "border_dark": "#60a5fa",
-                "title": "✅ Pronto per la Pubblicazione",
-                "message": "Il tour è completo e pronto per essere pubblicato.",
-                "action": "Verrà elaborato e pubblicato automaticamente.",
+                "title": _("✅ Ready for Publication"),
+                "message": _("The tour is complete and ready to be published."),
+                "action": _("It will be processed and published automatically."),
             },
             "ENQUEUED": {
                 "bg_light": "#fef3c7",
                 "bg_dark": "#78350f",
                 "border_light": "#f59e0b",
                 "border_dark": "#fbbf24",
-                "title": "⏳ In Coda",
-                "message": "Il tour è in coda per essere elaborato.",
-                "action": "Attendi, sarà processato a breve. Non modificare durante questa fase.",
+                "title": _("⏳ Queued"),
+                "message": _("The tour is queued for processing."),
+                "action": _("Please wait, it will be processed shortly. Do not modify during this phase."),
             },
             "BUILDING": {
                 "bg_light": "#f3e8ff",
                 "bg_dark": "#581c87",
                 "border_light": "#8b5cf6",
                 "border_dark": "#a78bfa",
-                "title": "🔨 In Costruzione",
-                "message": "Il tour è in fase di elaborazione.",
-                "action": "Non modificare il tour durante questa fase. Il processo potrebbe richiedere alcuni minuti.",
+                "title": _("🔨 Building"),
+                "message": _("The tour is being processed."),
+                "action": _("Do not modify the tour during this phase. The process may take a few minutes."),
             },
             "FAILED": {
                 "bg_light": "#fee2e2",
                 "bg_dark": "#7f1d1d",
                 "border_light": "#ef4444",
                 "border_dark": "#f87171",
-                "title": "❌ Errore",
-                "message": "Si è verificato un errore durante l'elaborazione del tour.",
-                "action": "Controlla i dati inseriti o contatta l'assistenza.",
+                "title": _("❌ Error"),
+                "message": _("An error occurred while processing the tour."),
+                "action": _("Check the entered data or contact support."),
             },
             "BUILT": {
                 "bg_light": "#d1fae5",
                 "bg_dark": "#065f46",
                 "border_light": "#10b981",
                 "border_dark": "#34d399",
-                "title": "✅ Pronto per l'uso",
-                "message": "Modello Addestrato con successo e pronto per essere utilizzato.",
-                "action": "Puoi iniziare a servire il tour ai visitatori.",
+                "title": _("✅ Ready for Use"),
+                "message": _("Model successfully trained and ready to be used."),
+                "action": _("You can start serving the tour to visitors."),
             },
         }
         
@@ -158,7 +159,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                     border-left: 4px solid light-dark(#ef4444, #f87171);
                     color: light-dark(#7f1d1d, #fecaca);
                 ">
-                    <strong>🔒 Tour Bloccato:</strong> Non puoi modificare il tour in questo stato.
+                    <strong>{_("🔒 Tour Locked:")}</strong> {_("You cannot modify the tour in this state.")}
                 </div>
             '''
         

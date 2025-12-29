@@ -80,7 +80,7 @@ def complete_build(request):
         except Exception as e:
             print(f"Errore nell'eliminazione del lock: {e}")
 
-
+        # Delete folder that contains the copy of the training data
         try:
             prefix = f"{tour_id}/data/"
             bucket = storage.bucket

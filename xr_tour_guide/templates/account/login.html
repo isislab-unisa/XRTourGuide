@@ -1,6 +1,7 @@
 {% extends 'registration_base.html' %}
 
-{% block title %}Accedi - XR Tour Guide{% endblock %}
+{% load i18n %}
+{% block title %}Sign In - XR Tour Guide{% endblock %}
 
 {% block registration_content %}
 <style>
@@ -67,6 +68,55 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+
+    /* Language Switcher */
+    .language-switcher-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+    }
+
+    .language-switcher {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        padding: 10px 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .language-switcher:hover {
+        background: white;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .language-switcher select {
+        border: none;
+        background: transparent;
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        outline: none;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .language-switcher select option {
+        background: white;
+        color: #2d3748;
+    }
+
+    .language-icon {
+        width: 18px;
+        height: 18px;
+        opacity: 0.7;
     }
 
     .card {
@@ -375,11 +425,30 @@
 
 <div class="login-wrapper">
     <div class="login-container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-wrapper">
+            <form action="{% url 'set_language' %}" method="post" class="language-switcher">
+                {% csrf_token %}
+                <svg class="language-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                </svg>
+                <select name="language" onchange="this.form.submit()">
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {% get_available_languages as LANGUAGES %}
+                    {% for lang_code, lang_name in LANGUAGES %}
+                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                            {{ lang_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
         <div class="card">
             <div class="card-body">
                 <div class="login-header">
-                    <h2>👋 Bentornato</h2>
-                    <p>Accedi al tuo account</p>
+                    <h2>👋 {% trans "Welcome Back" %}</h2>
+                    <p>{% trans "Sign in to your account" %}</p>
                 </div>
                 
                 {% if error %}
@@ -396,10 +465,10 @@
                             type="email" 
                             name="email" 
                             id="email" 
-                            placeholder="Email"
+                            placeholder="{% trans 'Email' %}"
                             class="form-control"
                             autocomplete="email">
-                        <label for="email">Email</label>
+                        <label for="email">{% trans "Email" %}</label>
                     </div>
 
                     <div class="password-field-wrapper">
@@ -408,23 +477,23 @@
                                 type="password" 
                                 name="password" 
                                 id="password" 
-                                placeholder="Password" 
+                                placeholder="{% trans 'Password' %}" 
                                 class="form-control"
                                 autocomplete="current-password">
-                            <label for="password">Password</label>
+                            <label for="password">{% trans "Password" %}</label>
                         </div>
                         <span class="password-toggle" onclick="togglePassword()">👁️</span>
                     </div>
 
                     <div class="d-grid mb-3">
-                        <button class="btn btn-primary" type="submit">Accedi</button>
+                        <button class="btn btn-primary" type="submit">{% trans "Sign In" %}</button>
                     </div>
                 </form>
 
-                <!-- <div class="divider">oppure</div> -->
+                <!-- <div class="divider">{% trans "or" %}</div> -->
 
                 <div class="signup-link">
-                    <p>Non hai un account? <a href="{% url 'register_platform' %}">Registrati</a></p>
+                    <p>{% trans "Don't have an account?" %} <a href="{% url 'register_platform' %}">{% trans "Sign Up" %}</a></p>
                 </div>
             </div>
         </div>
