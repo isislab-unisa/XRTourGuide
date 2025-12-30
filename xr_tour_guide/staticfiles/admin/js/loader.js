@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (document.getElementById('loading-overlay')) return;
 
-            event.preventDefault();
+            // event.preventDefault();
 
             const loader = document.createElement('div');
             loader.id = 'loading-overlay';
@@ -78,10 +78,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.appendChild(loader);
 
             const logo = document.getElementById('loading-logo');
-            // logo.onload = () => console.log("LOGO CARICATO CORRETTAMENTE:", logo.src);
-            // logo.onerror = () => console.error("⚠️ ERRORE NEL CARICAMENTO LOGO:", logo.src);
 
-            setTimeout(() => form.submit(), 300);
+            // setTimeout(() => form.submit(), 300);
         });
     });
 });

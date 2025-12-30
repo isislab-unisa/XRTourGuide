@@ -1,7 +1,3 @@
-"""
-Base admin classes shared across all admin modules.
-This file prevents circular imports.
-"""
 import nested_admin
 from unfold.admin import StackedInline as UnfoldStackedInline
 from unfold.admin import TabularInline as UnfoldTabularInline

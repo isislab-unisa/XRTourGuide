@@ -5,21 +5,14 @@ WORKDIR /workspace
 COPY . .
 
 RUN apt-get update && \
-    apt-get install -y default-libmysqlclient-dev build-essential && \
-    pip install -r requirements.txt
-
-RUN apt-get update \
+    apt-get install -y default-libmysqlclient-dev build-essential \
+    && pip install -r requirements.txt \
     && apt-get install -y gettext \
-    && rm -rf /var/lib/apt/lists/*
-
-
-RUN apt-get update && \
-apt-get install -y ca-certificates && \
-update-ca-certificates
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get install -y ca-certificates \
+    && update-ca-certificates
 
 RUN pip install gunicorn
-
-EXPOSE 8001
 
 CMD sh -c "\
     python manage.py makemigrations && \
