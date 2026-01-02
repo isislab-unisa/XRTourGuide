@@ -68,10 +68,16 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             'admin/js/init_maps.js',
             'admin/js/init_markdown_editor.js',
             'admin/js/hide_waypoint_coordinates.js',
-            'admin/js/refresh_subtours_checkboxes.js',
+            # 'admin/js/refresh_subtours_checkboxes.js',
             'admin/js/fix_minio_preview.js',
             'admin/js/loader.js',
+            'admin/js/subtour_popup.js',
         ]
+        css = {
+            'all': [
+                'admin/css/subtour_improved.css',
+            ]
+        }
         
     @admin.display(description=_("Status"))
     def status_badge(self, obj):

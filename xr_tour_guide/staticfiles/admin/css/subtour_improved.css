@@ -1,0 +1,315 @@
+/* ============================================
+   IMPROVED SUB-TOURS DISPLAY
+   Properly adapts to Unfold light/dark themes
+   ============================================ */
+
+/* Default light theme values */
+#id_sub_tours {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Custom scrollbar styling - Light mode */
+#id_sub_tours::-webkit-scrollbar {
+    width: 8px;
+}
+
+#id_sub_tours::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+#id_sub_tours::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+#id_sub_tours::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Firefox scrollbar - Light mode */
+#id_sub_tours {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+}
+
+/* Each checkbox item as a card */
+#id_sub_tours li {
+    list-style: none;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#id_sub_tours label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    color: #111827;
+}
+
+#id_sub_tours label:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Checked state */
+#id_sub_tours input[type="checkbox"]:checked ~ span,
+#id_sub_tours label:has(input[type="checkbox"]:checked) {
+    border-color: #3b82f6;
+    background: #dbeafe;
+}
+
+/* Checkbox styling - FIXED */
+#id_sub_tours input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 2px 0 0 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    accent-color: #3b82f6 !important;
+    -webkit-appearance: checkbox;
+    appearance: checkbox;
+}
+
+/* Text content */
+#id_sub_tours label > span {
+    flex: 1;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: #111827;
+}
+
+/* Edit link styling */
+#id_sub_tours a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    padding: 4px 8px;
+    background: #3b82f6;
+    color: white !important;
+    border-radius: 4px;
+    text-decoration: none !important;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+#id_sub_tours a:hover {
+    background: #2563eb;
+}
+
+/* Empty state */
+#id_sub_tours:empty::before {
+    content: "No sub-tours available. Create one first.";
+    grid-column: 1 / -1;
+    padding: 32px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* Animation for new items */
+#id_sub_tours li {
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scroll indicator at bottom */
+#id_sub_tours::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, #f9fafb);
+    pointer-events: none;
+    grid-column: 1 / -1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #id_sub_tours {
+        grid-template-columns: 1fr;
+        max-height: 400px;
+    }
+}
+
+/* ============================================
+   DARK MODE OVERRIDES - Multiple selectors
+   ============================================ */
+
+/* Unfold dark theme - html level */
+html[data-theme="dark"] #id_sub_tours,
+html.dark #id_sub_tours,
+.dark #id_sub_tours,
+[data-theme="dark"] #id_sub_tours,
+body[data-theme="dark"] #id_sub_tours,
+html[class*="dark"] #id_sub_tours,
+body[class*="dark"] #id_sub_tours {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    scrollbar-color: #4b5563 #111827 !important;
+}
+
+html[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-track,
+html.dark #id_sub_tours::-webkit-scrollbar-track,
+.dark #id_sub_tours::-webkit-scrollbar-track,
+[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-track,
+body[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-track,
+html[class*="dark"] #id_sub_tours::-webkit-scrollbar-track,
+body[class*="dark"] #id_sub_tours::-webkit-scrollbar-track {
+    background: #111827 !important;
+}
+
+html[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-thumb,
+html.dark #id_sub_tours::-webkit-scrollbar-thumb,
+.dark #id_sub_tours::-webkit-scrollbar-thumb,
+[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-thumb,
+body[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-thumb,
+html[class*="dark"] #id_sub_tours::-webkit-scrollbar-thumb,
+body[class*="dark"] #id_sub_tours::-webkit-scrollbar-thumb {
+    background: #4b5563 !important;
+}
+
+html[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-thumb:hover,
+html.dark #id_sub_tours::-webkit-scrollbar-thumb:hover,
+.dark #id_sub_tours::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-thumb:hover,
+body[data-theme="dark"] #id_sub_tours::-webkit-scrollbar-thumb:hover,
+html[class*="dark"] #id_sub_tours::-webkit-scrollbar-thumb:hover,
+body[class*="dark"] #id_sub_tours::-webkit-scrollbar-thumb:hover {
+    background: #6b7280 !important;
+}
+
+html[data-theme="dark"] #id_sub_tours label,
+html.dark #id_sub_tours label,
+.dark #id_sub_tours label,
+[data-theme="dark"] #id_sub_tours label,
+body[data-theme="dark"] #id_sub_tours label,
+html[class*="dark"] #id_sub_tours label,
+body[class*="dark"] #id_sub_tours label {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+}
+
+html[data-theme="dark"] #id_sub_tours label:hover,
+html.dark #id_sub_tours label:hover,
+.dark #id_sub_tours label:hover,
+[data-theme="dark"] #id_sub_tours label:hover,
+body[data-theme="dark"] #id_sub_tours label:hover,
+html[class*="dark"] #id_sub_tours label:hover,
+body[class*="dark"] #id_sub_tours label:hover {
+    border-color: #60a5fa !important;
+    background: #1e3a8a !important;
+}
+
+html[data-theme="dark"] #id_sub_tours input[type="checkbox"]:checked ~ span,
+html[data-theme="dark"] #id_sub_tours label:has(input[type="checkbox"]:checked),
+html.dark #id_sub_tours input[type="checkbox"]:checked ~ span,
+html.dark #id_sub_tours label:has(input[type="checkbox"]:checked),
+.dark #id_sub_tours input[type="checkbox"]:checked ~ span,
+.dark #id_sub_tours label:has(input[type="checkbox"]:checked),
+[data-theme="dark"] #id_sub_tours input[type="checkbox"]:checked ~ span,
+[data-theme="dark"] #id_sub_tours label:has(input[type="checkbox"]:checked),
+body[data-theme="dark"] #id_sub_tours input[type="checkbox"]:checked ~ span,
+body[data-theme="dark"] #id_sub_tours label:has(input[type="checkbox"]:checked),
+html[class*="dark"] #id_sub_tours input[type="checkbox"]:checked ~ span,
+html[class*="dark"] #id_sub_tours label:has(input[type="checkbox"]:checked),
+body[class*="dark"] #id_sub_tours input[type="checkbox"]:checked ~ span,
+body[class*="dark"] #id_sub_tours label:has(input[type="checkbox"]:checked) {
+    border-color: #60a5fa !important;
+    background: #1e3a8a !important;
+}
+
+/* Dark mode checkbox color - FIXED */
+html[data-theme="dark"] #id_sub_tours input[type="checkbox"],
+html.dark #id_sub_tours input[type="checkbox"],
+.dark #id_sub_tours input[type="checkbox"],
+[data-theme="dark"] #id_sub_tours input[type="checkbox"],
+body[data-theme="dark"] #id_sub_tours input[type="checkbox"],
+html[class*="dark"] #id_sub_tours input[type="checkbox"],
+body[class*="dark"] #id_sub_tours input[type="checkbox"] {
+    accent-color: #60a5fa !important;
+    -webkit-appearance: checkbox;
+    appearance: checkbox;
+}
+
+html[data-theme="dark"] #id_sub_tours label > span,
+html.dark #id_sub_tours label > span,
+.dark #id_sub_tours label > span,
+[data-theme="dark"] #id_sub_tours label > span,
+body[data-theme="dark"] #id_sub_tours label > span,
+html[class*="dark"] #id_sub_tours label > span,
+body[class*="dark"] #id_sub_tours label > span {
+    color: #f9fafb !important;
+}
+
+html[data-theme="dark"] #id_sub_tours a,
+html.dark #id_sub_tours a,
+.dark #id_sub_tours a,
+[data-theme="dark"] #id_sub_tours a,
+body[data-theme="dark"] #id_sub_tours a,
+html[class*="dark"] #id_sub_tours a,
+body[class*="dark"] #id_sub_tours a {
+    background: #2563eb !important;
+}
+
+html[data-theme="dark"] #id_sub_tours a:hover,
+html.dark #id_sub_tours a:hover,
+.dark #id_sub_tours a:hover,
+[data-theme="dark"] #id_sub_tours a:hover,
+body[data-theme="dark"] #id_sub_tours a:hover,
+html[class*="dark"] #id_sub_tours a:hover,
+body[class*="dark"] #id_sub_tours a:hover {
+    background: #1e40af !important;
+}
+
+html[data-theme="dark"] #id_sub_tours:empty::before,
+html.dark #id_sub_tours:empty::before,
+.dark #id_sub_tours:empty::before,
+[data-theme="dark"] #id_sub_tours:empty::before,
+body[data-theme="dark"] #id_sub_tours:empty::before,
+html[class*="dark"] #id_sub_tours:empty::before,
+body[class*="dark"] #id_sub_tours:empty::before {
+    color: #9ca3af !important;
+}
+
+html[data-theme="dark"] #id_sub_tours::after,
+html.dark #id_sub_tours::after,
+.dark #id_sub_tours::after,
+[data-theme="dark"] #id_sub_tours::after,
+body[data-theme="dark"] #id_sub_tours::after,
+html[class*="dark"] #id_sub_tours::after,
+body[class*="dark"] #id_sub_tours::after {
+    background: linear-gradient(to bottom, transparent, #1f2937) !important;
+}
