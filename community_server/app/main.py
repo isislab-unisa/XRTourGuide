@@ -541,7 +541,8 @@ async def verify_email(
         "success.html",
         {
             "request": request,
-            "message": "Email verificata con successo!"
+            "message": "Email verificata con successo!",
+            "type": "Email"
         }
     )
 
@@ -649,6 +650,7 @@ def get_reset_form(
 
 @app.post("/verify-reset-password/")
 def verify_reset_password(
+    request: Request,
     token: str = Form(...),
     password: str = Form(...),
     confirm_password: str = Form(...),
@@ -669,4 +671,11 @@ def verify_reset_password(
     user.verification_token_expires = None
     db.commit()
 
-    return {"message": "Password cambiata con successo"}
+    return templates.TemplateResponse(
+        "success.html",
+        {
+            "request": request,
+            "message": "Password modificata con successo!",
+            "type": "Password"
+        }
+    )

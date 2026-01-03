@@ -40,15 +40,15 @@ XRTourGuide provides an online platform that enables communities to create and s
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🎯 Extended Reality (XR)
+### Extended Reality (XR)
 Augment real-world views with interactive digital content, creating immersive experiences that blend physical and digital worlds.
 
-### 🤖 AI-Powered Visual Recognition
+### AI-Powered Visual Recognition
 Automatically identify objects, artwork, buildings, and natural features to trigger relevant multimedia content.
 
-### 🎬 Multimodal Content Support
+### Multimodal Content Support
 - Text descriptions
 - Audio narratives
 - Video presentations
@@ -58,15 +58,12 @@ Automatically identify objects, artwork, buildings, and natural features to trig
 ### ☁️ Cloud-Native Architecture
 Scalable, accessible Django-based web platform built for reliability and performance.
 
-### 🎮 Gamification Elements
-Engage users through interactive challenges, achievements, and social sharing features.
-
-### 🌍 Multi-Language Support
+### Multi-Language Support
 Make cultural content accessible to international audiences with comprehensive language support.
 
 ---
 
-## 🏛️ Use Cases
+## Use Cases
 
 XRTourGuide is being piloted in the **Bussento, Lambro, and Mingardo** rural communities:
 
@@ -81,22 +78,22 @@ Identifying local mushroom species and sharing traditional recipes, promoting fo
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 XRTourGuide/
 ├── AI_classification/       # AI models for visual recognition and image classification
 ├── community_server/        # Backend server for community features
 ├── mobile/                  # Mobile application (multi-platform)
-├── pmtiles-server/         # Map tiles server for geographic data
-├── xr_tour_guide/          # Core XR tour guide platform (Django)
+├── pmtiles-server/          # Map tiles server for geographic data
+├── xr_tour_guide/           # Core XR tour guide platform (Django)
 ├── LICENSE                  # MIT License
-└── README.md               # Project documentation
+└── README.md                # Project documentation
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Docker and Docker Compose
@@ -109,43 +106,71 @@ XRTourGuide/
 git clone https://github.com/isislab-unisa/XRTourGuide.git
 cd XRTourGuide
 ```
+2. **Configure environment variables**
 
-2. **Start all services**
+Create a `.env` file in xr_tour_guide:
+
+```bash
+# Database Configuration
+DB_NAME=xrtourguide
+DB_USER=your_admin
+DB_PASSWORD=password
+DB_HOST=db
+DB_PORT=3306
+
+# Django settings
+SECRET_KEY=Django_secret
+SITE_ID=1
+FORCE_SCRIPT_NAME="/"
+
+# MinIO
+MINIO_ROOT_USER=root_user
+MINIO_ROOT_PASSWORD=password
+AWS_STORAGE_BUCKET_NAME="bucket-name"
+AWS_S3_ENDPOINT_URL=http://minio:9000
+
+# Email
+EMAIL_HOST_PASSWORD=password
+EMAIL_HOST_USER=your_email
+
+# Google
+GOOGLE_CLIENT_ID=client_id
+GOOGLE_CLIENT_SECRET=secret
+
+# Email Certbot
+EMAIL_CERTBOT=your_email
+
+# Redis and Celery endpoint 
+CELERY_BROKER_URL=redis://redis:6379/0
+REDIS_URL=redis://redis:6379
+
+# Endpoint: AI train, AI inference, Django webhook, pmtiles server
+CALLBACK_ENDPOINT=http://web:8001/complete_build/
+TRAIN_ENDPOINT=http://ai_training:8090/train_model
+INFERENCE_ENDPOINT=http://ai_inference:8050/inference
+PMTILES_URL=http://pmtiles-server:8081/extract
+
+#Community server
+COMMUNITY_SERVER=your_domain_name:8002
+```
+
+Create a `.env` file in community_server:
+Check [community_server .env](/community_server/README.md#quick-start)
+
+Add a map of your region in pmtiles format in ```pmtiles-server/maps ```
+
+> 💡 **Tip:** Generate a secure secret key with: `openssl rand -hex 32`
+
+3. **Start all services**
 ```bash
 docker compose up -d --build
 ```
 
 That's it! The platform will be available at the configured ports.
 
-### Development Setup
-
-For local development without Docker:
-
-**Web Platform (Django)**
-```bash
-cd xr_tour_guide
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-```
-
-**Mobile App**
-```bash
-cd mobile
-flutter pub get
-flutter run
-```
-
-**AI Classification**
-```bash
-cd AI_classification
-pip install -r requirements.txt
-# Refer to AI_classification/README.md for specific instructions
-```
-
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
 
@@ -157,11 +182,9 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
-
 ---
 
-## 🌟 Impact & Goals
+## Impact & Goals
 
 ### Expected Outcomes
 - **Boost Tourism**: Increase year-round visitor flow with engaging, immersive tours
@@ -176,29 +199,27 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
 XRTourGuide is a collaborative effort bringing together:
 
 - **[Università degli Studi di Salerno (UNISA)](https://www.unisa.it/)**
-- **[ISISLab](https://www.isislab.it)** - Expertise in Cloud/Edge Computing, AI, VR, and project        coordination
+- **[ISISLab](https://www.isislab.it)** - Expertise in Cloud/Edge Computing, AI, VR, and project coordination
 - **[Picaresque S.R.L.](https://tech.picaresquestudio.com/)** - Specialists in historical/serious games and software development
 - **[Comunità Montana Bussento Lambro e Mingardo (CMBLM)](https://www.cmbussento.it/)** - Pilot rural community partner
 
 ### Part of FUTURAL
 
-XRTourGuide is a sub-project of [FUTURAL](https://futural-project.eu/it/) - an EU-funded initiative producing innovative, community-driven solutions to address key social, environmental, and financial challenges in rural areas across Europe.
+XRTourGuide is a sub-project of [FUTURAL](https://futural-project.eu/it/), an EU-funded initiative producing innovative, community-driven solutions to address key social, environmental, and financial challenges in rural areas across Europe.
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📞 Contact & Resources
+## Contact & Resources
 
 - **Project Website**: [isislab-unisa.github.io/XRTourGuide](https://isislab-unisa.github.io/XRTourGuide/)
 - **FUTURAL Project**: [futural-project.eu](https://futural-project.eu/it/)
 - **Research Group**: [ISISLab - UNISA](https://www.isislab.it/)
 - **GitHub Issues**: [Report bugs or request features](https://github.com/isislab-unisa/XRTourGuide/issues)
-
-
 
 </div>

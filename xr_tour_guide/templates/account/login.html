@@ -224,6 +224,11 @@
         color: #c53030;
     }
 
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+    }
+
     .forgot-password {
         text-align: right;
         margin-bottom: 24px;
@@ -279,6 +284,12 @@
 
     .btn-primary:active {
         transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
     }
 
     .divider {
@@ -385,6 +396,137 @@
         color: #667eea;
     }
 
+    /* Resend Verification Section */
+    .resend-verification-section {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px dashed #e2e8f0;
+    }
+
+    .resend-prompt {
+        color: #718096;
+        font-size: 0.85rem;
+        margin: 0 0 15px 0;
+    }
+
+    .resend-link {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-size: 0.85rem;
+    }
+
+    .resend-link:hover {
+        color: #5568d3;
+        text-decoration: underline;
+    }
+
+    #resend-form-container,
+    #reset-form-container {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 25px;
+        margin-top: 15px;
+        animation: expandDown 0.4s ease-out;
+    }
+
+    @keyframes expandDown {
+        from {
+            opacity: 0;
+            max-height: 0;
+            padding: 0;
+        }
+        to {
+            opacity: 1;
+            max-height: 400px;
+            padding: 25px;
+        }
+    }
+
+    .resend-header,
+    .reset-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .resend-header h3,
+    .reset-header h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 6px;
+    }
+
+    .resend-header p,
+    .reset-header p {
+        color: #718096;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .cancel-link {
+        color: #718096;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .cancel-link:hover {
+        color: #2d3748;
+        text-decoration: underline;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control-resend {
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        padding: 12px 14px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: white;
+        width: 100%;
+    }
+
+    .form-control-resend:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .form-control-resend::placeholder {
+        color: #a0aec0;
+    }
+
+    /* Loading spinner */
+    .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .login-wrapper {
@@ -397,6 +539,11 @@
 
         .login-header h2 {
             font-size: 1.65rem;
+        }
+
+        #resend-form-container,
+        #reset-form-container {
+            padding: 20px;
         }
     }
 
@@ -419,6 +566,16 @@
 
         .form-floating > .form-control {
             font-size: 0.9rem;
+        }
+
+        #resend-form-container,
+        #reset-form-container {
+            padding: 18px 15px;
+        }
+
+        .resend-header h3,
+        .reset-header h3 {
+            font-size: 1.1rem;
         }
     }
 </style>
@@ -457,7 +614,7 @@
                     </div>
                 {% endif %}
 
-                <form action="{% url 'login' %}" method="post">
+                <form action="{% url 'login' %}" method="post" id="login-form">
                     {% csrf_token %}
 
                     <div class="form-floating">
@@ -485,15 +642,81 @@
                         <span class="password-toggle" onclick="togglePassword()">👁️</span>
                     </div>
 
+                    <div class="forgot-password">
+                        <a href="#" id="show-reset-form">{% trans "Forgot password?" %}</a>
+                    </div>
+
                     <div class="d-grid mb-3">
                         <button class="btn btn-primary" type="submit">{% trans "Sign In" %}</button>
                     </div>
                 </form>
 
+                <!-- Reset Password Form Container -->
+                <div id="reset-form-container" style="display: none;">
+                    <div class="reset-header">
+                        <h3>🔒 {% trans "Reset Password" %}</h3>
+                        <p>{% trans "Enter your email to receive a password reset link" %}</p>
+                    </div>
+
+                    <div id="reset-message" class="alert" style="display: none;"></div>
+
+                    <form id="reset-password-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="reset_email" class="form-label">{% trans "Email" %} *</label>
+                            <input type="email" id="reset_email" class="form-control-resend" placeholder="{% trans 'your@email.com' %}" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" id="reset-btn" class="btn btn-primary">
+                                <span id="reset-btn-text">{% trans "Send Reset Link" %}</span>
+                            </button>
+                        </div>
+
+                        <div class="text-center" style="margin-top: 12px;">
+                            <a href="#" id="cancel-reset" class="cancel-link">{% trans "Back to Sign In" %}</a>
+                        </div>
+                    </form>
+                </div>
+
                 <!-- <div class="divider">{% trans "or" %}</div> -->
 
-                <div class="signup-link">
+                <div class="signup-link" id="signup-section">
                     <p>{% trans "Don't have an account?" %} <a href="{% url 'register_platform' %}">{% trans "Sign Up" %}</a></p>
+                </div>
+
+                <div class="resend-verification-section" id="resend-section">
+                    <p class="resend-prompt">
+                        {% trans "Didn't receive verification email?" %} 
+                        <a href="#" id="show-resend-form" class="resend-link">{% trans "Resend it" %}</a>
+                    </p>
+                    
+                    <div id="resend-form-container" style="display: none;">
+                        <div class="resend-header">
+                            <h3>📧 {% trans "Resend Verification Email" %}</h3>
+                            <p>{% trans "Enter your email address to receive a new verification link" %}</p>
+                        </div>
+
+                        <div id="resend-message" class="alert" style="display: none;"></div>
+
+                        <form id="resend-verification-form">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="resend_email" class="form-label">{% trans "Email" %} *</label>
+                                <input type="email" id="resend_email" class="form-control-resend" placeholder="{% trans 'your@email.com' %}" required>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" id="resend-btn" class="btn btn-primary">
+                                    <span id="resend-btn-text">{% trans "Send Verification Email" %}</span>
+                                </button>
+                            </div>
+
+                            <div class="text-center" style="margin-top: 12px;">
+                                <a href="#" id="cancel-resend" class="cancel-link">{% trans "Cancel" %}</a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -501,6 +724,20 @@
 </div>
 
 <script>
+// Translation strings for JavaScript
+const translations = {
+    sending: "{% trans 'Sending...' %}",
+    sendVerification: "{% trans 'Send Verification Email' %}",
+    sendResetLink: "{% trans 'Send Reset Link' %}",
+    verificationSent: "{% trans 'Verification email sent successfully!' %}",
+    resetSent: "{% trans 'Password reset email sent successfully!' %}",
+    error: "{% trans 'Error' %}",
+    emailNotFound: "{% trans 'Email not found' %}",
+    emailAlreadyVerified: "{% trans 'Email already verified' %}",
+    sendError: "{% trans 'Error sending email' %}",
+    networkError: "{% trans 'Network error. Check your connection and try again.' %}"
+};
+
 function togglePassword() {
     const passwordInput = document.querySelector('input[name="password"]');
     const toggle = document.querySelector('.password-toggle');
@@ -513,6 +750,204 @@ function togglePassword() {
         toggle.textContent = "👁️";
     }
 }
+
+// Show/hide reset password form
+document.getElementById("show-reset-form").addEventListener("click", function(e) {
+    e.preventDefault();
+    const resetContainer = document.getElementById("reset-form-container");
+    const loginForm = document.getElementById("login-form");
+    const signupSection = document.getElementById("signup-section");
+    const resendSection = document.getElementById("resend-section");
+    
+    resetContainer.style.display = "block";
+    loginForm.style.display = "none";
+    signupSection.style.display = "none";
+    resendSection.style.display = "none";
+});
+
+document.getElementById("cancel-reset").addEventListener("click", function(e) {
+    e.preventDefault();
+    const resetContainer = document.getElementById("reset-form-container");
+    const loginForm = document.getElementById("login-form");
+    const signupSection = document.getElementById("signup-section");
+    const resendSection = document.getElementById("resend-section");
+    const messageBox = document.getElementById("reset-message");
+    
+    resetContainer.style.display = "none";
+    loginForm.style.display = "block";
+    signupSection.style.display = "block";
+    resendSection.style.display = "block";
+    messageBox.style.display = "none";
+    document.getElementById("reset_email").value = "";
+});
+
+// Reset password form handler
+document.getElementById("reset-password-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const resetBtn = document.getElementById("reset-btn");
+    const btnText = document.getElementById("reset-btn-text");
+    const messageBox = document.getElementById("reset-message");
+    const email = document.getElementById("reset_email").value.trim();
+
+    // Disable button and show loading state
+    resetBtn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span> ' + translations.sending;
+
+    // Reset message
+    messageBox.style.display = "none";
+    messageBox.textContent = "";
+    messageBox.classList.remove("alert-danger", "alert-success");
+
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        const response = await fetch("{% url 'reset_password' %}", {
+            method: "POST",
+            body: formData
+        });
+
+        const responseText = await response.text();
+
+        if (response.ok) {
+            messageBox.textContent = translations.resetSent;
+            messageBox.classList.add("alert-success");
+            messageBox.style.display = "block";
+
+            // Clear the email field
+            document.getElementById("reset_email").value = "";
+
+            // Re-enable button
+            setTimeout(() => {
+                resetBtn.disabled = false;
+                btnText.textContent = translations.sendResetLink;
+            }, 2000);
+        } else {
+            let errorMessage = translations.sendError;
+            
+            if (response.status === 404) {
+                errorMessage = translations.emailNotFound;
+            } else {
+                errorMessage = responseText || translations.sendError;
+            }
+
+            messageBox.textContent = translations.error + ": " + errorMessage;
+            messageBox.classList.add("alert-danger");
+            messageBox.style.display = "block";
+
+            // Re-enable button
+            resetBtn.disabled = false;
+            btnText.textContent = translations.sendResetLink;
+        }
+    } catch (error) {
+        console.log(error);
+        messageBox.textContent = translations.networkError;
+        messageBox.classList.add("alert-danger");
+        messageBox.style.display = "block";
+
+        // Re-enable button
+        resetBtn.disabled = false;
+        btnText.textContent = translations.sendResetLink;
+    }
+});
+
+// Show/hide resend verification form
+document.getElementById("show-resend-form").addEventListener("click", function(e) {
+    e.preventDefault();
+    const container = document.getElementById("resend-form-container");
+    const prompt = this.parentElement;
+    
+    container.style.display = "block";
+    prompt.style.display = "none";
+});
+
+document.getElementById("cancel-resend").addEventListener("click", function(e) {
+    e.preventDefault();
+    const container = document.getElementById("resend-form-container");
+    const prompt = document.querySelector(".resend-prompt");
+    const messageBox = document.getElementById("resend-message");
+    
+    container.style.display = "none";
+    prompt.style.display = "block";
+    messageBox.style.display = "none";
+    document.getElementById("resend_email").value = "";
+});
+
+// Resend verification email handler
+document.getElementById("resend-verification-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const resendBtn = document.getElementById("resend-btn");
+    const btnText = document.getElementById("resend-btn-text");
+    const messageBox = document.getElementById("resend-message");
+    const email = document.getElementById("resend_email").value.trim();
+
+    // Disable button and show loading state
+    resendBtn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span> ' + translations.sending;
+
+    // Reset message
+    messageBox.style.display = "none";
+    messageBox.textContent = "";
+    messageBox.classList.remove("alert-danger", "alert-success");
+
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        const response = await fetch("{% url 'send_verification_email' %}", {
+            method: "POST",
+            body: formData
+        });
+
+        const responseText = await response.text();
+
+        if (response.ok) {
+            messageBox.textContent = translations.verificationSent;
+            messageBox.classList.add("alert-success");
+            messageBox.style.display = "block";
+
+            // Clear the email field
+            document.getElementById("resend_email").value = "";
+
+            // Re-enable button
+            setTimeout(() => {
+                resendBtn.disabled = false;
+                btnText.textContent = translations.sendVerification;
+            }, 2000);
+        } else {
+            let errorMessage = translations.sendError;
+            
+            if (response.status === 404) {
+                errorMessage = translations.emailNotFound;
+            } else if (response.status === 400) {
+                errorMessage = translations.emailAlreadyVerified;
+            } else {
+                errorMessage = responseText || translations.sendError;
+            }
+
+            messageBox.textContent = translations.error + ": " + errorMessage;
+            messageBox.classList.add("alert-danger");
+            messageBox.style.display = "block";
+
+            // Re-enable button
+            resendBtn.disabled = false;
+            btnText.textContent = translations.sendVerification;
+        }
+    } catch (error) {
+        console.log(error);
+        messageBox.textContent = translations.networkError;
+        messageBox.classList.add("alert-danger");
+        messageBox.style.display = "block";
+
+        // Re-enable button
+        resendBtn.disabled = false;
+        btnText.textContent = translations.sendVerification;
+    }
+});
 
 document.querySelectorAll('.form-control').forEach(input => {
     input.addEventListener('focus', function() {

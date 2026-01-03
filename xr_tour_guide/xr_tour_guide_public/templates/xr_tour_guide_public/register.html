@@ -357,6 +357,83 @@
         to { transform: rotate(360deg); }
     }
 
+    /* Resend Verification Section */
+    .resend-verification-section {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px dashed #e2e8f0;
+    }
+
+    .resend-prompt {
+        color: #718096;
+        font-size: 0.9rem;
+        margin: 0 0 15px 0;
+    }
+
+    .resend-link {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .resend-link:hover {
+        color: #5568d3;
+        text-decoration: underline;
+    }
+
+    #resend-form-container {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 30px;
+        margin-top: 20px;
+        animation: expandDown 0.4s ease-out;
+    }
+
+    @keyframes expandDown {
+        from {
+            opacity: 0;
+            max-height: 0;
+            padding: 0;
+        }
+        to {
+            opacity: 1;
+            max-height: 500px;
+            padding: 30px;
+        }
+    }
+
+    .resend-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .resend-header h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 8px;
+    }
+
+    .resend-header p {
+        color: #718096;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .cancel-link {
+        color: #718096;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .cancel-link:hover {
+        color: #2d3748;
+        text-decoration: underline;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .form-section {
@@ -379,6 +456,10 @@
         .language-switcher-wrapper {
             padding: 0 20px;
         }
+
+        #resend-form-container {
+            padding: 25px 20px;
+        }
     }
 
     @media (max-width: 480px) {
@@ -396,6 +477,14 @@
 
         .form-header h2 {
             font-size: 1.5rem;
+        }
+
+        #resend-form-container {
+            padding: 20px 15px;
+        }
+
+        .resend-header h3 {
+            font-size: 1.2rem;
         }
     }
 </style>
@@ -481,6 +570,40 @@
         <div class="login-link">
             <p>{% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Sign In" %}</a></p>
         </div>
+
+        <div class="resend-verification-section">
+            <p class="resend-prompt">
+                {% trans "Didn't receive verification email?" %} 
+                <a href="#" id="show-resend-form" class="resend-link">{% trans "Resend it" %}</a>
+            </p>
+            
+            <div id="resend-form-container" style="display: none;">
+                <div class="resend-header">
+                    <h3>📧 {% trans "Resend Verification Email" %}</h3>
+                    <p>{% trans "Enter your email address to receive a new verification link" %}</p>
+                </div>
+
+                <div id="resend-message" class="form-message" style="display: none;"></div>
+
+                <form id="resend-verification-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="resend_email" class="form-label">{% trans "Email" %} *</label>
+                        <input type="email" id="resend_email" class="form-control" placeholder="{% trans 'your@email.com' %}" required>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" id="resend-btn" class="btn btn-primary">
+                            <span id="resend-btn-text">{% trans "Send Verification Email" %}</span>
+                        </button>
+                    </div>
+
+                    <div class="text-center" style="margin-top: 15px;">
+                        <a href="#" id="cancel-resend" class="cancel-link">{% trans "Cancel" %}</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -494,7 +617,13 @@ const translations = {
     emailSent: "{% trans 'Email sent successfully! Registration in progress...' %}",
     error: "{% trans 'Error' %}",
     unknownError: "{% trans 'Unknown error' %}",
-    networkError: "{% trans 'Network error. Check your connection and try again.' %}"
+    networkError: "{% trans 'Network error. Check your connection and try again.' %}",
+    sending: "{% trans 'Sending...' %}",
+    sendVerification: "{% trans 'Send Verification Email' %}",
+    verificationSent: "{% trans 'Verification email sent successfully!' %}",
+    emailNotFound: "{% trans 'Email not found' %}",
+    emailAlreadyVerified: "{% trans 'Email already verified' %}",
+    sendError: "{% trans 'Error sending email' %}"
 };
 
 function togglePassword() {
@@ -510,6 +639,7 @@ function togglePassword() {
     }
 }
 
+// Registration form handler
 document.getElementById("register-form").addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -583,6 +713,102 @@ document.getElementById("register-form").addEventListener("submit", async functi
         // Re-enable button
         submitBtn.disabled = false;
         btnText.textContent = translations.register;
+    }
+});
+
+// Show/hide resend verification form
+document.getElementById("show-resend-form").addEventListener("click", function(e) {
+    e.preventDefault();
+    const container = document.getElementById("resend-form-container");
+    const prompt = this.parentElement;
+    
+    container.style.display = "block";
+    prompt.style.display = "none";
+});
+
+document.getElementById("cancel-resend").addEventListener("click", function(e) {
+    e.preventDefault();
+    const container = document.getElementById("resend-form-container");
+    const prompt = document.querySelector(".resend-prompt");
+    const messageBox = document.getElementById("resend-message");
+    
+    container.style.display = "none";
+    prompt.style.display = "block";
+    messageBox.style.display = "none";
+    document.getElementById("resend_email").value = "";
+});
+
+// Resend verification email handler
+document.getElementById("resend-verification-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const resendBtn = document.getElementById("resend-btn");
+    const btnText = document.getElementById("resend-btn-text");
+    const messageBox = document.getElementById("resend-message");
+    const email = document.getElementById("resend_email").value.trim();
+
+    // Disable button and show loading state
+    resendBtn.disabled = true;
+    btnText.innerHTML = '<span class="spinner"></span> ' + translations.sending;
+
+    // Reset message
+    messageBox.style.display = "none";
+    messageBox.textContent = "";
+    messageBox.classList.remove("text-danger", "text-success");
+
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        const response = await fetch("{% url 'send_verification_email' %}", {
+            method: "POST",
+            body: formData
+        });
+
+        const responseText = await response.text();
+
+        if (response.ok) {
+            messageBox.textContent = translations.verificationSent;
+            messageBox.classList.add("text-success");
+            messageBox.style.display = "block";
+
+            // Clear the email field
+            document.getElementById("resend_email").value = "";
+
+            // Re-enable button
+            setTimeout(() => {
+                resendBtn.disabled = false;
+                btnText.textContent = translations.sendVerification;
+            }, 2000);
+        } else {
+            let errorMessage = translations.sendError;
+            
+            if (response.status === 404) {
+                errorMessage = translations.emailNotFound;
+            } else if (response.status === 400) {
+                errorMessage = translations.emailAlreadyVerified;
+            } else {
+                errorMessage = responseText || translations.sendError;
+            }
+
+            messageBox.textContent = translations.error + ": " + errorMessage;
+            messageBox.classList.add("text-danger");
+            messageBox.style.display = "block";
+
+            // Re-enable button
+            resendBtn.disabled = false;
+            btnText.textContent = translations.sendVerification;
+        }
+    } catch (error) {
+        console.log(error);
+        messageBox.textContent = translations.networkError;
+        messageBox.classList.add("text-danger");
+        messageBox.style.display = "block";
+
+        // Re-enable button
+        resendBtn.disabled = false;
+        btnText.textContent = translations.sendVerification;
     }
 });
 

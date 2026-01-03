@@ -40,28 +40,26 @@
 
 ## 🌟 Overview
 
-**XRTourGuide Community Server** is an open-source identity provider built to unify and empower communities around XRTourGuide servers. Our mission is to strengthen the visibility and impact of rural communities by providing secure, scalable, and user-friendly authentication tools.
+**XRTourGuide Community Server** is an open-source identity provider built to unify and empower communities around XRTourGuide servers.
 
 ### Why XRTourGuide Community Server?
 
-- 🔒 **Secure by Design** - OAuth 2.0 authentication with industry best practices
-- 🚀 **Fast & Modern** - Built on FastAPI for high performance
-- 🌐 **Community-First** - Designed with rural communities in mind
-- 🔧 **Developer-Friendly** - Clear APIs, great documentation, easy to extend
-- 🐳 **Deploy Anywhere** - Docker-ready for seamless deployment
+- **Secure by Design** - OAuth 2.0 authentication
+- **Fast & Modern** - Built on FastAPI for high performance
+- **Community-First** - Designed with rural communities in mind
+- **Developer-Friendly** - Clear APIs, great documentation, easy to extend
+- **Deploy Anywhere** - Docker-ready for seamless deployment
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Capabilities
 
-- 🔐 **User Authentication & Authorization** - Secure OAuth 2.0 implementation
-- 👥 **Community Management** - Comprehensive APIs for community operations
-- 🗄️ **Reliable Data Storage** - MySQL-backed persistence layer
-- 🖥️ **Admin Dashboard** - Modern, intuitive administration interface
-- 📱 **RESTful APIs** - Clean, well-documented endpoints
-- 🔄 **Scalable Architecture** - Built to grow with your community
+- **User Authentication & Authorization** - Secure OAuth 2.0 implementation
+- **Community Management** - Comprehensive APIs for community operations
+- **Reliable Data Storage** - MySQL-backed persistence layer
+- **Admin Dashboard** - Modern, intuitive administration interface
 
 ### Technical Stack
 
@@ -73,7 +71,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 Get up and running in minutes with Docker!
 
@@ -98,19 +96,23 @@ Create a `.env` file in the project root:
 
 ```bash
 # Database Configuration
-DB_NAME=xrtourguide
-DB_USER=admin
-DB_PASSWORD=your_secure_password_here
-DB_HOST=db
-DB_PORT=3306
+CS_DB_NAME=xrtourguide
+CS_DB_USER=your_admin
+CS_DB_PASSWORD=password
+CS_DB_HOST=db
+CS_DB_PORT=3306
 
 # Default Admin User
-DEFAULT_USER_NAME=admin
+DEFAULT_USER_NAME=your_admin
 DEFAULT_USER_EMAIL=admin@example.com
-DEFAULT_USER_PASSWORD=change_me_immediately
+DEFAULT_USER_PASSWORD=password
 
 # Security
 SECRET_KEY=your_secret_key_here_generate_with_openssl_rand_hex_32
+JWT_SECRETY=your_secret_key_here_generate_with_openssl_rand_hex_32
+
+# Endpoint
+BASE_UR="https://your_domain_name/communityserver"
 ```
 
 > 💡 **Tip:** Generate a secure secret key with: `openssl rand -hex 32`
@@ -123,40 +125,38 @@ docker-compose up -d --build
 
 4. **Verify installation**
 
-- 📚 **API Documentation:** http://localhost:8002/docs
-- 🎛️ **Admin Interface:** http://localhost:8002
-- 🔍 **Health Check:** http://localhost:8002/health
+- **API Documentation:** http://localhost:8002/docs
+- **Admin Interface:** http://localhost:8002
+- **Health Check:** http://localhost:8002/health
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 ### API Reference
 
 Once running, explore the interactive API documentation:
 
 - **Swagger UI:** http://localhost:8002/docs
-- **ReDoc:** http://localhost:8002/redoc
 
 ### Project Structure
 
 ```
 community-server/
-├── app/               # API endpoints
-├── model/            # Database models
-│   └── models/          # Pydantic schemas
-    └── database         # DB
+├── app/                   # API endpoints
+├── model/                 # Database models
+│   └── models/            # Pydantic schemas
+    └── database           # DB
 ├── templates/             # HTML templates
 ├── docker-compose.yml     # Docker orchestration
-├── Dockerfile            # Container definition
-├── requirements.txt      # Python dependencies
-├── .env.example         # Environment template
-└── README.md            # This file
+├── Dockerfile             # Container definition
+├── requirements.txt       # Python dependencies
+└── README.md              # This file
 ```
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We love contributions! Whether you're fixing bugs, improving docs, or proposing new features, your help is welcome.
 
@@ -191,7 +191,7 @@ sudo docker compose up -d --build
 
 ---
 
-## 🐛 Issues & Support
+## Issues & Support
 
 ### Reporting Bugs
 
@@ -208,32 +208,17 @@ Have an idea? We'd love to hear it! [Create a feature request](https://github.co
 
 ---
 
-## 💬 Community
+## Community
 
 Join our community and connect with other contributors!
 
-- 💻 **GitHub Discussions:** [Join the conversation](https://github.com/isislab-unisa/XRTourGuide/discussions)
-- 🐛 **Issue Tracker:** [Report bugs or request features](https://github.com/isislab-unisa/XRTourGuide/issues)
-- 📧 **Contact:** [isislab@unisa.it](mailto:isislab@unisa.it)
+- **GitHub Discussions:** [Join the conversation](https://github.com/isislab-unisa/XRTourGuide/discussions)
+- **Issue Tracker:** [Report bugs or request features](https://github.com/isislab-unisa/XRTourGuide/issues)
+- **Contact:** [isislab@unisa.it](mailto:isislab@unisa.it)
 
 ---
 
-## 🗺️ Roadmap
-
-- [ ] Multi-language support
-- [ ] Advanced role-based access control (RBAC)
-- [ ] Two-factor authentication (2FA)
-- [ ] API rate limiting and throttling
-- [ ] Comprehensive audit logging
-- [ ] Integration with popular identity providers
-- [ ] Mobile app support
-- [ ] Community analytics dashboard
-
-Want to help with any of these? Check out our [contributing guide](#-contributing)!
-
----
-
-## 📜 License
+## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 

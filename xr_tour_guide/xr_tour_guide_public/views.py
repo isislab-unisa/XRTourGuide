@@ -126,6 +126,25 @@ def send_verification_email(request):
         json={'email': email}
     )
     if response.status_code == 200:
-        return HttpResponse("Email di verifica inviata con successo", status=200)
+        return HttpResponse("Email di verifica inviata con successo", status=response.status_code)
+    elif response.status_code == 404:
+        return HttpResponse("Email non trovata", status=response.status_code)
+    elif response.status_code == 400:
+        return HttpResponse("Email già verificata", status=response.status_code)
     else:
-        return HttpResponse("Email non valida", status=response.status_code)
+        return HttpResponse("Errore nell'invio dell'email", status=response.status_code)
+
+def reset_password(request):
+    email = request.POST.get('email')
+    response = requests.post(
+        f"http://{os.getenv('COMMUNITY_SERVER')}/reset-password/",
+        json={'email': email}
+    )
+    if response.status_code == 200:
+        return HttpResponse("Email di verifica inviata con successo", status=response.status_code)
+    elif response.status_code == 404:
+        return HttpResponse("Email non trovata", status=response.status_code)
+    elif response.status_code == 400:
+        return HttpResponse("Email già verificata", status=response.status_code)
+    else:
+        return HttpResponse("Errore nell'invio dell'email", status=response.status_code)
