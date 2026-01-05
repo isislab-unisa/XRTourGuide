@@ -21,7 +21,7 @@ class UserRole(str, Enum):
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), nullable=False)
+    username = Column(String(50), nullable=False, unique=True)
     email = Column(String(100), nullable=False, unique=True)
     password = Column(String(100), nullable=False)
     name = Column(String(100), nullable=True)
@@ -30,12 +30,14 @@ class User(Base):
     city = Column(String(100), nullable=True)
     description = Column(String(100), nullable=True)
     email_verified = Column(Boolean, default=False, nullable=True)
-    verification_token = Column(String(200), nullable=True)
-    verification_token_expires = Column(DateTime, nullable=True)
+    email_verification_token = Column(String(255), nullable=True)
+    email_verification_expires = Column(DateTime, nullable=True)
+    password_reset_token = Column(String(255), nullable=True)
+    password_reset_expires = Column(DateTime, nullable=True)
     role = Column(
-        SAEnum(UserRole, name="user_role_enum"),
+        String(10),
         nullable=False,
-        default=UserRole.USER
+        default=UserRole.USER.value
     )
 
     def __repr__(self):

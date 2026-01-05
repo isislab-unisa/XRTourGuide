@@ -19,8 +19,8 @@ CMD sh -c "\
     python manage.py migrate && \
     python manage.py init_groups && \
     python manage.py collectstatic --noinput && \
-    # python manage.py makemessages -l it && \
-    # python translate_po.py --full && \
-    # python manage.py compilemessages && \
+    python manage.py makemessages -l it && \
+    python translate_po.py --full && \
+    python manage.py compilemessages && \
     gunicorn --bind 0.0.0.0:8001 xr_tour_guide.wsgi:application \
 "

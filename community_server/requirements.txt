@@ -13,3 +13,4 @@ python-jose[cryptography]
 fastapi_mail
 aiosmtplib
 dotenv
+alembic

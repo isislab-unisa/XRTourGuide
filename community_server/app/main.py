@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 import secrets
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from fastapi.middleware.cors import CORSMiddleware
 
 dotenv.load_dotenv()
 
@@ -62,6 +63,14 @@ async def lifespan(app: FastAPI):
         db.close()
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost", "http://127.0.0.1", "https://xrtourguide.di.unisa.it"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -179,24 +188,6 @@ async def get_services(db: Session = Depends(get_db)):
 @app.get("/get_service/{service_id}")
 async def get_service(service_id: int, db: Session = Depends(get_db)):
     return db.query(models.Services).filter(models.Services.id == service_id).first().domain
-
-# @app.post("/api/register/")
-# async def api_register(
-#     username: str = Form(...),
-#     email: str = Form(...),
-#     password: str = Form(...),
-#     db: Session = Depends(get_db)
-# ):
-#     existing = db.query(models.User).filter(models.User.email == email).first()
-#     if existing:
-#         raise HTTPException(400, "Email already in use")
-
-#     user = models.User(username=username, email=email)
-#     user.set_password(password)
-#     db.add(user)
-#     db.commit()
-
-#     return {"message": "User registered successfully"}
 
 @app.post("/api/token/")
 async def api_login(request: Request, db: Session = Depends(get_db)):
@@ -437,17 +428,17 @@ async def api_register(
             detail="Email già verificata"
         )
     
-    verification_token = secrets.token_urlsafe(32)
-    token_expires = datetime.utcnow() + timedelta(hours=24)
+    email_verification_token = secrets.token_urlsafe(32)
+    email_verification_expires = datetime.utcnow() + timedelta(hours=24)
 
     if existing and not existing.active:
-        existing.verification_token = verification_token
-        existing.verification_token_expires = token_expires
+        existing.email_verification_token = email_verification_token
+        existing.email_verification_expires = email_verification_expires
         db.commit()
 
         email_sent = send_verification_email(
             email=data.email,
-            token=verification_token,
+            token=email_verification_token,
             username=data.username
         )
 
@@ -474,8 +465,8 @@ async def api_register(
             description=data.description,
             active=False, 
             email_verified=False,
-            verification_token=verification_token,
-            verification_token_expires=token_expires
+            email_verification_token=email_verification_token,
+            email_verification_expires=email_verification_expires
         )
     except Exception as e:
         print(f"Errore nell'inserimento dell'utente: {e}", flush=True)
@@ -491,7 +482,7 @@ async def api_register(
 
     email_sent = send_verification_email(
         email=data.email,
-        token=verification_token,
+        token=email_verification_token,
         username=data.username
     )
 
@@ -515,7 +506,7 @@ async def verify_email(
     db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(
-        models.User.verification_token == token
+        models.User.email_verification_token == token
     ).first()
 
     if not user:
@@ -524,7 +515,7 @@ async def verify_email(
             detail="Token di verifica non valido"
         )
 
-    if user.verification_token_expires < datetime.utcnow():
+    if user.email_verification_expires < datetime.utcnow():
         raise HTTPException(
             status_code=400,
             detail="Token di verifica scaduto. Richiedi un nuovo link."
@@ -532,8 +523,8 @@ async def verify_email(
 
     user.email_verified = True
     user.active = True
-    user.verification_token = None
-    user.verification_token_expires = None
+    user.email_verification_token = None
+    user.email_verification_expires = None
     
     db.commit()
 
@@ -570,16 +561,16 @@ async def resend_verification(
             detail="Email già verificata"
         )
 
-    verification_token = secrets.token_urlsafe(32)
+    email_verification_token = secrets.token_urlsafe(32)
     token_expires = datetime.utcnow() + timedelta(hours=24)
 
-    user.verification_token = verification_token
-    user.verification_token_expires = token_expires
+    user.email_verification_token = email_verification_token
+    user.email_verification_expires = token_expires
     db.commit()
 
     email_sent = send_verification_email(
         email=user.email,
-        token=verification_token,
+        token=email_verification_token,
         username=user.username
     )
 
@@ -609,8 +600,8 @@ async def request_reset_password(
     token = secrets.token_urlsafe(32)
     expires = datetime.utcnow() + timedelta(hours=24)
 
-    user.verification_token = token
-    user.verification_token_expires = expires
+    user.password_reset_token = token
+    user.password_reset_expires = expires
     db.commit()
 
     email_sent = send_forgot_password(
@@ -620,8 +611,8 @@ async def request_reset_password(
     )
 
     if not email_sent:
-        user.verification_token = None
-        user.verification_token_expires = None
+        user.password_reset_token = None
+        user.password_reset_expires = None
         db.commit()
         raise HTTPException(status_code=500, detail="Errore invio email")
 
@@ -634,10 +625,10 @@ def get_reset_form(
     db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(
-        models.User.verification_token == token
+        models.User.password_reset_token == token
     ).first()
 
-    if not user or user.verification_token_expires < datetime.utcnow():
+    if not user or user.password_reset_expires < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Token non valido o scaduto")
 
     return templates.TemplateResponse(
@@ -660,15 +651,15 @@ def verify_reset_password(
         raise HTTPException(status_code=400, detail="Le password non coincidono")
 
     user = db.query(models.User).filter(
-        models.User.verification_token == token
+        models.User.password_reset_token == token
     ).first()
 
-    if not user or user.verification_token_expires < datetime.utcnow():
+    if not user or user.password_reset_expires < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Token non valido o scaduto")
 
     user.set_password(password)
-    user.verification_token = None
-    user.verification_token_expires = None
+    user.password_reset_token = None
+    user.password_reset_expires = None
     db.commit()
 
     return templates.TemplateResponse(

@@ -3,6 +3,7 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin
 from django.db.models import Q
 from django.urls import path
+from django.utils.translation import gettext_lazy as _
 
 class ReviewAdmin(ModelAdmin):
     list_display = ("tour", "user", "timestamp")
