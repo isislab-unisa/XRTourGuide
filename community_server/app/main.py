@@ -648,14 +648,30 @@ def verify_reset_password(
     db: Session = Depends(get_db)
 ):
     if password != confirm_password:
-        raise HTTPException(status_code=400, detail="Le password non coincidono")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Le password non coincidono",
+                "type": "Password",
+            },
+            status_code=400
+        )
 
     user = db.query(models.User).filter(
         models.User.password_reset_token == token
     ).first()
 
     if not user or user.password_reset_expires < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Token non valido o scaduto")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Token non valido o scaduto",
+                "type": "Token",
+            },
+            status_code=400
+        )
 
     user.set_password(password)
     user.password_reset_token = None

@@ -17,6 +17,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
     hide_ordering_field = True
     compressed_fields = True
+    warn_unsaved_form = True
     
     list_display = ('title', 'place', 'category', 'status_badge', 'creation_time', 'user')
     readonly_fields = ['user', 'creation_time', 'status_info']

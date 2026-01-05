@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verified</title>
+    <title>Error</title>
     <style>
         * {
             margin: 0;
@@ -31,10 +31,10 @@
             text-align: center;
         }
 
-        .success-icon {
+        .error-icon {
             width: 80px;
             height: 80px;
-            background: #10b981;
+            background: #ef4444;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -43,7 +43,7 @@
             animation: scaleIn 0.5s ease-out;
         }
 
-        .success-icon svg {
+        .error-icon svg {
             width: 48px;
             height: 48px;
             stroke: white;
@@ -51,7 +51,7 @@
             fill: none;
             stroke-linecap: round;
             stroke-linejoin: round;
-            animation: drawCheck 0.5s ease-out 0.3s forwards;
+            animation: drawX 0.5s ease-out 0.3s forwards;
             stroke-dasharray: 100;
             stroke-dashoffset: 100;
         }
@@ -67,7 +67,7 @@
             }
         }
 
-        @keyframes drawCheck {
+        @keyframes drawX {
             to {
                 stroke-dashoffset: 0;
             }
@@ -125,19 +125,17 @@
 </head>
 <body>
     <div class="container">
-        <div class="success-icon">
+        <div class="error-icon">
             <svg viewBox="0 0 52 52">
-                <polyline points="14 27 22 35 38 19"/>
+                <line x1="16" y1="16" x2="36" y2="36"/>
+                <line x1="36" y1="16" x2="16" y2="36"/>
             </svg>
         </div>
         
-        {% if type == "Password" %}
-            <h1>Password Modified Successfully!</h1>
-        {% elif type == "Email" %}
-            <h1>User Registered Successfully!</h1>
-        {% endif %}
+        <h1>Error: {{ type }}</h1>
+        <p>{{ message }}</p>
         
-        <!-- <a href="https://xrtourguide.di.unisa.it/login" class="button">Go to login page</a> -->
+        <!-- <a href="/reset-password" class="button">Try Again</a> -->
     </div>
 </body>
 </html>
