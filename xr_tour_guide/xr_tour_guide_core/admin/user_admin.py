@@ -42,7 +42,7 @@ class CustomUserAdmin(ModelAdmin, UserAdmin):
             'classes': ('tab',)
         }),
         (_('Personal Information'), {
-            'fields': (('first_name', 'last_name'), 'email', 'city', 'description'),
+            'fields': (_('first_name'), _('last_name'), 'email', _('city'), _('description')),
             'description': _('Personal information and profile details'),
             'classes': ('tab',)
         }),
@@ -55,7 +55,7 @@ class CustomUserAdmin(ModelAdmin, UserAdmin):
             'classes': ('tab',)
         }),
         (_('Personal Information'), {
-            'fields': (('first_name', 'last_name'), 'email', 'city', 'description'),
+            'fields': (_('first_name'), _('last_name'), 'email', _('city'), _('description')),
             'description': _('Personal information and profile details'),
             'classes': ('tab',)
         }),

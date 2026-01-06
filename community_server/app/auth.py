@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 
 SECRET_KEY = os.getenv("JWT_SECRET")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+ACCESS_TOKEN_EXPIRE_MINUTES = 15 #* 24
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 def create_access_token(data: dict):
@@ -28,8 +28,10 @@ def verify_token(token: str, required_type: str = None):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token type"
             )
+        print(f"Payload: {payload}", flush=True)
         return payload
     except jwt.ExpiredSignatureError:
+        print("Token has expired diocaneeeeeeee", flush=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired"
