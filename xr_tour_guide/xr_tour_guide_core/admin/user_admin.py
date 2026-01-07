@@ -39,12 +39,12 @@ class CustomUserAdmin(ModelAdmin, UserAdmin):
         (_('Account Credentials'), {
             'fields': ('username', 'password', 'password_reset_action'),
             'description': _('Login credentials for the user account'),
-            'classes': ('tab',)
+            'classes': ('tab',),
         }),
         (_('Personal Information'), {
-            'fields': (_('first_name'), _('last_name'), 'email', _('city'), _('description')),
+            'fields': ('first_name', 'last_name', 'email', 'city', 'description'),
             'description': _('Personal information and profile details'),
-            'classes': ('tab',)
+            'classes': ('tab',),
         }),
     )
     
