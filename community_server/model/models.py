@@ -13,6 +13,7 @@ class Services(Base):
     name = Column(String(50), nullable=False)
     domain = Column(String(100), nullable=False, unique=True)
     active = Column(Boolean, default=True, nullable=True)
+    email = Column(String(100), nullable=True)
 
 class UserRole(str, Enum):
     ADMIN = "ADMIN"

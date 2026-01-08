@@ -129,9 +129,10 @@ def add_service(
     name: str = Form(...),
     domain: str = Form(...),
     active: bool = Form(...),
+    email: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    new_service = models.Services(name=name, domain=domain, active=active)
+    new_service = models.Services(name=name, domain=domain, active=active, email=email)
     db.add(new_service)
     db.commit()
     services = db.query(models.Services).all()

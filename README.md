@@ -163,6 +163,9 @@ Add a map of your region in pmtiles format in ```pmtiles-server/maps ```
 
 3. **Start all services**
 ```bash
+cd community-server
+docker compose up -d --build
+cd ../xr_tour_guide
 docker compose up -d --build
 ```
 
