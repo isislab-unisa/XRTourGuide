@@ -553,6 +553,27 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <span class="label-icon">🏷️</span>
+                        Email
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="email" 
+                        name="email" 
+                        placeholder="e.g. API Gateway, Database MySQL, Web Server..."
+                        required
+                        maxlength="100"
+                        oninput="updateCharCounter('email', 100)"
+                    >
+                    <div class="form-helper">
+                        Please enter a email
+                        <span class="char-counter" id="email-counter">0/100</span>
+                    </div>
+                </div>
+
                 <!-- Domain -->
                 <div class="form-group">
                     <label for="domain" class="form-label">
