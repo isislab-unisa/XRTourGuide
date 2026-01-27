@@ -27,3 +27,4 @@ django-allauth
 cryptography
 polib
 googletrans==4.0.0rc1
+django-cors-headers

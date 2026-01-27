@@ -70,7 +70,6 @@
         }
     }
 
-    /* Language Switcher */
     .language-switcher-wrapper {
         display: flex;
         justify-content: flex-end;
@@ -106,11 +105,6 @@
         outline: none;
         padding: 0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    .language-switcher select option {
-        background: white;
-        color: #2d3748;
     }
 
     .language-icon {
@@ -332,6 +326,8 @@
         justify-content: center;
         gap: 10px;
         text-decoration: none;
+        cursor: pointer;
+        width: 100%;
     }
 
     .btn-google:hover {
@@ -396,7 +392,6 @@
         color: #667eea;
     }
 
-    /* Resend Verification Section */
     .resend-verification-section {
         text-align: center;
         margin-top: 20px;
@@ -506,11 +501,6 @@
         outline: none;
     }
 
-    .form-control-resend::placeholder {
-        color: #a0aec0;
-    }
-
-    /* Loading spinner */
     .spinner {
         display: inline-block;
         width: 14px;
@@ -527,23 +517,15 @@
         to { transform: rotate(360deg); }
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .login-wrapper {
             padding: 30px 20px;
         }
-
         .card-body {
             padding: 40px 32px;
         }
-
         .login-header h2 {
             font-size: 1.65rem;
-        }
-
-        #resend-form-container,
-        #reset-form-container {
-            padding: 20px;
         }
     }
 
@@ -551,31 +533,11 @@
         .login-wrapper {
             padding: 20px 15px;
         }
-
-        .login-container {
-            max-width: 100%;
-        }
-
         .card-body {
             padding: 35px 28px;
         }
-
         .login-header h2 {
             font-size: 1.5rem;
-        }
-
-        .form-floating > .form-control {
-            font-size: 0.9rem;
-        }
-
-        #resend-form-container,
-        #reset-form-container {
-            padding: 18px 15px;
-        }
-
-        .resend-header h3,
-        .reset-header h3 {
-            font-size: 1.1rem;
         }
     }
 </style>
@@ -586,7 +548,7 @@
         <div class="language-switcher-wrapper">
             <form action="{% url 'set_language' %}" method="post" class="language-switcher">
                 {% csrf_token %}
-                <svg class="language-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg class="language-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
                 </svg>
                 <select name="language" onchange="this.form.submit()">
@@ -609,7 +571,7 @@
                 </div>
                 
                 {% if error %}
-                    <div class="alert alert-danger">
+                    <div class="alert alert-danger" id="error-message">
                         {{ error }}
                     </div>
                 {% endif %}
@@ -679,7 +641,20 @@
                     </form>
                 </div>
 
-                <!-- <div class="divider">{% trans "or" %}</div> -->
+                <div class="divider">{% trans "or" %}</div>
+
+                <!-- Google Sign-In Button -->
+                <div class="d-grid mb-3">
+                    <button class="btn-google" id="google-login-btn">
+                        <svg class="google-icon" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        {% trans "Continue with Google" %}
+                    </button>
+                </div>
 
                 <div class="signup-link" id="signup-section">
                     <p>{% trans "Don't have an account?" %} <a href="{% url 'register_platform' %}">{% trans "Sign Up" %}</a></p>
@@ -723,8 +698,9 @@
     </div>
 </div>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <script>
-// Translation strings for JavaScript
 const translations = {
     sending: "{% trans 'Sending...' %}",
     sendVerification: "{% trans 'Send Verification Email' %}",
@@ -735,8 +711,184 @@ const translations = {
     emailNotFound: "{% trans 'Email not found' %}",
     emailAlreadyVerified: "{% trans 'Email already verified' %}",
     sendError: "{% trans 'Error sending email' %}",
-    networkError: "{% trans 'Network error. Check your connection and try again.' %}"
+    networkError: "{% trans 'Network error. Check your connection and try again.' %}",
+    googleLoginError: "{% trans 'Google login failed. Please try again.' %}",
+    googleLoading: "{% trans 'Google Sign-In is loading. Please try again in a moment.' %}"
 };
+
+const GOOGLE_CLIENT_ID = "{{ GOOGLE_CLIENT_ID }}";
+let googleInitialized = false;
+
+console.log('🔧 Google Client ID:', GOOGLE_CLIENT_ID ? 'Configured' : 'MISSING');
+
+// ==================== GOOGLE SIGN-IN ====================
+
+function initGoogleSignIn() {
+    console.log('🔄 Initializing Google Sign-In');
+    
+    if (!GOOGLE_CLIENT_ID) {
+        console.error('❌ GOOGLE_CLIENT_ID not configured');
+        return;
+    }
+    
+    if (typeof google === 'undefined' || !google.accounts?.id) {
+        console.log('⏳ Google SDK not loaded yet, retrying...');
+        setTimeout(initGoogleSignIn, 200);
+        return;
+    }
+    
+    try {
+        // Simple initialization without prompt
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCallback,
+            auto_select: false,
+        });
+        
+        googleInitialized = true;
+        console.log('✅ Google Sign-In initialized successfully');
+        
+    } catch (error) {
+        console.error('❌ Google initialization error:', error);
+        showErrorMessage('Google Sign-In configuration error: ' + error.message);
+    }
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(initGoogleSignIn, 100));
+} else {
+    setTimeout(initGoogleSignIn, 100);
+}
+
+// Handle custom button click - Use renderButton approach
+document.getElementById('google-login-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    console.log('🖱️ Google button clicked');
+    
+    if (!GOOGLE_CLIENT_ID) {
+        showErrorMessage('Google Sign-In not configured. Please contact support.');
+        return;
+    }
+    
+    if (!googleInitialized) {
+        showErrorMessage(translations.googleLoading);
+        setTimeout(initGoogleSignIn, 100);
+        return;
+    }
+    
+    try {
+        // Create hidden container for Google button
+        const container = document.createElement('div');
+        container.id = 'hidden-google-button';
+        container.style.position = 'absolute';
+        container.style.top = '-9999px';
+        container.style.left = '-9999px';
+        container.style.width = '1px';
+        container.style.height = '1px';
+        container.style.overflow = 'hidden';
+        document.body.appendChild(container);
+        
+        console.log('✅ Rendering Google button...');
+        
+        // Render the actual Google button
+        google.accounts.id.renderButton(container, {
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            text: 'continue_with',
+        });
+        
+        // Wait then click it
+        setTimeout(() => {
+            const googleBtn = container.querySelector('div[role="button"]');
+            if (googleBtn) {
+                console.log('✅ Clicking Google button programmatically');
+                googleBtn.click();
+            } else {
+                console.error('❌ Could not find rendered Google button');
+                showErrorMessage('Failed to trigger Google Sign-In. Please try again.');
+            }
+            
+            // Cleanup after 2 seconds
+            setTimeout(() => {
+                if (container && container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
+            }, 2000);
+        }, 150);
+        
+    } catch (error) {
+        console.error('❌ Error triggering Google sign-in:', error);
+        showErrorMessage(translations.googleLoginError + ': ' + error.message);
+    }
+});
+
+async function handleGoogleCallback(response) {
+    console.log('🎯 Google callback received');
+    console.log('📦 Has credential:', !!response.credential);
+    
+    if (!response.credential) {
+        console.error('❌ No credential received');
+        showErrorMessage('Google authentication failed - no credential received');
+        return;
+    }
+    
+    try {
+        const url = "{% url 'google_login' %}";
+        const csrfToken = getCookie('csrftoken');
+        
+        console.log('📡 Sending credential to backend...');
+        
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                id_token: response.credential
+            }),
+            credentials: 'same-origin'
+        });
+
+        console.log('📥 Response status:', res.status);
+        
+        const contentType = res.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            const responseText = await res.text();
+            try {
+                data = JSON.parse(responseText);
+                console.log('✅ Response data:', data);
+            } catch (e) {
+                console.error('❌ JSON parse error:', e);
+                showErrorMessage('Invalid server response');
+                return;
+            }
+        } else {
+            const responseText = await res.text();
+            console.error('❌ Non-JSON response:', responseText.substring(0, 200));
+            showErrorMessage('Server error: ' + responseText.substring(0, 100));
+            return;
+        }
+
+        if (res.ok) {
+            console.log('✅ Login successful! Redirecting...');
+            window.location.href = data.redirect || "{{ settings.LOGIN_REDIRECT_URL }}";
+        } else {
+            console.error('❌ Login failed:', data);
+            showErrorMessage(data.detail || translations.googleLoginError);
+        }
+    } catch (error) {
+        console.error('💥 Critical error:', error);
+        showErrorMessage(translations.networkError + ' (' + error.message + ')');
+    }
+}
+
+// ==================== UTILITY FUNCTIONS ====================
 
 function togglePassword() {
     const passwordInput = document.querySelector('input[name="password"]');
@@ -751,18 +903,58 @@ function togglePassword() {
     }
 }
 
-// Show/hide reset password form
+function showErrorMessage(message) {
+    console.log('⚠️ Showing error:', message);
+    let messageBox = document.getElementById('error-message');
+    
+    if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.id = 'error-message';
+        messageBox.className = 'alert alert-danger';
+        const loginHeader = document.querySelector('.login-header');
+        loginHeader.insertAdjacentElement('afterend', messageBox);
+    }
+    
+    messageBox.textContent = message;
+    messageBox.style.display = 'block';
+    
+    setTimeout(() => {
+        messageBox.style.display = 'none';
+    }, 8000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// ==================== RESET PASSWORD ====================
+
 document.getElementById("show-reset-form").addEventListener("click", function(e) {
     e.preventDefault();
     const resetContainer = document.getElementById("reset-form-container");
     const loginForm = document.getElementById("login-form");
     const signupSection = document.getElementById("signup-section");
     const resendSection = document.getElementById("resend-section");
+    const googleBtn = document.querySelector('.btn-google').parentElement;
+    const divider = document.querySelector('.divider');
     
     resetContainer.style.display = "block";
     loginForm.style.display = "none";
     signupSection.style.display = "none";
     resendSection.style.display = "none";
+    googleBtn.style.display = "none";
+    divider.style.display = "none";
 });
 
 document.getElementById("cancel-reset").addEventListener("click", function(e) {
@@ -771,38 +963,36 @@ document.getElementById("cancel-reset").addEventListener("click", function(e) {
     const loginForm = document.getElementById("login-form");
     const signupSection = document.getElementById("signup-section");
     const resendSection = document.getElementById("resend-section");
+    const googleBtn = document.querySelector('.btn-google').parentElement;
+    const divider = document.querySelector('.divider');
     const messageBox = document.getElementById("reset-message");
     
     resetContainer.style.display = "none";
     loginForm.style.display = "block";
     signupSection.style.display = "block";
     resendSection.style.display = "block";
+    googleBtn.style.display = "block";
+    divider.style.display = "block";
     messageBox.style.display = "none";
     document.getElementById("reset_email").value = "";
 });
 
-// Reset password form handler
 document.getElementById("reset-password-form").addEventListener("submit", async function(e) {
     e.preventDefault();
-
     const resetBtn = document.getElementById("reset-btn");
     const btnText = document.getElementById("reset-btn-text");
     const messageBox = document.getElementById("reset-message");
     const email = document.getElementById("reset_email").value.trim();
 
-    // Disable button and show loading state
     resetBtn.disabled = true;
     btnText.innerHTML = '<span class="spinner"></span> ' + translations.sending;
-
-    // Reset message
     messageBox.style.display = "none";
-    messageBox.textContent = "";
     messageBox.classList.remove("alert-danger", "alert-success");
 
     try {
         const formData = new FormData();
         formData.append('email', email);
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
 
         const response = await fetch("{% url 'reset_password' %}", {
             method: "POST",
@@ -815,88 +1005,66 @@ document.getElementById("reset-password-form").addEventListener("submit", async 
             messageBox.textContent = translations.resetSent;
             messageBox.classList.add("alert-success");
             messageBox.style.display = "block";
-
-            // Clear the email field
             document.getElementById("reset_email").value = "";
-
-            // Re-enable button
             setTimeout(() => {
                 resetBtn.disabled = false;
                 btnText.textContent = translations.sendResetLink;
             }, 2000);
         } else {
             let errorMessage = translations.sendError;
-            
             if (response.status === 404) {
                 errorMessage = translations.emailNotFound;
             } else {
                 errorMessage = responseText || translations.sendError;
             }
-
             messageBox.textContent = translations.error + ": " + errorMessage;
             messageBox.classList.add("alert-danger");
             messageBox.style.display = "block";
-
-            // Re-enable button
             resetBtn.disabled = false;
             btnText.textContent = translations.sendResetLink;
         }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         messageBox.textContent = translations.networkError;
         messageBox.classList.add("alert-danger");
         messageBox.style.display = "block";
-
-        // Re-enable button
         resetBtn.disabled = false;
         btnText.textContent = translations.sendResetLink;
     }
 });
 
-// Show/hide resend verification form
+// ==================== RESEND VERIFICATION ====================
+
 document.getElementById("show-resend-form").addEventListener("click", function(e) {
     e.preventDefault();
-    const container = document.getElementById("resend-form-container");
-    const prompt = this.parentElement;
-    
-    container.style.display = "block";
-    prompt.style.display = "none";
+    document.getElementById("resend-form-container").style.display = "block";
+    this.parentElement.style.display = "none";
 });
 
 document.getElementById("cancel-resend").addEventListener("click", function(e) {
     e.preventDefault();
-    const container = document.getElementById("resend-form-container");
-    const prompt = document.querySelector(".resend-prompt");
-    const messageBox = document.getElementById("resend-message");
-    
-    container.style.display = "none";
-    prompt.style.display = "block";
-    messageBox.style.display = "none";
+    document.getElementById("resend-form-container").style.display = "none";
+    document.querySelector(".resend-prompt").style.display = "block";
+    document.getElementById("resend-message").style.display = "none";
     document.getElementById("resend_email").value = "";
 });
 
-// Resend verification email handler
 document.getElementById("resend-verification-form").addEventListener("submit", async function(e) {
     e.preventDefault();
-
     const resendBtn = document.getElementById("resend-btn");
     const btnText = document.getElementById("resend-btn-text");
     const messageBox = document.getElementById("resend-message");
     const email = document.getElementById("resend_email").value.trim();
 
-    // Disable button and show loading state
     resendBtn.disabled = true;
     btnText.innerHTML = '<span class="spinner"></span> ' + translations.sending;
-
-    // Reset message
     messageBox.style.display = "none";
-    messageBox.textContent = "";
     messageBox.classList.remove("alert-danger", "alert-success");
 
     try {
         const formData = new FormData();
         formData.append('email', email);
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
 
         const response = await fetch("{% url 'send_verification_email' %}", {
             method: "POST",
@@ -909,18 +1077,13 @@ document.getElementById("resend-verification-form").addEventListener("submit", a
             messageBox.textContent = translations.verificationSent;
             messageBox.classList.add("alert-success");
             messageBox.style.display = "block";
-
-            // Clear the email field
             document.getElementById("resend_email").value = "";
-
-            // Re-enable button
             setTimeout(() => {
                 resendBtn.disabled = false;
                 btnText.textContent = translations.sendVerification;
             }, 2000);
         } else {
             let errorMessage = translations.sendError;
-            
             if (response.status === 404) {
                 errorMessage = translations.emailNotFound;
             } else if (response.status === 400) {
@@ -928,35 +1091,20 @@ document.getElementById("resend-verification-form").addEventListener("submit", a
             } else {
                 errorMessage = responseText || translations.sendError;
             }
-
             messageBox.textContent = translations.error + ": " + errorMessage;
             messageBox.classList.add("alert-danger");
             messageBox.style.display = "block";
-
-            // Re-enable button
             resendBtn.disabled = false;
             btnText.textContent = translations.sendVerification;
         }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         messageBox.textContent = translations.networkError;
         messageBox.classList.add("alert-danger");
         messageBox.style.display = "block";
-
-        // Re-enable button
         resendBtn.disabled = false;
         btnText.textContent = translations.sendVerification;
     }
-});
-
-document.querySelectorAll('.form-control').forEach(input => {
-    input.addEventListener('focus', function() {
-        this.parentElement.style.transform = 'translateY(-2px)';
-    });
-    
-    input.addEventListener('blur', function() {
-        this.parentElement.style.transform = 'translateY(0)';
-    });
 });
 </script>
 

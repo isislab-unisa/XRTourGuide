@@ -43,8 +43,8 @@ class JWTFastAPIAuthentication(BaseAuthentication):
             user.email = payload.get("email", user.email)
             user.first_name = payload.get("name", user.first_name)
             user.last_name = payload.get("surname", user.last_name)
-            user.city = payload.get("city", user.city)
-            user.description = payload.get("description", user.description)
+            user.city = payload.get("city", user.city) or "Not provided"
+            user.description = payload.get("description", user.description) or "Not provided"
             user.save()
         except User.DoesNotExist:
             user = User.objects.create_user(
@@ -52,8 +52,8 @@ class JWTFastAPIAuthentication(BaseAuthentication):
                 email=payload.get("email", ""),
                 first_name=payload.get("name", ""),
                 last_name=payload.get("surname", ""),
-                city=payload.get("city", ""),
-                description=payload.get("description", "")
+                city=payload.get("city", "") or "Not provided",
+                description=payload.get("description", "") or "Not provided"
             )
             user.set_unusable_password()
             user.is_staff = True
