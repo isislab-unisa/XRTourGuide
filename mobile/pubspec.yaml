@@ -67,6 +67,7 @@ dependencies:
   connectivity_plus: ^6.1.5
   flutter_map_pmtiles: ^1.0.5
   firebase_core: ^4.2.1
+  ar_flutter_plugin: ^0.7.3
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +81,10 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.5
+
+dependency_overrides: 
+  permission_handler: ^12.0.0+1
+  geolocator: ^14.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -117,6 +122,7 @@ flutter:
     - assets/int-exterior.jpg
     - assets/translations/
     - assets/models/ResNet50.tflite
+    - assets/models/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
