@@ -4,5 +4,9 @@ __pycache__/
 migrations/**/*.py
 certbot/
 z_file/
+z_done_san_nilo
 z_populate_db.py
+z_populate_db_2.py
 .community.env
+it_IT-riccardo-x_low.onnx
+it_IT-riccardo-x_low.onnx.json
