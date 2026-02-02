@@ -19,6 +19,7 @@ from django.db.models import Case, When
 from ..authentication import JWTFastAPIAuthentication
 import os
 import dotenv
+from django.http import HttpResponse
 
 dotenv.load_dotenv()
 
@@ -206,3 +207,113 @@ def cut_map(request, tour_id):
     
     file = storage.open(f"/{tour_id}/tour_{tour_id}.pmtiles", mode='rb')
     return FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}.pmtiles")
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tour_deep_link(request, pk):
+    
+    android_store = os.getenv("ANDROID_STORE")
+    ios_store = os.getenv("IOS_STORE")
+    
+    app_deep_link = f"xrtourguide://tour/{pk}"
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Opening Tour...</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .loader {{
+                margin: 20px auto;
+                border: 5px solid #f3f3f3;
+                border-top: 5px solid #3498db;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                animation: spin 1s linear infinite;
+            }}
+            @keyframes spin {{
+                0% {{ transform: rotate(0deg); }}
+                100% {{ transform: rotate(360deg); }}
+            }}
+            .message {{
+                margin-top: 20px;
+                color: #666;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="loader"></div>
+        <div class="message" id="message">Opening tour...</div>
+        
+        <script>
+            var appOpened = false;
+            var redirected = false;
+            
+            function redirect() {{
+                if (redirected) return;
+                redirected = true;
+                
+                var isAndroid = /Android/i.test(navigator.userAgent);
+                var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                var isMobile = isAndroid || isIOS;
+                
+                if (isMobile) {{
+                    document.getElementById('message').textContent = 'App not installed. Redirecting to store...';
+                    setTimeout(function() {{
+                        if (isAndroid) {{
+                            window.location.href = '{android_store}';
+                        }} else if (isIOS) {{
+                            window.location.href = '{ios_store}';
+                        }}
+                    }}, 500);
+                }} else {{
+                    document.getElementById('message').textContent = 'Redirecting to web page...';
+                    setTimeout(function() {{
+                        window.location.href = '/tour_details/{pk}/';
+                    }}, 500);
+                }}
+            }}
+            
+            document.addEventListener('visibilitychange', function() {{
+                if (document.hidden) {{
+                    appOpened = true;
+                }}
+            }});
+            
+            window.addEventListener('blur', function() {{
+                appOpened = true;
+            }});
+            
+            var isAndroid = /Android/i.test(navigator.userAgent);
+            var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            var isMobile = isAndroid || isIOS;
+            
+            if (isMobile) {{
+                var iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = '{app_deep_link}';
+                document.body.appendChild(iframe);
+                
+                setTimeout(function() {{
+                    if (!appOpened && !document.hidden) {{
+                        redirect();
+                    }}
+                }}, 1500);
+            }} else {{
+                redirect();
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    
+    return HttpResponse(html)

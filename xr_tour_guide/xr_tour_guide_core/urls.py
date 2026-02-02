@@ -46,4 +46,5 @@ urlpatterns = [
     path("download_model/", download_model, name="download_model"),
     path("cut_map/<int:tour_id>/", cut_map, name="cut_map"),
     path("health_check/", health_check, name="health_check"),
+    path("tour/<int:pk>/", tour_deep_link, name="tour_deep_link"),
 ]

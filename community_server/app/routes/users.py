@@ -14,17 +14,40 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/list_users/")
-async def list_users(db: Session = Depends(get_db)):
-    """List all users"""
-    return db.query(models.User).all()
+# @router.get("/list_users/")
+# async def list_users(db: Session = Depends(get_db)):
+#     """List all users"""
+#     return db.query(models.User).all()
 
 @router.post("/update_password/")
 async def update_password(
     db: Session = Depends(get_db),
     request: Request = None
 ):
-    """Update user password"""
+    """
+    Update authenticated user's password.
+
+    This endpoint allows a user to change their password by providing the old password
+    and the new password. Requires a valid Bearer access token.
+
+    Request Body (JSON):
+        oldPassword (string): Current password
+        newPassword (string): New password
+
+    Headers:
+        Authorization: Bearer <access_token>
+
+    Token Requirements:
+        - Must be a valid access token
+
+    Responses:
+        200:
+            Description: Password updated successfully.
+            Content:
+                message: Confirmation message
+        401:
+            Description: Authorization missing, invalid token, or incorrect current password.
+    """
     data = await request.json()
     old_password = data.get("oldPassword")
     new_password = data.get("newPassword")
@@ -57,12 +80,35 @@ async def update_password(
 
     return {"message": "Password updated successfully"}
 
+
 @router.post("/delete_account/")
 async def delete_account(
     db: Session = Depends(get_db),
     request: Request = None
 ):
-    """Deactivate user account"""
+    """
+    Deactivate authenticated user's account.
+
+    This endpoint deactivates the user account. The user must provide
+    their password and a valid Bearer access token.
+
+    Request Body (JSON):
+        password (string): Current password
+
+    Headers:
+        Authorization: Bearer <access_token>
+
+    Token Requirements:
+        - Must be a valid access token
+
+    Responses:
+        200:
+            Description: Account successfully deactivated.
+            Content:
+                message: Confirmation message
+        401:
+            Description: Authorization missing, invalid token, or incorrect password.
+    """
     data = await request.json()
     password = data.get("password")
     auth_header = request.headers.get("Authorization")
