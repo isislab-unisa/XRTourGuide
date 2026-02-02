@@ -123,6 +123,15 @@ flutter:
     - assets/translations/
     - assets/models/ResNet50.tflite
     - assets/models/
+    - assets/models/AR/totem_base/
+    - assets/models/AR/totem_body/
+    - assets/models/AR/buttons/audio/
+    - assets/models/AR/buttons/document/
+    - assets/models/AR/buttons/image/
+    - assets/models/AR/buttons/link/
+    - assets/models/AR/buttons/text/
+    - assets/models/AR/buttons/video/
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
