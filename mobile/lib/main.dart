@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'models/app_colors.dart';
@@ -14,7 +15,8 @@ import "dart:io" show Platform;
 import "package:flutter/foundation.dart" show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
+import 'package:app_links/app_links.dart';
+import 'tour_details_page.dart';
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
@@ -28,7 +30,11 @@ void downloadCallback(String id, int status, int progress) {
 //   return AuthService();
 // });
 
-final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final pendingTourIdProvider = StateProvider<int?>((ref) => null);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
@@ -37,13 +43,12 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   await FlutterDownloader.initialize(
     debug: true, // Set to false in production for less console output
-    ignoreSsl: false, // Set to true if you need to ignore SSL verification (not recommended for production)
+    ignoreSsl:
+        false, // Set to true if you need to ignore SSL verification (not recommended for production)
   );
 
   // Register the callback function for background downloads
@@ -58,13 +63,9 @@ Future<void> main() async {
     ),
   );
 
-
   runApp(
     EasyLocalization(
-      supportedLocales: const [
-        Locale('en', 'US'),
-        Locale('it', 'IT'),
-      ],
+      supportedLocales: const [Locale('en', 'US'), Locale('it', 'IT')],
       path: 'assets/translations', // Path to your translation files
       fallbackLocale: const Locale('en', 'US'),
       child: const ProviderScope(child: MyApp()),
@@ -72,12 +73,94 @@ Future<void> main() async {
   );
 }
 
-
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _appLinks = AppLinks();
+    _initDeepLinks();
+
+  }
+
+  Future<void> _initDeepLinks() async {
+    final initialUri = await _appLinks.getInitialLink();
+    if (initialUri != null) {
+      _handleUri(initialUri);
+    }
+
+    _linkSub = _appLinks.uriLinkStream.listen(
+      (uri) => _handleUri(uri),
+      onError: (_) {},
+    );
+  }
+
+  void _handleUri(Uri uri) {
+    final tourId = _extractTourId(uri);
+    if (tourId == null) return;
+
+    ref.read(pendingTourIdProvider.notifier).state = tourId;
+    _tryOpenPendingTour(ref.read(authServiceProvider).authStatus);
+  }
+
+  int? _extractTourId(Uri uri) {
+    // xrtourguide://tour/1
+    if (uri.scheme == 'xrtourguide' && uri.host == 'tour') {
+      final idStr = uri.pathSegments.isNotEmpty ? uri.pathSegments[0] : null;
+      return int.tryParse(idStr ?? '');
+    }
+
+    // http(s)://<host>/tour/1
+    if ((uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.pathSegments.length >= 2 &&
+        uri.pathSegments[0] == 'tour') {
+      return int.tryParse(uri.pathSegments[1]);
+    }
+
+    return null;
+  }
+
+  void _tryOpenPendingTour(AuthStatus status) {
+    final pendingTourId = ref.read(pendingTourIdProvider);
+    if (pendingTourId == null) return;
+    if (status == AuthStatus.loading) return;
+
+    if (status == AuthStatus.authenticated) {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder:
+              (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
+        ),
+      );
+      ref.read(pendingTourIdProvider.notifier).state = null;
+    } else {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => const AuthFlowScreen()),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    ref.listen<AuthService>(authServiceProvider, (prev, next) {
+      _tryOpenPendingTour(next.authStatus);
+    });
+
     return MaterialApp(
       title: "app_name".tr(),
       localizationsDelegates: context.localizationDelegates,
@@ -85,6 +168,7 @@ class MyApp extends StatelessWidget {
       locale: context.locale,
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
+      navigatorKey: navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         primaryColor: AppColors.primary,
@@ -125,13 +209,15 @@ class AuthChecker extends ConsumerWidget {
         return const Scaffold(
           backgroundColor: AppColors.background,
           body: Center(child: CircularProgressIndicator()),
-        );      
+        );
       case AuthStatus.authenticated:
         return const TravelExplorerScreen(isGuest: false);
       case AuthStatus.unauthenticated:
         return const AuthFlowScreen();
       case AuthStatus.registering:
-        return const AuthFlowScreen(registeredTemp: true,); // You can handle this state differently if needed
+        return const AuthFlowScreen(
+          registeredTemp: true,
+        ); // You can handle this state differently if needed
     }
   }
 }
@@ -141,8 +227,8 @@ enum AuthState { onboarding, login, register }
 class AuthFlowScreen extends ConsumerStatefulWidget {
   final bool registeredTemp;
 
-
-  const AuthFlowScreen({Key? key, this.registeredTemp = false}) : super(key: key);
+  const AuthFlowScreen({Key? key, this.registeredTemp = false})
+    : super(key: key);
 
   @override
   ConsumerState<AuthFlowScreen> createState() => _AuthFlowScreenState();
@@ -178,8 +264,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
             duration: Duration(seconds: 5),
           ),
         );
-      });  
-    } 
+      });
+    }
   }
 
   void _showError(String message) {
@@ -187,7 +273,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
-
 
   @override
   void dispose() {
@@ -314,10 +399,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             label,
             style: const TextStyle(
@@ -537,7 +619,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       },
                       context: context,
                     ),
-
                   ],
                 ),
               ),
@@ -657,7 +738,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      response.data['message'] ?? 'password_reset_success'.tr(),
+                                      response.data['message'] ??
+                                          'password_reset_success'.tr(),
                                     ),
                                     backgroundColor: Colors.green,
                                     behavior: SnackBarBehavior.floating,
@@ -675,9 +757,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      e.toString(),
-                                    ),
+                                    content: Text(e.toString()),
                                     backgroundColor: Colors.red,
                                     behavior: SnackBarBehavior.floating,
                                     margin: const EdgeInsets.only(
@@ -740,10 +820,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
     // }
   }
 
-
-
   Widget _buildLoginScreen() {
-
     final authService = ref.read(authServiceProvider);
 
     return Scaffold(
@@ -771,7 +848,9 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - MediaQuery.of(context).viewInsets.bottom,
+                  minHeight:
+                      constraints.maxHeight -
+                      MediaQuery.of(context).viewInsets.bottom,
                 ),
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -864,7 +943,9 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               _passwordController.text,
                             );
                           } catch (e) {
-                            _showError(authService.loginErrorMessage ?? 'Login failed');
+                            _showError(
+                              authService.loginErrorMessage ?? 'Login failed',
+                            );
                           }
                         },
                         context: context,
@@ -882,7 +963,9 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               padding: EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 'or'.tr(),
-                                style: TextStyle(color: AppColors.textSecondary),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                             ),
                             Expanded(child: Divider(color: AppColors.divider)),
@@ -989,7 +1072,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
   }
 
   Widget _buildRegisterScreen() {
-
     final authService = ref.read(authServiceProvider);
 
     return Scaffold(

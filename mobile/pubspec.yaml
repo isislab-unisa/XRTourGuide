@@ -68,6 +68,7 @@ dependencies:
   flutter_map_pmtiles: ^1.0.5
   firebase_core: ^4.2.1
   ar_flutter_plugin: ^0.7.3
+  app_links: ^7.0.0
 
 dev_dependencies:
   flutter_test:
