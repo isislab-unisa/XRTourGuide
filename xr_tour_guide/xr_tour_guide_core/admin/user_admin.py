@@ -118,7 +118,12 @@ class CustomUserAdmin(ModelAdmin, UserAdmin):
             response = requests.post(
                 f"http://{os.getenv('COMMUNITY_SERVER')}/reset-password/",
                 json={'email': user.email},
-                timeout=5
+                timeout=5,
+                headers={
+                    "x-api-key": os.getenv('IDP_API_KEY'),
+                    "x-api-secret": os.getenv('IDP_API_SECRET'),
+                    "Content-Type": "application/json"
+                }
             )
 
             if response.status_code == 200:

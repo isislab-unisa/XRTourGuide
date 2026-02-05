@@ -23,20 +23,26 @@ class JWTFastAPIAuthentication(BaseAuthentication):
         try:
             response = requests.post(
                 f"http://{os.getenv('COMMUNITY_SERVER')}/api/verify/",
-                data={"token": token}
+                data={"token": token},
+                headers={
+                    "x-api-key": os.getenv('IDP_API_KEY'),
+                    "x-api-secret": os.getenv('IDP_API_SECRET')
+                }
             )
 
+            if response.status_code == 401:
+                raise AuthenticationFailed("Service not authorized")
+            
             if response.status_code != 200:
                 raise AuthenticationFailed("Invalid token")
 
             payload = response.json()
-            print(f"Payload: {payload}")
             username = payload.get("username")
             if not username:
                 raise AuthenticationFailed("Invalid token payload")
 
         except requests.RequestException as e:
-            raise AuthenticationFailed("Token verify failed")
+            raise AuthenticationFailed("Token verification failed")
 
         try:
             user = User.objects.get(username=username)

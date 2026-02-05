@@ -16,40 +16,7 @@ def get_db():
 
 @router.get("/profile_detail/")
 def api_profile_detail(request: Request, db: Session = Depends(get_db)):
-    """
-    Retrieve authenticated user profile details.
-
-    This endpoint returns the profile information of the user
-    associated with the provided Bearer access token.
-
-    Authentication:
-        Requires an Authorization header with a valid Bearer access token.
-
-    Headers:
-        Authorization: Bearer <access_token>
-
-    Token Requirements:
-        - Token must be valid
-        - Token type must be "access"
-
-    Responses:
-        200:
-            Description: User profile retrieved successfully.
-            Content:
-                id: User identifier
-                username: Username
-                email: Email address
-                first_name: First name
-                last_name: Last name
-                city: City
-                description: User description
-
-        401:
-            Description: Authorization header missing or invalid token.
-
-        404:
-            Description: User not found.
-    """
+    
     auth_header = request.headers.get("Authorization")
 
     if not auth_header:
@@ -85,40 +52,6 @@ async def update_profile(
     db: Session = Depends(get_db),
     request: Request = None
 ):
-    """
-    Update authenticated user profile information.
-
-    Updates one or more fields of the authenticated user's profile.
-    Only fields provided in the request body will be modified.
-
-    Authentication:
-        Requires an Authorization header with a valid Bearer access token.
-
-    Headers:
-        Authorization: Bearer <access_token>
-
-    Request Body (JSON):
-        email (string, optional): New email address
-        firstName (string, optional): New first name
-        lastName (string, optional): New last name
-        description (string, optional): New profile description
-
-    Token Requirements:
-        - Token must be valid
-        - Token type must be "access"
-
-    Responses:
-        200:
-            Description: Profile updated successfully.
-            Content:
-                message: Confirmation message
-
-        401:
-            Description: Authorization header missing or invalid token.
-
-        404:
-            Description: User not found.
-    """
     data = await request.json()
     
     auth_header = request.headers.get("Authorization")

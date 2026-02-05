@@ -7,15 +7,11 @@ from datetime import datetime, timedelta
 import secrets
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-
-from app.auth import create_access_token, create_refresh_token, verify_token
+from app.auth import create_access_token, create_refresh_token, verify_token, verify_service_or_mobile
 from app.email_utils import send_verification_email, send_forgot_password
 from app.model import models
 from app.model.database import SessionLocal
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
-import httpx
-
+from app.model.models import Services
 router = APIRouter()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,11 +26,6 @@ def get_db():
         db.close()
 
 class UserRegister(BaseModel):
-    """
-    User registration request model.
-
-    Represents the payload required to register a new user account.
-    """
     username: str
     email: EmailStr
     password: str
@@ -44,26 +35,10 @@ class UserRegister(BaseModel):
     description: Optional[str] = None
 
 class GoogleLoginRequest(BaseModel):
-    """
-    Google OAuth login request model.
-
-    Contains the Google ID token returned by the OAuth flow.
-    """
     id_token: str
 
 @router.get("/", response_class=HTMLResponse)
 async def root(request: Request, db: Session = Depends(get_db)):
-    """
-    Display login page.
-
-    Renders the login HTML page and loads
-    the list of available services.
-
-    Responses:
-        200:
-            Description: Login page rendered.
-            Content: HTML page.
-    """
     services = db.query(models.Services).all()
     return templates.TemplateResponse(
         request=request, name="login.html", context={"services": services}
@@ -76,53 +51,20 @@ async def login(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    """
-    Web login endpoint.
-
-    Authenticates an administrative user using form data
-    and renders the home page on success.
-
-    Form Parameters:
-        email (string): User email
-        password (string): User password
-
-    Responses:
-        200:
-            Description: Login successful, home page rendered.
-        401:
-            Description: Invalid credentials.
-    """
     user = db.query(models.User).filter(models.User.email == email).first()
 
     if not user or not user.verify_password(password) or not user.active or user.role == models.UserRole.USER:
         return templates.TemplateResponse("login.html", {"request": request, "message": "Invalid credentials"})
 
     services = db.query(models.Services).all()
+    request.session["user_id"] = user.id
     return templates.TemplateResponse(
         "home.html",
         {"request": request, "message": f"Welcome {user.username}!", "services": services}
     )
 
 @router.post("/api/token/")
-async def api_login(request: Request, db: Session = Depends(get_db)):
-    """
-    API login endpoint.
-
-    Authenticates a user and returns JWT access and refresh tokens.
-
-    Request Body (JSON):
-        email (string): User email
-        password (string): User password
-
-    Responses:
-        200:
-            Description: Authentication successful.
-            Content: JWT tokens and user data.
-        400:
-            Description: Missing credentials.
-        401:
-            Description: Invalid credentials or inactive account.
-    """
+async def api_login(request: Request, db: Session = Depends(get_db), service: Services = Depends(verify_service_or_mobile)):
     data = await request.json()
     email = data.get("email")
     password = data.get("password")
@@ -141,8 +83,8 @@ async def api_login(request: Request, db: Session = Depends(get_db)):
     if not user.verify_password(password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access_token = create_access_token({"user_id": user.id})
-    refresh_token = create_refresh_token({"user_id": user.id})
+    access_token = create_access_token({"user_id": user.id, "username": user.username, "email": user.email})
+    refresh_token = create_refresh_token({"user_id": user.id, "username": user.username})
 
     return {
         "access": access_token,
@@ -160,21 +102,7 @@ async def api_login(request: Request, db: Session = Depends(get_db)):
     }
 
 @router.post("/api/token/refresh/")
-async def refresh(request: Request):
-    """
-    Refresh JWT access token.
-
-    Generates a new access token using a valid refresh token.
-
-    Request Body (JSON):
-        refresh (string): Refresh token
-
-    Responses:
-        200:
-            Description: New access token generated.
-        400:
-            Description: Invalid refresh token.
-    """
+async def refresh(request: Request, db: Session = Depends(get_db), service: Services = Depends(verify_service_or_mobile)):
     data = await request.json()
     refresh = data.get("refresh")
     payload = verify_token(refresh)
@@ -182,33 +110,28 @@ async def refresh(request: Request):
     if payload.get("type") != "refresh":
         raise HTTPException(400, "Invalid refresh token")
 
-    new_access_token = create_access_token({"user_id": payload["user_id"]})
+    user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    new_access_token = create_access_token({
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email
+    })
 
     return {"access": new_access_token}
 
 @router.post("/api/google-login/")
 async def google_login(
     data: GoogleLoginRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    service: Services = Depends(verify_service_or_mobile)
 ):
-    """
-    Authenticate user using Google OAuth.
-
-    Verifies the Google ID token, creates a new user if necessary,
-    and returns JWT tokens.
-
-    Request Body (JSON):
-        id_token (string): Google OAuth ID token
-
-    Responses:
-        200:
-            Description: Authentication successful.
-        401:
-            Description: Invalid Google token or inactive account.
-        500:
-            Description: Google OAuth configuration or authentication error.
-    """
     try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+        
         GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
         if not GOOGLE_CLIENT_ID:
@@ -264,8 +187,15 @@ async def google_login(
             if not user.active:
                 raise HTTPException(status_code=401, detail="Account is deactivated")
 
-        access_token = create_access_token({"user_id": user.id})
-        refresh_token = create_refresh_token({"user_id": user.id})
+        access_token = create_access_token({
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email
+        })
+        refresh_token = create_refresh_token({
+            "user_id": user.id,
+            "username": user.username
+        })
 
         return {
             "access": access_token,
@@ -288,27 +218,19 @@ async def google_login(
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 @router.post("/api/verify/")
-async def api_verify(token: str = Form(...), db: Session = Depends(get_db)):
-    """
-    Verify JWT token and return user information.
+async def api_verify(
+    token: str = Form(...),
+    service: models.Services = Depends(verify_service_or_mobile),
+    db: Session = Depends(get_db)
+):
 
-    Validates a JWT token and returns its payload
-    enriched with user profile data.
-
-    Form Parameters:
-        token (string): JWT token
-
-    Responses:
-        200:
-            Description: Token is valid.
-        401:
-            Description: Invalid token.
-    """
-    payload = verify_token(token)
+    payload = verify_token(token, required_type="access")
     if payload is None:
         return {"valid": False, "status": 401}
 
     user = db.query(models.User).filter(models.User.id == payload["user_id"]).first()
+    if not user:
+        return {"valid": False, "status": 404}
 
     payload.update({
         "id": user.id,
@@ -326,25 +248,9 @@ async def api_verify(token: str = Form(...), db: Session = Depends(get_db)):
 @router.post("/api_register/")
 async def api_register(
     data: UserRegister,
+    service: models.Services = Depends(verify_service_or_mobile),
     db: Session = Depends(get_db)
 ):
-    """
-    Register a new user account.
-
-    Creates a new inactive user account and sends
-    an email verification link.
-
-    Request Body (JSON):
-        UserRegister model
-
-    Responses:
-        201:
-            Description: Account created, verification email sent.
-        400:
-            Description: Email or username already in use.
-        500:
-            Description: Email sending or database error.
-    """
     existing = db.query(models.User).filter(
         (models.User.email == data.email) |
         (models.User.username == data.username)
@@ -418,23 +324,8 @@ async def api_register(
 async def verify_email(
     token: str,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Verify user email address.
-
-    Activates the user account associated with the
-    provided email verification token.
-
-    Query Parameters:
-        token (string): Email verification token
-
-    Responses:
-        200:
-            Description: Email verified successfully.
-        400:
-            Description: Invalid or expired token.
-    """
     user = db.query(models.User).filter(
         models.User.email_verification_token == token
     ).first()
@@ -459,22 +350,9 @@ async def verify_email(
 @router.post("/resend-verification/")
 async def resend_verification(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    service: models.Services = Depends(verify_service_or_mobile),
 ):
-    """
-    Resend email verification link.
-
-    Generates a new verification token and sends it
-    to the user's email address.
-
-    Responses:
-        200:
-            Description: Verification email resent.
-        404:
-            Description: Email not found.
-        400:
-            Description: Email already verified.
-    """
     data = await request.json()
     email = data.get("email")
 
@@ -507,20 +385,9 @@ async def resend_verification(
 @router.post("/reset-password/")
 async def request_reset_password(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    service: models.Services = Depends(verify_service_or_mobile),
 ):
-    """
-    Request password reset email.
-
-    Generates a password reset token and sends
-    a reset link to the user's email.
-
-    Responses:
-        200:
-            Description: Password reset email sent.
-        404:
-            Description: Email not found.
-    """
     data = await request.json()
     email = data.get("email")
 
@@ -554,23 +421,8 @@ async def request_reset_password(
 def get_reset_form(
     token: str,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Display password reset form.
-
-    Renders the password reset HTML form
-    if the provided token is valid.
-
-    Query Parameters:
-        token (string): Password reset token
-
-    Responses:
-        200:
-            Description: Password reset form rendered.
-        400:
-            Description: Invalid or expired token.
-    """
     user = db.query(models.User).filter(
         models.User.password_reset_token == token
     ).first()
@@ -589,24 +441,8 @@ def verify_reset_password(
     token: str = Form(...),
     password: str = Form(...),
     confirm_password: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Verify and complete password reset.
-
-    Validates the reset token and updates the user's password.
-
-    Form Parameters:
-        token (string): Password reset token
-        password (string): New password
-        confirm_password (string): Password confirmation
-
-    Responses:
-        200:
-            Description: Password successfully updated.
-        400:
-            Description: Passwords do not match or token invalid.
-    """
     if password != confirm_password:
         return templates.TemplateResponse(
             "error.html",
@@ -634,3 +470,13 @@ def verify_reset_password(
         "success.html",
         {"request": request, "message": "Password successfully updated!", "type": "Password"}
     )
+
+# @router.post("/verify/")
+# async def verify_token_endpoint(
+#     token: str,
+#     service: Services = Depends(verify_service_credentials),
+#     db: Session = Depends(get_db)
+# ):
+#     payload = verify_token(token, required_type="access")
+    
+#     return payload

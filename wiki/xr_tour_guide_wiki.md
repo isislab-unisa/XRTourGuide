@@ -1,53 +1,41 @@
 # XRTourGuide
 
 <div align="center">
-<img src="../assets/logo.png" width=20% heigth=20%>
+<img src="../assets/logo.png" width=20% height=20%>
 <br><br>
 
-![XRTourGuide](https://img.shields.io/badge/XR-TourGuide-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![FUTURAL](https://img.shields.io/badge/EU-FUTURAL-yellow)
-
-**Guiding Real-Life Experiences with XR Content**
-
-*Enriching reality with immersive media insights using Extended Reality (XR) and Artificial Intelligence (AI) to empower rural communities.*
-
-[Website](https://isislab-unisa.github.io/XRTourGuide/) • [FUTURAL Project](https://futural-project.eu/it/)
+# XRTourGuide Authoring Platform
 
 </div>
 
----
+The Authoring Platform is a comprehensive web-based system that provides REST API functionalities for both the web frontend and mobile application. It enables users to create, manage, and experience immersive location-based tours enhanced with augmented reality capabilities.
 
-## About
+## Architecture Overview
 
-**XRTourGuide** is an innovative sub-project of the EU-funded [FUTURAL initiative](https://futural-project.eu/it/), designed to create immersive virtual tours that enrich rural communities and enhance cultural heritage preservation. By combining Extended Reality (XR) technologies with Artificial Intelligence, XRTourGuide empowers local communities to create, share, and experience interactive tours of their cultural landmarks, natural sites, and historical treasures.
+Our solution is built on a microservices architecture, where each service maintains distinct responsibilities. The platform consists of several interconnected components that work together to deliver a seamless tour creation and consumption experience.
 
-### The Challenge
+<div align="center">
+<img src="../assets/core/architecture.png">
+</div>
 
-Many rural regions rich in cultural heritage face significant obstacles:
+The architecture comprises:
 
-- **Limited Accessibility**: Cultural sites struggle to remain open due to staff shortages and deteriorating infrastructure
-- **Insufficient Services**: Lack of basic visitor amenities discourages tourism
-- **Low Visibility**: Weak regional branding and promotional efforts keep areas "off the map"
-- **Poor Information Dissemination**: Historical and practical information about sites is fragmented and difficult to access
+- **Web Application**: Tour authoring interface for content creators
+- **Mobile Application**: End-user tour experience platform
+- **Identity Provider**: Centralized authentication and user management
+- **XRCommunityServer**: Multi-instance federation server managing the XRTourGuide community
+- **AI Services**: Visual recognition and inference capabilities
+- **Media Storage**: Multimedia content management system
 
-### Our Solution
-
-XRTourGuide provides a comprehensive online platform that enables communities to create and share immersive XR virtual tours, transforming how people explore and engage with rural territories. The platform combines:
-
-- **Web-based Authoring Tools** for intuitive content creation
-- **Mobile Applications** for discovering and experiencing tours on-location
-- **AI-Powered Visual Recognition** to trigger contextual, location-aware information
-- **Community Co-Creation** through active participation of local residents, cultural organizations, and tourism boards
-
----
-
-## Key Features
+## Core Features
 
 ### User Authentication
 
-#### Sign Up
-New users register through the web application with their profile information stored in the XRCommunityServer, which manages multiple XRTourGuide instances to create a unified community.
+The platform implements a secure authentication system managed through the XRCommunityServer, which coordinates multiple XRTourGuide instances to create a unified community experience.
+
+#### Registration Process
+
+New users register through the web application with their profile information stored in the XRCommunityServer.
 
 <div align="center">
 
@@ -59,19 +47,41 @@ New users register through the web application with their profile information st
 - First Name
 - Last Name
 - Username
-- Email
+- Email Address
 - Password
 - City
-- Description (Bio)
+- Biography/Description
 
-**Process:**
-1. User submits registration form
-2. Information is sent to the Identity Provider (IdP)
-3. Activation link is sent to the user's email
-4. User activates account via email link
+**Registration Flow:**
 
-#### Sign In
-Registered users access the platform through a secure authentication flow.
+```mermaid
+sequenceDiagram
+    participant User
+    participant WebApp
+    participant IdP as Identity Provider
+    participant Email as Email Service
+    
+    User->>WebApp: Submit registration form
+    WebApp->>IdP: Send user credentials
+    IdP->>IdP: Validate and create account
+    IdP->>Email: Send activation link
+    Email->>User: Deliver activation email
+    User->>IdP: Click activation link
+    IdP->>IdP: Activate account
+    IdP->>User: Confirm activation
+```
+
+**Process Steps:**
+1. User completes and submits the registration form
+2. Application forwards information to the Identity Provider
+3. Identity Provider validates data and creates account
+4. Activation link is sent to the registered email address
+5. User activates account by following the email link
+6. Account becomes active and ready for use
+
+#### Authentication Process
+
+Registered users access the platform through a secure JWT-based authentication flow.
 
 <div align="center">
 
@@ -80,17 +90,42 @@ Registered users access the platform through a secure authentication flow.
 </div>
 
 **Authentication Flow:**
-1. User enters email and password
-2. Credentials are validated by the Identity Provider
-3. Upon successful authentication, a JWT token is issued
-4. Token is used for subsequent authenticated requests
 
-### 🗺️ Tour Creation
+```mermaid
+sequenceDiagram
+    participant User
+    participant WebApp as WebApp/API Server
+    participant IdP as Identity Provider
+    
+    User->>WebApp: Enter credentials
+    WebApp->>IdP: Validate credentials
+    IdP->>IdP: Verify email and password
+    alt Authentication Successful
+        IdP->>WebApp: Issue JWT token
+        WebApp->>User: Grant access
+        User->>WebApp: Request with JWT token
+        WebApp->>WebApp: Validate token
+        WebApp->>User: Return protected resource
+    else Authentication Failed
+        IdP->>WebApp: Return error
+        WebApp->>User: Display error message
+    end
+```
 
-The core functionality of the web application revolves around creating and managing immersive tours. Tour creators can define rich, multi-waypoint experiences.
+**Authentication Steps:**
+1. User submits email and password credentials
+2. Identity Provider validates credentials against stored records
+3. Upon successful validation, a JWT token is generated and issued
+4. Token is stored client-side and included in subsequent API requests
+5. API endpoints validate the token before processing requests
+
+### Tour Creation
+
+The platform's primary functionality enables content creators to design and publish comprehensive, location-based tours with multiple waypoints and rich multimedia content.
 
 #### Step 1: Tour Information
-Define the basic details of your tour including name, description and category.
+
+Define the fundamental attributes of your tour, including identification, description, and categorization.
 
 <div align="center">
 
@@ -98,8 +133,17 @@ Define the basic details of your tour including name, description and category.
 
 </div>
 
-#### Step 2: Area Selection
-Select the geographic area where your tour takes place using an interactive map interface.
+**Tour Attributes:**
+- Tour name/title
+- Detailed description
+- Category classification
+- Difficulty level
+- Estimated duration
+- Target audience
+
+#### Step 2: Geographic Area Selection
+
+Specify the geographic boundaries of your tour using an interactive map interface.
 
 <div align="center">
 
@@ -107,8 +151,16 @@ Select the geographic area where your tour takes place using an interactive map 
 
 </div>
 
-#### Step 3: Add Waypoints
-Add individual waypoints (stops) along the tour route, each with its own content and media like: images, video, tracks, pdf, markdown content
+**Area Definition Features:**
+- Interactive map selection tool
+- Polygon drawing for custom boundaries
+- Area size validation
+- Geographic coordinate specification
+- Map layer customization
+
+#### Step 3: Waypoint Configuration
+
+Add and configure individual waypoints along the tour route, each containing location-specific content and multimedia resources.
 
 <div align="center">
 
@@ -116,77 +168,183 @@ Add individual waypoints (stops) along the tour route, each with its own content
 
 </div>
 
-**Waypoint Features:**
-- Geographic coordinates (GPS location)
-- Title and description
-- Multimedia content (images, videos, 3D models)
+**Waypoint Components:**
+- GPS coordinates (latitude, longitude)
+- Waypoint title and description
+- Multimedia attachments (images, videos, audio tracks, PDFs)
+- 3D models and AR content
 - AI visual recognition triggers
 - Historical and contextual information
-- Points of interest markers
+- Points of interest references
+- Markdown-formatted content
 
----
+**Tour Creation Workflow:**
 
-## API Endpoints
+```mermaid
+sequenceDiagram
+    participant Creator
+    participant WebApp
+    participant API
+    participant Storage
+    participant AIService as AI Service
+    
+    Note over Creator,Storage: Tour Creation
+    Creator->>WebApp: Enter tour information<br/>(title, subtitle, description,<br/>place/coordinates, cover image)
+    WebApp->>Storage: Store cover image
+    WebApp->>API: Create tour record
+    API->>Storage: Save tour metadata
+    
+    Note over Creator,Storage: Waypoint Creation
+    loop For each waypoint
+        Creator->>WebApp: Add waypoint information<br/>(title, description, location)
+        Creator->>WebApp: Upload content<br/>(images, PDF, markdown, audio)
+        WebApp->>Storage: Store waypoint media
+        WebApp->>API: Create waypoint record
+        API->>Storage: Save waypoint data
+    end
+    
+    Note over Creator,Storage: AI Training
+    Creator->>WebApp: Enable AI recognition
+    WebApp->>AIService: Train recognition model
+    AIService->>AIService: Process training data
+    AIService->>Storage: Store trained model
+```
 
-The web application exposes RESTful API endpoints used by the mobile application to retrieve tour data, submit reviews, and interact with AI services.
+## API Reference
 
-### Tour & Waypoint Management
+The platform exposes a comprehensive RESTful API used by the mobile application and third-party integrations.
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/tour_waypoints/<tour_id>/` | GET | Retrieve all waypoints for a specific tour |
-| `/load_model/<tour_id>/` | GET | Load the AI recognition model for a tour |
-| `/get_waypoint_resources/` | GET | Fetch multimedia resources for a waypoint |
-| `/cut_map/<tour_id>/` | GET | Generate a cropped map view for the tour area |
+### Tour and Waypoint Management
 
-### User Interactions
+| Endpoint | Method | Description | Parameters |
+|----------|--------|-------------|------------|
+| `/tour_waypoints/<tour_id>/` | GET | Retrieve all waypoints associated with a specific tour | `tour_id`: Tour identifier |
+| `/load_model/<tour_id>/` | GET | Load the AI recognition model trained for a tour | `tour_id`: Tour identifier |
+| `/get_waypoint_resources/` | GET | Fetch multimedia resources attached to waypoints | `waypoint_id`: Waypoint identifier |
+| `/cut_map/<tour_id>/` | GET | Generate a cropped map view for the tour's geographic area | `tour_id`: Tour identifier |
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/create_review/` | POST | Submit a review for a tour |
-| `/get_reviews_by_user/` | GET | Retrieve all reviews created by a user |
-| `/increment_view_count/` | POST | Track tour views/visits |
+### User Interaction and Analytics
 
-### AI Services
+| Endpoint | Method | Description | Request Body |
+|----------|--------|-------------|--------------|
+| `/create_review/` | POST | Submit a user review for a completed tour | `tour_id`, `rating`, `comment`, `user_token` |
+| `/get_reviews_by_user/` | GET | Retrieve all reviews created by a specific user | `user_id` (query parameter) |
+| `/increment_view_count/` | POST | Track and increment tour view/visit statistics | `tour_id`, `user_token` |
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/inference/` | POST | Perform visual recognition inference on uploaded images |
-| `/download_model/` | GET | Download AI model for offline mobile use |
+### Artificial Intelligence Services
 
----
+| Endpoint | Method | Description | Request Body |
+|----------|--------|-------------|--------------|
+| `/inference/` | POST | Perform visual recognition inference on uploaded images | `image` (file), `tour_id`, `model_version` |
+| `/download_model/` | GET | Download trained AI model for offline mobile use | `tour_id`, `platform` (iOS/Android) |
 
-## Contributing
+**AI Inference Flow:**
 
-We welcome contributions from the community! XRTourGuide is built on the principle of co-creation, and your input helps make the platform better for everyone.
+```mermaid
+sequenceDiagram
+    participant MobileApp
+    participant WebApp as WebApp
+    participant AIService as AI Service
+    participant Model as Model Storage
+    
+    MobileApp->>MobileApp: User captures photo
+    MobileApp->>WebApp: POST /inference/
+    WebApp->>AIService: Forward image data
+    AIService->>Model: Load tour model
+    Model->>AIService: Return model weights
+    AIService->>AIService: Run inference
+    AIService->>WebApp: Return recognition results
+    WebApp->>MobileApp: Matched waypoint + confidence
+    MobileApp->>MobileApp: Trigger AR content
+```
 
-### How to Contribute
+## Technology Stack
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**Backend:**
+- Django framework with Django REST Framework (DRF)
+- RESTful API architecture
+- JWT-based authentication
+- MySQL 8.0 database
+- Celery for asynchronous task processing
+- Redis as message broker and cache
+- MinIO for S3-compatible object storage (media files, AI models)
 
----
+**Web Server & Reverse Proxy:**
+- Nginx as reverse proxy and static file server
+- SSL/TLS certificate management with Certbot
+
+**Frontend:**
+- HTML, CSS, and JavaScript
+- Responsive web design
+- Interactive mapping libraries
+
+**AI/ML Services:**
+- PyTorch for deep learning models
+- FastAPI for AI inference and training microservices
+- Computer vision pipeline for image recognition
+- Separate containerized services for model training and inference
+
+**Infrastructure:**
+- Docker containerization
+- Docker Compose orchestration
+- Custom network configuration for service isolation
+- Health checks and automatic restart policies
+
+## Development and Contribution
+
+We welcome and encourage contributions from the developer community. XRTourGuide is built on principles of open collaboration and co-creation.
+
+### Contributing Guidelines
+
+**Getting Started:**
+
+1. Fork the repository to your GitHub account
+2. Clone your fork locally: `git clone https://github.com/YOUR_USERNAME/XRTourGuide.git`
+3. Create a feature branch: `git checkout -b feature/descriptive-feature-name`
+4. Make your changes following the project's coding standards
+5. Write or update tests as necessary
+6. Commit your changes: `git commit -m 'Add descriptive commit message'`
+7. Push to your fork: `git push origin feature/descriptive-feature-name`
+8. Open a Pull Request with a clear description of changes
+
+**Code Standards:**
+- Follow existing code style and conventions
+- Write clear, self-documenting code
+- Include comments for complex logic
+- Ensure all tests pass before submitting
+- Update documentation for new features
+
+**Pull Request Process:**
+- Provide a detailed description of changes
+- Reference related issues if applicable
+- Ensure CI/CD checks pass
+- Respond to review feedback promptly
+- Maintain a clean commit history
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](../LICENSE) file for complete terms and conditions.
 
----
+## Funding and Acknowledgments
 
-## Acknowledgments
+This project has received funding from the European Union's Horizon 2020 research and innovation programme under the [FUTURAL](https://futural-project.eu/it/) initiative. We gratefully acknowledge the support and collaboration of all project partners and contributors.
 
-This project has received funding from the European Union's Horizon 2020 research and innovation programme under the [FUTURAL](https://futural-project.eu/it/) initiative.
+## Resources and Contact
 
----
+**Project Resources:**
+- **Official Website**: [isislab-unisa.github.io/XRTourGuide](https://isislab-unisa.github.io/XRTourGuide/)
+- **Documentation**: Available in the `/docs` directory
+- **API Documentation**: Interactive API explorer at `/api/docs`
 
-## Contact & Resources
-
-- **Project Website**: [isislab-unisa.github.io/XRTourGuide](https://isislab-unisa.github.io/XRTourGuide/)
+**Research and Development:**
 - **FUTURAL Project**: [futural-project.eu](https://futural-project.eu/it/)
-- **Research Group**: [ISISLab - UNISA](https://www.isislab.it/)
-- **GitHub Issues**: [Report bugs or request features](https://github.com/isislab-unisa/XRTourGuide/issues)
+- **ISISLab Research Group**: [www.isislab.it](https://www.isislab.it/)
+- **University of Salerno**: Department of Computer Science
 
-</div>Issue Tracker**: [GitHub Issues](https://github.com/isislab-unisa/XRTourGuide/issues)
+**Support and Community:**
+- **Issue Tracker**: [GitHub Issues](https://github.com/isislab-unisa/XRTourGuide/issues)
+- **Feature Requests**: Submit via GitHub Issues with the `enhancement` label
+- **Bug Reports**: Submit via GitHub Issues with the `bug` label
+- **Discussions**: [GitHub Discussions](https://github.com/isislab-unisa/XRTourGuide/discussions)
+
+For direct inquiries, please contact the development team through the ISISLab website or GitHub repository.

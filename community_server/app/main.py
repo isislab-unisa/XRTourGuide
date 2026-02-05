@@ -7,6 +7,7 @@ from app.model import models
 from app.model.database import SessionLocal, engine
 import dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.routes import auth, services, users, profile
 
@@ -57,6 +58,7 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET"))
 
 app.include_router(auth.router, tags=["Authentication"])
 app.include_router(services.router, tags=["Services"])
