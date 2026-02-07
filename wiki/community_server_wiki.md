@@ -751,8 +751,8 @@ We welcome contributions to improve the XRCommunityServer Identity Provider. Ple
 **1. Fork the Repository**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/XRCommunityServer.git
-cd XRCommunityServer
+git clone https://github.com/isislab-unisa/XRTourGuide.git
+cd community_server
 ```
 
 **2. Create Feature Branch**
@@ -810,6 +810,6 @@ This project has received funding from the European Union's Horizon 2020 researc
 - **Issue Tracker**: GitHub Issues
 - **Feature Requests**: Submit via GitHub Issues with the `enhancement` label
 - **Bug Reports**: Submit via GitHub Issues with the `bug` label
-- **Security Issues**: Report privately to security@isislab.it
+- **Security Issues**: Report privately to isislab.unisa@gmail.com
 
 For direct inquiries about the Identity Provider, please contact the development team through the ISISLab website or GitHub repository.
