@@ -1,3 +1,5 @@
+import base64
+import re
 from rest_framework.response import Response
 from rest_framework import status
 from ..serializers import TourSerializer, WaypointSerializer
@@ -215,7 +217,10 @@ def tour_deep_link(request, pk):
     android_store = os.getenv("ANDROID_STORE")
     ios_store = os.getenv("IOS_STORE")
     
-    app_deep_link = f"xrtourguide://tour/{pk}"
+    domain = os.getenv("DOMAIN")
+    domain = re.sub(r'^https?://', '', domain)
+    domain_b64 = base64.b64encode(domain.encode()).decode()
+    app_deep_link = f"xrtourguide://tour/{pk}?domain={domain_b64}"
     
     html = f"""
     <!DOCTYPE html>
