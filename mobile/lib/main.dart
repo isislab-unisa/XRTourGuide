@@ -17,6 +17,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:app_links/app_links.dart';
 import 'tour_details_page.dart';
+import 'dart:convert';
+import 'services/api_service.dart';
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
@@ -35,6 +37,7 @@ final RouteObserver<ModalRoute<void>> routeObserver =
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final pendingTourIdProvider = StateProvider<int?>((ref) => null);
+final pendingTourDomainProvider = StateProvider<String?>((ref) => null);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required for plugin initialization
@@ -94,6 +97,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   Future<void> _initDeepLinks() async {
     final initialUri = await _appLinks.getInitialLink();
+    print('DEEPLINK initInitial: $initialUri');
     if (initialUri != null) {
       _handleUri(initialUri);
     }
@@ -104,12 +108,36 @@ class _MyAppState extends ConsumerState<MyApp> {
     );
   }
 
+  String? _decodeBase64UrlSafe(String? input) {
+    if (input == null) return null;
+    try {
+      var normalized = input.replaceAll('-', '+').replaceAll('_', '/');
+      final pad = normalized.length % 4;
+      if (pad > 0) normalized += '=' * (4 - pad);
+      return utf8.decode(base64.decode(normalized));
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _handleUri(Uri uri) {
+    print(
+      'DEEPLINK _handleUri: uri=$uri, path=${uri.pathSegments}, query=${uri.queryParameters}',
+    );
     final tourId = _extractTourId(uri);
     if (tourId == null) return;
 
+    final domainB64 = uri.queryParameters['domain'];
+    final domainUrl = _decodeBase64UrlSafe(domainB64);
+
+    if (domainUrl != null && domainUrl.isNotEmpty) {
+      ref.read(apiServiceProvider).updateBaseUrl(domainUrl);
+    }
+
     ref.read(pendingTourIdProvider.notifier).state = tourId;
-    _tryOpenPendingTour(ref.read(authServiceProvider).authStatus);
+    ref.read(pendingTourDomainProvider.notifier).state = domainUrl;
+    
+    // _tryOpenPendingTour(ref.read(authServiceProvider).authStatus);
   }
 
   int? _extractTourId(Uri uri) {
@@ -131,14 +159,19 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   void _tryOpenPendingTour(AuthStatus status) {
     final pendingTourId = ref.read(pendingTourIdProvider);
+    final pendingDomain = ref.read(pendingTourDomainProvider);
     if (pendingTourId == null) return;
     if (status == AuthStatus.loading) return;
 
     if (status == AuthStatus.authenticated) {
+      // Costruisci stack: TravelExplorer -> TourDetail
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
+        (route) => false, // rimuove tutte le route precedenti
+      );
       navigatorKey.currentState?.push(
         MaterialPageRoute(
-          builder:
-              (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
+          builder: (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
         ),
       );
       ref.read(pendingTourIdProvider.notifier).state = null;
@@ -200,9 +233,38 @@ class _MyAppState extends ConsumerState<MyApp> {
 class AuthChecker extends ConsumerWidget {
   const AuthChecker({Key? key}) : super(key: key);
 
+  void _tryOpenPendingTour(WidgetRef ref, AuthStatus status) {
+    final pendingTourId = ref.read(pendingTourIdProvider);
+    if (pendingTourId == null) return;
+    if (status == AuthStatus.loading) return;
+
+    if (status == AuthStatus.authenticated) {
+
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
+        (route) => false,
+      );
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder:
+              (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
+        ),
+      );
+      ref.read(pendingTourIdProvider.notifier).state = null;
+    } else {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => const AuthFlowScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authService = ref.watch(authServiceProvider);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tryOpenPendingTour(ref, authService.authStatus);
+    });
 
     switch (authService.authStatus) {
       case AuthStatus.loading:

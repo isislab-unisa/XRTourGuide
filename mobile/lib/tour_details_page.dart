@@ -105,6 +105,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   @override
   void initState() {
     super.initState();
+    print(
+      'TOUR initState: tourId=${widget.tourId}, isOffline=${widget.isOffline}',
+    );
+    try {
+      _apiService = ref.read(apiServiceProvider);
+      print('TOUR apiService OK');
+    } catch (e) {
+      print('TOUR apiService ERROR: $e');
+    }
     _tourService = ref.read(tourServiceProvider);
     _apiService = ref.read(apiServiceProvider);
     _localStateService = ref.read(localStateServiceProvider);
@@ -1520,7 +1529,7 @@ Future<void> _loadWaypoints() async {
                     },
                   ),
                   SizedBox(width: 10),
-                  if (_tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
+                  if (_tourDetails != null && _tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
                     _buildNavTab(
                       icon: Icons.map_outlined,
                       label: 'map_tab'.tr(),
@@ -1771,7 +1780,7 @@ Future<void> _loadWaypoints() async {
                   ),
                 ),
             ] else if (_selectedTab == 'Itinerario') ...[
-              if (_tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
+              if (_tourDetails != null && _tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
                 // Interactive Map view using flutter_map
                 Padding(
                   padding: const EdgeInsets.all(16.0),

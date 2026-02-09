@@ -26,10 +26,12 @@ class ApiService {
   '/stream_minio_resource/'
   ];
 
-  static String basicUrl = 'https://';
-  // static const String basicUrl = 'http://172.16.15.145:80';
+  static String appSignature = "com.isislab.xr_tour_guide";
 
-  static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
+  static String basicUrl = 'http://';
+  static const String centralizedUrl = 'http://172.16.15.136:8002';
+
+  // static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {
@@ -40,6 +42,8 @@ class ApiService {
           if (options.extra.containsKey('baseUrl') && options.extra['baseUrl'] != null) {
             options.baseUrl = options.extra['baseUrl'];
           }
+
+          options.headers['x-app-package'] = appSignature;
 
           print("Request: ${options.baseUrl} ${options.method} ${options.path}");
 
@@ -94,9 +98,32 @@ class ApiService {
     return opts;
   }
 
+  // void updateBaseUrl(String newBaseUrl) {
+  //   basicUrl = "http://";
+  //   basicUrl =  basicUrl + newBaseUrl;
+  // }
+
   void updateBaseUrl(String newBaseUrl) {
-    basicUrl =  basicUrl + newBaseUrl;
+    String normalized = newBaseUrl;
+    if (!normalized.startsWith('http://') &&
+        !normalized.startsWith('https://')) {
+      normalized = 'http://' + normalized;
+    }
+    basicUrl = normalized;
+    print('ApiService basicUrl set to: $normalized');
   }
+
+  // void updateBaseUrl(String newBaseUrl) {
+  //   // Normalize: ensure scheme present
+  //   String normalized = newBaseUrl;
+  //   if (!normalized.startsWith('http://') &&
+  //       !normalized.startsWith('https://')) {
+  //     normalized = 'https://' + normalized.replaceAll(RegExp(r'^/+'), '');
+  //   }
+  //   basicUrl = normalized;
+  //   _dio.options.baseUrl = normalized;
+  //   print('ApiService baseUrl updated to: $normalized');
+  // }
 
   String getCurrentBaseUrl() {
     return basicUrl;
