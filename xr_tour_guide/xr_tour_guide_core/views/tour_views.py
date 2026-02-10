@@ -452,7 +452,7 @@ def tour_informations(request):
     domain = os.getenv("DOMAIN")
     for tour_data in data:
         tour_id = tour_data['id']
-        tour_data['default_img_url'] = f"{domain}stream_minio_resource/?tour={tour_id}&file=default_image"
+        tour_data['default_img'] = f"{domain}stream_minio_resource/?tour={tour_id}&file=default_image"
         tour_data['deep_link'] = f"{domain}tour/{tour_id}/"
         
         tour = Tour.objects.get(id=tour_id)
