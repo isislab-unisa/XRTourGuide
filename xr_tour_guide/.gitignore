@@ -3,10 +3,10 @@
 __pycache__/
 migrations/**/*.py
 certbot/
-z_file/
-z_done_san_nilo
-z_populate_db.py
-z_populate_db_2.py
+unisa_file/
+san_nilo/
+init_unisa_tour.py
+# init_san_nilo_tour.py
 .community.env
 it_IT-riccardo-x_low.onnx
 it_IT-riccardo-x_low.onnx.json
