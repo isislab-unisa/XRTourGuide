@@ -14,7 +14,30 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/profile_detail/")
+@router.get(
+    "/profile_detail/",
+    summary="Retrieve authenticated user profile details",
+    responses={
+        200: {
+            "description": "User profile retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": 1,
+                        "username": "johndoe",
+                        "email": "john@example.com",
+                        "first_name": "John",
+                        "last_name": "Doe",
+                        "city": "New York",
+                        "description": "Software developer"
+                    }
+                }
+            }
+        },
+        401: {"description": "Authorization header missing or invalid"},
+        404: {"description": "User not found"}
+    }
+)
 def api_profile_detail(request: Request, db: Session = Depends(get_db)):
     
     auth_header = request.headers.get("Authorization")
@@ -47,7 +70,24 @@ def api_profile_detail(request: Request, db: Session = Depends(get_db)):
         "description": user.description
     }
 
-@router.post("/update_profile/")
+@router.post(
+    "/update_profile/",
+    summary="Update authenticated user profile",
+    responses={
+        200: {
+            "description": "Profile updated successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Profile updated successfully"
+                    }
+                }
+            }
+        },
+        401: {"description": "Authorization header missing or invalid"},
+        404: {"description": "User not found"}
+    }
+)
 async def update_profile(
     db: Session = Depends(get_db),
     request: Request = None

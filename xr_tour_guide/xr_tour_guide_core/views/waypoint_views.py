@@ -90,6 +90,38 @@ def stream_minio_resource(request):
     
     return response
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Get waypoint resources by type",
+    manual_parameters=[
+        openapi.Parameter(
+            'waypoint_id',
+            openapi.IN_QUERY,
+            description="ID of the waypoint",
+            type=openapi.TYPE_STRING,
+            required=True
+        ),
+        openapi.Parameter(
+            'resource_type',
+            openapi.IN_QUERY,
+            description="Type of resource (readme/video/audio/pdf/links/images)",
+            type=openapi.TYPE_STRING,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(
+            description="Resource URLs retrieved successfully",
+            examples={
+                "application/json": {
+                    "url": "/stream_minio_resource?waypoint=1&file=readme"
+                }
+            }
+        ),
+        400: openapi.Response(description="Invalid resource type"),
+        404: openapi.Response(description="Waypoint not found")
+    }
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_waypoint_resources(request):

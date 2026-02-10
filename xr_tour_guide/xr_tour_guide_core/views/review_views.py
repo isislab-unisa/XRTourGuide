@@ -15,8 +15,20 @@ from ..authentication import JWTFastAPIAuthentication
 @swagger_auto_schema(
     method='get',
     operation_summary="Retrieve reviews for a specific tour",
+    manual_parameters=[
+        openapi.Parameter(
+            'tour_id',
+            openapi.IN_PATH,
+            description="ID of the tour",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
     responses={
-        200: openapi.Response(description="List of reviews (serialized)"),
+        200: openapi.Response(
+            description="List of reviews (serialized)",
+            schema=ReviewSerializer(many=True)
+        ),
         404: openapi.Response(description="Tour not found")
     }
 )
@@ -70,7 +82,16 @@ def create_review(request):
     method='get',
     operation_summary="Retrieve all reviews made by the currently logged in user",
     responses={
-        200: openapi.Response(description="List of reviews (serialized)"),
+        200: openapi.Response(
+            description="List of reviews (serialized)",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'review_count': openapi.Schema(type=openapi.TYPE_INTEGER, description='Total number of reviews'),
+                    'reviews': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT))
+                }
+            )
+        ),
     }
 )
 @api_view(['GET'])

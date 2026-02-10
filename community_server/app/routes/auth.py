@@ -63,7 +63,35 @@ async def login(
         {"request": request, "message": f"Welcome {user.username}!", "services": services}
     )
 
-@router.post("/api/token/")
+@router.post(
+    "/api/token/",
+    summary="User login to get access and refresh tokens",
+    responses={
+        200: {
+            "description": "Login successful",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                        "token_type": "bearer",
+                        "user": {
+                            "id": 1,
+                            "username": "john_doe",
+                            "email": "john@example.com",
+                            "name": "John",
+                            "surname": "Doe",
+                            "city": "New York",
+                            "description": "Software developer"
+                        }
+                    }
+                }
+            }
+        },
+        400: {"description": "Email and password required"},
+        401: {"description": "User not found, account not active, or invalid credentials"}
+    }
+)
 async def api_login(request: Request, db: Session = Depends(get_db), service: Services = Depends(verify_service_or_mobile)):
     data = await request.json()
     email = data.get("email")
@@ -101,7 +129,24 @@ async def api_login(request: Request, db: Session = Depends(get_db), service: Se
         }
     }
 
-@router.post("/api/token/refresh/")
+@router.post(
+    "/api/token/refresh/",
+    summary="Refresh access token using refresh token",
+    responses={
+        200: {
+            "description": "Access token refreshed successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid refresh token"},
+        404: {"description": "User not found"}
+    }
+)
 async def refresh(request: Request, db: Session = Depends(get_db), service: Services = Depends(verify_service_or_mobile)):
     data = await request.json()
     refresh = data.get("refresh")
@@ -122,7 +167,36 @@ async def refresh(request: Request, db: Session = Depends(get_db), service: Serv
 
     return {"access": new_access_token}
 
-@router.post("/api/google-login/")
+@router.post(
+    "/api/google-login/",
+    summary="Login or register using Google OAuth",
+    responses={
+        200: {
+            "description": "Google login successful",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                        "token_type": "bearer",
+                        "user": {
+                            "id": 1,
+                            "username": "john_doe",
+                            "email": "john@example.com",
+                            "name": "John",
+                            "surname": "Doe",
+                            "city": None,
+                            "description": None
+                        }
+                    }
+                }
+            }
+        },
+        400: {"description": "Email not provided by Google"},
+        401: {"description": "Invalid token issuer or account is deactivated"},
+        500: {"description": "Google OAuth not configured or authentication error"}
+    }
+)
 async def google_login(
     data: GoogleLoginRequest,
     db: Session = Depends(get_db), 
@@ -217,7 +291,33 @@ async def google_login(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
-@router.post("/api/verify/")
+@router.post(
+    "/api/verify/",
+    summary="Verify access token and get user details",
+    responses={
+        200: {
+            "description": "Token verified successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user_id": 1,
+                        "username": "john_doe",
+                        "email": "john@example.com",
+                        "type": "access",
+                        "id": 1,
+                        "name": "John",
+                        "surname": "Doe",
+                        "city": "New York",
+                        "description": "Software developer",
+                        "valid": True
+                    }
+                }
+            }
+        },
+        401: {"description": "Invalid token"},
+        404: {"description": "User not found"}
+    }
+)
 async def api_verify(
     token: str = Form(...),
     service: models.Services = Depends(verify_service_or_mobile),
@@ -245,7 +345,24 @@ async def api_verify(
 
     return JSONResponse(content=payload, media_type="application/json")
 
-@router.post("/api_register/")
+@router.post(
+    "/api_register/",
+    summary="Register a new user account",
+    responses={
+        201: {
+            "description": "Account created successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Account created successfully. Please verify your email."
+                    }
+                }
+            }
+        },
+        400: {"description": "Email or username already in use, or email already verified"},
+        500: {"description": "Email sending failed"}
+    }
+)
 async def api_register(
     data: UserRegister,
     service: models.Services = Depends(verify_service_or_mobile),
@@ -347,7 +464,25 @@ async def verify_email(
         {"request": request, "message": "Email verified successfully!", "type": "Email"}
     )
 
-@router.post("/resend-verification/")
+@router.post(
+    "/resend-verification/",
+    summary="Resend email verification link",
+    responses={
+        200: {
+            "description": "Verification email sent successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Verification email sent again"
+                    }
+                }
+            }
+        },
+        400: {"description": "Email already verified"},
+        404: {"description": "Email not found"},
+        500: {"description": "Email sending failed"}
+    }
+)
 async def resend_verification(
     request: Request,
     db: Session = Depends(get_db),
@@ -382,7 +517,24 @@ async def resend_verification(
 
     return {"message": "Verification email sent again"}
 
-@router.post("/reset-password/")
+@router.post(
+    "/reset-password/",
+    summary="Request password reset email",
+    responses={
+        200: {
+            "description": "Password reset email sent successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Password reset email sent"
+                    }
+                }
+            }
+        },
+        404: {"description": "Email not found"},
+        500: {"description": "Email sending failed"}
+    }
+)
 async def request_reset_password(
     request: Request,
     db: Session = Depends(get_db),
@@ -470,13 +622,3 @@ def verify_reset_password(
         "success.html",
         {"request": request, "message": "Password successfully updated!", "type": "Password"}
     )
-
-# @router.post("/verify/")
-# async def verify_token_endpoint(
-#     token: str,
-#     service: Services = Depends(verify_service_credentials),
-#     db: Session = Depends(get_db)
-# ):
-#     payload = verify_token(token, required_type="access")
-    
-#     return payload

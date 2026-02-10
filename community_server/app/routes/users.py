@@ -14,12 +14,23 @@ def get_db():
     finally:
         db.close()
 
-# @router.get("/list_users/")
-# async def list_users(db: Session = Depends(get_db)):
-#     """List all users"""
-#     return db.query(models.User).all()
-
-@router.post("/update_password/")
+@router.post(
+    "/update_password/",
+    summary="Update user password",
+    responses={
+        200: {
+            "description": "Password updated successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Password updated successfully"
+                    }
+                }
+            }
+        },
+        401: {"description": "Authorization header missing, invalid, or incorrect credentials"}
+    }
+)
 async def update_password(
     db: Session = Depends(get_db),
     request: Request = None
@@ -58,7 +69,23 @@ async def update_password(
     return {"message": "Password updated successfully"}
 
 
-@router.post("/delete_account/")
+@router.post(
+    "/delete_account/",
+    summary="Delete user account",
+    responses={
+        200: {
+            "description": "Account deleted successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Account deleted successfully"
+                    }
+                }
+            }
+        },
+        401: {"description": "Authorization header missing, invalid, or incorrect credentials"}
+    }
+)
 async def delete_account(
     db: Session = Depends(get_db),
     request: Request = None

@@ -15,6 +15,8 @@ import requests
 import redis
 from django.conf import settings
 from ..authentication import JWTFastAPIAuthentication
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
 
@@ -38,6 +40,25 @@ def build(request):
         return JsonResponse({"message": "Tour already built"}, status=400)
     return redirect(settings.LOGIN_REDIRECT_URL)
 
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Complete the build process for a tour",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['poi_name', 'poi_id', 'model_url', 'status'],
+        properties={
+            'poi_name': openapi.Schema(type=openapi.TYPE_STRING, description='Name of the POI/tour'),
+            'poi_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the POI/tour'),
+            'model_url': openapi.Schema(type=openapi.TYPE_STRING, description='URL of the model'),
+            'status': openapi.Schema(type=openapi.TYPE_STRING, description='Build status (COMPLETED or FAILED)'),
+        },
+    ),
+    responses={
+        200: openapi.Response(description="Build completed successfully"),
+        404: openapi.Response(description="Tour not found"),
+        500: openapi.Response(description="Error saving tour")
+    }
+)
 @api_view(['POST'])
 # @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([AllowAny])
@@ -57,9 +78,9 @@ def complete_build(request):
             tour.status = "BUILT"
             tour.save()
         except Tour.DoesNotExist:
-            return JsonResponse({"error": "Cromo POI not found"}, status=404)
+            return JsonResponse({"error": "POI not found"}, status=404)
         except Exception as e:
-            return JsonResponse({"error": f"Error saving Cromo POI: {str(e)}"}, status=500)
+            return JsonResponse({"error": f"Error saving POI: {str(e)}"}, status=500)
 
         send_mail(
             'Build completata',
@@ -74,7 +95,6 @@ def complete_build(request):
         except Exception as e:
             print(f"Errore nell'eliminazione del lock: {e}")
 
-        # Delete folder that contains the copy of the training data
         try:
             prefix = f"{tour_id}/data/"
             bucket = storage.bucket
@@ -104,8 +124,25 @@ def complete_build(request):
         except Exception as e:
             print(f"Errore nell'eliminazione del lock: {e}")
 
-        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+        return JsonResponse({"error": "POI not found"}, status=404)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Load model for a specific tour",
+    manual_parameters=[
+        openapi.Parameter(
+            'tour_id',
+            openapi.IN_PATH,
+            description="ID of the tour",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(description="Model loaded successfully"),
+        404: openapi.Response(description="Tour or model not found")
+    }
+)
 @api_view(["GET"])
 @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
@@ -113,7 +150,7 @@ def load_model(request, tour_id):
     try:
         tour = Tour.objects.get(pk=tour_id)
     except Tour.DoesNotExist:
-        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+        return JsonResponse({"error": "POI not found"}, status=404)
     storage = MinioStorage()
     if storage.exists(
         f"{tour_id}/model.pt"
@@ -127,6 +164,36 @@ def load_model(request, tour_id):
         return JsonResponse({"error": "Model not found"}, status=404)
     return JsonResponse({"message": "Model loaded"}, status=200)
 
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Run inference on an image for a specific tour",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['tour_id', 'img'],
+        properties={
+            'tour_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the tour'),
+            'img': openapi.Schema(type=openapi.TYPE_STRING, description='Image data for inference'),
+        },
+    ),
+    responses={
+        200: openapi.Response(
+            description="Inference completed",
+            examples={
+                "application/json": {
+                    "result": 1,
+                    "available_resources": {
+                        "pdf": 1,
+                        "readme": 0,
+                        "video": 1,
+                        "audio": 0,
+                        "links": 1
+                    }
+                }
+            }
+        ),
+        404: openapi.Response(description="Tour not found")
+    }
+)
 @api_view(['POST'])
 @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
@@ -135,7 +202,7 @@ def inference(request):
     try:
         tour = Tour.objects.get(pk=tour_id)
     except Tour.DoesNotExist:
-        return JsonResponse({"error": "Cromo POI not found"}, status=404)
+        return JsonResponse({"error": "POI not found"}, status=404)
 
     payload = {
         "poi_id": str(tour_id),
@@ -202,6 +269,25 @@ def inference(request):
         "available_resources": available_resources
     }, status=200)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Download training data model for a tour",
+    manual_parameters=[
+        openapi.Parameter(
+            'tour_id',
+            openapi.IN_QUERY,
+            description="ID of the tour",
+            type=openapi.TYPE_STRING,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(
+            description="Training data retrieved successfully",
+            content_type='application/json'
+        )
+    }
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def download_model(request):

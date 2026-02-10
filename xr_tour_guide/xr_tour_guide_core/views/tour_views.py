@@ -9,7 +9,7 @@ from django.http import JsonResponse, FileResponse
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
 import mimetypes
-from ..models import MinioStorage, Tour, Category
+from ..models import MinioStorage, Tour, Category, TypeOfImage
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -43,6 +43,36 @@ def parse_coordinates(coord_str):
             'searchTerm', openapi.IN_QUERY, 
             description="Keyword to search in title, description, place or coordinates", 
             type=openapi.TYPE_STRING
+        ),
+        openapi.Parameter(
+            'category',
+            openapi.IN_QUERY,
+            description="Filter tours by category",
+            type=openapi.TYPE_STRING
+        ),
+        openapi.Parameter(
+            'sorted',
+            openapi.IN_QUERY,
+            description="Sort tours by creation time (true/false)",
+            type=openapi.TYPE_STRING
+        ),
+        openapi.Parameter(
+            'num_tours',
+            openapi.IN_QUERY,
+            description="Limit number of tours returned",
+            type=openapi.TYPE_INTEGER
+        ),
+        openapi.Parameter(
+            'lat',
+            openapi.IN_QUERY,
+            description="Latitude for distance-based sorting",
+            type=openapi.TYPE_NUMBER
+        ),
+        openapi.Parameter(
+            'lon',
+            openapi.IN_QUERY,
+            description="Longitude for distance-based sorting",
+            type=openapi.TYPE_NUMBER
         )
     ],
     responses={200: TourSerializer(many=True)}
@@ -101,6 +131,15 @@ def tour_list(request):
 @swagger_auto_schema(
     method='get',
     operation_summary="Retrieve details for a specific tour",
+    manual_parameters=[
+        openapi.Parameter(
+            'pk',
+            openapi.IN_PATH,
+            description="ID of the tour",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
     responses={
         200: TourSerializer(),
         404: openapi.Response(description="Tour not found")
@@ -116,6 +155,32 @@ def tour_details(request, pk):
     serializer = TourSerializer(tour)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Retrieve waypoints for a specific tour including sub-tours",
+    manual_parameters=[
+        openapi.Parameter(
+            'tour_id',
+            openapi.IN_PATH,
+            description="ID of the tour",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(
+            description="Waypoints and sub-tours retrieved successfully",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'waypoints': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT)),
+                    'sub_tours': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT))
+                }
+            )
+        ),
+        404: openapi.Response(description="Tour not found")
+    }
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def tour_waypoints(request, tour_id):
@@ -144,13 +209,24 @@ def tour_waypoints(request, tour_id):
     return Response(data, status=status.HTTP_200_OK)
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Increment the view count for a specific tour",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['tour_id'],
+        properties={
+            'tour_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the tour'),
+        },
+    ),
+    responses={
+        200: openapi.Response(description="Tour updated successfully"),
+        404: openapi.Response(description="Tour not found")
+    }
+)
 @api_view(['POST'])
 @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([AllowAny])
-@swagger_auto_schema(
-    operation_summary="Increment the view count for a specific tour",
-    responses={200: openapi.Response(description="Tour updated successfully")}
-)
 def increment_view_count(request):
     tour_id = request.data.get('tour_id')
     try:
@@ -163,6 +239,23 @@ def increment_view_count(request):
 
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
 
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Extract and download pmtiles file for a tour based on waypoint coordinates",
+    manual_parameters=[
+        openapi.Parameter(
+            'tour_id',
+            openapi.IN_PATH,
+            description="ID of the tour",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(description="Pmtiles file returned successfully"),
+        400: openapi.Response(description="Tour not found or invalid waypoints")
+    }
+)
 @api_view(['POST'])
 @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
@@ -210,6 +303,22 @@ def cut_map(request, tour_id):
     file = storage.open(f"/{tour_id}/tour_{tour_id}.pmtiles", mode='rb')
     return FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}.pmtiles")
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Generate deep link page for opening tour in mobile app or web",
+    manual_parameters=[
+        openapi.Parameter(
+            'pk',
+            openapi.IN_PATH,
+            description="ID of the tour",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(description="HTML page with deep link logic")
+    }
+)
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def tour_deep_link(request, pk):
@@ -322,3 +431,58 @@ def tour_deep_link(request, pk):
     """
     
     return HttpResponse(html)
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Retrieve all tours with streaming links for default images and waypoint resources",
+    responses={
+        200: openapi.Response(
+            description="List of tours with streaming links and waypoint resources",
+            schema=TourSerializer(many=True)
+        )
+    }
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tour_informations(request):
+    tours = Tour.objects.all()
+    serializer = TourSerializer(tours, many=True)
+    data = serializer.data
+    
+    domain = os.getenv("DOMAIN")
+    for tour_data in data:
+        tour_id = tour_data['id']
+        tour_data['default_img_url'] = f"{domain}stream_minio_resource/?tour={tour_id}&file=default_image"
+        tour_data['deep_link'] = f"{domain}tour/{tour_id}/"
+        
+        tour = Tour.objects.get(id=tour_id)
+        waypoints = tour.waypoints.all()
+        waypoints_data = []
+        
+        for waypoint in waypoints:
+            waypoint_info = {
+                'id': waypoint.id,
+                'title': waypoint.title,
+                'resources': {}
+            }
+            
+            if waypoint.pdf_item:
+                waypoint_info['resources']['pdf'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=pdf"
+            if waypoint.readme_item:
+                waypoint_info['resources']['readme'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=readme"
+            if waypoint.video_item:
+                waypoint_info['resources']['video'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=video"
+            if waypoint.audio_item:
+                waypoint_info['resources']['audio'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=audio"
+            if waypoint.links.exists():
+                waypoint_info['resources']['links'] = [link.link for link in waypoint.links.all()]
+            
+            images = waypoint.images.filter(type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
+            if images.exists():
+                waypoint_info['resources']['images'] = [f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file={img.image.name}" for img in images]
+            
+            waypoints_data.append(waypoint_info)
+        
+        tour_data['waypoints_resources'] = waypoints_data
+    
+    return Response(data)

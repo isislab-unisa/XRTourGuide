@@ -24,11 +24,27 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/list_services/")
+@router.get(
+    "/list_services/",
+    summary="List all services",
+    responses={
+        200: {
+            "description": "List of all services retrieved successfully"
+        }
+    }
+)
 async def list_services(db: Session = Depends(get_db)):
     return db.query(models.Services).all()
 
-@router.get("/get_services/")
+@router.get(
+    "/get_services/",
+    summary="Get active services with health check",
+    responses={
+        200: {
+            "description": "List of active and healthy services"
+        }
+    }
+)
 async def get_services(db: Session = Depends(get_db)):
     services = db.query(models.Services).filter(models.Services.active == True).all()
 
@@ -44,11 +60,31 @@ async def get_services(db: Session = Depends(get_db)):
 
     return results
 
-@router.get("/get_service/{service_id}")
+@router.get(
+    "/get_service/{service_id}",
+    summary="Get service domain by ID",
+    responses={
+        200: {
+            "description": "Service domain retrieved successfully"
+        }
+    }
+)
 async def get_service(service_id: int, db: Session = Depends(get_db)):
     return db.query(models.Services).filter(models.Services.id == service_id).first().domain
 
-@router.get("/register_service")
+@router.get(
+    "/register_service",
+    summary="Display service registration form",
+    response_class=HTMLResponse,
+    responses={
+        200: {
+            "description": "Registration form displayed"
+        },
+        303: {
+            "description": "Redirect to login or home"
+        }
+    }
+)
 def register_service(
     request: Request,
     db: Session = Depends(get_db)
@@ -66,7 +102,22 @@ def register_service(
         {"request": request}
     )
 
-@router.post("/add_service/")
+@router.post(
+    "/add_service/",
+    summary="Add a new service",
+    response_class=HTMLResponse,
+    responses={
+        200: {
+            "description": "Service added successfully"
+        },
+        303: {
+            "description": "Redirect to login"
+        },
+        403: {
+            "description": "Admin access required"
+        }
+    }
+)
 def add_service(
     request: Request,
     name: str = Form(...),
@@ -148,7 +199,25 @@ def add_service(
         }
     )
 
-@router.post("/delete_service/{service_id}")
+@router.post(
+    "/delete_service/{service_id}",
+    summary="Delete a service",
+    response_class=HTMLResponse,
+    responses={
+        200: {
+            "description": "Service deleted successfully"
+        },
+        303: {
+            "description": "Redirect to login"
+        },
+        403: {
+            "description": "Admin access required"
+        },
+        404: {
+            "description": "Service not found"
+        }
+    }
+)
 def delete_service(
     service_id: int,
     request: Request,
@@ -174,7 +243,25 @@ def delete_service(
         {"request": request, "services": services, "message": "Service deleted successfully"}
     )
 
-@router.post("/status_service/{service_id}")
+@router.post(
+    "/status_service/{service_id}",
+    summary="Toggle service active status",
+    response_class=HTMLResponse,
+    responses={
+        200: {
+            "description": "Service status updated successfully"
+        },
+        303: {
+            "description": "Redirect to login"
+        },
+        403: {
+            "description": "Admin access required"
+        },
+        404: {
+            "description": "Service not found"
+        }
+    }
+)
 def status_service(
     service_id: int,
     request: Request,
@@ -200,7 +287,35 @@ def status_service(
         {"request": request, "services": services, "message": "Service status updated"}
     )
 
-@router.post("/regenerate_credentials/{service_id}")
+@router.post(
+    "/regenerate_credentials/{service_id}",
+    summary="Regenerate service credentials",
+    responses={
+        200: {
+            "description": "Credentials regenerated and email sent",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Credentials regenerated and email sent",
+                        "email_sent_to": "example@example.com"
+                    }
+                }
+            }
+        },
+        303: {
+            "description": "Redirect to login"
+        },
+        403: {
+            "description": "Admin access required"
+        },
+        404: {
+            "description": "Service not found"
+        },
+        500: {
+            "description": "Credentials regenerated but failed to send email"
+        }
+    }
+)
 async def regenerate_credentials(
     service_id: int,
     request: Request,
@@ -256,7 +371,16 @@ async def regenerate_credentials(
         "email_sent_to": service.requester_email
     }
 
-@router.get("/retrieve-credentials", response_class=HTMLResponse)
+@router.get(
+    "/retrieve-credentials",
+    summary="Retrieve service credentials using token",
+    response_class=HTMLResponse,
+    responses={
+        200: {
+            "description": "Credentials page displayed (success or error)"
+        }
+    }
+)
 async def retrieve_credentials_page(
     request: Request,
     token: str,

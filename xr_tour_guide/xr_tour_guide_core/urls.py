@@ -11,9 +11,9 @@ from rest_framework import permissions
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Cromo API",
+      title="XRTourGuide API",
       default_version='v1',
-      description="These are the API endpoints for Cromo.",
+      description="These are the API endpoints for XRTourGuide.",
       terms_of_service="https://www.google.com/policies/terms/",
       contact=openapi.Contact(email="contact@dummy.local"),
       license=openapi.License(name="BSD License"),
@@ -47,4 +47,5 @@ urlpatterns = [
     path("cut_map/<int:tour_id>/", cut_map, name="cut_map"),
     path("health_check/", health_check, name="health_check"),
     path("tour/<int:pk>/", tour_deep_link, name="tour_deep_link"),
+    path("tour-informations", tour_informations, name="tour_informations"),
 ]
