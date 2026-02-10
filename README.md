@@ -152,6 +152,9 @@ PMTILES_URL=http://pmtiles-server:8081/extract
 
 #Community server
 COMMUNITY_SERVER=your_domain_name:8002
+
+#Your domain
+DOMAIN=https://yout_domain/ #the final slash is mandatory
 ```
 
 Create a `.env` file in community_server:
