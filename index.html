@@ -495,9 +495,9 @@
                             traditions and targeting diverse audiences.</p>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                        <h3 class="text-xl font-semibold mb-3 text-blue-700">MushroomMate</h3>
-                        <p class="text-gray-600">Identifying local mushroom species and sharing traditional recipes,
-                            promoting food culture and knowledge transfer.</p>
+                    <h3 class="text-xl font-semibold mb-3 text-blue-700">LocalProducts</h3>
+                    <p class="text-gray-600">Scan a local product to instantly identify it, reveal origin and producer stories, get tasting tips, and access purchase
+                        or visit options.</p>
                     </div>
                 </div>
             </div>
@@ -519,16 +519,16 @@
                             for the XRTourGuide - FUTURAL project</h3>
                         <p class="text-gray-600 mb-4">Metodologie e strumenti digitali per la conservazione e la valorizzazione
                             culturale e informativa del territorio.</p>
-                        <button onclick="openGallery()"
+                        <button onclick="openGallery('evento_1')"
                             class="inline-block bg-blue-600 text-white px-5 py-2 rounded-md font-medium hover:bg-blue-700 transition mt-auto">
                             View Details</button>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col">
-                        <h3 class="text-xl font-semibold mb-2 text-blue-700">Coming Soon</h3>
-                        <p class="text-gray-600 mb-4">Date to be announced.</p>
-                        <a href="https://example.com/futural-launch" target="_blank"
-                            class="inline-block bg-gray-400 text-gray-200 px-5 py-2 rounded-md font-medium pointer-events-none opacity-60 mt-auto">
-                            View Details</a>
+                        <h3 class="text-xl font-semibold mb-2 text-blue-700">Evento Author Day XRTourGuide - FUTURAL</h3>
+                        <p class="text-gray-600 mb-4">Martedi 25 Novembre 2025</p>
+                        <button onclick="openGallery('evento_2')"
+                            class="inline-block bg-blue-600 text-white px-5 py-2 rounded-md font-medium hover:bg-blue-700 transition mt-auto">
+                            View Details</button>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col">
                         <h3 class="text-xl font-semibold mb-2 text-blue-700">Coming Soon</h3>
@@ -691,17 +691,30 @@
 
     <script>
         // Gallery functionality
-        const images = [
-            'images/evento_1_copertina.jpg',
-            'images/evento_1_locandina.jpg',
-            'images/evento_1_presentazione.jpg'
-        ];
-
+        const galleries = {
+            'evento_1': [
+                'images/evento_1/evento_1_copertina.jpg',
+                'images/evento_1/evento_1_locandina.jpg',
+                'images/evento_1/evento_1_presentazione.jpg'
+            ],
+            'evento_2': [
+                'images/evento_2/locandina.jpg',
+                'images/evento_2/opuscolo_page-0001.jpg',
+                'images/evento_2/opuscolo_page-0002.jpg',
+                'images/evento_2/opuscolo_page-0003.jpg',
+                'images/evento_2/opuscolo_page-0004.jpg',
+                'images/evento_2/opuscolo_page-0005.jpg',
+                'images/evento_2/opuscolo_page-0006.jpg',
+                'images/evento_2/opuscolo_page-0007.jpg'
+            ]
+        };
+        let currentGallery = galleries['evento_1'];
         let currentIndex = 0;
 
-        function openGallery() {
+        function openGallery(evento = "evento_1") {
             const modal = document.getElementById('gallery-modal');
             const container = document.getElementById('gallery-container');
+            currentGallery = galleries[evento] || galleries['evento_1'];
             document.body.classList.add('gallery-open');
             modal.classList.add('active');
 
@@ -709,7 +722,7 @@
             setTimeout(() => {
                 container.classList.add('appear');
             }, 50);
-
+            renderIndicators();
             showImage(0);
         }
 
@@ -725,6 +738,18 @@
             }, 300);
         }
 
+    function renderIndicators() {
+        const indicators = document.querySelector('.indicators');
+        indicators.innerHTML = '';
+        for (let i = 0; i < currentGallery.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'indicator' + (i === 0 ? ' active' : '');
+            div.addEventListener('click', () => showImage(i));
+            indicators.appendChild(div);
+        }
+        document.getElementById('total-number').textContent = currentGallery.length;
+    }
+
     function showImage(index) {
         const galleryImage = document.getElementById('gallery-image');
         const indicators = document.querySelectorAll('.indicator');
@@ -732,10 +757,12 @@
         const imageWrapper = document.getElementById('image-wrapper');
         const scrollIndicator = document.getElementById('scroll-indicator');
 
+        if (!currentGallery[index]) return;
+
         // Aggiorna immagine
         galleryImage.classList.remove('fade-in');
         setTimeout(() => {
-            galleryImage.src = images[index];
+            galleryImage.src = currentGallery[index];
             galleryImage.classList.add('fade-in');
 
             // Reset scroll position
@@ -817,13 +844,14 @@
         startX = 0;
         startY = 0;
     });
+
         function nextImage() {
-            const nextIndex = (currentIndex + 1) % images.length;
+            const nextIndex = (currentIndex + 1) % currentGallery.length;
             showImage(nextIndex);
         }
 
         function prevImage() {
-            const prevIndex = (currentIndex - 1 + images.length) % images.length;
+            const prevIndex = (currentIndex - 1 + images.length) % currentGallery.length;
             showImage(prevIndex);
         }
 
@@ -899,7 +927,7 @@
         });
 
         // Imposta il numero totale di immagini
-        document.getElementById('total-number').textContent = images.length;
+        document.getElementById('total-number').textContent = currentGallery.length;
 
         // Re-initialize Lucide Icons after dynamic content potentially loaded
         lucide.createIcons();
