@@ -15,7 +15,7 @@ schema_view = get_schema_view(
       default_version='v1',
       description="These are the API endpoints for XRTourGuide.",
       terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contact@dummy.local"),
+      contact=openapi.Contact(email="isislab.unisa@gmail.com"),
       license=openapi.License(name="BSD License"),
    ),
    public=True,
@@ -31,8 +31,17 @@ urlpatterns = [
         get_reviews_by_tour_id,
         name="get_reviews_by_tour_id",
     ),
-    re_path(
-        r"^docs/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
+    re_path(r"^swagger(?P<format>\.json|\.yaml)$",
+        schema_view.without_ui(cache_timeout=0),
+        name='schema-json'
+    ),
+    re_path(r"^swagger/$",
+        schema_view.with_ui('swagger', cache_timeout=0),
+        name='schema-swagger-ui'
+    ),
+    re_path(r"^docs/$",
+        schema_view.with_ui('redoc', cache_timeout=0),
+        name='schema-redoc'
     ),
     path("tour_waypoints/<int:tour_id>/", tour_waypoints, name="tour_waypoints"),
     path("create_review/", create_review, name="create_review"),
