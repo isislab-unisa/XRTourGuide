@@ -1,319 +1,469 @@
-# XRTourGuide API Documentation
+# XRTourGuide Community Server API Documentation
 
 ## Overview
 
-The XRTourGuide API provides endpoints for managing augmented reality tours, waypoints, reviews, and related resources.
+The XRTourGuide Community Server API provides authentication, user management, profile management, and service registration endpoints.
 
-**Base URL:** `https://xrtourguide.di.unisa.it/`  
-**Version:** v1  
-**Authentication:** Basic Auth  
-**Contact:** isislab.unisa@gmail.com  
-**License:** BSD License
+**Base URL:** To be configured  
+**Version:** 0.1.0  
+**Framework:** FastAPI
 
 ---
 
 ## Endpoints
 
-### Health Check
+### Authentication
 
-#### GET `/health_check/`
-Check if the service is active.
+#### GET `/`
+Root endpoint.
 
 **Response:**
-- `200`: Service is active
+- `200`: Successful Response (HTML)
+
+---
+
+#### POST `/login/`
+User login via form.
+
+**Request Body (Form Data):**
+- `email` (string, required): User email
+- `password` (string, required): User password
+
+**Response:**
+- `200`: Successful Response (HTML)
+- `422`: Validation Error
+
+---
+
+#### POST `/api/token/`
+User login to get access and refresh tokens.
+
+**Response:**
+- `200`: Login successful
 ```json
 {
-  "status": "Active"
-}
-```
-
----
-
-### Tours
-
-#### GET `/tour-informations`
-Retrieve all tours with streaming links for default images and waypoint resources.
-
-**Response:**
-- `200`: List of tours with streaming links and waypoint resources
-
----
-
-#### GET `/tour_list/`
-List tours by category with optional filters.
-
-**Query Parameters:**
-- `searchTerm` (string, optional): Keyword to search in title, description, place or coordinates
-- `category` (string, optional): Filter tours by category
-- `sorted` (string, optional): Sort tours by creation time (true/false)
-- `num_tours` (integer, optional): Limit number of tours returned
-- `lat` (number, optional): Latitude for distance-based sorting
-- `lon` (number, optional): Longitude for distance-based sorting
-
-**Response:**
-- `200`: Array of tours
-
----
-
-#### GET `/tour_details/{id}/`
-Retrieve details for a specific tour.
-
-**Path Parameters:**
-- `id` (integer, required): ID of the tour
-
-**Response:**
-- `200`: Tour details
-- `404`: Tour not found
-
----
-
-#### GET `/tour/{id}/`
-Generate deep link page for opening tour in mobile app or web.
-
-**Path Parameters:**
-- `id` (integer, required): ID of the tour
-
-**Response:**
-- `200`: HTML page with deep link logic
-
----
-
-#### POST `/increment_view_count/`
-Increment the view count for a specific tour.
-
-**Request Body:**
-```json
-{
-  "tour_id": 123
-}
-```
-
-**Response:**
-- `200`: Tour updated successfully
-- `404`: Tour not found
-
----
-
-### Waypoints
-
-#### GET `/tour_waypoints/{tour_id}/`
-Retrieve waypoints for a specific tour including sub-tours.
-
-**Path Parameters:**
-- `tour_id` (integer, required): ID of the tour
-
-**Response:**
-- `200`: Waypoints and sub-tours retrieved successfully
-```json
-{
-  "waypoints": [],
-  "sub_tours": []
-}
-```
-- `404`: Tour not found
-
----
-
-#### GET `/get_waypoint_resources/`
-Get waypoint resources by type.
-
-**Query Parameters:**
-- `waypoint_id` (string, required): ID of the waypoint
-- `resource_type` (string, required): Type of resource (readme/video/audio/pdf/links/images)
-
-**Response:**
-- `200`: Resource URLs retrieved successfully
-```json
-{
-  "url": "/stream_minio_resource?waypoint=1&file=readme"
-}
-```
-- `400`: Invalid resource type
-- `404`: Waypoint not found
-
----
-
-#### GET `/stream_minio_resource/`
-Stream a specific file from MinIO storage for a waypoint.
-
-**Query Parameters:**
-- `file` (string, required): Exact name of the file to stream (pdf/audio/video/readme/image)
-
-**Response:**
-- `200`: File streamed successfully
-- `400`: File name not provided
-- `404`: Waypoint or file not found
-
----
-
-### Reviews
-
-#### POST `/create_review/`
-Create a new review for a specific tour.
-
-**Request Body:**
-```json
-{
-  "tour_id": 123,
-  "rating": 4.5,
-  "comment": "Great tour!"
-}
-```
-
-**Response:**
-- `201`: Review created successfully
-- `404`: Tour not found
-
----
-
-#### GET `/get_reviews_by_tour_id/{tour_id}/`
-Retrieve reviews for a specific tour.
-
-**Path Parameters:**
-- `tour_id` (integer, required): ID of the tour
-
-**Response:**
-- `200`: List of reviews
-- `404`: Tour not found
-
----
-
-#### GET `/get_reviews_by_user/`
-Retrieve all reviews made by the currently logged in user.
-
-**Response:**
-- `200`: List of reviews
-```json
-{
-  "review_count": 5,
-  "reviews": []
-}
-```
-
----
-
-### Model & Inference
-
-#### GET `/download_model/`
-Download training data model for a tour.
-
-**Query Parameters:**
-- `tour_id` (string, required): ID of the tour
-
-**Response:**
-- `200`: Training data retrieved successfully
-
----
-
-#### GET `/load_model/{tour_id}/`
-Load model for a specific tour.
-
-**Path Parameters:**
-- `tour_id` (integer, required): ID of the tour
-
-**Response:**
-- `200`: Model loaded successfully
-- `404`: Tour or model not found
-
----
-
-#### POST `/inference/`
-Run inference on an image for a specific tour.
-
-**Request Body:**
-```json
-{
-  "tour_id": 123,
-  "img": "base64_encoded_image_data"
-}
-```
-
-**Response:**
-- `200`: Inference completed
-```json
-{
-  "result": 1,
-  "available_resources": {
-    "pdf": 1,
-    "readme": 0,
-    "video": 1,
-    "audio": 0,
-    "links": 1
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "user": {
+    "id": 1,
+    "username": "john_doe",
+    "email": "john@example.com",
+    "name": "John",
+    "surname": "Doe",
+    "city": "New York",
+    "description": "Software developer"
   }
 }
 ```
-- `404`: Tour not found
+- `400`: Email and password required
+- `401`: User not found, account not active, or invalid credentials
 
 ---
 
-### Build & Map
+#### POST `/api/token/refresh/`
+Refresh access token using refresh token.
 
-#### POST `/complete_build/`
-Complete the build process for a tour.
+**Response:**
+- `200`: Access token refreshed successfully
+```json
+{
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+- `400`: Invalid refresh token
+- `404`: User not found
+
+---
+
+#### POST `/api/google-login/`
+Login or register using Google OAuth.
 
 **Request Body:**
 ```json
 {
-  "poi_name": "Tour Name",
-  "poi_id": 123,
-  "model_url": "https://example.com/model.zip",
-  "status": "COMPLETED"
+  "id_token": "google_id_token_here"
 }
 ```
 
 **Response:**
-- `200`: Build completed successfully
-- `404`: Tour not found
-- `500`: Error saving tour
+- `200`: Google login successful
+```json
+{
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "user": {
+    "id": 1,
+    "username": "john_doe",
+    "email": "john@example.com",
+    "name": "John",
+    "surname": "Doe"
+  }
+}
+```
+- `400`: Email not provided by Google
+- `401`: Invalid token issuer or account is deactivated
+- `422`: Validation Error
+- `500`: Google OAuth not configured or authentication error
 
 ---
 
-#### POST `/cut_map/{tour_id}/`
-Extract and download pmtiles file for a tour based on waypoint coordinates.
+#### POST `/api/verify/`
+Verify access token and get user details.
 
-**Path Parameters:**
-- `tour_id` (integer, required): ID of the tour
+**Request Body (Form Data):**
+- `token` (string, required): Access token to verify
 
 **Response:**
-- `200`: Pmtiles file returned successfully
-- `400`: Tour not found or invalid waypoints
+- `200`: Token verified successfully
+```json
+{
+  "user_id": 1,
+  "username": "john_doe",
+  "email": "john@example.com",
+  "type": "access",
+  "id": 1,
+  "name": "John",
+  "surname": "Doe",
+  "city": "New York",
+  "description": "Software developer",
+  "valid": true
+}
+```
+- `401`: Invalid token
+- `404`: User not found
+- `422`: Validation Error
+
+---
+
+#### POST `/api_register/`
+Register a new user account.
+
+**Request Body:**
+```json
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "secure_password",
+  "firstName": "John",
+  "lastName": "Doe",
+  "city": "New York",
+  "description": "Software developer"
+}
+```
+
+**Response:**
+- `201`: Account created successfully
+```json
+{
+  "message": "Account created successfully. Please verify your email."
+}
+```
+- `400`: Email or username already in use, or email already verified
+- `422`: Validation Error
+- `500`: Email sending failed
+
+---
+
+#### GET `/verify-email`
+Verify user email address.
+
+**Query Parameters:**
+- `token` (string, required): Email verification token
+
+**Response:**
+- `200`: Successful Response
+- `422`: Validation Error
+
+---
+
+#### POST `/resend-verification/`
+Resend email verification link.
+
+**Response:**
+- `200`: Verification email sent successfully
+```json
+{
+  "message": "Verification email sent again"
+}
+```
+- `400`: Email already verified
+- `404`: Email not found
+- `500`: Email sending failed
+
+---
+
+#### POST `/reset-password/`
+Request password reset email.
+
+**Response:**
+- `200`: Password reset email sent successfully
+```json
+{
+  "message": "Password reset email sent"
+}
+```
+- `404`: Email not found
+- `500`: Email sending failed
+
+---
+
+#### GET `/reset-password/`
+Get password reset form.
+
+**Query Parameters:**
+- `token` (string, required): Password reset token
+
+**Response:**
+- `200`: Successful Response
+- `422`: Validation Error
+
+---
+
+#### POST `/verify-reset-password/`
+Verify and complete password reset.
+
+**Request Body (Form Data):**
+- `token` (string, required): Password reset token
+- `password` (string, required): New password
+- `confirm_password` (string, required): Password confirmation
+
+**Response:**
+- `200`: Successful Response
+- `422`: Validation Error
+
+---
+
+### Services
+
+#### GET `/list_services/`
+List all services.
+
+**Response:**
+- `200`: List of all services retrieved successfully
+
+---
+
+#### GET `/get_services/`
+Get active services with health check.
+
+**Response:**
+- `200`: List of active and healthy services
+
+---
+
+#### GET `/get_service/{service_id}`
+Get service domain by ID.
+
+**Path Parameters:**
+- `service_id` (integer, required): ID of the service
+
+**Response:**
+- `200`: Service domain retrieved successfully
+- `422`: Validation Error
+
+---
+
+#### GET `/register_service`
+Display service registration form.
+
+**Response:**
+- `200`: Registration form displayed (HTML)
+- `303`: Redirect to login or home
+
+---
+
+#### POST `/add_service/`
+Add a new service (Admin only).
+
+**Request Body (Form Data):**
+- `name` (string, required): Service name
+- `domain` (string, required): Service domain
+- `requester_email` (string, required): Requester's email
+- `active` (boolean, required): Service active status
+
+**Response:**
+- `200`: Service added successfully (HTML)
+- `303`: Redirect to login
+- `403`: Admin access required
+- `422`: Validation Error
+
+---
+
+#### POST `/delete_service/{service_id}`
+Delete a service (Admin only).
+
+**Path Parameters:**
+- `service_id` (integer, required): ID of the service
+
+**Response:**
+- `200`: Service deleted successfully (HTML)
+- `303`: Redirect to login
+- `403`: Admin access required
+- `404`: Service not found
+- `422`: Validation Error
+
+---
+
+#### POST `/status_service/{service_id}`
+Toggle service active status (Admin only).
+
+**Path Parameters:**
+- `service_id` (integer, required): ID of the service
+
+**Response:**
+- `200`: Service status updated successfully (HTML)
+- `303`: Redirect to login
+- `403`: Admin access required
+- `404`: Service not found
+- `422`: Validation Error
+
+---
+
+#### POST `/regenerate_credentials/{service_id}`
+Regenerate service credentials (Admin only).
+
+**Path Parameters:**
+- `service_id` (integer, required): ID of the service
+
+**Response:**
+- `200`: Credentials regenerated and email sent
+```json
+{
+  "message": "Credentials regenerated and email sent",
+  "email_sent_to": "example@example.com"
+}
+```
+- `303`: Redirect to login
+- `403`: Admin access required
+- `404`: Service not found
+- `422`: Validation Error
+- `500`: Credentials regenerated but failed to send email
+
+---
+
+#### GET `/retrieve-credentials`
+Retrieve service credentials using token.
+
+**Query Parameters:**
+- `token` (string, required): Credentials retrieval token
+
+**Response:**
+- `200`: Credentials page displayed (HTML)
+- `422`: Validation Error
+
+---
+
+### Users
+
+#### POST `/update_password/`
+Update user password.
+
+**Headers:**
+- `Authorization`: Bearer token (required)
+
+**Response:**
+- `200`: Password updated successfully
+```json
+{
+  "message": "Password updated successfully"
+}
+```
+- `401`: Authorization header missing, invalid, or incorrect credentials
+
+---
+
+#### POST `/delete_account/`
+Delete user account.
+
+**Headers:**
+- `Authorization`: Bearer token (required)
+
+**Response:**
+- `200`: Account deleted successfully
+```json
+{
+  "message": "Account deleted successfully"
+}
+```
+- `401`: Authorization header missing, invalid, or incorrect credentials
+
+---
+
+### Profile
+
+#### GET `/profile_detail/`
+Retrieve authenticated user profile details.
+
+**Headers:**
+- `Authorization`: Bearer token (required)
+
+**Response:**
+- `200`: User profile retrieved successfully
+```json
+{
+  "id": 1,
+  "username": "johndoe",
+  "email": "john@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "city": "New York",
+  "description": "Software developer"
+}
+```
+- `401`: Authorization header missing or invalid
+- `404`: User not found
+
+---
+
+#### POST `/update_profile/`
+Update authenticated user profile.
+
+**Headers:**
+- `Authorization`: Bearer token (required)
+
+**Response:**
+- `200`: Profile updated successfully
+```json
+{
+  "message": "Profile updated successfully"
+}
+```
+- `401`: Authorization header missing or invalid
+- `404`: User not found
 
 ---
 
 ## Data Models
 
-### Tour
+### User Registration
 ```json
 {
-  "id": 123,
-  "title": "Tour Title",
-  "subtitle": "Tour Subtitle",
-  "place": "Location Name",
-  "category": "INSIDE|OUTSIDE|THING|MIXED",
-  "description": "Tour description",
-  "user": 456,
-  "lat": "40.7128",
-  "lon": "-74.0060",
-  "default_img": "image_url",
-  "creation_time": "2024-01-01T12:00:00Z",
-  "user_name": "username",
-  "tot_view": 100,
-  "l_edited": "2024-01-01T12:00:00Z",
-  "rating": "4.5",
-  "rating_counter": "10"
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "secure_password",
+  "firstName": "John",
+  "lastName": "Doe",
+  "city": "New York",
+  "description": "Software developer"
 }
 ```
 
-### Review
+### Google Login Request
 ```json
 {
-  "id": 789,
-  "tour": 123,
-  "user": 456,
-  "rating": 5,
-  "comment": "Amazing experience!",
-  "user_name": "username",
-  "creation_date": "2024-01-01T12:00:00Z"
+  "id_token": "google_id_token_string"
+}
+```
+
+### Service
+```json
+{
+  "name": "Service Name",
+  "domain": "https://service.example.com",
+  "requester_email": "admin@example.com",
+  "active": true
 }
 ```
 
@@ -321,11 +471,15 @@ Extract and download pmtiles file for a tour based on waypoint coordinates.
 
 ## Authentication
 
-All endpoints require Basic Authentication. Include credentials in the request header:
+Most endpoints require JWT Bearer token authentication. Include the token in the request header:
 
 ```
-Authorization: Basic <base64_encoded_credentials>
+Authorization: Bearer <access_token>
 ```
+
+**Token Types:**
+- **Access Token**: Short-lived token for API access
+- **Refresh Token**: Long-lived token to obtain new access tokens
 
 ---
 
@@ -334,5 +488,17 @@ Authorization: Basic <base64_encoded_credentials>
 Common error responses across endpoints:
 
 - `400`: Bad Request - Invalid parameters or missing required fields
+- `401`: Unauthorized - Invalid or missing authentication
+- `403`: Forbidden - Insufficient permissions
 - `404`: Not Found - Requested resource does not exist
+- `422`: Validation Error - Request validation failed
 - `500`: Internal Server Error - Server-side error occurred
+
+---
+
+## Notes
+
+- Admin-only endpoints require elevated privileges
+- Email verification is required for new user accounts
+- Service credentials are sent via email when regenerated
+- Password reset tokens are time-limited
