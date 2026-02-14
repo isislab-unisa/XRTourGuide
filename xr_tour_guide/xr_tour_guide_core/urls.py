@@ -56,5 +56,5 @@ urlpatterns = [
     path("cut_map/<int:tour_id>/", cut_map, name="cut_map"),
     path("health_check/", health_check, name="health_check"),
     path("tour/<int:pk>/", tour_deep_link, name="tour_deep_link"),
-    path("tour-informations", tour_informations, name="tour_informations"),
+    path("tour-informations/", tour_informations, name="tour_informations"),
 ]

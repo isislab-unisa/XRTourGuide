@@ -18,8 +18,7 @@ services:
     volumes:
       - mysql_data_xr_tour_guide:/var/lib/mysql
     networks:
-      backend_net:
-        ipv4_address: 172.28.0.30
+      - backend_net
 
   web:
     build: .
@@ -149,8 +148,7 @@ services:
     ports:
       - "8090:8090"
     networks:
-      backend_net:
-        ipv4_address: 172.28.0.20
+     - backend_net
 
   ai_inference:
     build: ../AI_classification/inference
@@ -193,17 +191,17 @@ services:
   #   networks:
   #     - backend_net
 
-  # pmtiles-server:
-  #   build: ../pmtiles-server
-  #   container_name: pmtiles-server
-  #   depends_on:
-  #     - minio
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - "8081:8081"
-  #   networks:
-  #     - backend_net
+  pmtiles-server:
+    build: ../pmtiles-server
+    container_name: pmtiles-server
+    depends_on:
+      - minio
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    networks:
+      - backend_net
 
 volumes:
   mysql_data_xr_tour_guide:

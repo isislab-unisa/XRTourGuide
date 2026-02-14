@@ -452,34 +452,47 @@ def tour_informations(request):
     domain = os.getenv("DOMAIN")
     for tour_data in data:
         tour_id = tour_data['id']
-        tour_data['default_img'] = f"{domain}stream_minio_resource/?tour={tour_id}&file=default_image"
+        
+        coordinates = tour_data.get('coordinates', '0.0, 0.0')
+        lat, lon = coordinates.split(',')
+        tour_data['lat'] = float(lat.strip())
+        tour_data['lon'] = float(lon.strip())
+        
+        tour_data.pop('coordinates', None)
+        
+        tour_data['default_img_url'] = f"{domain}stream_minio_resource/?tour={tour_id}&file=default_image"
         tour_data['deep_link'] = f"{domain}tour/{tour_id}/"
         
         tour = Tour.objects.get(id=tour_id)
+        if tour.user:
+            tour_data['user_name'] = tour.user.username
+        
+        if tour_data.get('creation_time'):
+            tour_data['creation_time'] = tour_data['creation_time'].split('T')[0]
+        if tour_data.get('last_edited'):
+            tour_data['l_edited'] = tour_data['last_edited'].split('T')[0]
+            tour_data.pop('last_edited', None)
+        
         waypoints = tour.waypoints.all()
         waypoints_data = []
         
         for waypoint in waypoints:
+            wp_coordinates = waypoint.coordinates or '0.0, 0.0'
+            
             waypoint_info = {
                 'id': waypoint.id,
                 'title': waypoint.title,
-                'resources': {}
+                'description': waypoint.description or '',
+                'location': wp_coordinates,
+                'resources': {
+                    'readme': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=readme",
+                    'audio': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=audio",
+                    'pdf': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=pdf",
+                    'markdown': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=markdown",
+                    'video': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=video",
+                    'links': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=links"
+                }
             }
-            
-            if waypoint.pdf_item:
-                waypoint_info['resources']['pdf'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=pdf"
-            if waypoint.readme_item:
-                waypoint_info['resources']['readme'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=readme"
-            if waypoint.video_item:
-                waypoint_info['resources']['video'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=video"
-            if waypoint.audio_item:
-                waypoint_info['resources']['audio'] = f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=audio"
-            if waypoint.links.exists():
-                waypoint_info['resources']['links'] = [link.link for link in waypoint.links.all()]
-            
-            images = waypoint.images.filter(type_of_images=TypeOfImage.ADDITIONAL_IMAGES)
-            if images.exists():
-                waypoint_info['resources']['images'] = [f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file={img.image.name}" for img in images]
             
             waypoints_data.append(waypoint_info)
         
