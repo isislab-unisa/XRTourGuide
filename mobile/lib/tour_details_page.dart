@@ -245,7 +245,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
             latitude: (subTourInfo['lat'] as num?)?.toDouble() ?? 0.0,
             longitude: (subTourInfo['lon'] as num?)?.toDouble() ?? 0.0,
             images: const [], // il contenitore non ha immagini proprie
-            category: (subTourInfo['category'] ?? 'INSIDE') as String,
+            category: (subTourInfo['category'] ?? 'INDOOR') as String,
             subWaypoints: subWps,
           );
           subTourWaypoints.add(subTourWaypoint);
@@ -415,6 +415,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         setState(() {
           _tourDetails = tour;
           _isLoadingTourDetails = false;
+          print("STATUS: " + _tourDetails!.status);
         });
       }
     } catch (e) {
@@ -716,13 +717,6 @@ Future<void> _loadWaypoints() async {
               ),
             ),
             children: [
-              // Base map layer
-              // TileLayer(
-              //   urlTemplate:
-              //       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              //   userAgentPackageName: 'com.isislab.xrtourguide',
-              //   tileProvider: NetworkTileProvider()
-              // ),
               _baseMapLayer(),
               // Waypoint markers
               MarkerLayer(
@@ -799,7 +793,7 @@ Future<void> _loadWaypoints() async {
             ),
           ),
           
-          if (widget.isGuest == false)
+          if (widget.isGuest == false && _tourDetails!.status == "BUILT")
             Positioned(
               top: MediaQuery.of(context).padding.top - 15,
               right: 16,
@@ -885,14 +879,6 @@ Future<void> _loadWaypoints() async {
                                   borderRadius: BorderRadius.circular(12),
                                   child: widget.isOffline
                                       ? (_getWaypointImagesFor(selectedWaypoint).isNotEmpty
-                                          // ? Image.file(
-                                          //     File(_getWaypointImagesFor(selectedWaypoint)[0]),
-                                          //     width: 80,
-                                          //     height: 80,
-                                          //     fit: BoxFit.cover,
-                                          //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                          //   )
-                                          // : _offlineImagePlaceholder())
                                           ? ZlibImage(
                                               filePath: _getWaypointImagesFor(selectedWaypoint)[0],
                                               width: 80,
@@ -902,13 +888,6 @@ Future<void> _loadWaypoints() async {
                                               errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
                                             ) : _offlineImagePlaceholder())
                                       : (selectedWaypoint.images.isNotEmpty
-                                          // ? Image.network(
-                                          //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
-                                          //     width: 80,
-                                          //     height: 80,
-                                          //     fit: BoxFit.cover,
-                                          //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                          //   )
                                           ? ZlibImage(
                                               url: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
                                               width: 80,
@@ -1066,28 +1045,10 @@ Future<void> _loadWaypoints() async {
                                       padding: const EdgeInsets.only(
                                         right: 12,
                                       ),
-                                      // child: ClipRRect(
-                                      //   borderRadius:
-                                      //       BorderRadius.circular(12),
-                                      //   child: Image.network(
-                                      //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
-                                      //     width: 250,
-                                      //     height: 200,
-                                      //     fit: BoxFit.cover,
-                                      //   ),
-                                      // ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
                                         child: widget.isOffline ?
                                         (_getWaypointImagesFor(selectedWaypoint).isNotEmpty
-                                            // ? Image.file(
-                                            //     File(_getWaypointImagesFor(selectedWaypoint)[0]),
-                                            //     width: 80,
-                                            //     height: 80,
-                                            //     fit: BoxFit.cover,
-                                            //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                            //   )
-                                            // : _offlineImagePlaceholder())
                                             ? ZlibImage(
                                                 filePath: _getWaypointImagesFor(selectedWaypoint)[index],
                                                 width: 250,
@@ -1097,13 +1058,6 @@ Future<void> _loadWaypoints() async {
                                                 errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
                                             ) : _offlineImagePlaceholder())
                                         : (selectedWaypoint.images.isNotEmpty
-                                            // ? Image.network(
-                                            //     "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
-                                            //     width: 80,
-                                            //     height: 80,
-                                            //     fit: BoxFit.cover,
-                                            //     errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                            //   )
                                             ? ZlibImage(
                                                 url: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
                                                 width: 250,
@@ -1238,12 +1192,6 @@ Future<void> _loadWaypoints() async {
                           _offlineTourImagePath != null &&
                           File(_offlineTourImagePath!).existsSync()) {
                         // Modalità Offline: carica l'immagine dal file locale
-                        // return Image.file(
-                        //   File(_offlineTourImagePath!),
-                        //   fit: BoxFit.cover,
-                        //   errorBuilder: (context, error, stackTrace) =>
-                        //       _offlineImagePlaceholder(),
-                        // );
                         return ZlibImage(
                           filePath: _offlineTourImagePath!,
                           fit: BoxFit.cover,
@@ -1252,12 +1200,6 @@ Future<void> _loadWaypoints() async {
                         );
                       } else if (_tourDetails != null) {
                         // Modalità Online: carica l'immagine dalla rete
-                        // return Image.network(
-                        //   "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
-                        //   fit: BoxFit.cover,
-                        //   errorBuilder: (context, error, stackTrace) =>
-                        //       _offlineImagePlaceholder(),
-                        // );
                         return ZlibImage(
                           url: "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
                           fit: BoxFit.cover,
@@ -1320,7 +1262,6 @@ Future<void> _loadWaypoints() async {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      // '${_currentImageIndex + 1}/${_tourDetails?.images.length}',
                       '${_currentImageIndex + 1}/1',
                       style: const TextStyle(
                         color: Colors.white,
@@ -1458,8 +1399,7 @@ Future<void> _loadWaypoints() async {
                       ),
 
                       const Spacer(),
-
-                      if (widget.isGuest == false)
+                      if (widget.isGuest == false && _tourDetails?.status == "BUILT")
                         Padding(
                           padding: const EdgeInsets.only(top: 20.0),
                           child: Center(
@@ -1529,7 +1469,7 @@ Future<void> _loadWaypoints() async {
                     },
                   ),
                   SizedBox(width: 10),
-                  if (_tourDetails != null && _tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
+                  if (_tourDetails != null && _tourDetails!.category != "INDOOR" && _tourDetails!.category != "Cibo")
                     _buildNavTab(
                       icon: Icons.map_outlined,
                       label: 'map_tab'.tr(),
@@ -1780,7 +1720,7 @@ Future<void> _loadWaypoints() async {
                   ),
                 ),
             ] else if (_selectedTab == 'Itinerario') ...[
-              if (_tourDetails != null && _tourDetails!.category != "INSIDE" && _tourDetails!.category != "Cibo")
+              if (_tourDetails != null && _tourDetails!.category != "INDOOR" && _tourDetails!.category != "Cibo")
                 // Interactive Map view using flutter_map
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -1801,8 +1741,6 @@ Future<void> _loadWaypoints() async {
                       child: FlutterMap(
                         mapController: _mapController,
                         options: MapOptions(
-                          // initialCenter: LatLng(_waypoints[0].latitude, _waypoints[0].longitude),
-                          // initialZoom: 13.0,
                           initialCameraFit: _getInitialCameraFit(),
                           maxZoom: 16.0,
                           interactionOptions: const InteractionOptions(
@@ -1810,13 +1748,6 @@ Future<void> _loadWaypoints() async {
                           ),
                         ),
                         children: [
-                          // Base map layer
-                          // TileLayer(
-                          //   urlTemplate:
-                          //       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          //   userAgentPackageName: 'com.isislab.xrtourguide',
-                          //   tileProvider: NetworkTileProvider()
-                          // ),
                           _baseMapLayer(),
 
                           // Current location marker
@@ -2111,7 +2042,7 @@ Widget _buildWaypointItem({
                             // Centra la mappa SOLO per waypoints principali
                             if (index < _waypoints.length &&
                                 _selectedTab == 'Itinerario' &&
-                                (tourCategory != "INSIDE" &&
+                                (tourCategory != "INDOOR" &&
                                     tourCategory != "Cibo")) {
                               _centerMap(
                                 LatLng(
@@ -2281,26 +2212,6 @@ Widget _buildWaypointItem({
                                     ? (() {
                                       final offlineList = _offlineImagesByWaypoint[waypointIndex] ?? const <String>[];
                                       if (imageIndex < offlineList.length && offlineList[imageIndex].isNotEmpty) {
-                                      // return Image.file(
-                                      //   File(offlineList[imageIndex]),
-                                      //   height: 100,
-                                      //   width: 150,
-                                      //   fit: BoxFit.cover,
-                                      //   errorBuilder: (context, error, stackTrace) {
-                                      //   return Container(
-                                      //     height: 100,
-                                      //     width: 150,
-                                      //     decoration: BoxDecoration(
-                                      //     color: Colors.grey.shade300,
-                                      //     borderRadius: BorderRadius.circular(8.0),
-                                      //     ),
-                                      //     child: Icon(
-                                      //     Icons.image_not_supported,
-                                      //     color: Colors.grey.shade600,
-                                      //     ),
-                                      //   );
-                                      //   },
-                                      // );
                                       return ZlibImage(
                                         filePath: offlineList[imageIndex],
                                         width: 150,
@@ -2339,26 +2250,6 @@ Widget _buildWaypointItem({
                                       );
                                       }
                                     })()
-                                    // : Image.network(
-                                    //   "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
-                                    //   height: 100,
-                                    //   width: 150,
-                                    //   fit: BoxFit.cover,
-                                    //   errorBuilder: (context, error, stackTrace) {
-                                    //   return Container(
-                                    //     height: 100,
-                                    //     width: 150,
-                                    //     decoration: BoxDecoration(
-                                    //     color: Colors.grey.shade300,
-                                    //     borderRadius: BorderRadius.circular(8.0),
-                                    //     ),
-                                    //     child: Icon(
-                                    //     Icons.image_not_supported,
-                                    //     color: Colors.grey.shade600,
-                                    //     ),
-                                    //   );
-                                    //   },
-                                    // ),
                                     : ZlibImage(
                                       url:
                                         "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
@@ -2391,7 +2282,7 @@ Widget _buildWaypointItem({
                       ),
 
                     // Navigate button - SOLO per waypoints principali
-                    if (!isSubWaypoint && _tourDetails!.category != "INSIDE") ...[
+                    if (!isSubWaypoint && _tourDetails!.category != "INDOOR") ...[
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
@@ -2408,6 +2299,40 @@ Widget _buildWaypointItem({
                             ),
                           ),
                         ),
+                      ),
+                    ],
+
+                    if(!isSubWaypoint && _tourDetails?.status != "BUILT" && _tourDetails?.category == "GUIDE") ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ARCameraScreen(
+                                  tourId: widget.tourId,
+                                  latitude: latitude,
+                                  longitude: longitude,
+                                  isOffline: widget.isOffline,
+                                  enableRecognition: false,
+                                  initialWaypointId: waypointIndex,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.art_track_outlined, color: AppColors.primary),
+                          label: Text('open_resource_consultation'.tr()),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.primary),
+                            foregroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          )
+                        )
                       ),
                     ],
 

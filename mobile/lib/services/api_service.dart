@@ -28,10 +28,10 @@ class ApiService {
 
   static String appSignature = "com.isislab.xr_tour_guide";
 
-  static String basicUrl = 'http://';
-  static const String centralizedUrl = 'http://172.16.15.136:8002';
+  static String basicUrl = 'https://';
+  // static const String centralizedUrl = 'http://';
 
-  // static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
+  static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {
@@ -98,11 +98,6 @@ class ApiService {
     return opts;
   }
 
-  // void updateBaseUrl(String newBaseUrl) {
-  //   basicUrl = "http://";
-  //   basicUrl =  basicUrl + newBaseUrl;
-  // }
-
   void updateBaseUrl(String newBaseUrl) {
     String normalized = newBaseUrl;
     if (!normalized.startsWith('http://') &&
@@ -113,17 +108,6 @@ class ApiService {
     print('ApiService basicUrl set to: $normalized');
   }
 
-  // void updateBaseUrl(String newBaseUrl) {
-  //   // Normalize: ensure scheme present
-  //   String normalized = newBaseUrl;
-  //   if (!normalized.startsWith('http://') &&
-  //       !normalized.startsWith('https://')) {
-  //     normalized = 'https://' + normalized.replaceAll(RegExp(r'^/+'), '');
-  //   }
-  //   basicUrl = normalized;
-  //   _dio.options.baseUrl = normalized;
-  //   print('ApiService baseUrl updated to: $normalized');
-  // }
 
   String getCurrentBaseUrl() {
     return basicUrl;
@@ -172,7 +156,7 @@ class ApiService {
       socket.destroy();
     } catch (e) {
       print('Ping failed: $e');
-      return false;
+      // return false;
     }
 
     try {

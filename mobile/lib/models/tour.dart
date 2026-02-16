@@ -13,6 +13,7 @@ class Tour {
   final String creator;
   final String lastEdited;
   final int totViews;
+  final String status;
 
   Tour({
     required this.id,
@@ -29,6 +30,7 @@ class Tour {
     required this.creator,
     required this.lastEdited,
     required this.totViews,
+    required this.status,
   });
 
   factory Tour.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,7 @@ class Tour {
       creator: json['user_name'] as String,
       lastEdited: json['l_edited'] as String, //da rivedere
       totViews: json['tot_view'] as int,
+      status: json['status'] as String,
     );
   }
 

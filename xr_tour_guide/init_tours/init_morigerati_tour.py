@@ -2,6 +2,14 @@ import os
 import sys
 import django
 from docx import Document
+from pathlib import Path
+
+current_file = Path(__file__).resolve()
+project_root = current_file.parent.parent
+print(f"project root: {project_root}")
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'xr_tour_guide.settings')
 django.setup()
@@ -25,7 +33,7 @@ TOUR_CONFIG = {
     "coordinates": "40.142222,15.552778",
     "category": Category.INDOOR,
     "description": "Tour dedicato agli antichi mestieri e alla cereria di Morigerati",
-    "username": "root"
+    "username": "xrtourguide"
 }
 
 BASE_PATH = "./morigerati_tour"

@@ -186,9 +186,10 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
 
     // Mock data
     return [
-      Category(name: 'INSIDE', image: 'assets/interior.jpg'),
-      Category(name: 'OUTSIDE', image: 'assets/exterior.jpg'),
+      Category(name: 'INDOOR', image: 'assets/interior.jpg'),
+      Category(name: 'OUTDOOR', image: 'assets/exterior.jpg'),
       Category(name: 'MIXED', image: 'assets/int-exterior.jpg'),
+      Category(name: "GUIDE", image: 'assets/things.png'),
     ];
   }
 

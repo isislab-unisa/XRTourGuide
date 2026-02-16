@@ -2,6 +2,14 @@ import os
 import sys
 import django
 from docx import Document
+from pathlib import Path
+
+current_file = Path(__file__).resolve()
+project_root = current_file.parent.parent
+print(f"project root: {project_root}")
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'xr_tour_guide.settings')
 django.setup()
@@ -19,7 +27,7 @@ from django.core.files import File
 from django.db import connection
 
 BASE_PATH = "./local_product"
-USERNAME = "root"
+USERNAME = "xrtourguide"
 PLACE = "Cilento"
 COORDINATES = "40.142222,15.552778"
 TOUR_TITLE = "Local Product"

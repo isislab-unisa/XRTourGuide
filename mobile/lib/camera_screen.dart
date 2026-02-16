@@ -103,6 +103,9 @@ class ARCameraScreen extends ConsumerStatefulWidget {
   final double longitude;
   final int tourId;
   final bool isOffline;
+  final bool enableRecognition;
+  final int? initialWaypointId;
+  final String? tourType;
 
   ARCameraScreen({
     Key? key,
@@ -114,6 +117,9 @@ class ARCameraScreen extends ConsumerStatefulWidget {
     required this.latitude,
     required this.longitude,
     this.isOffline = false,
+    this.enableRecognition = true,
+    this.initialWaypointId,
+    this.tourType,
   }) : super(key: key);
 
   @override
@@ -201,14 +207,32 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _apiService = ref.read(apiServiceProvider);
     _localStateService = LocalStateService();
     _offlineService = ref.read(offlineStorageServiceProvider);
-    _initializeCamera();
-    _getCurrentLocation();
+    // _initializeCamera();
+    // _getCurrentLocation();
+    // _initializeAnimations();
+    // _setInitialContent();
+    // if (widget.isOffline) {
+    //   _initOfflineMap();
+    //   _initializeOfflineRecognizer();
+    // } // Set initial content
+    if (widget.enableRecognition) {
+      _initializeCamera();
+      _getCurrentLocation();
+      if (widget.isOffline) {
+        _initOfflineMap();
+        _initializeOfflineRecognizer();
+      }
+    } else {
+      _getCurrentLocation();
+    }
     _initializeAnimations();
     _setInitialContent();
-    if (widget.isOffline) {
-      _initOfflineMap();
-      _initializeOfflineRecognizer();
-    } // Set initial content
+
+    if(!widget.enableRecognition) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _enterStubRecognizedState();
+      });
+    }
   }
 
   @override
@@ -223,6 +247,86 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _offlineRecognitionService?.dispose();
     _clearTempFiles();
     super.dispose();
+  }
+
+  Future<void> _enterStubRecognizedState() async {
+    try{
+      await _getTourWaypoints();
+
+      int waypointId = widget.initialWaypointId ?? -1;
+      if (waypointId == -1){
+        if (_waypoints.isNotEmpty) waypointId = _waypoints.first.id;
+      }
+
+      Waypoint? wp;
+      try {
+        wp = _waypoints.firstWhere((w) => w.id == waypointId);
+      } catch(e) {
+        wp = null;
+      }
+
+      if (wp != null) {
+        widget.landmarkName = wp.title;
+        widget.landmarkDescription = wp.description;
+        widget.landmarkImages = wp.images;
+      }
+
+      final Map<String, dynamic> available = {
+        "readme" : 0,
+        "links" : 0,
+        "pdf" : 0,
+        "audio" : 0,
+        "video" : 0,
+        "images" : 0
+      };
+
+      if (waypointId != -1) {
+        if (widget.isOffline) {
+          final imgs = _offlineImagesByWaypoint[waypointId] ?? [];
+          if (imgs.isNotEmpty) available["images"] = 1;
+          final res = _offlineResourcesByWaypoint[waypointId] ?? {};
+          res.forEach((k, v) {
+            if (v is String && v.isNotEmpty) available[k] = 1;
+          });
+        } else {
+          for (final t in ["readme", "links", "images", "video", "pdf", "audio"]) {
+            try {
+              final resp = await _tourService.getResourceByWaypointAndType(waypointId, t);
+              if (resp != null) {
+                if (t == "images") {
+                  if (resp is List && resp.isNotEmpty) available["images"] = 1;
+                }else if (resp is String && resp.isNotEmpty) {
+                  available[t] = 1;
+                } else if (resp is Map && resp.isNotEmpty) {
+                  available[t] = 1;
+                }
+              }
+            } catch (e) {
+              print("Error checking resource $t for waypoint $waypointId: $e");
+            }
+          }
+        }
+      }
+
+      setState(() {
+        _recognizedWaypointId = waypointId;
+        _availableResources = available;
+        _currentMarkdownContent = "# ${widget.landmarkName}\n\n${widget.landmarkDescription}";
+        _currentActiveContent = MarkdownWidget(
+          data: _currentMarkdownContent,
+          config: _buildMarkdownConfig(),
+          padding: const EdgeInsets.only(top: 0),
+          shrinkWrap: true,
+        );
+        _recognitionState = RecognitionState.success;
+      });
+      _successAnimationController.reset();
+      _successAnimationController.forward();
+      _startAROverlayAnimation();
+    } catch(e) {
+      print("Error entering stub recognized state: $e");
+      _showError("Error loading initial content.");
+    }
   }
 
 
@@ -2239,7 +2343,7 @@ Widget _buildMiniMap(BuildContext context) {
 
 
     return Scaffold(
-      backgroundColor: Colors.black, // Black background for camera feel
+      backgroundColor: widget.enableRecognition ? Colors.black : Colors.white, // Black background for camera feel
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -2249,8 +2353,10 @@ Widget _buildMiniMap(BuildContext context) {
               onARViewCreated: onARViewCreated,
               planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
               )
-          else 
-            _buildCameraBackground(),
+          else if (widget.enableRecognition)
+            _buildCameraBackground()
+          else
+            Container(color: Colors.white, width: double.infinity, height: double.infinity),
 
           // --- Static Semi-transparent Circle (added here) ---
           if (!_isARMode)
@@ -2278,12 +2384,12 @@ Widget _buildMiniMap(BuildContext context) {
           _buildBackButton(context),
 
           // Mini map (top right)
-          _buildMiniMap(context),
+          if(widget.enableRecognition) _buildMiniMap(context),
 
           // Draggable bottom sheet with landmark info
           _buildDraggableSheet(context),
 
-          if (_recognitionState == RecognitionState.success)
+          if (_recognitionState == RecognitionState.success && widget.enableRecognition)
             Positioned(
               top: MediaQuery.of(context).padding.top + 16 + miniMapHeight + 10,
               right: 16,
