@@ -201,7 +201,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             tour_id = request.resolver_match.kwargs.get("object_id")
             available = Tour.objects.filter(
                 is_subtour=True, 
-                category="INSIDE", 
+                category="INDOOR", 
                 parent_tours__isnull=True
             )
             if tour_id:

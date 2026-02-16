@@ -65,9 +65,9 @@ class Status(models.TextChoices):
     ENQUEUED = "ENQUEUED", _("Enqueued")
 
 class Category(models.TextChoices):
-    INSIDE = "INSIDE", _("Inside")
-    OUTSIDE = "OUTSIDE", _("Outside")
-    THING = "THING", _("Thing")
+    INDOOR = "INDOOR", _("INDOOR")
+    OUTDOOR = "OUTDOOR", _("OUTDOOR")
+    GUIDE = "GUIDE", _("GUIDE")
     MIXED = "MIXED", _("Mixed")
         
 class TourQuerySet(models.QuerySet):
@@ -84,7 +84,7 @@ class Tour(models.Model):
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
-        default=Category.INSIDE,
+        default=Category.INDOOR,
         verbose_name=_("Category")
     )
     default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])], verbose_name=_("Default Image"))
@@ -181,7 +181,7 @@ class Waypoint(models.Model):
     audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp3', 'wav'])], verbose_name=_("Audio Item"))
     
     def save(self, *args, **kwargs):
-        if self.tour and self.tour.category == Category.INSIDE:
+        if self.tour and self.tour.category == Category.INDOOR:
             self.coordinates = self.tour.coordinates
         is_new = self.pk is None
         old_files = {

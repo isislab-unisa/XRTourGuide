@@ -4,7 +4,7 @@
             var category = $("#id_category").val();
 
             var tourCoordField = $("#id_coordinates").closest('.form-row, .form-group, .field, .form__field');
-            if (category === "THING") {
+            if (category === "GUIDE") {
                 tourCoordField.hide();
             } else {
                 tourCoordField.show();
@@ -19,7 +19,7 @@
                 var coordFieldsetInline = $inline.find("input[name$='-coordinates']")
                                                 .closest("fieldset.module");
 
-                if (category === "INSIDE" || category === "THING") {
+                if (category === "INDOOR" || category === "GUIDE") {
                     placeFieldsetInline.hide();
                     coordFieldsetInline.hide();
                 } else {

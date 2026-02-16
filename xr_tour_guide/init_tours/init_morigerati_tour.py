@@ -23,7 +23,7 @@ TOUR_CONFIG = {
     "subtitle": "Tour dei Mestieri e della Cereria",
     "place": "Morigerati",
     "coordinates": "40.142222,15.552778",
-    "category": Category.INSIDE,
+    "category": Category.INDOOR,
     "description": "Tour dedicato agli antichi mestieri e alla cereria di Morigerati",
     "username": "root"
 }

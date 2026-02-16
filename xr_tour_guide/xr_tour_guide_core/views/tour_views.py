@@ -438,7 +438,46 @@ def tour_deep_link(request, pk):
     responses={
         200: openapi.Response(
             description="List of tours with streaming links and waypoint resources",
-            schema=TourSerializer(many=True)
+            examples={
+                'application/json': [
+                    {
+                        "title": "Example Tour",
+                        "subtitle": "Example Subtitle",
+                        "place": "Example Place",
+                        "category": "OUTDOOR",
+                        "description": "Example description",
+                        "user": 1,
+                        "lat": 40.0,
+                        "lon": 15.0,
+                        "default_img": "1/default_image/example.jpg",
+                        "creation_time": "2026-01-01",
+                        "user_name": "username",
+                        "id": 1,
+                        "tot_view": 0,
+                        "l_edited": "2026-01-01",
+                        "rating": 0.0,
+                        "rating_counter": 0,
+                        "default_img_url": "http://example.com/stream_minio_resource/?tour=1&file=default_image",
+                        "deep_link": "http://example.com/tour/1/",
+                        "waypoints_resources": [
+                            {
+                                "id": 1,
+                                "title": "Example Waypoint",
+                                "description": "Example waypoint description",
+                                "location": "40.0, 15.0",
+                                "resources": {
+                                    "readme": "http://example.com/stream_minio_resource/?waypoint=1&file=readme",
+                                    "audio": "http://example.com/stream_minio_resource/?waypoint=1&file=audio",
+                                    "pdf": "http://example.com/stream_minio_resource/?waypoint=1&file=pdf",
+                                    "markdown": "http://example.com/stream_minio_resource/?waypoint=1&file=markdown",
+                                    "video": "http://example.com/stream_minio_resource/?waypoint=1&file=video",
+                                    "links": "http://example.com/stream_minio_resource/?waypoint=1&file=links"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
         )
     }
 )

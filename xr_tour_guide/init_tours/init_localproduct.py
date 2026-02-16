@@ -22,6 +22,7 @@ BASE_PATH = "./local_product"
 USERNAME = "root"
 PLACE = "Cilento"
 COORDINATES = "40.142222,15.552778"
+TOUR_TITLE = "Local Product"
 
 
 def fix_auto_increment():
@@ -59,61 +60,47 @@ def extract_text_from_md(md_path):
     return ""
 
 
-def get_default_image(product_path):
-    img_folder = os.path.join(product_path, "img")
-    if not os.path.exists(img_folder):
-        return None
-    
-    for img_name in sorted(os.listdir(img_folder)):
-        if img_name.lower().endswith((".jpg", ".jpeg", ".png")):
-            return os.path.join(img_folder, img_name)
+def get_default_image(base_path):
+    for folder_name in sorted(os.listdir(base_path)):
+        folder_path = os.path.join(base_path, folder_name)
+        if os.path.isdir(folder_path) and not folder_name.startswith('.'):
+            img_folder = os.path.join(folder_path, "img")
+            if os.path.exists(img_folder):
+                for img_name in sorted(os.listdir(img_folder)):
+                    if img_name.lower().endswith((".jpg", ".jpeg", ".png")):
+                        return os.path.join(img_folder, img_name)
     return None
 
 
-def create_product_tour(product_name, product_path, user):
-    
-    description = product_name
-    docx_path = os.path.join(product_path, "descrizione.docx")
-    md_path = os.path.join(product_path, "descrizione.md")
-    
-    if os.path.exists(docx_path):
-        extracted_desc = extract_text_from_docx(docx_path)
-        if extracted_desc:
-            description = extracted_desc
-    elif os.path.exists(md_path):
-        extracted_desc = extract_text_from_md(md_path)
-        if extracted_desc:
-            description = extracted_desc
-    
+def create_main_tour(user):
     try:
-        tour = Tour.objects.get(title=product_name, category=Category.THING)
-        print(f"  Tour '{product_name}' already exists, updating...")
+        tour = Tour.objects.get(title=TOUR_TITLE, category=Category.GUIDE)
+        print(f"  Tour '{TOUR_TITLE}' already exists")
     except Tour.DoesNotExist:
         fix_auto_increment()
         tour = Tour(
-            title=product_name,
-            subtitle=f"Typical Product of {PLACE}",
+            title=TOUR_TITLE,
+            subtitle=f"Typical Products of {PLACE}",
             place=PLACE,
             coordinates=COORDINATES,
-            category=Category.THING,
-            description=description,
+            category=Category.GUIDE,
+            description=f"A collection of typical products from {PLACE}",
             user=user
         )
         
-        default_img_path = get_default_image(product_path)
+        default_img_path = get_default_image(BASE_PATH)
         if default_img_path and os.path.exists(default_img_path):
             with open(default_img_path, "rb") as f:
                 img_name = os.path.basename(default_img_path)
                 tour.default_image.save(img_name, File(f), save=False)
         
         tour.save()
-        print(f"  Tour '{product_name}' created with ID: {tour.pk}")
+        print(f"  Tour '{TOUR_TITLE}' created with ID: {tour.pk}")
     
     return tour
 
 
 def create_waypoint_for_product(tour, product_name, product_path):
-    
     description = product_name
     docx_path = os.path.join(product_path, "descrizione.docx")
     md_path = os.path.join(product_path, "descrizione.md")
@@ -225,16 +212,14 @@ def main():
     
     product_folders.sort()
     
-    total_tours = 0
-    total_waypoints = 0
+    print(f"\nCreating tour '{TOUR_TITLE}' with {len(product_folders)} waypoints...\n")
     
-    print(f"\nCreating tours for {len(product_folders)} local products...\n")
+    tour = create_main_tour(user)
+    
+    total_waypoints = 0
     
     for product_name, product_path in product_folders:
         print(f"Processing: {product_name}")
-        
-        tour = create_product_tour(product_name, product_path, user)
-        total_tours += 1
         
         waypoint = create_waypoint_for_product(tour, product_name, product_path)
         total_waypoints += 1
@@ -243,7 +228,7 @@ def main():
     
     print("=" * 60)
     print(f"Summary:")
-    print(f"  Tours created/updated: {total_tours}")
+    print(f"  Tour: {TOUR_TITLE}")
     print(f"  Waypoints created/updated: {total_waypoints}")
     print("=" * 60)
 
