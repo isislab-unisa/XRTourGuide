@@ -147,6 +147,16 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         PlainLocationField: {"widget": LocationWidget},
     }
     
+    def has_delete_permission(self, request, obj=None):
+        has_permission = super().has_delete_permission(request, obj)
+        if not has_permission:
+            return False
+        if obj is None:
+            return True
+        if not request.user.is_superuser and obj.user != request.user:
+            return False
+        return True
+    
     class Media:
         js = [
             'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
@@ -191,6 +201,16 @@ class WaypointViewImageAdmin(ModelAdmin):
                 kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
+    def has_delete_permission(self, request, obj=None):
+        has_permission = super().has_delete_permission(request, obj)
+        if not has_permission:
+            return False
+        if obj is None:
+            return True
+        if not request.user.is_superuser and obj.user != request.user:
+            return False
+        return True
 
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
 
@@ -237,5 +257,15 @@ class WaypointViewLinkAdmin(ModelAdmin):
                 kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
+    
+    def has_delete_permission(self, request, obj=None):
+        has_permission = super().has_delete_permission(request, obj)
+        if not has_permission:
+            return False
+        if obj is None:
+            return True
+        if not request.user.is_superuser and obj.user != request.user:
+            return False
+        return True
+         
 admin.site.register(WaypointViewLink, WaypointViewLinkAdmin)

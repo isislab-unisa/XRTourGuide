@@ -104,6 +104,7 @@ class Tour(models.Model):
     last_edited = models.DateTimeField(auto_now=True, null=True, blank=True, verbose_name=_("Last Edited"))
     sub_tours = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='parent_tours', verbose_name=_("Internal Tour"))
     is_subtour = models.BooleanField(default=False, null=True, blank=True, verbose_name=_("Is Subtour"))
+    reports = models.IntegerField(default=0, null=True, blank=True, verbose_name=_("reports"))
 
     class Meta:
         db_table = "Tour"

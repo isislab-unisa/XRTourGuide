@@ -19,7 +19,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     compressed_fields = True
     
     list_display = ('title', 'place', 'category', 'status_badge', 'creation_time', 'user')
-    readonly_fields = ['user', 'creation_time', 'status_info', 'status_badge', 'status']
+    readonly_fields = ['user', 'creation_time', 'status_info', 'status_badge', 'status', 'license_notice']
     list_filter = ['category', 'status', 'place', 'creation_time']
     search_fields = ('title', 'subtitle', 'description', 'place')
     date_hierarchy = 'creation_time'
@@ -41,7 +41,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             'fields': ('place', 'coordinates'),
         }),
         (_('🖼️ Cover Image'), {
-            'fields': ('default_image',),
+            'fields': ('license_notice', 'default_image',),
         }),
         (_('🔗 Internal Tours (Optional)'), {
             'fields': ('sub_tours',),
@@ -78,7 +78,84 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                 'admin/css/subtour_improved.css',
             ]
         }
-        
+
+    @admin.display(description=_("Image License"))
+    def license_notice(self, obj):
+        return mark_safe(f'''
+            <div style="
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                background: light-dark(#eff6ff, #1e3a5f);
+                border: 1px solid light-dark(#bfdbfe, #2d5a9e);
+                border-left: 4px solid light-dark(#3b82f6, #60a5fa);
+                border-radius: 8px;
+                padding: 14px 16px;
+                margin: 4px 0 8px 0;
+                color: light-dark(#1e3a8a, #bfdbfe);
+                font-size: 0.875rem;
+                line-height: 1.6;
+            ">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     style="flex-shrink:0; margin-top:2px; opacity:.8;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <div>
+                    <div style="font-weight: 700; margin-bottom: 4px; font-size: 0.9375rem;">
+                        {_("Content licensed under CC BY-NC 4.0")}
+                    </div>
+                    <div style="opacity: .85;">
+                        {_("The images and multimedia content associated with this tour are protected under the")}
+                        <a href="https://creativecommons.org/licenses/by-nc/4.0/"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           style="
+                               color: light-dark(#2563eb, #93c5fd);
+                               font-weight: 600;
+                               text-decoration: none;
+                               border-bottom: 1px solid light-dark(#93c5fd, #60a5fa);
+                           ">
+                            Creative Commons Attribution-NonCommercial 4.0 International
+                        </a>
+                        {_("license. Reproduction, distribution or commercial use without explicit written authorization from the rights holder is strictly prohibited.")}
+                    </div>
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-top: 10px;
+                        flex-wrap: wrap;
+                    ">
+                        <span style="
+                            display: inline-flex; align-items: center; gap: 4px;
+                            padding: 3px 10px; border-radius: 20px;
+                            background: light-dark(#dbeafe, #1e40af);
+                            color: light-dark(#1d4ed8, #bfdbfe);
+                            font-size: 0.75rem; font-weight: 700; letter-spacing: .04em;
+                        ">© {_("Attribution required")}</span>
+                        <span style="
+                            display: inline-flex; align-items: center; gap: 4px;
+                            padding: 3px 10px; border-radius: 20px;
+                            background: light-dark(#fee2e2, #7f1d1d);
+                            color: light-dark(#dc2626, #fca5a5);
+                            font-size: 0.75rem; font-weight: 700; letter-spacing: .04em;
+                        ">⊘ {_("No commercial use")}</span>
+                        <span style="
+                            display: inline-flex; align-items: center; gap: 4px;
+                            padding: 3px 10px; border-radius: 20px;
+                            background: light-dark(#d1fae5, #065f46);
+                            color: light-dark(#059669, #6ee7b7);
+                            font-size: 0.75rem; font-weight: 700; letter-spacing: .04em;
+                        ">✓ {_("Sharing allowed")}</span>
+                    </div>
+                </div>
+            </div>
+        ''')
+
     @admin.display(description=_("Status"))
     def status_badge(self, obj):
         status_colors = {

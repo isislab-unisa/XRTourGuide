@@ -538,3 +538,79 @@ def tour_informations(request):
         tour_data['waypoints_resources'] = waypoints_data
     
     return Response(data)
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Report a tour",
+    operation_description="Increments the report count of a tour by 1. Requires authentication.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['tour_id'],
+        properties={
+            'tour_id': openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description="ID of the tour to report"
+            )
+        }
+    ),
+    responses={
+        200: openapi.Response(
+            description="Tour reported successfully",
+            examples={
+                "application/json": {
+                    "detail": "Tour reported successfully"
+                }
+            }
+        ),
+        400: openapi.Response(
+            description="Missing or invalid tour_id",
+            examples={
+                "application/json": {
+                    "detail": "tour_id is required"
+                }
+            }
+        ),
+        404: openapi.Response(
+            description="Tour not found",
+            examples={
+                "application/json": {
+                    "detail": "Tour not found"
+                }
+            }
+        ),
+        500: openapi.Response(
+            description="Internal server error",
+            examples={
+                "application/json": {
+                    "detail": "An unexpected error occurred"
+                }
+            }
+        ),
+    }
+)
+@api_view(['POST'])
+@authentication_classes([JWTFastAPIAuthentication])
+@permission_classes([IsAuthenticated])
+def increment_reports(request):
+    tour_id = request.data.get('tour_id')
+
+    if tour_id is None:
+        return Response({"detail": "tour_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not isinstance(tour_id, int) or tour_id <= 0:
+        return Response({"detail": "tour_id must be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        tour = Tour.objects.get(id=tour_id)
+    except Tour.DoesNotExist:
+        return Response({"detail": "Tour not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception:
+        return Response({"detail": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    try:
+        tour.reports = (tour.reports or 0) + 1
+        tour.save(update_fields=['reports'])
+    except Exception:
+        return Response({"detail": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({"detail": "Tour reported successfully"}, status=status.HTTP_200_OK)
