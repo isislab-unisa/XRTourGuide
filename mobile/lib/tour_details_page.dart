@@ -1656,22 +1656,6 @@ Future<void> _loadWaypoints() async {
                           },
                         ),
                         const SizedBox(height: 16),
-                      //  ...[
-                      //   _buildReviewItem(
-                      //     name: _reviews[0].user,
-                      //     date: _reviews[0].date,
-                      //     rating: _reviews[0].rating,
-                      //     comment: _reviews[0].comment,
-                      //   ),
-                      //   const SizedBox(height: 16),
-                      //   _buildReviewItem(
-                      //     name: _reviews[1].user,
-                      //     date: _reviews[1].date,
-                      //     rating: _reviews[1].rating,
-                      //     comment: _reviews[1].comment,
-                      //   ),
-                      //   const SizedBox(height: 16),
-                      // ],
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(
@@ -1713,6 +1697,48 @@ Future<void> _loadWaypoints() async {
                                 color: AppColors.primary,
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Pulsante Report Tour (outline rosso con icona danger)
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('report_sent'.tr()),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+
+                            try {
+                              await _apiService.sendReport(widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('report_failed'.tr()),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.report, color: Colors.red),
+                          label: Text(
+                            'report_tour'.tr(),
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.red),
+                            foregroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),

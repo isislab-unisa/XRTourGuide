@@ -34,6 +34,7 @@ class ApiService {
   static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
 
 
+
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -492,6 +493,20 @@ class ApiService {
       return response;
     } catch (e) {
       print('Failed to fetch servers list: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> sendReport(int tourId, {String? baseUrl}) async {
+    try {
+      final response = dio.post("/increment-reports/", data: {
+        'tour_id': tourId,
+      },
+      options: _getOptions(baseUrl: baseUrl),
+      );
+      return response;
+    } catch (e) {
+      print('Failed to send report: $e');
       rethrow;
     }
   }

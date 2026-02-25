@@ -118,5 +118,8 @@
     "offline_mode_message": "Sei in modalità offline.",
     "offline_mode_user_details": "Sei in modalità offline. Torna online per visualizzare il tuo profilo.",
     "server_selection_description": "Seleziona il server a cui vuoi connetterti. Cambiare server potrebbe influire sulla disponibilità dei dati e sulle prestazioni.",
-    "open_resource_consultation": "Risorse per la consultazione"
+    "open_resource_consultation": "Risorse per la consultazione",
+    "report_tour": "Segnala questo tour",
+    "report_sent": "Segnalazione inviata. Grazie per il tuo feedback!",
+    "report_failed": "Segnalazione fallita. Riprova."
 }

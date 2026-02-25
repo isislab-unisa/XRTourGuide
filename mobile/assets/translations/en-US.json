@@ -118,5 +118,8 @@
     "offline_mode_message" : "You are in offline mode",
     "offline_mode_user_details": "You are in offline mode. Go back online to visualize your own profile.",
     "server_selection_description": "Select the server you want to connect to. Changing the server may affect data availability and performance.",
-    "open_resource_consultation": "Resources for consultation"
+    "open_resource_consultation": "Resources for consultation",
+    "report_tour": "Report this tour",
+    "report_sent": "Thank you for your report. It will soon be reviewed.",
+    "report_failed": "Failed to send report. Please try again."
 }
