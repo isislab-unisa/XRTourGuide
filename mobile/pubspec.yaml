@@ -67,8 +67,8 @@ dependencies:
   connectivity_plus: ^6.1.5
   flutter_map_pmtiles: ^1.0.5
   firebase_core: ^4.2.1
-  ar_flutter_plugin: ^0.7.3
   app_links: ^7.0.0
+  ar_flutter_plugin_updated: ^0.0.1
 
 dev_dependencies:
   flutter_test:
@@ -121,6 +121,7 @@ flutter:
     - assets/exterior.jpg
     - assets/interior.jpg
     - assets/int-exterior.jpg
+    - assets/things.png
     - assets/translations/
     - assets/models/ResNet50.tflite
     - assets/models/

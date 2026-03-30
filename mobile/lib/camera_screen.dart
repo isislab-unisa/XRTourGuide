@@ -31,17 +31,17 @@ import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 
 // Import for AR
-import 'package:ar_flutter_plugin/ar_flutter_plugin.dart';
-import 'package:ar_flutter_plugin/datatypes/config_planedetection.dart';
-import 'package:ar_flutter_plugin/datatypes/hittest_result_types.dart';
-import 'package:ar_flutter_plugin/datatypes/node_types.dart';
-import 'package:ar_flutter_plugin/managers/ar_location_manager.dart';
-import 'package:ar_flutter_plugin/managers/ar_session_manager.dart';
-import 'package:ar_flutter_plugin/managers/ar_object_manager.dart';
-import 'package:ar_flutter_plugin/managers/ar_anchor_manager.dart';
-import 'package:ar_flutter_plugin/models/ar_anchor.dart';
-import 'package:ar_flutter_plugin/models/ar_node.dart';
-import 'package:ar_flutter_plugin/models/ar_hittest_result.dart';
+import 'package:ar_flutter_plugin_updated/ar_flutter_plugin.dart';
+import 'package:ar_flutter_plugin_updated/datatypes/config_planedetection.dart';
+import 'package:ar_flutter_plugin_updated/datatypes/hittest_result_types.dart';
+import 'package:ar_flutter_plugin_updated/datatypes/node_types.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_location_manager.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin_updated/managers/ar_anchor_manager.dart';
+import 'package:ar_flutter_plugin_updated/models/ar_anchor.dart';
+import 'package:ar_flutter_plugin_updated/models/ar_node.dart';
+import 'package:ar_flutter_plugin_updated/models/ar_hittest_result.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
 // New imports for media players/viewers
@@ -207,14 +207,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _apiService = ref.read(apiServiceProvider);
     _localStateService = LocalStateService();
     _offlineService = ref.read(offlineStorageServiceProvider);
-    // _initializeCamera();
-    // _getCurrentLocation();
-    // _initializeAnimations();
-    // _setInitialContent();
-    // if (widget.isOffline) {
-    //   _initOfflineMap();
-    //   _initializeOfflineRecognizer();
-    // } // Set initial content
     if (widget.enableRecognition) {
       _initializeCamera();
       _getCurrentLocation();
@@ -977,21 +969,16 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   String _processImageContent(String content) {
     if (content.isEmpty) return content;
 
-    // Definisci il prefisso che vuoi aggiungere (ad esempio il base URL del tuo server)
     String baseUrl = _apiService.getCurrentBaseUrl();
 
-    // Split il contenuto in righe
     List<String> lines = content.split('\n');
 
-    // Processa ogni riga
     List<String> processedLines =
         lines.map((line) {
           line = line.trim();
 
-          // Controlla se la riga contiene un'immagine markdown
           if (line.startsWith('![') &&
               line.contains('](/stream_minio_resource/')) {
-            // Estrai il numero dell'immagine e il percorso
             RegExp regex = RegExp(
               r'!\[(\d+)\]\((/stream_minio_resource/[^)]+)\)',
             );
@@ -1001,7 +988,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
               String imageNumber = match.group(1)!;
               String imagePath = match.group(2)!;
 
-              // Ricostruisci la riga con il prefisso
               return '![$imageNumber]($baseUrl$imagePath)';
             }
           }
