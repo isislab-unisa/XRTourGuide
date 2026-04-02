@@ -57,6 +57,9 @@ enum RecognitionState {
   failure, // Recognition failed,
 }
 
+final bool isAndroid = Platform.isAndroid;
+final bool isIOS = Platform.isIOS;
+
 Future<Uint8List> _processImageInIsolate(Map<String, dynamic> params) async {
   final Uint8List bytes = params['bytes'];
   final int orientation = params['orientation'];
@@ -191,6 +194,14 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   //AR Variables
   bool _isARMode = false;
+  static const double _totemStartScale = 0.5;
+  static const double _totemTargetScale = 15.0;
+  static const double _iosModelScaleCompensation = 1.0;
+  double get _platformModelScaleCompensation => isIOS ? _iosModelScaleCompensation : 1.0;
+
+  static const double _iosGridTune = 0.55;
+  static const double _iosIconScaleTune = 2.5;
+
   ARSessionManager? arSessionManager;
   ARObjectManager? arObjectManager;
   ARAnchorManager? arAnchorManager;
@@ -317,6 +328,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       _startAROverlayAnimation();
     } catch(e) {
       print("Error entering stub recognized state: $e");
+      _totemBodyNode = null;
+      _arNodeToResourceType.clear();
       _showError("Error loading initial content.");
     }
   }
@@ -578,111 +591,262 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       return;
     }
 
-    var hit = hits.firstWhere((element) => element.type == ARHitTestResultType.plane);
+    // var hit = hits.firstWhere((element) => element.type == ARHitTestResultType.plane);
+    final planeHits = hits.where((h) => h.type == ARHitTestResultType.plane).toList();
+    if (planeHits.isEmpty) {
+      _showError(" Punta la fotocamera verso una superficie piana per visualizzare il totem AR");
+      return;
+    }
+    final hit = planeHits.first;
     var anchor = ARPlaneAnchor(transformation: hit.worldTransform);
     bool? didAddAnchor = await arAnchorManager?.addAnchor(anchor);
 
     if (didAddAnchor == true) {
       _totemSpawned = true;
-      arSessionManager!.onInitialize(showPlanes: false);
+      // arSessionManager!.onInitialize(showPlanes: false);
+      arSessionManager?.showPlanes(false);
       _spawnAndAnimateTotem(anchor);
     }
   }
 
 
+  // Future<void> _spawnAndAnimateTotem(ARPlaneAnchor anchor) async {
+  //   var structureNode = ARNode(
+  //     type: NodeType.localGLTF2,
+  //     uri: "assets/models/AR/totem_base/totem_base.gltf",
+  //     scale: vector.Vector3(0.5, 0.5, 0.5),
+  //     position: vector.Vector3(0, 0, 0),
+  //     rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0)
+  //   );
+
+  //   bool? didAddNode = await arObjectManager?.addNode(structureNode, planeAnchor: anchor);
+  //   _totemBaseNode = structureNode;
+
+  //   if (didAddNode == true) {
+
+  //     var bodyNode = ARNode(
+  //       type: NodeType.localGLTF2,
+  //       uri: "assets/models/AR/totem_body/totem_body.gltf",
+  //       scale: vector.Vector3(0.5, 0.5, 0.5),
+  //       position: vector.Vector3(0, 0, 0),
+  //       rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+  //     );
+
+  //     bool? didAddBody = await arObjectManager?.addNode(bodyNode, planeAnchor: anchor);
+  //     if (didAddBody == true) {
+  //       _totemBodyNode = bodyNode;
+  //     } else {
+  //       print("[DEBUG] Failed to add Totem Body Node");
+  //     }
+
+  //     double currentScale = 0.01;
+  //     double targetScale = 15.0;
+
+  //     Timer.periodic(const Duration(milliseconds: 20), (timer) {
+  //       currentScale += 0.1;
+  //       if (currentScale >= targetScale) {
+  //         currentScale = targetScale;
+  //         timer.cancel();
+  //         _spawnTotemIcons(anchor);
+  //       }
+  //       _totemBaseNode!.scale = vector.Vector3(currentScale, currentScale, currentScale);
+  //       if (_totemBodyNode != null) {
+  //         _totemBodyNode!.scale = vector.Vector3(currentScale, currentScale, currentScale);
+  //       }
+  //     });      
+  //   }
+  // }
+
   Future<void> _spawnAndAnimateTotem(ARPlaneAnchor anchor) async {
-    var structureNode = ARNode(
+    final manager = arObjectManager;
+    if (manager == null) return;
+
+    final double initialVisualScale =
+        _totemStartScale * _platformModelScaleCompensation;
+
+    final structureNode = ARNode(
       type: NodeType.localGLTF2,
       uri: "assets/models/AR/totem_base/totem_base.gltf",
-      scale: vector.Vector3(0.5, 0.5, 0.5),
+      scale: vector.Vector3(
+        initialVisualScale,
+        initialVisualScale,
+        initialVisualScale,
+      ),
       position: vector.Vector3(0, 0, 0),
-      rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0)
+      rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
     );
 
-    bool? didAddNode = await arObjectManager?.addNode(structureNode, planeAnchor: anchor);
+    final bool? didAddBase = await manager.addNode(
+      structureNode,
+      planeAnchor: anchor,
+    );
+
+    if (didAddBase != true) {
+      _totemSpawned = false;
+      print("[DEBUG] Failed to add Totem Base Node");
+      return;
+    }
+
     _totemBaseNode = structureNode;
 
-    if (didAddNode == true) {
+    final bodyNode = ARNode(
+      type: NodeType.localGLTF2,
+      uri: "assets/models/AR/totem_body/totem_body.gltf",
+      scale: vector.Vector3(
+        initialVisualScale,
+        initialVisualScale,
+        initialVisualScale,
+      ),
+      position: vector.Vector3(0, 0, 0),
+      rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+    );
 
-      var bodyNode = ARNode(
-        type: NodeType.localGLTF2,
-        uri: "assets/models/AR/totem_body/totem_body.gltf",
-        scale: vector.Vector3(0.5, 0.5, 0.5),
-        position: vector.Vector3(0, 0, 0),
-        rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
-      );
+    final bool? didAddBody = await manager.addNode(
+      bodyNode,
+      planeAnchor: anchor,
+    );
 
-      bool? didAddBody = await arObjectManager?.addNode(bodyNode, planeAnchor: anchor);
-      if (didAddBody == true) {
-        _totemBodyNode = bodyNode;
-      } else {
-        print("[DEBUG] Failed to add Totem Body Node");
+    if (didAddBody == true) {
+      _totemBodyNode = bodyNode;
+    } else {
+      print("[DEBUG] Failed to add Totem Body Node");
+    }
+
+    // Crescita "logica" identica tra piattaforme.
+    // Su iOS applichiamo solo una compensazione visuale per allineare ARKit ad ARCore.
+    double currentLogicalScale = 0.01;
+
+    Timer.periodic(const Duration(milliseconds: 20), (timer) {
+      if (!mounted || _totemBaseNode == null) {
+        timer.cancel();
+        return;
       }
 
-      double currentScale = 0.01;
-      double targetScale = 15.0;
+      currentLogicalScale += 0.1;
+      if (currentLogicalScale >= _totemTargetScale) {
+        currentLogicalScale = _totemTargetScale;
+        timer.cancel();
+        _spawnTotemIcons(anchor, currentLogicalScale);
+      }
 
-      Timer.periodic(const Duration(milliseconds: 20), (timer) {
-        currentScale += 0.1;
-        if (currentScale >= targetScale) {
-          currentScale = targetScale;
-          timer.cancel();
-          _spawnTotemIcons(anchor);
-        }
-        _totemBaseNode!.scale = vector.Vector3(currentScale, currentScale, currentScale);
-        if (_totemBodyNode != null) {
-          _totemBodyNode!.scale = vector.Vector3(currentScale, currentScale, currentScale);
-        }
-      });      
-    }
+      final double visualScale =
+          currentLogicalScale * _platformModelScaleCompensation;
+
+      final nextScale = vector.Vector3(visualScale, visualScale, visualScale);
+      _totemBaseNode?.scale = nextScale;
+      _totemBodyNode?.scale = nextScale;
+    });
   }
 
   final Map<String, String> _arNodeToResourceType = {};
 
-  Future<void> _spawnTotemIcons(ARPlaneAnchor anchor) async {
-    if (_totemBaseNode == null) {
-      return;
-    }
+  // Future<void> _spawnTotemIcons(ARPlaneAnchor anchor) async {
+  //   if (_totemBaseNode == null) {
+  //     return;
+  //   }
 
-    double currentTotemScale = _totemBaseNode!.scale.x;
-    double scaleRatio = currentTotemScale / 0.5;
+  //   double currentTotemScale = _totemBaseNode!.scale.x;
+  //   double scaleRatio = currentTotemScale / 0.5;
 
-    final iconsData =
-        _getAvailableIconsData().where((e) => e['isVisible'] == true).toList();
+  //   final iconsData =
+  //       _getAvailableIconsData().where((e) => e['isVisible'] == true).toList();
 
-    // Configurazione Griglia sul Totem
-    // Questi valori dipendono dalle dimensioni del tuo modello 3D 'totem_base.glb'
-    double startX = -0.0035 * scaleRatio; // Sposta a sinistra
-    double startY = 0.034 * scaleRatio; // Altezza dello schermo
-    double gapX = 0.006 * scaleRatio; // Spazio orizzontale tra icone
-    double gapY = 0.006 * scaleRatio; // Spazio verticale
+  //   // Configurazione Griglia sul Totem
+  //   // Questi valori dipendono dalle dimensioni del tuo modello 3D 'totem_base.glb'
+  //   double startX = -0.0035 * scaleRatio; // Sposta a sinistra
+  //   double startY = 0.034 * scaleRatio; // Altezza dello schermo
+  //   double gapX = 0.006 * scaleRatio; // Spazio orizzontale tra icone
+  //   double gapY = 0.006 * scaleRatio; // Spazio verticale
 
-    int columns = 2; // Icone per riga
+  //   int columns = 2; // Icone per riga
+
+  //   for (int i = 0; i < iconsData.length; i++) {
+  //     final data = iconsData[i];
+
+  //     // Calcolo posizione in griglia
+  //     int row = i ~/ columns;
+  //     int col = i % columns;
+  //     double x = startX + (col * gapX);
+  //     double y = startY - (row * gapY);
+  //     double z = 0.001 * scaleRatio;
+
+  //     var iconNode = ARNode(
+  //       type: NodeType.localGLTF2,
+  //       uri: data['modelPath'],
+  //       scale: vector.Vector3(0.1 * scaleRatio, 0.1 * scaleRatio, 0.1 * scaleRatio), // Dimensione icona
+  //       position: vector.Vector3(x, y, z), // Z=0.15 per farlo "uscire" dallo schermo
+  //       rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+  //     );
+
+  //     bool? didAdd = await arObjectManager!.addNode(iconNode, planeAnchor: anchor);
+  //     if (didAdd == true && iconNode.name != null) {
+  //       // Memorizziamo che questo nodo corrisponde a questo tipo di risorsa
+  //       _arNodeToResourceType[iconNode.name!] = data['type'];
+  //     } else {
+  //       print("[DEBUG]: Failed to add Node for ${data['label']}");
+  //     }
+  //   }
+  // }
+
+Future<void> _spawnTotemIcons(
+    ARPlaneAnchor anchor,
+    double logicalTotemScale,
+  ) async {
+    final manager = arObjectManager;
+    if (manager == null || _totemBaseNode == null) return;
+
+    _arNodeToResourceType.clear();
+
+    final double scaleRatio = logicalTotemScale / _totemStartScale;
+    final double iconScaleCompensation = _platformModelScaleCompensation;
+
+    // Fine tuning della griglia: iOS tende a risultare leggermente più "largo"
+    // per via della pipeline di caricamento glTF nel plugin.
+    final double gridTune = isIOS ? _iosGridTune : 1.0;
+
+    final List<Map<String, dynamic>> iconsData =
+        _getAvailableIconsData()
+            .where((e) => e['isVisible'] == true)
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+
+    const int columns = 2;
+    final double startX = -0.0035 * scaleRatio * gridTune;
+    final double startY = 0.034 * scaleRatio * gridTune;
+    final double gapX = 0.006 * scaleRatio * gridTune;
+    final double gapY = 0.006 * scaleRatio * gridTune;
 
     for (int i = 0; i < iconsData.length; i++) {
       final data = iconsData[i];
+      final String modelPath = data['modelPath'] as String;
+      final String type = data['type'] as String;
 
-      // Calcolo posizione in griglia
-      int row = i ~/ columns;
-      int col = i % columns;
-      double x = startX + (col * gapX);
-      double y = startY - (row * gapY);
-      double z = 0.001 * scaleRatio;
+      final int row = i ~/ columns;
+      final int col = i % columns;
 
-      var iconNode = ARNode(
+      final double x = startX + (col * gapX);
+      final double y = startY - (row * gapY);
+      final double z = 0.001 * scaleRatio;
+
+      final double iconScaleTune = isIOS ? _iosIconScaleTune : 1.0;
+      final double iconScale = 0.1 * scaleRatio * iconScaleCompensation * iconScaleTune;
+
+      final iconNode = ARNode(
         type: NodeType.localGLTF2,
-        uri: data['modelPath'],
-        scale: vector.Vector3(0.1 * scaleRatio, 0.1 * scaleRatio, 0.1 * scaleRatio), // Dimensione icona
-        position: vector.Vector3(x, y, z), // Z=0.15 per farlo "uscire" dallo schermo
+        uri: modelPath,
+        scale: vector.Vector3(iconScale, iconScale, iconScale),
+        position: vector.Vector3(x, y, z),
         rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
       );
 
-      bool? didAdd = await arObjectManager!.addNode(iconNode, planeAnchor: anchor);
-      if (didAdd == true && iconNode.name != null) {
-        // Memorizziamo che questo nodo corrisponde a questo tipo di risorsa
-        _arNodeToResourceType[iconNode.name!] = data['type'];
+      final bool? didAdd = await manager.addNode(iconNode, planeAnchor: anchor);
+      if (didAdd == true) {
+        final String? nodeName = iconNode.name;
+        if (nodeName != null) {
+          _arNodeToResourceType[nodeName] = type;
+        }
       } else {
-        print("[DEBUG]: Failed to add Node for ${data['label']}");
+        print("[DEBUG] Failed to add icon node: $type");
       }
     }
   }
@@ -1578,6 +1742,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _totemSpawned = false;
     _totemBaseNode = null;
     _totemBodyNode = null;
+    _arNodeToResourceType.clear();
     }
 
 
@@ -2337,7 +2502,7 @@ Widget _buildMiniMap(BuildContext context) {
           if (_isARMode) 
             ARView(
               onARViewCreated: onARViewCreated,
-              planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
+              planeDetectionConfig: PlaneDetectionConfig.horizontal,
               )
           else if (widget.enableRecognition)
             _buildCameraBackground()
