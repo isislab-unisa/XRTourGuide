@@ -43,6 +43,7 @@ import 'package:ar_flutter_plugin_updated/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin_updated/models/ar_node.dart';
 import 'package:ar_flutter_plugin_updated/models/ar_hittest_result.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
+import 'models/ARPlatformConfig.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -56,9 +57,6 @@ enum RecognitionState {
   success, // Recognition successful
   failure, // Recognition failed,
 }
-
-final bool isAndroid = Platform.isAndroid;
-final bool isIOS = Platform.isIOS;
 
 Future<Uint8List> _processImageInIsolate(Map<String, dynamic> params) async {
   final Uint8List bytes = params['bytes'];
@@ -196,11 +194,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   bool _isARMode = false;
   static const double _totemStartScale = 0.5;
   static const double _totemTargetScale = 15.0;
-  static const double _iosModelScaleCompensation = 1.0;
-  double get _platformModelScaleCompensation => isIOS ? _iosModelScaleCompensation : 1.0;
-
-  static const double _iosGridTune = 0.55;
-  static const double _iosIconScaleTune = 2.5;
 
   ARSessionManager? arSessionManager;
   ARObjectManager? arObjectManager;
@@ -209,7 +202,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   ARNode? _totemBaseNode;
   ARNode? _totemBodyNode;
   bool _totemSpawned = false;
-
 
   @override
   void initState() {
@@ -661,8 +653,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     final manager = arObjectManager;
     if (manager == null) return;
 
+    final cfg = arPlatformCfg;
     final double initialVisualScale =
-        _totemStartScale * _platformModelScaleCompensation;
+        _totemStartScale * cfg.modelScaleCompensation;
 
     final structureNode = ARNode(
       type: NodeType.localGLTF2,
@@ -672,7 +665,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         initialVisualScale,
         initialVisualScale,
       ),
-      position: vector.Vector3(0, 0, 0),
+      position: vector.Vector3(0, cfg.totemOffsetY, 0),
       rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
     );
 
@@ -697,7 +690,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         initialVisualScale,
         initialVisualScale,
       ),
-      position: vector.Vector3(0, 0, 0),
+      position: vector.Vector3(0, cfg.totemOffsetY, 0),
       rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
     );
 
@@ -713,7 +706,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     }
 
     // Crescita "logica" identica tra piattaforme.
-    // Su iOS applichiamo solo una compensazione visuale per allineare ARKit ad ARCore.
     double currentLogicalScale = 0.01;
 
     Timer.periodic(const Duration(milliseconds: 20), (timer) {
@@ -730,7 +722,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       }
 
       final double visualScale =
-          currentLogicalScale * _platformModelScaleCompensation;
+          currentLogicalScale * cfg.modelScaleCompensation;
 
       final nextScale = vector.Vector3(visualScale, visualScale, visualScale);
       _totemBaseNode?.scale = nextScale;
@@ -797,12 +789,9 @@ Future<void> _spawnTotemIcons(
 
     _arNodeToResourceType.clear();
 
-    final double scaleRatio = logicalTotemScale / _totemStartScale;
-    final double iconScaleCompensation = _platformModelScaleCompensation;
+    final cfg = arPlatformCfg;
 
-    // Fine tuning della griglia: iOS tende a risultare leggermente più "largo"
-    // per via della pipeline di caricamento glTF nel plugin.
-    final double gridTune = isIOS ? _iosGridTune : 1.0;
+    final double scaleRatio = logicalTotemScale / _totemStartScale;
 
     final List<Map<String, dynamic>> iconsData =
         _getAvailableIconsData()
@@ -811,10 +800,10 @@ Future<void> _spawnTotemIcons(
             .toList();
 
     const int columns = 2;
-    final double startX = -0.0035 * scaleRatio * gridTune;
-    final double startY = 0.034 * scaleRatio * gridTune;
-    final double gapX = 0.006 * scaleRatio * gridTune;
-    final double gapY = 0.006 * scaleRatio * gridTune;
+    final double startX = cfg.gridStartX * scaleRatio;
+    final double startY = cfg.gridStartY * scaleRatio;
+    final double gapX = cfg.gridGapX * scaleRatio;
+    final double gapY = cfg.gridGapY * scaleRatio;
 
     for (int i = 0; i < iconsData.length; i++) {
       final data = iconsData[i];
@@ -824,12 +813,11 @@ Future<void> _spawnTotemIcons(
       final int row = i ~/ columns;
       final int col = i % columns;
 
-      final double x = startX + (col * gapX);
-      final double y = startY - (row * gapY);
-      final double z = 0.001 * scaleRatio;
+      final double x = startX + (col * gapX) + (cfg.iconOffsetX * scaleRatio);
+      final double y = startY - (row * gapY) + (cfg.iconOffsetY * scaleRatio);
+      final double z = cfg.iconOffsetZ * scaleRatio;
 
-      final double iconScaleTune = isIOS ? _iosIconScaleTune : 1.0;
-      final double iconScale = 0.1 * scaleRatio * iconScaleCompensation * iconScaleTune;
+      final double iconScale = 0.1 * scaleRatio * cfg.modelScaleCompensation * cfg.iconScaleTune;
 
       final iconNode = ARNode(
         type: NodeType.localGLTF2,

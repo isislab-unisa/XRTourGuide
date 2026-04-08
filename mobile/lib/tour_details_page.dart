@@ -794,6 +794,7 @@ Future<void> _loadWaypoints() async {
           ),
           
           if (widget.isGuest == false && _tourDetails!.status == "BUILT")
+          // if (widget.isGuest == false)
             Positioned(
               top: MediaQuery.of(context).padding.top - 15,
               right: 16,
@@ -1400,6 +1401,7 @@ Future<void> _loadWaypoints() async {
 
                       const Spacer(),
                       if (widget.isGuest == false && _tourDetails?.status == "BUILT")
+                      // if (widget.isGuest == false) //Debug
                         Padding(
                           padding: const EdgeInsets.only(top: 20.0),
                           child: Center(
@@ -2329,6 +2331,7 @@ Widget _buildWaypointItem({
                     ],
 
                     if(!isSubWaypoint && _tourDetails?.status != "BUILT" && _tourDetails?.category == "GUIDE") ...[
+                    // if(!isSubWaypoint && _tourDetails?.category == "GUIDE") ...[
                       const SizedBox(height: 8),
                       SizedBox(
                         width: double.infinity,
