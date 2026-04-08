@@ -19,6 +19,7 @@ import 'package:app_links/app_links.dart';
 import 'tour_details_page.dart';
 import 'dart:convert';
 import 'services/api_service.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.

@@ -21,6 +21,9 @@ import "package:easy_localization/easy_localization.dart";
 import "elements/zlib_image.dart";
 import 'package:geolocator/geolocator.dart';
 import 'providers/home_providers.dart'; // Importa i nuovi provider
+import 'services/analytics_service.dart'; // Importa il servizio di analytics
+
+
 
 class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
@@ -37,6 +40,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     with RouteAware {
   late TourService _tourService;
   late OfflineStorageService _offlineService;
+  late AnalyticsService _analytics;
 
   // State for offline data (local state is fine for offline as it's fast)
   List<Map<String, dynamic>> _offlineTours = [];
@@ -52,6 +56,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     super.initState();
     _tourService = ref.read(tourServiceProvider);
     _offlineService = ref.read(offlineStorageServiceProvider);
+    _analytics = ref.read(analyticsServiceProvider);
 
     _checkInitialConnectivity();
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
@@ -505,16 +510,29 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                       creator: tour.creator,
                       lastEdited: tour.lastEdited,
                       onTap:
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => TourDetailScreen(
-                                    tourId: tour.id,
-                                    isGuest: widget.isGuest,
-                                  ),
-                            ),
-                          ),
+                          () {
+                            unawaited(
+                              _analytics.logEvent(
+                                name: "tour_open",
+                                parameters: {
+                                  "tour_id": tour.id,
+                                  "is_guest": widget.isGuest,
+                                  "source": "nearby_section",
+                                },
+                              ),
+                            );
+                            
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => TourDetailScreen(
+                                      tourId: tour.id,
+                                      isGuest: widget.isGuest,
+                                    ),
+                              ),
+                            );
+                          }
                     ),
                   );
                 },

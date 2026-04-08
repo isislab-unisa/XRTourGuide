@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'secure_storage_service.dart';
 import 'package:dio/dio.dart';
 import 'api_service.dart';
+import 'analytics_service.dart';
 
 enum AuthStatus { authenticated, unauthenticated, loading, registering }
 
@@ -18,6 +19,7 @@ final apiServiceProvider = Provider<ApiService>((ref) {
 class AuthService extends ChangeNotifier {
   final Ref ref;
   late final ApiService apiService;
+  late final AnalyticsService _analytics;
   final SecureStorageService _storageService = SecureStorageService();
   AuthStatus _authStatus = AuthStatus.loading;
   AuthStatus get authStatus => _authStatus;
@@ -28,18 +30,10 @@ class AuthService extends ChangeNotifier {
 
   AuthService(this.ref) {
     apiService = ref.read(apiServiceProvider);
+    _analytics = ref.read(analyticsServiceProvider);
     _checkAuthStatus();
   }
 
-  // Future<void> _checkAuthStatus() async {
-  //   final accessToken = await _storageService.getAccessToken();
-  //   if (accessToken != null) {
-  //     _authStatus = AuthStatus.authenticated;
-  //   } else {
-  //     _authStatus = AuthStatus.unauthenticated;
-  //   }
-  //   notifyListeners();
-  // }
 
   Future<void> _checkAuthStatus() async {
     _authStatus = AuthStatus.loading;
@@ -70,6 +64,15 @@ class AuthService extends ChangeNotifier {
       }
     }
     notifyListeners();
+
+    // [LOGGER] Log the auth status check event
+    await _analytics.logEvent(
+      name: "auth_status_resolved",
+      parameters: {
+        'status' : _authStatus.name,
+        'server_up': serverUp,
+      },
+    );
   }
 
   Future<bool> _refreshAccessTokenSilently({Duration timeout = const Duration(seconds: 4)}) async{
