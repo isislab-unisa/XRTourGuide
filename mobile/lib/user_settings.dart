@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'models/app_colors.dart';
@@ -7,6 +9,7 @@ import 'main.dart'; // Import your main app file for navigation
 import 'services/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'services/analytics_service.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -32,8 +35,8 @@ class UserProfileScreen extends ConsumerStatefulWidget {
 
 class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   late TourService _tourService;
-
   late AuthService _authService;
+  late AnalyticsService _analytics;
 
   // Current screen state - starts with main profile
   ProfileScreenState _currentScreen = ProfileScreenState.main;
@@ -71,6 +74,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     super.initState();
     _authService = ref.read(authServiceProvider);
     _tourService = ref.read(tourServiceProvider);
+    _analytics = ref.read(analyticsServiceProvider);
     _loadData();
   }
 
@@ -255,6 +259,8 @@ void _handleBack(BuildContext context) {
   void _saveLanguageSelection(Locale selectedLocale) {
 
     context.setLocale(selectedLocale);
+
+    unawaited(_analytics.logEvent(name: 'change_language', parameters: {'language': selectedLocale.toString()}));
 
     setState(() {
       _currentScreen = ProfileScreenState.main;

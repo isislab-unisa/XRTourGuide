@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import 'user_settings.dart'; // Ensure this import is correct for UserProfileScr
 import 'review_list.dart';
 import 'main.dart'; // Adjust import based on your project structure
 import "package:easy_localization/easy_localization.dart";
+import 'services/analytics_service.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -34,6 +37,7 @@ class UserDetailScreen extends ConsumerStatefulWidget {
 
 class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
   late TourService _tourService;
+  late AnalyticsService _analytics;
 
   // Current screen state - starts with main profile
   ProfileScreenState _currentScreen = ProfileScreenState.main;
@@ -54,6 +58,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
   void initState() {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
+    _analytics = ref.read(analyticsServiceProvider);
     if(widget.isOffline) {
       _isLoadingUserDetails = false;
       _isLoadingReviews = false;
@@ -342,8 +347,10 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(
-                          //TODO: Navigate to all review page
                           onPressed: () {
+
+                            unawaited(_analytics.logEvent(name: "view_all_reviews", parameters: {"user_id": _user!.id, "source": "profile_screen"}));
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -397,7 +404,44 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                           ),
                         ),
                       ),
-                    ], ],
+                    ], 
+                    SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          _showReportDialog();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'report_test'.tr(),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.redAccent,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.report_problem,
+                              size: 20,
+                              color: Colors.redAccent,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    ],
                   ),
                 ),
                 // // Bottom navigation bar
@@ -422,6 +466,122 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
         ),
       ),
       bottomNavigationBar: _buildBottomNavBar(context, 1),
+    );
+  }
+
+  Future<void> _showReportDialog() async {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+    bool isSending = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("report_test".tr()),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: "title".tr(),
+                      hintText: "title_hint".tr(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    minLines: 3,
+                    maxLines: 6,
+                    decoration: InputDecoration(
+                      labelText: "description".tr(),
+                      hintText: "description_hint".tr(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed:
+                      isSending ? null : () => Navigator.of(context).pop(),
+                  child: Text("cancel".tr()),
+                ),
+                ElevatedButton(
+                  onPressed:
+                      isSending
+                          ? null
+                          : () async {
+                            final title = titleController.text.trim();
+                            final description =
+                                descriptionController.text.trim();
+
+                            if (title.isEmpty || description.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "report_alert".tr(),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
+                            setState(() => isSending = true);
+
+                            try {
+                              await _analytics.logEvent(
+                                name: "user_report",
+                                parameters: {
+                                  "title": title,
+                                  "description": description,
+                                  "source": "profile_report_dialog",
+                                },
+                              );
+
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "report_sent".tr(),
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "report_failed".tr(),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            } finally {
+                              setState(() => isSending = false);
+                            }
+                          },
+                  child:
+                      isSending
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : Text("send".tr()),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

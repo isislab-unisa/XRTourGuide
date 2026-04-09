@@ -1,5 +1,7 @@
 // lib/screens/tour_detail_screen.dart
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -23,6 +25,7 @@ import "dart:io";
 import "package:path_provider/path_provider.dart";
 import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
 import 'elements/zlib_image.dart'; // Aggiungi questo import
+import 'services/analytics_service.dart';
 
 
 
@@ -49,6 +52,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   late ApiService _apiService;
   late LocalStateService _localStateService;
   late OfflineStorageService _offlineService;
+  late AnalyticsService _analytics;
   Set<int> _scannedWaypoints = {};
 
   Map<int, List<String>> _offlineImagesByWaypoint = {};
@@ -118,6 +122,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     _apiService = ref.read(apiServiceProvider);
     _localStateService = ref.read(localStateServiceProvider);
     _offlineService = ref.read(offlineStorageServiceProvider);
+    _analytics = ref.read(analyticsServiceProvider);
     if (widget.isOffline) {
       print("OFFLINE TOUR");
       _initOfflineMap();
@@ -125,7 +130,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     }else {
       print("ONLINE TOUR");
       _loadData();
-      _incrementViewCount();
+      // _incrementViewCount();
     }
     _checkLocationPermission();
     _loadScannedWaypoints();
@@ -309,6 +314,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   }
 
   Future<void> _downloadTourOffline() async {
+    unawaited(_analytics.logEvent(name: 'download_tour_offline', parameters: {'tour_id': widget.tourId}));
     setState(() => _isDownloading = true);
 
     try{
@@ -355,6 +361,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
     if (confirmed == true) {
       await _removeOfflineTour();
+      unawaited(_analytics.logEvent(name: 'remove_offline_tour', parameters: {'tour_id': widget.tourId}));
     }
   }
 
@@ -541,6 +548,7 @@ Future<void> _loadWaypoints() async {
 
    // Method to launch map application
   Future<void> _launchMapApp(double latitude, double longitude) async {
+    _analytics.logEvent(name: 'launch_map_app', parameters: {'latitude': latitude, 'longitude': longitude, 'source': 'itinerary_view'});
     final String googleMapsUrl =
         'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving';
     final String appleMapsUrl =
@@ -811,6 +819,7 @@ Future<void> _loadWaypoints() async {
                     if (!widget.isOffline){
                       _apiService.initializeInferenceModule(widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
                     }
+                    _analytics.logEvent(name: 'go_to_camera_screen', parameters: {'tour_id': widget.tourId, "source": "map_screen"});
                     //Initialize the inference module for the tour
                     Navigator.push(
                       context,
@@ -1410,6 +1419,9 @@ Future<void> _loadWaypoints() async {
                                 if (!widget.isOffline) {
                                   _apiService.initializeInferenceModule(_tourDetails!.id, baseUrl: _apiService.getCurrentBaseUrl());
                                 }
+
+                                _analytics.logEvent(name: "go_to_camera_screen", parameters: {"tour_id": widget.tourId, "source": "about_screen"});
+
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -1662,6 +1674,8 @@ Future<void> _loadWaypoints() async {
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {
+                            _analytics.logEvent(name: 'view_all_reviews', parameters: {'tour_id': widget.tourId, "source": "about_screen"});
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -1718,6 +1732,7 @@ Future<void> _loadWaypoints() async {
 
                             try {
                               await _apiService.sendReport(widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
+                              unawaited(_analytics.logEvent(name: "report_tour", parameters: {"tour_id": widget.tourId, "source": "about_screen"}));
                             } catch (e) {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -2745,6 +2760,7 @@ void _showLeaveReviewSheet(int tourId) {
                             final comment = _reviewController.text;
 
                             _apiService.leaveReview(tourId, rating, comment, baseUrl: _apiService.getCurrentBaseUrl());
+                            _analytics.logEvent(name: 'leave_review', parameters: {'tour_id': tourId, 'rating': rating, "source": "about_screen"});
                             _loadData();
 
                             Navigator.pop(context); // Close the sheet

@@ -31,7 +31,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   Future<void> _fetchServers() async {
     try {
       final response = await _apiService.getServersList();
-      print("Servers response: ${response.data}");
       if (response.statusCode == 200) {
         setState(() {
           _servers = response.data; // Supponendo che la risposta sia una lista di server

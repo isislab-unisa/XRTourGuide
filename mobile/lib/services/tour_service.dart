@@ -215,7 +215,6 @@ Future<User> getUserDetails() async {
     print("User Details Retrieval error: $e");
     rethrow;
   }
-  //TODO: Gestire errore 401 per token non riconosciuto
 }
 
   Future<({List<Review> reviews, int totalCount})> getReviewByUser(int max) async {

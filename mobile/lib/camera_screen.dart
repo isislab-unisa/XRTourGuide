@@ -29,6 +29,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:dio/dio.dart';
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
+import 'services/analytics_service.dart';
 
 // Import for AR
 import 'package:ar_flutter_plugin_updated/ar_flutter_plugin.dart';
@@ -133,6 +134,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   late ApiService _apiService;
   late LocalStateService _localStateService;
   late OfflineStorageService _offlineService;
+  late AnalyticsService _analytics;
   OfflineRecognitionService? _offlineRecognitionService;
   bool _isProcessingFrame = false;
 
@@ -209,6 +211,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _tourService = ref.read(tourServiceProvider);
     _apiService = ref.read(apiServiceProvider);
     _localStateService = LocalStateService();
+    _analytics = ref.read(analyticsServiceProvider);
     _offlineService = ref.read(offlineStorageServiceProvider);
     if (widget.enableRecognition) {
       _initializeCamera();
@@ -341,6 +344,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       _totemSpawned = false;
       _totemBaseNode = null;
 
+      unawaited(_analytics.logEvent(name: "exit_ar_mode", parameters: {"tour_id": widget.tourId, "waypoint_id": _recognizedWaypointId}));
+
       await Future.delayed(const Duration(milliseconds: 500));
       await _initializeCamera();
     } else {
@@ -359,6 +364,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       setState(() {
         _isARMode = true;
       });
+
+      unawaited(_analytics.logEvent(name: "enter_ar_mode", parameters: {"tour_id": widget.tourId, "waypoint_id": _recognizedWaypointId}));
     }
   }
 
@@ -601,54 +608,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     }
   }
 
-
-  // Future<void> _spawnAndAnimateTotem(ARPlaneAnchor anchor) async {
-  //   var structureNode = ARNode(
-  //     type: NodeType.localGLTF2,
-  //     uri: "assets/models/AR/totem_base/totem_base.gltf",
-  //     scale: vector.Vector3(0.5, 0.5, 0.5),
-  //     position: vector.Vector3(0, 0, 0),
-  //     rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0)
-  //   );
-
-  //   bool? didAddNode = await arObjectManager?.addNode(structureNode, planeAnchor: anchor);
-  //   _totemBaseNode = structureNode;
-
-  //   if (didAddNode == true) {
-
-  //     var bodyNode = ARNode(
-  //       type: NodeType.localGLTF2,
-  //       uri: "assets/models/AR/totem_body/totem_body.gltf",
-  //       scale: vector.Vector3(0.5, 0.5, 0.5),
-  //       position: vector.Vector3(0, 0, 0),
-  //       rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
-  //     );
-
-  //     bool? didAddBody = await arObjectManager?.addNode(bodyNode, planeAnchor: anchor);
-  //     if (didAddBody == true) {
-  //       _totemBodyNode = bodyNode;
-  //     } else {
-  //       print("[DEBUG] Failed to add Totem Body Node");
-  //     }
-
-  //     double currentScale = 0.01;
-  //     double targetScale = 15.0;
-
-  //     Timer.periodic(const Duration(milliseconds: 20), (timer) {
-  //       currentScale += 0.1;
-  //       if (currentScale >= targetScale) {
-  //         currentScale = targetScale;
-  //         timer.cancel();
-  //         _spawnTotemIcons(anchor);
-  //       }
-  //       _totemBaseNode!.scale = vector.Vector3(currentScale, currentScale, currentScale);
-  //       if (_totemBodyNode != null) {
-  //         _totemBodyNode!.scale = vector.Vector3(currentScale, currentScale, currentScale);
-  //       }
-  //     });      
-  //   }
-  // }
-
   Future<void> _spawnAndAnimateTotem(ARPlaneAnchor anchor) async {
     final manager = arObjectManager;
     if (manager == null) return;
@@ -732,53 +691,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   final Map<String, String> _arNodeToResourceType = {};
 
-  // Future<void> _spawnTotemIcons(ARPlaneAnchor anchor) async {
-  //   if (_totemBaseNode == null) {
-  //     return;
-  //   }
-
-  //   double currentTotemScale = _totemBaseNode!.scale.x;
-  //   double scaleRatio = currentTotemScale / 0.5;
-
-  //   final iconsData =
-  //       _getAvailableIconsData().where((e) => e['isVisible'] == true).toList();
-
-  //   // Configurazione Griglia sul Totem
-  //   // Questi valori dipendono dalle dimensioni del tuo modello 3D 'totem_base.glb'
-  //   double startX = -0.0035 * scaleRatio; // Sposta a sinistra
-  //   double startY = 0.034 * scaleRatio; // Altezza dello schermo
-  //   double gapX = 0.006 * scaleRatio; // Spazio orizzontale tra icone
-  //   double gapY = 0.006 * scaleRatio; // Spazio verticale
-
-  //   int columns = 2; // Icone per riga
-
-  //   for (int i = 0; i < iconsData.length; i++) {
-  //     final data = iconsData[i];
-
-  //     // Calcolo posizione in griglia
-  //     int row = i ~/ columns;
-  //     int col = i % columns;
-  //     double x = startX + (col * gapX);
-  //     double y = startY - (row * gapY);
-  //     double z = 0.001 * scaleRatio;
-
-  //     var iconNode = ARNode(
-  //       type: NodeType.localGLTF2,
-  //       uri: data['modelPath'],
-  //       scale: vector.Vector3(0.1 * scaleRatio, 0.1 * scaleRatio, 0.1 * scaleRatio), // Dimensione icona
-  //       position: vector.Vector3(x, y, z), // Z=0.15 per farlo "uscire" dallo schermo
-  //       rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
-  //     );
-
-  //     bool? didAdd = await arObjectManager!.addNode(iconNode, planeAnchor: anchor);
-  //     if (didAdd == true && iconNode.name != null) {
-  //       // Memorizziamo che questo nodo corrisponde a questo tipo di risorsa
-  //       _arNodeToResourceType[iconNode.name!] = data['type'];
-  //     } else {
-  //       print("[DEBUG]: Failed to add Node for ${data['label']}");
-  //     }
-  //   }
-  // }
 
 Future<void> _spawnTotemIcons(
     ARPlaneAnchor anchor,
@@ -1157,6 +1069,8 @@ Future<void> _spawnTotemIcons(
     Widget? contentToDisplay;
     Map<String, dynamic> content = {};
 
+    unawaited(_analytics.logEvent(name: "content_viewed", parameters: {"tour_id": widget.tourId, "waypoint_id": waypointId, "content_type": type, "is_offline": widget.isOffline}));
+
     var queryType = type;
     if (type == "text"){
       queryType = "readme";
@@ -1173,11 +1087,6 @@ Future<void> _spawnTotemIcons(
 
     try {
       if (widget.isOffline) {
-        // if(_offlineResourcesByWaypoint.containsKey(waypointId)) {
-        //   content = _offlineResourcesByWaypoint[waypointId]!;
-        // } else {
-        //   throw Exception("No offline resources found for waypoint $waypointId");
-        // }
         final resources = _offlineResourcesByWaypoint[waypointId] ?? {};
         final images = _offlineImagesByWaypoint[waypointId] ?? [];
 
@@ -1615,8 +1524,20 @@ Future<void> _spawnTotemIcons(
       
       final success = waypointId != -1;
       if (success) {
+
+        unawaited(_analytics.logEvent(name: 'recognition_success', parameters: {
+          'waypoint_id': waypointId,
+          'tour_id': widget.tourId,
+          'is_offline': widget.isOffline,
+        }));
+
         _handleRecognitionSuccess(waypointId, availableResources, widget.isOffline);
       } else {
+        unawaited(_analytics.logEvent(name: 'recognition_failure', parameters: {
+          'tour_id': widget.tourId,
+          'is_offline': widget.isOffline,
+        }));
+
         setState(() => _recognitionState = RecognitionState.failure);
         _failureAnimationController.forward();
         Timer(const Duration(seconds: 3), () {
@@ -1625,6 +1546,11 @@ Future<void> _spawnTotemIcons(
       }
     } catch(e) {
       print("Error during recognition: $e");
+      unawaited(_analytics.logEvent(name: 'recognition_error', parameters: {
+        'tour_id': widget.tourId,
+        'is_offline': widget.isOffline,
+        'error': e.toString(),
+      }));
       _showError("Recognition failed: $e");
       setState(() => _recognitionState = RecognitionState.failure);
       _failureAnimationController.forward();

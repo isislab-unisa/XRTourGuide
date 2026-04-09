@@ -103,7 +103,7 @@ class ApiService {
     String normalized = newBaseUrl;
     if (!normalized.startsWith('http://') &&
         !normalized.startsWith('https://')) {
-      normalized = 'http://' + normalized;
+      normalized = 'https://' + normalized;
     }
     basicUrl = normalized;
     print('ApiService basicUrl set to: $normalized');
@@ -155,6 +155,7 @@ class ApiService {
     try {
       final socket = await Socket.connect(host, port, timeout: timeout);
       socket.destroy();
+      return true;
     } catch (e) {
       print('Ping failed: $e');
       // return false;
@@ -209,6 +210,7 @@ class ApiService {
           validateStatus: (status) => status == 200 || status == 401, // Allow 401 for invalid credentials
         ),
       );
+      print('Login response: ${response.statusCode}, data: ${response.data}');
       return response;
     } catch (e) {
       print('Failed to login: $e');
@@ -418,7 +420,7 @@ class ApiService {
       });
       return response;
     } catch (e) {
-      print('Failed to incvrement tour views: $e');
+      print('Failed to increment tour views: $e');
       rethrow;
     }
   }

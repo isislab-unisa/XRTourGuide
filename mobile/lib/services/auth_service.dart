@@ -118,11 +118,14 @@ class AuthService extends ChangeNotifier {
       final accessToken = response.data['access'];
       final refreshToken = response.data['refresh'];
 
+      int userId = response.data['user']["id"];
+
       await _storageService.saveTokens(
         accessToken: accessToken,
         refreshToken: refreshToken,
       );
       _authStatus = AuthStatus.authenticated;
+      _analytics.setUserId(userId.toString());
       notifyListeners();
     } catch (e) {
       print("Login Error: $e");
@@ -149,9 +152,6 @@ class AuthService extends ChangeNotifier {
         description,
         city,
       );
-      // Simulate a network request
-      // await Future.delayed(const Duration(seconds: 1));
-
 
       _authStatus = AuthStatus.registering;
     } catch (e) {
@@ -216,6 +216,8 @@ class AuthService extends ChangeNotifier {
 
     await _storageService.deleteAllTokens();
     _authStatus = AuthStatus.unauthenticated;
+
+    _analytics.setUserId(null);
     notifyListeners();
   }
 }

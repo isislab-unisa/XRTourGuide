@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
 import 'main.dart';
 import 'models/app_colors.dart';
 import 'elements/travel_list_item_card.dart';
@@ -11,8 +10,6 @@ import 'tour_details_page.dart';
 import "category_detail_screen.dart";
 import "search_screen.dart";
 import 'user_details.dart';
-import 'models/tour.dart';
-import 'models/category.dart';
 import 'services/tour_service.dart';
 import 'services/offline_tour_service.dart';
 import 'package:flutter/widgets.dart';
@@ -516,7 +513,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                                 name: "tour_open",
                                 parameters: {
                                   "tour_id": tour.id,
-                                  "is_guest": widget.isGuest,
+                                  "is_guest": widget.isGuest.toString(),
                                   "source": "nearby_section",
                                 },
                               ),

@@ -69,6 +69,8 @@ dependencies:
   firebase_core: ^4.2.1
   app_links: ^7.0.0
   ar_flutter_plugin_updated: ^0.0.1
+  firebase_analytics: ^12.2.0
+  firebase_crashlytics: ^5.1.0
 
 dev_dependencies:
   flutter_test:

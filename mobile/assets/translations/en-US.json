@@ -36,7 +36,7 @@
     "name_hint": "Enter your first name",
     "surname_hint": "Enter your last name",
     "mail_hint": "Enter your email",
-    "description_hint": "Enter a short description about yourself",
+    "description_hint": "Enter a short description",
     "save": "Save",
     "account_security_title": "Account & Security",
     "change_password": "Change Password",
@@ -121,5 +121,9 @@
     "open_resource_consultation": "Resources for consultation",
     "report_tour": "Report this tour",
     "report_sent": "Thank you for your report. It will soon be reviewed.",
-    "report_failed": "Failed to send report. Please try again."
+    "report_failed": "Failed to send report. Please try again.",
+    "report_test": "Report a problem with the app",
+    "title": "Title",
+    "title_hint": "Enter a brief title",
+    "report_alert": "Compile both title and description to send"
 }

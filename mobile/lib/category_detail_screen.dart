@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xr_tour_guide/models/tour.dart';
@@ -7,6 +9,7 @@ import 'tour_details_page.dart';
 import 'services/tour_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
+import 'services/analytics_service.dart';
 
 
 
@@ -29,6 +32,7 @@ class CategoryDetailScreen extends ConsumerStatefulWidget {
 class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
 
   late TourService _tourService;
+  late AnalyticsService _analytics;
 
   List<Tour>? _categoriesTour;
   bool _isLoading = true;
@@ -36,6 +40,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
   void initState() {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
+    _analytics = ref.read(analyticsServiceProvider);
     _loadData();
   }
 
@@ -142,18 +147,30 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
                   rating: tour.rating,
                   reviewCount: tour.reviewCount,
                   // isFavorite: tour['isFavorite'] ?? false,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => TourDetailScreen(
-                              tourId: tour.id,
-                              isGuest: widget.isGuest,
-                            ),
-                      ),
-                    );
-                  },
+                  onTap:
+                      () {
+                        unawaited(
+                          _analytics.logEvent(
+                            name: "tour_open",
+                            parameters: {
+                              "tour_id": tour.id,
+                              "is_guest": widget.isGuest.toString(),
+                              "source": "categories_list",
+                            },
+                          ),
+                        );
+                        
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => TourDetailScreen(
+                                  tourId: tour.id,
+                                  isGuest: widget.isGuest,
+                                ),
+                          ),
+                        );
+                      }
                 );
               },
             ),

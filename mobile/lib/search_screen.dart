@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'models/app_colors.dart';
@@ -6,6 +8,7 @@ import 'tour_details_page.dart';
 import 'models/tour.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
+import 'services/analytics_service.dart';
 
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -20,6 +23,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
     with SingleTickerProviderStateMixin {
 
   late TourService _tourService;
+  late AnalyticsService _analytics;
 
   // Controller for the search text field
   final TextEditingController _searchController = TextEditingController();
@@ -39,6 +43,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
   void initState() {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
+    _analytics = ref.read(analyticsServiceProvider);
     // Initialize filtered destinations with an empty list
     _filteredDestinations = [];
 
@@ -249,10 +254,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                           destination.title,
                           destination.id,
                           onTap: () {
-                            // Handle destination selection
-                            print(
-                              'Selected destination: ${destination.title}',
+                            unawaited(
+                              _analytics.logEvent(
+                                name: "tour_open",
+                                parameters: {
+                                  "tour_id": destination.id,
+                                  "is_guest": widget.isGuest.toString(),
+                                  "source": "search_screen",
+                                },
+                              ),
                             );
+
+                            // Handle destination selection
                             Navigator.push(
                               context,
                               MaterialPageRoute(

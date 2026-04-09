@@ -29,8 +29,15 @@ class AnalyticsService {
   }) async {
     final cleaned = <String, Object>{};
     parameters?.forEach((k, v) {
-      if (v != null) cleaned[k] = v;
+      if (v == null) return;
+      
+      if (v is String || v is num) {
+        cleaned[k] = v;
+      } else {
+        cleaned[k] = v.toString();
+      }
     });
+    debugPrint("""Logging event: $name with parameters: $cleaned""");
     await _safe(() => _analytics.logEvent(name: name, parameters: cleaned));
   }
 

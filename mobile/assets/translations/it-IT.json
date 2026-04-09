@@ -36,7 +36,7 @@
     "name_hint": "Inserisci il tuo nome",
     "surname_hint": "Inserisci il tuo cognome",
     "mail_hint": "Inserisci la tua email",
-    "description_hint": "Inserisci una breve descrizione di te stesso",
+    "description_hint": "Inserisci una breve descrizione",
     "save": "Salva",
     "account_security_title": "Account e Sicurezza",
     "change_password": "Cambia Password",
@@ -121,5 +121,9 @@
     "open_resource_consultation": "Risorse per la consultazione",
     "report_tour": "Segnala questo tour",
     "report_sent": "Segnalazione inviata. Grazie per il tuo feedback!",
-    "report_failed": "Segnalazione fallita. Riprova."
+    "report_failed": "Segnalazione fallita. Riprova.",
+    "report_test": "Segnala un problema con l'app",
+    "title": "Titolo",
+    "title_hint": "Inserisci un titolo breve",
+    "report_alert": "Compila sia il titolo che la descrizione per inviare la segnalazione"
 }
