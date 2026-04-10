@@ -333,12 +333,12 @@ class ApiService {
           options: Options(sendTimeout: Duration(seconds: timeout)),
         );
         response = await dio.get(
-          "/tour_list/?lon=$longitude&lat=$latitude",
+          "/tour_list/?lon=$longitude&lat=$latitude&num_tours=5",
           options: options,
         );
       } else {
         final options = _getOptions(baseUrl: baseUrl);
-        response = await dio.get('/tour_list/?lon=$longitude&lat=$latitude', options: options);
+        response = await dio.get('/tour_list/?lon=$longitude&lat=$latitude&num_tours=5', options: options);
       }
       return response;
     } catch (e) {
@@ -350,7 +350,7 @@ class ApiService {
 
   Future<Response> getTourBySearchTerm(String searchTerm, {String? baseUrl}) async {
     try {
-      final response = await dio.get("/tour_list/?searchTerm=$searchTerm", options: _getOptions(baseUrl: baseUrl));
+      final response = await dio.get("/tour_list/?searchTerm=$searchTerm&num_tours=10", options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tours: $e');
@@ -361,7 +361,7 @@ class ApiService {
 
   Future<Response> getTourByCategory(String category, {String? baseUrl}) async {
     try {
-      final response = await dio.get("/tour_list/?category=$category", options: _getOptions(baseUrl: baseUrl));
+      final response = await dio.get("/tour_list/?category=$category&num_tours=10", options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
       print('Failed to fetch tours: $e');
