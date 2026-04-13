@@ -548,7 +548,7 @@ Future<void> _loadWaypoints() async {
 
    // Method to launch map application
   Future<void> _launchMapApp(double latitude, double longitude) async {
-    _analytics.logEvent(name: 'launch_map_app', parameters: {'latitude': latitude, 'longitude': longitude, 'source': 'itinerary_view'});
+    unawaited(_analytics.logEvent(name: 'launch_map_app', parameters: {'latitude': latitude, 'longitude': longitude, 'source': 'itinerary_view'}));
     final String googleMapsUrl =
         'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving';
     final String appleMapsUrl =
@@ -819,7 +819,7 @@ Future<void> _loadWaypoints() async {
                     if (!widget.isOffline){
                       _apiService.initializeInferenceModule(widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
                     }
-                    _analytics.logEvent(name: 'go_to_camera_screen', parameters: {'tour_id': widget.tourId, "source": "map_screen"});
+                    unawaited(_analytics.logEvent(name: 'go_to_camera_screen', parameters: {'tour_id': widget.tourId, "source": "map_screen"}));
                     //Initialize the inference module for the tour
                     Navigator.push(
                       context,
@@ -1420,7 +1420,7 @@ Future<void> _loadWaypoints() async {
                                   _apiService.initializeInferenceModule(_tourDetails!.id, baseUrl: _apiService.getCurrentBaseUrl());
                                 }
 
-                                _analytics.logEvent(name: "go_to_camera_screen", parameters: {"tour_id": widget.tourId, "source": "about_screen"});
+                                unawaited(_analytics.logEvent(name: "go_to_camera_screen", parameters: {"tour_id": widget.tourId, "source": "about_screen"}));
 
                                 Navigator.push(
                                   context,
@@ -1674,7 +1674,7 @@ Future<void> _loadWaypoints() async {
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {
-                            _analytics.logEvent(name: 'view_all_reviews', parameters: {'tour_id': widget.tourId, "source": "about_screen"});
+                            unawaited(_analytics.logEvent(name: 'view_all_reviews', parameters: {'tour_id': widget.tourId  ,"source": "about_screen"}));
 
                             Navigator.push(
                               context,
@@ -2760,7 +2760,7 @@ void _showLeaveReviewSheet(int tourId) {
                             final comment = _reviewController.text;
 
                             _apiService.leaveReview(tourId, rating, comment, baseUrl: _apiService.getCurrentBaseUrl());
-                            _analytics.logEvent(name: 'leave_review', parameters: {'tour_id': tourId, 'rating': rating, "source": "about_screen"});
+                            unawaited(_analytics.logEvent(name: 'leave_review', parameters: {'tour_id': tourId, 'rating': rating, "source": "about_screen"}));
                             _loadData();
 
                             Navigator.pop(context); // Close the sheet

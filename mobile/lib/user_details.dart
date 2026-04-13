@@ -171,10 +171,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 30),
                     child: Column(
                       children: [
-                        // Profile image with camera icon
                         Stack(
                           children: [
-                            // Profile image with border
                             Container(
                               width: 100,
                               height: 100,
@@ -197,27 +195,6 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                                 ),
                               ),
                             ),
-                            // // Camera icon for changing profile picture
-                            // Positioned(
-                            //   bottom: 0,
-                            //   right: 0,
-                            //   child: Container(
-                            //     padding: const EdgeInsets.all(4),
-                            //     decoration: BoxDecoration(
-                            //       color: AppColors.background,
-                            //       shape: BoxShape.circle,
-                            //       border: Border.all(
-                            //         color: AppColors.primary,
-                            //         width: 2,
-                            //       ),
-                            //     ),
-                            //     child: const Icon(
-                            //       Icons.camera_alt,
-                            //       color: AppColors.primary,
-                            //       size: 20,
-                            //     ),
-                            //   ),
-                            // ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -242,8 +219,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                         const SizedBox(height: 4),
                         Center(
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const SizedBox(width: 165),
                               const Icon(
                                 Icons.location_city,
                                 color: AppColors.textSecondary,
@@ -333,7 +310,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                       ListView.builder(
                         shrinkWrap: true,
                         physics: NeverScrollableScrollPhysics(),
-                        itemCount: _reviews.length,
+                        itemCount: 2,
                         itemBuilder: (context, index) {
                           return _buildReviewItem(
                             name: _reviews[index].user,
@@ -349,7 +326,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                         child: OutlinedButton(
                           onPressed: () {
 
-                            unawaited(_analytics.logEvent(name: "view_all_reviews", parameters: {"user_id": _user!.id, "source": "profile_screen"}));
+                            unawaited(_analytics.logEvent(name: "view_own_reviews", parameters: {"user_id": _user!.id, "source": "profile_screen"}));
 
                             Navigator.push(
                               context,
@@ -474,6 +451,11 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
     final descriptionController = TextEditingController();
     bool isSending = false;
 
+    final borderStyle = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+      borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+    );
+
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -490,6 +472,9 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                     decoration: InputDecoration(
                       labelText: "title".tr(),
                       hintText: "title_hint".tr(),
+                      border: borderStyle,
+                      enabledBorder: borderStyle,
+                      focusedBorder: borderStyle.copyWith(borderSide: borderStyle.borderSide.copyWith(color: AppColors.primary, width: 2))
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -500,7 +485,11 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                     decoration: InputDecoration(
                       labelText: "description".tr(),
                       hintText: "description_hint".tr(),
+                      border: borderStyle,
+                      enabledBorder: borderStyle,
+                      focusedBorder: borderStyle.copyWith(borderSide: borderStyle.borderSide.copyWith(color: AppColors.primary, width: 2))
                     ),
+                    
                   ),
                 ],
               ),

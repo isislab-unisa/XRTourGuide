@@ -148,7 +148,6 @@ def run_inference_subproc(input_dir: str, model_path: str):
 async def read_root():
     return {"Hello": "World"}    
     
-app = FastAPI()
 
 @app.post("/inference")
 async def inference(request: Request):
