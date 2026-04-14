@@ -13,6 +13,17 @@ from django.views.decorators.http import require_http_methods
 load_dotenv()
 User = get_user_model()
 
+def get_community_server_base_url():
+    configured_url = os.getenv("COMMUNITY_SERVER_URL", "").strip()
+    if configured_url:
+        return configured_url.rstrip("/")
+
+    legacy_value = os.getenv("COMMUNITY_SERVER", "").strip()
+    if legacy_value.startswith(("http://", "https://")):
+        return legacy_value.rstrip("/")
+
+    return f"http://{legacy_value}".rstrip("/")
+
 def get_idp_headers():
     api_key = os.getenv('IDP_API_KEY')
     api_secret = os.getenv('IDP_API_SECRET')
@@ -50,7 +61,8 @@ def login(request):
             return render(request, "account/login.html", context)
         
         response = requests.post(
-            f"http://{os.getenv('COMMUNITY_SERVER')}/api/token/",
+            # f"http://{os.getenv('COMMUNITY_SERVER')}/api/token/",
+            f"{get_community_server_base_url()}/api/token/",
             json={'email': email, 'password': password},
             headers=get_idp_headers(),
             timeout=10
@@ -116,7 +128,8 @@ def google_login(request):
                 status=400
             )
         
-        idp_url = f"http://{os.getenv('COMMUNITY_SERVER')}/api/google-login/"
+        # idp_url = f"http://{os.getenv('COMMUNITY_SERVER')}/api/google-login/"
+        idp_url = f"{get_community_server_base_url()}/api/google-login/"
         
         response = requests.post(
             idp_url,
@@ -206,7 +219,8 @@ def register(request):
 
         try:
             response = requests.post(
-                f"http://{os.getenv('COMMUNITY_SERVER')}/api_register/",
+                # f"http://{os.getenv('COMMUNITY_SERVER')}/api_register/",
+                f"{get_community_server_base_url()}/api_register/",
                 json={
                     "username": username,
                     "email": email,
@@ -249,7 +263,8 @@ def send_verification_email(request):
     
     try:
         response = requests.post(
-            f"http://{os.getenv('COMMUNITY_SERVER')}/resend-verification/",
+            # f"http://{os.getenv('COMMUNITY_SERVER')}/resend-verification/",
+            f"{get_community_server_base_url()}/resend-verification/",
             json={'email': email},
             headers=get_idp_headers()
         )
@@ -271,7 +286,8 @@ def reset_password(request):
 
     try:
         response = requests.post(
-            f"http://{os.getenv('COMMUNITY_SERVER')}/reset-password/",
+            # f"http://{os.getenv('COMMUNITY_SERVER')}/reset-password/",
+            f"{get_community_server_base_url()}/reset-password/",
             json={'email': email},
             headers=get_idp_headers()
         )
