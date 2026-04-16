@@ -768,7 +768,7 @@ Future<void> _loadWaypoints() async {
 
           // Back button (positioned on top of the map)
           Positioned(
-            top: MediaQuery.of(context).padding.top - 15,
+            top: MediaQuery.of(context).padding.top + 8,
             left: 16,
             child: Container(
               width: screenWidth * 0.15,
@@ -804,7 +804,7 @@ Future<void> _loadWaypoints() async {
           if (widget.isGuest == false && _tourDetails!.status == "BUILT")
           // if (widget.isGuest == false)
             Positioned(
-              top: MediaQuery.of(context).padding.top - 15,
+              top: MediaQuery.of(context).padding.top + 8,
               right: 16,
               child: Container(
                 width: screenWidth * 0.15,
@@ -1231,7 +1231,7 @@ Future<void> _loadWaypoints() async {
 
                 // Back button
                 Positioned(
-                  top: MediaQuery.of(context).padding.top - 15,
+                  top: MediaQuery.of(context).padding.top + 8,
                   left: 16,
                   child: Container(
                     width: screenWidth * 0.15,
@@ -1299,21 +1299,31 @@ Future<void> _loadWaypoints() async {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        "created_by".tr(namedArgs: {'creator': _tourDetails?.creator ?? ''}),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
+                      Expanded(
+                        child: Text(
+                          "created_by".tr(namedArgs: {'creator': _tourDetails?.creator ?? ''}),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
-                      const Spacer(),
-                      Text(
-                        "last_edited_by".tr(namedArgs: {'date': _tourDetails?.lastEdited ?? ''}),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
+                      // const Spacer(),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "last_edited_by".tr(namedArgs: {'date': _tourDetails?.lastEdited ?? ''}),
+                          textAlign: TextAlign.end,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ],
@@ -1379,6 +1389,8 @@ Future<void> _loadWaypoints() async {
                             children: [ 
                               Text(
                                 _tourDetails!.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -1933,17 +1945,23 @@ Future<void> _loadWaypoints() async {
                         ? Colors.black
                         : (isSelected ? Colors.black : AppColors.textSecondary),
               ),
-              const SizedBox(width: 8),
-                Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: buttonColor != null
-                    ? Colors.black
-                    : (isSelected ? Colors.black : AppColors.textSecondary),
+              const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: buttonColor != null
+                      ? Colors.black
+                      : (isSelected ? Colors.black : AppColors.textSecondary),
+                  ),
+                                ),
                 ),
-              ),
             ],
           ),
         ),

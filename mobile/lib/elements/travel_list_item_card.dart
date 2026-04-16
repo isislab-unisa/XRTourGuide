@@ -135,76 +135,147 @@ class TravelListItemCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Category and rating row (if provided)
+                        // if (category != null || rating != null)
+                        //   Padding(
+                        //     padding: const EdgeInsets.only(bottom: 4.0),
+                        //     child: Row(
+                        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //       children: [
+                        //         // Category
+                        //         if (category != null)
+                        //           Text(
+                        //             category!,
+                        //             style: const TextStyle(
+                        //               fontSize: 14,
+                        //               color: AppColors.textSecondary,
+                        //             ),
+                        //           ),
+        
+                        //         // Rating
+                        //         if (rating != null)
+                        //           Column(
+                        //             children: [
+                        //               Row(
+                        //                 children: [
+                        //                   const Icon(
+                        //                     Icons.star,
+                        //                     color: Colors.amber,
+                        //                     size: 18,
+                        //                   ),
+                        //                   const SizedBox(width: 4),
+                        //                   Text(
+                        //                     '${rating!.toStringAsFixed(1).toString()}',
+                        //                     style: const TextStyle(
+                        //                       fontWeight: FontWeight.bold,
+                        //                       fontSize: 14,
+                        //                       color: AppColors.textPrimary,
+                        //                     ),
+                        //                   ),
+                        //                   if (reviewCount != null)
+                        //                     Text(
+                        //                       ' ($reviewCount)',
+                        //                       style: const TextStyle(
+                        //                         fontSize: 14,
+                        //                         color: AppColors.textSecondary,
+                        //                       ),
+                        //                     ),
+                        //                   SizedBox(width: 8),
+                        //                   const Icon(
+                        //                     Icons.remove_red_eye,
+                        //                     size: 16,
+                        //                     color: AppColors.textSecondary,
+                        //                   ),
+                        //                   Text(
+                        //                     totViews ?? '0',
+                        //                     style: const TextStyle(
+                        //                       fontSize: 14,
+                        //                       fontWeight: FontWeight.bold,
+                        //                       color: AppColors.textSecondary,
+                        //                     ),
+                        //                   )
+        
+                        //                 ],
+                        //               ),
+                        //             ],
+                        //           ),
+                        //       ],
+                        //     ),
+                        //   ),
+
                         if (category != null || rating != null)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 4.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Category
                                 if (category != null)
-                                  Text(
-                                    category!,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.textSecondary,
+                                  Expanded(
+                                    child: Text(
+                                      category!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
                                     ),
                                   ),
-        
-                                // Rating
+                                if (category != null && rating != null)
+                                  const SizedBox(width: 8),
                                 if (rating != null)
-                                  Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.star,
-                                            color: Colors.amber,
-                                            size: 18,
+                                  Flexible(
+                                    child: Wrap(
+                                      alignment: WrapAlignment.end,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 4,
+                                      runSpacing: 2,
+                                      children: [
+                                        const Icon(
+                                          Icons.star,
+                                          color: Colors.amber,
+                                          size: 18,
+                                        ),
+                                        Text(
+                                          rating!.toStringAsFixed(1),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: AppColors.textPrimary,
                                           ),
-                                          const SizedBox(width: 4),
+                                        ),
+                                        if (reviewCount != null)
                                           Text(
-                                            '${rating!.toStringAsFixed(1).toString()}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              color: AppColors.textPrimary,
-                                            ),
-                                          ),
-                                          if (reviewCount != null)
-                                            Text(
-                                              ' ($reviewCount)',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: AppColors.textSecondary,
-                                              ),
-                                            ),
-                                          SizedBox(width: 8),
-                                          const Icon(
-                                            Icons.remove_red_eye,
-                                            size: 16,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                          Text(
-                                            totViews ?? '0',
+                                            '($reviewCount)',
                                             style: const TextStyle(
                                               fontSize: 14,
-                                              fontWeight: FontWeight.bold,
                                               color: AppColors.textSecondary,
                                             ),
-                                          )
-        
-                                        ],
-                                      ),
-                                    ],
+                                          ),
+                                        const Icon(
+                                          Icons.remove_red_eye,
+                                          size: 16,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        Text(
+                                          totViews ?? '0',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                               ],
                             ),
                           ),
-        
                         // Title of the list item.
                         Text(
                           title, // Use the title parameter
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,

@@ -26,14 +26,14 @@ class ApiService {
   '/stream_minio_resource/'
   ];
 
-  static String appSignature = "com.isislab.xr_tour_guide";
-  // static String appSignature = "com.picaresque.xrtourguide";
+  // static String appSignature = "com.isislab.xr_tour_guide";
+  static String appSignature = "com.picaresque.xrtourguide";
 
   static String basicUrl = 'https://';
   // static const String centralizedUrl = 'http://';
 
-  static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
-
+  // static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
+  static const String centralizedUrl = 'https://xrtourguide.eu/communityserver/';
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {

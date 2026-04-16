@@ -96,8 +96,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     }
 
     // Se siamo tornati online o è la prima volta, proviamo a caricare i dati (se non ci sono già)
-    if (isNowOnline &&
-        (wasOnline != isNowOnline || _isCheckingConnection || forceReload)) {
+    if (isNowOnline && (wasOnline != isNowOnline || _isCheckingConnection || forceReload)) {
       _loadOnlineData(forceRefresh: forceReload);
     }
   }
@@ -143,10 +142,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     }
 
     // Carica tour
+    print("Loading online tours with forceRefresh=$forceRefresh");
     Position? position = await _getCurrentPosition();
-    ref
-        .read(nearbyToursProvider.notifier)
-        .loadTours(
+    ref.read(nearbyToursProvider.notifier).loadTours(
           forceRefresh: forceRefresh,
           lat: position?.latitude,
           lon: position?.longitude,

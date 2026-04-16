@@ -163,185 +163,236 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            Column(
-              children: [
-                // Profile header with image, name and email
-                SizedBox(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 30),
-                    child: Column(
-                      children: [
-                        Stack(
-                          children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.primary,
-                                  width: 2,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(50),
-                                child: Container(
-                                  color: Colors.blue.shade100,
-                                  child: const Icon(
-                                    Icons.person,
-                                    size: 70,
-                                    color: AppColors.accent,
-                                  )
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // User name
-                        Text(
-                          '${_user!.name} ${_user!.surname}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // User email
-                        Text(
-                          _user!.mail,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 16), // To avoid bottom nav bar
+              child: Column(
+                children: [
+                  // Profile header with image, name and email
+                  SizedBox(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 30),
+                      child: Column(
+                        children: [
+                          Stack(
                             children: [
-                              const Icon(
-                                Icons.location_city,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _user!.city,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: Container(
+                                    color: Colors.blue.shade100,
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 70,
+                                      color: AppColors.accent,
+                                    )
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        if (_user!.description.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _user!.description,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.textSecondary,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
+                          const SizedBox(height: 16),
+                          // User name
                           Text(
-                            'your_reviews'.tr(),
-                            style: TextStyle(
-                              fontSize: 23,
+                            '${_user!.name} ${_user!.surname}',
+                            style: const TextStyle(
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(height: 4),
+                          // User email
                           Text(
-                            '(${_totalReviewCount.toString()})',
+                            _user!.mail,
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               color: AppColors.textSecondary,
                             ),
                           ),
+                          const SizedBox(height: 4),
+                          Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.location_city,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _user!.city,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          if (_user!.description.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _user!.description,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       ),
-                      // const SizedBox(height: 4),
-                      const SizedBox(height: 16),
-                      //load the first two elements from _reviews
-                    if (_isLoadingReviews)
-                      const Center(child: CircularProgressIndicator())
-                    else if (_reviews.isNotEmpty) ...[
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: 2,
-                        itemBuilder: (context, index) {
-                          return _buildReviewItem(
-                            name: _reviews[index].user,
-                            date: _reviews[index].date,
-                            rating: _reviews[index].rating,
-                            comment: _reviews[index].comment,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'your_reviews'.tr(),
+                              style: TextStyle(
+                                fontSize: 23,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '(${_totalReviewCount.toString()})',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // const SizedBox(height: 4),
+                        const SizedBox(height: 16),
+                        //load the first two elements from _reviews
+                      if (_isLoadingReviews)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_reviews.isNotEmpty) ...[
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: _reviews.length > 2 ? 2 : _reviews.length,
+                          itemBuilder: (context, index) {
+                            return _buildReviewItem(
+                              name: _reviews[index].user,
+                              date: _reviews[index].date,
+                              rating: _reviews[index].rating,
+                              comment: _reviews[index].comment,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () {
+              
+                              unawaited(_analytics.logEvent(name: "view_own_reviews", parameters: {"user_id": _user!.id, "source": "profile_screen"}));
+              
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => ReviewListScreen(
+                                        isTour: false,
+                                        userId: _user!.id,
+                                        reviewCount: _user!.reviewCount,
+                                      ),
+                                ),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'more'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 20,
+                                  color: AppColors.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24.0),
+                          child: Center(
+                            child: Text(
+                              "no_reviews".tr(),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ], 
+                      SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {
-
-                            unawaited(_analytics.logEvent(name: "view_own_reviews", parameters: {"user_id": _user!.id, "source": "profile_screen"}));
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => ReviewListScreen(
-                                      isTour: false,
-                                      userId: _user!.id,
-                                      reviewCount: _user!.reviewCount,
-                                    ),
-                              ),
-                            );
+                            _showReportDialog();
                           },
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.primary),
+                            side: const BorderSide(color: Colors.redAccent),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -351,79 +402,31 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'more'.tr(),
+                                'report_test'.tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: Colors.redAccent,
                                 ),
                               ),
                               SizedBox(width: 4),
                               Icon(
-                                Icons.keyboard_arrow_down,
+                                Icons.report_problem,
                                 size: 20,
-                                color: AppColors.primary,
+                                color: Colors.redAccent,
                               ),
                             ],
                           ),
                         ),
                       ),
-                    ] else ...[
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24.0),
-                        child: Center(
-                          child: Text(
-                            "no_reviews".tr(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ], 
-                    SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          _showReportDialog();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.redAccent),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'report_test'.tr(),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.redAccent,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.report_problem,
-                              size: 20,
-                              color: Colors.redAccent,
-                            ),
-                          ],
-                        ),
-                      ),
+              
+                      ],
                     ),
-
-                    ],
                   ),
-                ),
-                // // Bottom navigation bar
-                // _buildBottomNavBar(context, 1), // 1 = Profile tab selected
-              ],
+                  // // Bottom navigation bar
+                  // _buildBottomNavBar(context, 1), // 1 = Profile tab selected
+                ],
+              ),
             ),
             Positioned(
               top: 8,
