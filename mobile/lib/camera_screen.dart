@@ -490,7 +490,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     return TileLayer(
       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      userAgentPackageName: 'com.isislab.xrtourguide',
+      userAgentPackageName: 'com.picaresque.xrtourguide',
       tileProvider: NetworkTileProvider(),
     );
   }
@@ -2263,7 +2263,7 @@ Widget _buildMiniMap(BuildContext context) {
         _baseMapLayer(),
         // TileLayer(
         //   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        //   userAgentPackageName: 'com.isislab.xrtourguide',
+        //   userAgentPackageName: 'com.picaresque.xrtourguide',
         // ),
 
         // Current location marker (se disponibile)

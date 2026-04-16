@@ -200,7 +200,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
     return TileLayer(
       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      userAgentPackageName: 'com.isislab.xrtourguide',
+      userAgentPackageName: 'com.picaresque.xrtourguide',
       tileProvider: NetworkTileProvider(),
     );
   }

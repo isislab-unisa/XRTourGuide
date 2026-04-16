@@ -27,6 +27,7 @@ class ApiService {
   ];
 
   static String appSignature = "com.isislab.xr_tour_guide";
+  // static String appSignature = "com.picaresque.xrtourguide";
 
   static String basicUrl = 'https://';
   // static const String centralizedUrl = 'http://';
