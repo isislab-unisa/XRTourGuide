@@ -99,8 +99,15 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 '</div>'
             )
         
+        # html_parts = [
+        #     '<div style="background: light-dark(#ffffff, #1f2937); padding: 16px; border-radius: 8px; '
+        #     'border: 1px solid light-dark(#e5e7eb, #374151);">',
+        #     f'<p style="margin: 0 0 12px 0; font-weight: 600; color: light-dark(#374151, #e5e7eb);">📷 {images.count()} ' + str(_('images uploaded')) + '</p>',
+        #     '<div style="display: flex; flex-wrap: wrap; gap: 16px;">'
+        # ]
+        
         html_parts = [
-            '<div style="background: light-dark(#ffffff, #1f2937); padding: 16px; border-radius: 8px; '
+            '<div data-waypoint-gallery="1" style="background: light-dark(#ffffff, #1f2937); padding: 16px; border-radius: 8px; '
             'border: 1px solid light-dark(#e5e7eb, #374151);">',
             f'<p style="margin: 0 0 12px 0; font-weight: 600; color: light-dark(#374151, #e5e7eb);">📷 {images.count()} ' + str(_('images uploaded')) + '</p>',
             '<div style="display: flex; flex-wrap: wrap; gap: 16px;">'
@@ -122,22 +129,43 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             
             img_url = f"/stream_minio_resource/?tour={img.waypoint.tour.pk}&waypoint={img.waypoint.pk}&file={img.image.name}"
             
+            # html_parts.append(f'''
+            #     <div style="width: 200px; border: 1px solid light-dark(#e5e7eb, #374151); border-radius: 8px; 
+            #          overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+            #         <img src="{img_url}" 
+            #              alt="View image" 
+            #              onclick="window.open('{img_url}', '_blank')"
+            #              style="width: 100%; height: 160px; object-fit: cover; cursor: pointer;"
+            #              title="{_('Click to view image in full screen')}"
+            #         />
+            #         <div style="padding: 8px; background: light-dark(#ffffff, #1f2937); display: flex; 
+            #              justify-content: space-between; align-items: center;">
+            #             <span style="font-size: 0.75rem; color: light-dark(#6b7280, #9ca3af);">ID: {img.pk}</span>
+            #             {delete_link}
+            #         </div>
+            #     </div>
+            # ''')
+            
             html_parts.append(f'''
                 <div style="width: 200px; border: 1px solid light-dark(#e5e7eb, #374151); border-radius: 8px; 
                      overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
-                    <img src="{img_url}" 
-                         alt="View image" 
-                         onclick="window.open('{img_url}', '_blank')"
-                         style="width: 100%; height: 160px; object-fit: cover; cursor: pointer;"
-                         title="{_('Click to view image in full screen')}"
-                    />
-                    <div style="padding: 8px; background: light-dark(#ffffff, #1f2937); display: flex; 
+                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA="
+                    data-waypoint-lazy-src="{img_url}"
+                    alt="View image"
+                    onclick="window.open('{img_url}', '_blank')"
+                    style="width: 100%; height: 160px; object-fit: cover; cursor: pointer; background: light-dark(#f3f4f6, #111827);"
+                    title="{_('Click to view image in full screen')}"
+                    loading="lazy"
+                    decoding="async"
+                />
+                <div style="padding: 8px; background: light-dark(#ffffff, #1f2937); display: flex; 
                          justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.75rem; color: light-dark(#6b7280, #9ca3af);">ID: {img.pk}</span>
                         {delete_link}
                     </div>
                 </div>
             ''')
+
         
         html_parts.append('</div></div>')
         
