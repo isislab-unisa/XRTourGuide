@@ -172,8 +172,15 @@ def fail_stuck_builds():
             
     cromo_poi = None
     try:
-        timeout_minutes = 10 #18 * 60 # 18 hours
-        threshold = timezone.now() - timedelta(minutes=1)
+        # timeout_minutes = 10 #18 * 60 # 18 hours
+        # threshold = timezone.now() - timedelta(minutes=1)
+        try:
+            configured_timeout = int(os.getenv("BUILD_TIMEOUT_MINUTES", 30))
+        except ValueError:
+            configured_timeout = 30
+        
+        timeout_minutes = max(1, min(configured_timeout, 45))
+        threshold = timezone.now() - timedelta(minutes=timeout_minutes)
 
         cromo_poi = Tour.objects.filter(status=Status.BUILDING, build_started_at__lt=threshold).first()
     except Tour.DoesNotExist:

@@ -69,6 +69,7 @@ class Tour {
       'user_name': creator,
       'l_edited': lastEdited,
       'tot_view': totViews,
+      'status': status,
     };
   }
 }

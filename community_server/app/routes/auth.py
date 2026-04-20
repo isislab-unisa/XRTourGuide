@@ -18,6 +18,35 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
+VERIFICATION_TOKEN_TTL_HOURS = 24
+VERIFICATION_RESEND_COOLDOWN_SECONDS = 90
+
+def _new_verification_expiry(now: Optional[datetime] = None) -> datetime:
+    current = now or datetime.utcnow()
+    return current + timedelta(hours=VERIFICATION_TOKEN_TTL_HOURS)
+
+def _verification_is_pending(user: models.User, now: Optional[datetime] = None) -> bool:
+    current = now or datetime.utcnow()
+    return bool(
+        user.email_verification_token and 
+        user.email_verification_expires and 
+        user.email_verification_expires > current
+    )
+    
+def _seconds_until_resent_allowed(user: models.User, now: Optional[datetime] = None) -> int:
+    if not user.email_verification_expires:
+        return 0
+    
+    current = now or datetime.utcnow()
+    last_sent_at = user.email_verification_expires - timedelta(hours=VERIFICATION_TOKEN_TTL_HOURS)
+    next_allowed_at = last_sent_at + timedelta(seconds=VERIFICATION_RESEND_COOLDOWN_SECONDS)
+    remaining = (next_allowed_at - current).total_seconds()
+    
+    if remaining <= 0:
+        return 0
+    
+    return int(remaining) + (0 if remaining.is_integer() else 1)
+
 def get_db():
     db = SessionLocal()
     try:
@@ -359,6 +388,7 @@ async def api_verify(
                 }
             }
         },
+        202: {"description": "Account already created and waiting for email verification."},
         400: {"description": "Email or username already in use, or email already verified"},
         500: {"description": "Email sending failed"}
     }
@@ -379,10 +409,21 @@ async def api_register(
     if existing and existing.email_verified:
         raise HTTPException(status_code=400, detail="Email already verified")
 
+    now = datetime.utcnow()
     email_verification_token = secrets.token_urlsafe(32)
-    email_verification_expires = datetime.utcnow() + timedelta(hours=24)
+    email_verification_expires = _new_verification_expiry(now)
 
     if existing and not existing.active:
+        
+        if _verification_is_pending(existing, now):
+            return JSONResponse(
+                status_code = 202,
+                content = {"message": "Account already exists but not verified. Please check your email for the verification link.", "verification_pending": True}
+            )
+            
+        previous_token = existing.email_verification_token
+        previous_expires = existing.email_verification_expires
+        
         existing.email_verification_token = email_verification_token
         existing.email_verification_expires = email_verification_expires
         db.commit()
@@ -394,7 +435,8 @@ async def api_register(
         )
 
         if not email_sent:
-            db.delete(existing)
+            existing.email_verification_token = previous_token
+            existing.email_verification_expires = previous_expires
             db.commit()
             raise HTTPException(status_code=500, detail="Email sending failed")
 
@@ -480,6 +522,7 @@ async def verify_email(
         },
         400: {"description": "Email already verified"},
         404: {"description": "Email not found"},
+        429: {"description": "Too many requests. Retry later"},
         500: {"description": "Email sending failed"}
     }
 )
@@ -499,8 +542,23 @@ async def resend_verification(
     if user.email_verified:
         raise HTTPException(status_code=400, detail="Email already verified")
 
+    # token = secrets.token_urlsafe(32)
+    # expires = datetime.utcnow() + timedelta(hours=24)
+    
+    now = datetime.utcnow()
+    seconds_left = _seconds_until_resent_allowed(user, now)
+    if seconds_left > 0:
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Too many requests. Please wait {seconds_left} seconds before requesting a new verification email.",
+            headers={"Retry-After": str(seconds_left)}
+        )
+        
+    previous_token = user.email_verification_token
+    previous_expires = user.email_verification_expires
+    
     token = secrets.token_urlsafe(32)
-    expires = datetime.utcnow() + timedelta(hours=24)
+    expires = _new_verification_expiry(now)
 
     user.email_verification_token = token
     user.email_verification_expires = expires
@@ -513,6 +571,9 @@ async def resend_verification(
     )
 
     if not email_sent:
+        user.email_verification_token = previous_token
+        user.email_verification_expires = previous_expires
+        db.commit()
         raise HTTPException(status_code=500, detail="Email sending failed")
 
     return {"message": "Verification email sent again"}

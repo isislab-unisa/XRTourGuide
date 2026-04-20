@@ -241,13 +241,13 @@ def register(request):
                 status=500
             )
 
-        if response.status_code == 201:
+        if response.status_code in (201, 202):
             try:
                 data = response.json()
-                print(f"Registration successful: {data}")
+                print(f"Registration response: {data}")
             except ValueError:
                 data = {"message": "Registration completed successfully"}
-            return JsonResponse(data, status=201)
+            return JsonResponse(data, status=response.status_code)
 
         try:
             error_data = response.json()
@@ -278,6 +278,13 @@ def send_verification_email(request):
         return HttpResponse("Email not found", status=response.status_code)
     elif response.status_code == 400:
         return HttpResponse("Email already verified", status=response.status_code)
+    elif response.status_code == 429:
+        try:
+            payload = response.json()
+            detail = payload.get("detail", "Too many requests. Please try again later.")
+        except ValueError:
+            detail = "Too many requests. Please try again later."
+        return HttpResponse(detail, status=response.status_code)
     else:
         return HttpResponse("Error sending email", status=response.status_code)
 
