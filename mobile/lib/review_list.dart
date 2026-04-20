@@ -237,13 +237,15 @@ class _ReviewListScreenState extends ConsumerState<ReviewListScreen> {
               if (widget.isTour)
                 Text(
                   widget.tourName ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(width: 8),
+                if (widget.isTour) const SizedBox(width: 8),
               Text(
                 "num_reviews".tr(namedArgs: {'count': '${_reviews.length}'}),
                 style: TextStyle(color: Colors.grey[600], fontSize: 16),
