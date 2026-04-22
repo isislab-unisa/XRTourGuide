@@ -195,7 +195,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         js = [
             'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
             'https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js',
-            'admin/js/init_maps.js',
+            # 'admin/js/init_maps.js',
             'admin/js/init_markdown_editor.js',
             'admin/js/hide_waypoint_coordinates.js',
         ]

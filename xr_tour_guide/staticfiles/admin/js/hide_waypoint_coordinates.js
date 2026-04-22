@@ -160,22 +160,13 @@
         }, true);
     });
 
-    function refreshMapsInContainer(container) {
-        if (!container) {
-            return;
-        }
+    function triggerLeafletResize() {
+        window.dispatchEvent(new Event("resize"));
+    }
 
-        container.querySelectorAll(".leaflet-container").forEach(function (mapEl) {
-            var map = mapEl._locationFieldMap;
-            if (!map || mapEl.offsetParent === null) {
-                return;
-            }
-
-            [0, 150, 400].forEach(function (delay) {
-                setTimeout(function () {
-                    map.invalidateSize({ pan: false, debounceMoveend: true });
-                }, delay);
-            });
+    function scheduleLeafletResize() {
+        [0, 120, 300, 600].forEach(function (delay) {
+            setTimeout(triggerLeafletResize, delay);
         });
     }
 
@@ -194,9 +185,28 @@
             return;
         }
 
-        setTimeout(function () {
-            refreshMapsInContainer(waypointContainer);
-        }, 0);
+        scheduleLeafletResize();
+    }, true);
+
+    document.addEventListener("transitionend", function (event) {
+        var waypointContainer = event.target.closest(".form-group, .inline-related");
+        if (!waypointContainer) {
+            return;
+        }
+
+        if (!waypointContainer.querySelector("input[name$='-coordinates']")) {
+            return;
+        }
+
+        scheduleLeafletResize();
+    }, true);
+
+    $(document).on("formset:added", function () {
+        scheduleLeafletResize();
     });
 
+    window.addEventListener("load", function () {
+        scheduleLeafletResize();
+    });
+    
 })(django.jQuery);
