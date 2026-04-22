@@ -226,6 +226,8 @@ async def refresh(request: Request, db: Session = Depends(get_db), service: Serv
         500: {"description": "Google OAuth not configured or authentication error"}
     }
 )
+
+
 async def google_login(
     data: GoogleLoginRequest,
     db: Session = Depends(get_db), 
@@ -236,6 +238,8 @@ async def google_login(
         from google.auth.transport import requests as google_requests
         
         GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+        GOOGLE_ID_TOKEN_CLOCK_SKEW_SECONDS = int(os.getenv("GOOGLE_ID_TOKEN_CLOCK_SKEW_SECONDS", "60"))
+
 
         if not GOOGLE_CLIENT_ID:
             raise HTTPException(status_code=500, detail="Google OAuth not configured")
@@ -243,7 +247,8 @@ async def google_login(
         idinfo = id_token.verify_oauth2_token(
             data.id_token,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=GOOGLE_ID_TOKEN_CLOCK_SKEW_SECONDS
         )
 
         if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
@@ -317,6 +322,8 @@ async def google_login(
 
     except ValueError as e:
         raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
