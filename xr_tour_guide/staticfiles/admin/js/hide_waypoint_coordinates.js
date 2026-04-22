@@ -140,9 +140,9 @@
             toggleFields();
         });
 
-        $(document).on("formset:added", function (event) {
+        $(document).on("formset:added", function (event, $row) {
             toggleFields();
-            bindWaypointImageLazyLoading(event.target || document);
+            bindWaypointImageLazyLoading(($row && $row[0]) || event.target || document);
         });
     });
 })(django.jQuery);

@@ -18,6 +18,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
     form = WaypointForm
     extra = 0
+    collapsible = True
     verbose_name = _("Point of Interest")
     verbose_name_plural = _("Tour Points of Interest")
     readonly_fields = ['display_existing_images']
