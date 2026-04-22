@@ -89,14 +89,30 @@
             }
         }
 
-        function loadWaypointImagesInDetails(detailsEl) {
-            if (!detailsEl || !detailsEl.open) {
-                return;
+        function isElementVisible(el) {
+            if (!el) {
+                return false;
             }
 
-            var lazyImages = detailsEl.querySelectorAll("img[data-waypoint-lazy-src]");
+            var style = window.getComputedStyle(el);
+            if (style.display === "none" || style.visibility === "hidden") {
+                return false;
+            }
+
+            return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+        }
+
+        function loadWaypointImages(root, onlyVisible) {
+            var scope = root || document;
+            var lazyImages = scope.querySelectorAll("img[data-waypoint-lazy-src]");
+
             lazyImages.forEach(function (img) {
                 if (img.getAttribute("data-waypoint-lazy-loaded") === "1") {
+                    return;
+                }
+
+                var gallery = img.closest("[data-waypoint-gallery='1']");
+                if (onlyVisible && gallery && !isElementVisible(gallery)) {
                     return;
                 }
 
@@ -111,30 +127,16 @@
             });
         }
 
-        function bindWaypointImageLazyLoading(root) {
+        function scheduleWaypointImageLoading(root) {
             var scope = root || document;
-            var detailsPanels = scope.querySelectorAll("details.collapse");
 
-            detailsPanels.forEach(function (detailsEl) {
-                if (!detailsEl.querySelector("[data-waypoint-gallery='1']")) {
-                    return;
-                }
-                if (detailsEl.getAttribute("data-waypoint-lazy-bound") === "1") {
-                    return;
-                }
-
-                detailsEl.setAttribute("data-waypoint-lazy-bound", "1");
-                detailsEl.addEventListener("toggle", function () {
-                    loadWaypointImagesInDetails(detailsEl);
-                });
-
-                // Se il pannello e già aperto, carica subito.
-                loadWaypointImagesInDetails(detailsEl);
+            window.requestAnimationFrame(function () {
+                loadWaypointImages(scope, true);
             });
         }
 
         toggleFields();
-        bindWaypointImageLazyLoading(document);
+        scheduleWaypointImageLoading(document);
 
         $("#id_category").change(function () {
             toggleFields();
@@ -142,8 +144,20 @@
 
         $(document).on("formset:added", function (event, $row) {
             toggleFields();
-            bindWaypointImageLazyLoading(($row && $row[0]) || event.target || document);
+            scheduleWaypointImageLoading(($row && $row[0]) || event.target || document);
         });
+
+        document.addEventListener("click", function () {
+            scheduleWaypointImageLoading(document);
+        }, true);
+
+        document.addEventListener("transitionend", function () {
+            scheduleWaypointImageLoading(document);
+        }, true);
+
+        document.addEventListener("animationend", function () {
+            scheduleWaypointImageLoading(document);
+        }, true);
     });
 
     function refreshMapsInContainer(container) {
