@@ -65,7 +65,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     class Media:
         js = [
             'https://code.jquery.com/jquery-3.6.0.min.js', 
-            'admin/js/init_maps.js',
+            # 'admin/js/init_maps.js',
             'admin/js/init_markdown_editor.js',
             'admin/js/hide_waypoint_coordinates.js',
             # 'admin/js/refresh_subtours_checkboxes.js',

@@ -145,4 +145,44 @@
             bindWaypointImageLazyLoading(($row && $row[0]) || event.target || document);
         });
     });
+
+    function refreshMapsInContainer(container) {
+        if (!container) {
+            return;
+        }
+
+        container.querySelectorAll(".leaflet-container").forEach(function (mapEl) {
+            var map = mapEl._locationFieldMap;
+            if (!map || mapEl.offsetParent === null) {
+                return;
+            }
+
+            [0, 150, 400].forEach(function (delay) {
+                setTimeout(function () {
+                    map.invalidateSize({ pan: false, debounceMoveend: true });
+                }, delay);
+            });
+        });
+    }
+
+    document.addEventListener("click", function (event) {
+        var header = event.target.closest("h3.cursor-pointer");
+        if (!header) {
+            return;
+        }
+
+        var waypointContainer = header.closest(".form-group, .inline-related");
+        if (!waypointContainer) {
+            return;
+        }
+
+        if (!waypointContainer.querySelector("input[name$='-coordinates']")) {
+            return;
+        }
+
+        setTimeout(function () {
+            refreshMapsInContainer(waypointContainer);
+        }, 0);
+    });
+
 })(django.jQuery);
