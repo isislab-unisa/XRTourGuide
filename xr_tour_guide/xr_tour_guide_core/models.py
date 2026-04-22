@@ -172,6 +172,7 @@ class Waypoint(models.Model):
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='waypoints', verbose_name=_("Tour"))
     description = models.TextField(blank=True, null=True, verbose_name=_("Description"))
     model_path = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Model Path"))
+    position = models.PositiveIntegerField(default=0, db_index=True, verbose_name=_("Position"))
     
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name=_("Timestamp"))
     build_started_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Build Started At"))
@@ -184,6 +185,13 @@ class Waypoint(models.Model):
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INDOOR:
             self.coordinates = self.tour.coordinates
+            
+        if self.pk is None and (self.position is None or self.position == 0):
+            last_position = (
+                Waypoint.objects.filter(tour=self.tour).aggregate(models.Max('position')).get("max_position")
+            )
+            self.position = 0 if last_position is None else last_position + 1
+            
         is_new = self.pk is None
         old_files = {
             'pdf_item': self.pdf_item,
@@ -225,6 +233,7 @@ class Waypoint(models.Model):
         db_table = "Waypoint"
         verbose_name = _("Waypoint")
         verbose_name_plural = _("Waypoints")
+        ordering = ['position', 'id']
 
     def __str__(self):
         return self.title

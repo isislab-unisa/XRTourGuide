@@ -186,13 +186,13 @@ def tour_details(request, pk):
 def tour_waypoints(request, tour_id):
     try:
         tour = Tour.objects.get(pk=tour_id)
-        waypoints = tour.waypoints.all()
+        waypoints = tour.waypoints.order_by('position', 'id')
         sub_tour_data = None
         if tour.category == Category.MIXED:
-            sub_tour = tour.sub_tours.all()
+            sub_tour = tour.sub_tours.order_by('position', 'id')
             sub_tour_data = []
             for st in sub_tour:
-                st_waypoints = st.waypoints.all()
+                st_waypoints = st.waypoints.order_by('position', 'id')
                 st_serializer = WaypointSerializer(st_waypoints, many=True)
                 st_data = {
                     'sub_tour': TourSerializer(st).data,
@@ -267,7 +267,7 @@ def cut_map(request, tour_id):
     except Tour.DoesNotExist:
         return JsonResponse({"error": "Tour not found"}, status=400)
 
-    waypoints = tour.waypoints.all()
+    waypoints = tour.waypoints.order_by('position', 'id')
     if not waypoints.exists():
         return JsonResponse({"error": "No waypoints found for this tour"}, status=400)
 
@@ -512,7 +512,7 @@ def tour_informations(request):
             tour_data['l_edited'] = tour_data['last_edited'].split('T')[0]
             tour_data.pop('last_edited', None)
         
-        waypoints = tour.waypoints.all()
+        waypoints = tour.waypoints.order_by('position', 'id')
         waypoints_data = []
         
         for waypoint in waypoints:

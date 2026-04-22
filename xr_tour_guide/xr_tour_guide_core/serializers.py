@@ -30,7 +30,7 @@ class WaypointSerializer(serializers.ModelSerializer):
         model = Waypoint
         fields = [
             'title', 'coordinates', 'tour', 'description',
-            'images', 'lat', 'lon', 'id'
+            'images', 'lat', 'lon', 'id', 'position'
         ]
 
     def get_lat(self, obj):

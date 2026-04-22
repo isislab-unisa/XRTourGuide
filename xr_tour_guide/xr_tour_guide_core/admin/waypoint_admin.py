@@ -19,6 +19,11 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     form = WaypointForm
     extra = 0
     collapsible = True
+    
+    sortable_field_name = 'position'
+    ordering_field = 'position'
+    hide_ordering_field = True
+    
     verbose_name = _("Point of Interest")
     verbose_name_plural = _("Tour Points of Interest")
     readonly_fields = ['display_existing_images']
@@ -33,7 +38,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     
     fieldsets = (
         (_('📍 Basic Information'), {
-            'fields': ('title', 'description'),
+            'fields': ('position', 'title', 'description'),
             'description': (
                 '<div style="background: light-dark(#dbeafe, #1e3a8a); padding: 12px; border-radius: 6px; '
                 'margin-bottom: 12px; border-left: 4px solid light-dark(#3b82f6, #60a5fa); '
