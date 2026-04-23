@@ -12,13 +12,22 @@ from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.urls import path, reverse
+from django.http import FileResponse, Http404
+from django.template.response import TemplateResponse
+from django.contrib import messages
+from django.shortcuts import redirect, get_object_or_404
+from ..services.tour_portability import TourPortabilityService, TourPortabilityError
+from ..forms.tour_import_form import TourImportForm
+import tempfile
+import os
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
     hide_ordering_field = True
     compressed_fields = True
     
-    list_display = ('title', 'place', 'category', 'status_badge', 'creation_time', 'user')
+    list_display = ('title', 'place', 'category', 'status_badge', 'creation_time', 'user', 'export_button')
     readonly_fields = ['user', 'creation_time', 'status_info', 'status_badge', 'status', 'license_notice']
     list_filter = ['category', 'status', 'place', 'creation_time']
     search_fields = ('title', 'subtitle', 'description', 'place')
@@ -78,6 +87,14 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                 'admin/css/subtour_improved.css',
             ]
         }
+        
+    @admin.display(description=_("Export"))
+    def export_button(self, obj):
+        url = reverse("admin:xr_tour_guide_core_tour_export", args=[obj.pk])
+        return format_html(
+            '<a class="button" href="{}" style="padding:4px 8px; border-radius:6px; background:#2563eb; color:white; text-decoration:none;">📦 Export</a>',
+            url,
+        )
 
     @admin.display(description=_("Image License"))
     def license_notice(self, obj):
@@ -376,5 +393,77 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         if not request.user.is_superuser and obj.user != request.user:
             return False
         return True
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "import-tour/",
+                self.admin_site.admin_view(self.import_tour_view),
+                name="xr_tour_guide_core_tour_import",
+            ),
+            path(
+                "<path:object_id>/export-tour/",
+                self.admin_site.admin_view(self.export_tour_view),
+                name="xr_tour_guide_core_tour_export",
+            ),
+        ]
+        return custom_urls + urls
+    
+    def export_tour_view(self, request, object_id):
+        tour = get_object_or_404(Tour, pk=object_id)
+
+        if not request.user.is_superuser and tour.user != request.user:
+            raise Http404()
+
+        service = TourPortabilityService()
+
+        fd, temp_zip_path = tempfile.mkstemp(suffix=".zip")
+        os.close(fd)
+
+        archive_path = service.export_tour(tour, include_subtours=True, output_path=temp_zip_path)
+
+        response = FileResponse(
+            open(archive_path, "rb"),
+            as_attachment=True,
+            filename=f"tour_export_{tour.pk}.zip",
+        )
+        return response
+    
+    def import_tour_view(self, request):
+        if request.method == "POST":
+            form = TourImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                service = TourPortabilityService()
+                try:
+                    tour = service.import_tour(
+                        archive_file=form.cleaned_data["archive"],
+                        owner=request.user,
+                        create_copy=form.cleaned_data["create_copy"],
+                    )
+                    self.message_user(
+                        request,
+                        f"Tour '{tour.title}' imported successfully.",
+                        level=messages.SUCCESS,
+                    )
+                    return redirect(
+                        reverse("admin:xr_tour_guide_core_tour_change", args=[tour.pk])
+                    )
+                except TourPortabilityError as exc:
+                    self.message_user(request, str(exc), level=messages.ERROR)
+        else:
+            form = TourImportForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "title": "Import Tour",
+            "form": form,
+        }
+        return TemplateResponse(
+            request,
+            "admin/xr_tour_guide_core/tour/import_tour.html",
+            context,
+        )
 
 admin.site.register(Tour, TourAdmin)

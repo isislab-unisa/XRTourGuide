@@ -1,0 +1,12 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+<li>
+    <a href="{% url 'admin:xr_tour_guide_core_tour_import' %}"
+        style="background:#059669;color:white;border-radius:6px;padding:8px 12px;text-decoration:none;">
+        ⬆ {% trans "Import tour" %}
+    </a>
+</li>
+{{ block.super }}
+{% endblock %}

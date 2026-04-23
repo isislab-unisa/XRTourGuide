@@ -570,6 +570,10 @@ table.tours-tbl {
                 <i data-lucide="plus-circle" width="15" height="15"></i>
                 {% trans "New Tour" %}
             </a>
+            <a href="{% url 'admin:xr_tour_guide_core_tour_import' %}" class="btn btn-ghost">
+                <i data-lucide="upload" width="15" height="15"></i>
+                {% trans "Import Tour" %}
+            </a>
             {% if tours.paginator.num_pages > 1 %}
             <a href="#" class="btn btn-ghost">
                 {% trans "View all" %}
@@ -709,6 +713,10 @@ table.tours-tbl {
                                     <a href="{% url 'admin:xr_tour_guide_core_tour_change' tour.pk %}" class="btn-xs btn-xs-view">
                                         <i data-lucide="eye" width="13" height="13"></i>
                                         {% trans "View" %}
+                                    </a>
+                                    <a href="{% url 'admin:xr_tour_guide_core_tour_export' tour.pk %}" class="btn-xs btn-xs-view">
+                                        <i data-lucide="download" width="13" height="13"></i>
+                                        {% trans "Export" %}
                                     </a>
                                 </div>
                             </td>
