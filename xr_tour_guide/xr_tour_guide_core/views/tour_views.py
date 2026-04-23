@@ -189,7 +189,7 @@ def tour_waypoints(request, tour_id):
         waypoints = tour.waypoints.order_by('position', 'id')
         sub_tour_data = None
         if tour.category == Category.MIXED:
-            sub_tour = tour.sub_tours.order_by('position', 'id')
+            sub_tour = tour.sub_tours.order_by('id')
             sub_tour_data = []
             for st in sub_tour:
                 st_waypoints = st.waypoints.order_by('position', 'id')
