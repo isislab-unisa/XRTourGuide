@@ -242,7 +242,7 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_S3_USE_SSL = False
 AWS_DEFAULT_ACL = None
 AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
+    'CacheControl': 'max-age=604800',
 }
 
 AUTH_PASSWORD_VALIDATORS = [

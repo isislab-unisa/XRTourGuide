@@ -606,10 +606,15 @@ table.tours-tbl {
                             <!-- Tour info -->
                             <td>
                                 <div class="tour-cell">
-                                    <img class="tour-thumb"
+                                    <!-- <img class="tour-thumb"
                                          data-tour-id="{{ tour.id }}"
                                          data-filename="{{ tour.default_image.name|urlencode }}"
                                          src="/static/images/placeholder.jpg"
+                                         alt="{{ tour.title }}"> -->
+                                    <img class="tour-thumb"
+                                         src = "{% url 'stream_minio_resource' %}?tour={{ tour.id }}"
+                                         loading = "lazy"
+                                         decoding="async"
                                          alt="{{ tour.title }}">
                                     <div style="min-width:0;">
                                         <div class="tour-cell-name">{{ tour.title }}</div>
@@ -847,18 +852,18 @@ function initCharts() {
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 
-    document.querySelectorAll('img[data-tour-id]').forEach(img => {
-        const tourId   = img.dataset.tourId;
-        const filename = img.dataset.filename;
-        if (!tourId || !filename) return;
-        const filenameOnly = filename.split('/').pop();
-        const scriptPath = (SCRIPT_NAME && SCRIPT_NAME !== '/') ? SCRIPT_NAME : '';
-        const url = `${scriptPath}/stream_minio_resource/?tour=${tourId}&file=${encodeURIComponent(filenameOnly)}`;
-        fetch(url)
-            .then(r => { if (!r.ok) throw new Error('img fetch failed'); return r.blob(); })
-            .then(b => img.src = URL.createObjectURL(b))
-            .catch(err => console.error('Tour image error:', err));
-    });
+    // document.querySelectorAll('img[data-tour-id]').forEach(img => {
+    //     const tourId   = img.dataset.tourId;
+    //     const filename = img.dataset.filename;
+    //     if (!tourId || !filename) return;
+    //     const filenameOnly = filename.split('/').pop();
+    //     const scriptPath = (SCRIPT_NAME && SCRIPT_NAME !== '/') ? SCRIPT_NAME : '';
+    //     const url = `${scriptPath}/stream_minio_resource/?tour=${tourId}&file=${encodeURIComponent(filenameOnly)}`;
+    //     fetch(url)
+    //         .then(r => { if (!r.ok) throw new Error('img fetch failed'); return r.blob(); })
+    //         .then(b => img.src = URL.createObjectURL(b))
+    //         .catch(err => console.error('Tour image error:', err));
+    // });
 });
 </script>
 {% endcomponent %}
