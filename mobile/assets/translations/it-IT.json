@@ -86,7 +86,7 @@
     "retry": "Riprova",
     "error_loading_categories": "Errore nel caricamento delle categorie",
     "search_bar_hint": "Cosa vuoi vedere?",
-    "recent_tours": "Tour Recenti",
+    "recent_tours": "Tour Vicini",
     "categories": "Categorie",
     "category_results": "{category}: {count} Risultati",
     "tour_completed": "Hai completato questo tour! Hai visitato tutti i waypoint disponibili.",

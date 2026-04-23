@@ -593,19 +593,20 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               ),
                             ),
                             onPressed: () async {
-                              print('Google login tapped');
-                            },
-                            context: context,
-                          ),
-                          _buildSocialButton(
-                            text: 'facebook_log'.tr(),
-                            icon: const Icon(
-                              Icons.facebook,
-                              color: Colors.blue,
-                              size: 24,
-                            ),
-                            onPressed: () {
-                              print('Facebook login tapped');
+                              // Print a message through snackbar
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Coming Soon...."),
+                                  backgroundColor: Colors.blue,
+                                  behavior: SnackBarBehavior.floating,
+                                  margin: const EdgeInsets.only(
+                                    bottom: 40,
+                                    left: 16,
+                                    right: 16,
+                                  ),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
                             },
                             context: context,
                           ),
@@ -1052,29 +1053,24 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 ),
                               ),
                             ),
-                            //TODO
-                            onPressed: () => print('Google login'),
+                            onPressed: () async {
+                              // Print a message through snackbar
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Coming Soon...."),
+                                  backgroundColor: Colors.blue,
+                                  behavior: SnackBarBehavior.floating,
+                                  margin: const EdgeInsets.only(
+                                    bottom: 40,
+                                    left: 16,
+                                    right: 16,
+                                  ),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(width: 20),
-                          _buildSocialIconButton(
-                            icon: const Icon(
-                              Icons.facebook,
-                              color: Colors.blue,
-                              size: 28,
-                            ),
-                            //TODO
-                            onPressed: () => print('Facebook login'),
-                          ),
-                          // const SizedBox(width: 20),
-                          // _buildSocialIconButton(
-                          //   icon: const Icon(
-                          //     Icons.apple,
-                          //     color: Colors.black,
-                          //     size: 28,
-                          //   ),
-                          //   //TODO
-                          //   onPressed: () => print('Apple login'),
-                          // ),
                         ],
                       ),
                       SizedBox(height: screenHeight * 0.04),

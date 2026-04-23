@@ -109,7 +109,8 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
         List<Waypoint> allWaypoints =
             waypointData
                 .map((waypoint) => Waypoint.fromJson(waypoint))
-                .toList();
+                .toList()
+                ..sort(Waypoint.compareByPosition);
 
         // Se ci sono sub-tours, aggiungi i loro waypoints come sub-waypoints
         if (data.containsKey('sub_tours') && data['sub_tours'] != null) {
@@ -120,7 +121,8 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
             final subWaypoints =
                 subWaypointData
                     .map((waypoint) => Waypoint.fromJson(waypoint))
-                    .toList();
+                    .toList()
+                    ..sort(Waypoint.compareByPosition);
 
             // Crea un waypoint principale per il sub-tour
             final subTourInfo = subTour['sub_tour'];
@@ -133,6 +135,7 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
               longitude: subTourInfo['lon']?.toDouble() ?? 0.0,
               images: [], // Sub-tour principale non ha immagini
               category: subTourInfo['category'] ?? 'MIXED',
+              position: (subTourInfo["position"] as num?)?.toInt() ?? 999999,
               subWaypoints: subWaypoints, // Aggiungi i sub-waypoints qui
             );
 
@@ -140,6 +143,7 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
           }
         }
 
+        allWaypoints.sort(Waypoint.compareByPosition);
         return allWaypoints;
       } else {
         throw Exception('Failed to load tour waypoints');

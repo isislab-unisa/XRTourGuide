@@ -24,8 +24,9 @@ import 'services/offline_tour_service.dart';
 import "dart:io";
 import "package:path_provider/path_provider.dart";
 import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
-import 'elements/zlib_image.dart'; // Aggiungi questo import
+import 'elements/zlib_image.dart';
 import 'services/analytics_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 
 
@@ -233,6 +234,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         }
 
         final List<Waypoint> mainWaypoints = wps.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+        mainWaypoints.sort(Waypoint.compareByPosition);
 
         final List<Waypoint> subTourWaypoints = <Waypoint>[];
         for (final st in subTours) {
@@ -241,6 +243,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
           final subWpJson = (st['waypoints'] as List?) ?? [];
           final subWps = subWpJson.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+          subWps.sort(Waypoint.compareByPosition);
 
           final subTourWaypoint = Waypoint(
             id: (subTourInfo['id'] as num).toInt(),
@@ -251,6 +254,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
             longitude: (subTourInfo['lon'] as num?)?.toDouble() ?? 0.0,
             images: const [], // il contenitore non ha immagini proprie
             category: (subTourInfo['category'] ?? 'INDOOR') as String,
+            position: (subTourInfo["position"] as num?)?.toInt() ?? 999999,
             subWaypoints: subWps,
           );
           subTourWaypoints.add(subTourWaypoint);
@@ -260,7 +264,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
           setState(() {
             _offlineImagesByWaypoint = imagesByWp;
             _tourDetails = Tour.fromJson(offlineData['tour']);
-            _waypoints = [...mainWaypoints, ...subTourWaypoints];
+            final mergedWaypoints = [...mainWaypoints, ...subTourWaypoints]
+              ..sort(Waypoint.compareByPosition);
+            _waypoints = mergedWaypoints;
             _expandedWaypoints = List.generate(_waypoints.length, (i) => i == 0);
             _expandedSubWaypoints.clear();
             for (int i = 0; i < _waypoints.length; i++) {
@@ -898,14 +904,18 @@ Future<void> _loadWaypoints() async {
                                               errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
                                             ) : _offlineImagePlaceholder())
                                       : (selectedWaypoint.images.isNotEmpty
-                                          ? ZlibImage(
-                                              url: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.cover,
-                                              useCache: false,
-                                              errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                            )
+                                          ? CachedNetworkImage(
+                                            imageUrl: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[0]}",
+                                            width: 80,
+                                            height: 80,
+                                            fit: BoxFit.cover,
+                                            memCacheWidth: 160,
+                                            maxWidthDiskCache: 320,
+                                            placeholder: (context, url) => const Center(
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            ),
+                                            errorWidget: (context, url, error) => _offlineImagePlaceholder(),
+                                          )
                                           : _offlineImagePlaceholder()),
                                 ),
                                 const SizedBox(width: 16),
@@ -1068,14 +1078,16 @@ Future<void> _loadWaypoints() async {
                                                 errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
                                             ) : _offlineImagePlaceholder())
                                         : (selectedWaypoint.images.isNotEmpty
-                                            ? ZlibImage(
-                                                url: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
-                                                width: 250,
-                                                height: 200,
+                                            ? CachedNetworkImage(
+                                                imageUrl: "${ApiService.basicUrl}/stream_minio_resource/?waypoint=${selectedWaypoint.id}&file=${selectedWaypoint.images[index]}",
                                                 fit: BoxFit.cover,
-                                                useCache: false,
-                                                errorBuilder: (context, error, stackTrace) => _offlineImagePlaceholder(),
-                                            )
+                                                memCacheWidth: 1200,
+                                                maxWidthDiskCache: 1600,
+                                                placeholder: (context, url) => const Center(
+                                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                                ),
+                                                errorWidget: (context, url, error) => _offlineImagePlaceholder(),
+                                              )
                                             : _offlineImagePlaceholder()),
                                       ),
                                     );
@@ -1210,11 +1222,15 @@ Future<void> _loadWaypoints() async {
                         );
                       } else if (_tourDetails != null) {
                         // Modalità Online: carica l'immagine dalla rete
-                        return ZlibImage(
-                          url: "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
+                        return CachedNetworkImage(
+                          imageUrl: "${ApiService.basicUrl}/stream_minio_resource/?tour=${_tourDetails!.id}",
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _offlineImagePlaceholder(),
+                          memCacheWidth: 1200,
+                          maxWidthDiskCache: 1600,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (context, url, error) => _offlineImagePlaceholder(),
                         );
                       }
                       // Fallback nel caso in cui non ci sia nessuna immagine
@@ -2311,29 +2327,30 @@ Widget _buildWaypointItem({
                                       );
                                       }
                                     })()
-                                    : ZlibImage(
-                                      url:
-                                        "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
-                                      width: 150,
+                                : CachedNetworkImage(
+                                  imageUrl:
+                                    "${ApiService.basicUrl}/stream_minio_resource/?waypoint=$waypointIndex&file=${images[imageIndex]}",
+                                  width: 150,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => const Center(
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  errorWidget: (context, url, error) {
+                                    return Container(
                                       height: 100,
-                                      fit: BoxFit.cover,
-                                      useCache: false,
-                                      errorBuilder:
-                                        (context, error, stackTrace) {
-                                          return Container(
-                                            height: 100,
-                                            width: 150,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
-                                              borderRadius:
-                                                BorderRadius.circular(8.0),
-                                            ),
-                                            child: Icon(
-                                              Icons.image_not_supported,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          );
-                                        },
+                                      width: 150,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        borderRadius:
+                                          BorderRadius.circular(8.0),
+                                      ),
+                                      child: Icon(
+                                        Icons.image_not_supported,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    );
+                                  },
                                 ),
                                 ),
                                 );

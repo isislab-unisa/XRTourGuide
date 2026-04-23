@@ -71,6 +71,7 @@ dependencies:
   ar_flutter_plugin_updated: ^0.0.1
   firebase_analytics: ^12.2.0
   firebase_crashlytics: ^5.1.0
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

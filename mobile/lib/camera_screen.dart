@@ -955,6 +955,8 @@ Future<void> _spawnTotemIcons(
           final List subTours = (offlineData['sub_tours'] as List?) ?? [];
 
           final List<Waypoint> mainWaypoints = wps.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+          mainWaypoints.sort(Waypoint.compareByPosition);
+
           final List<Waypoint> subTourWaypoints = <Waypoint>[];
 
           for (final st in subTours) {
@@ -963,6 +965,7 @@ Future<void> _spawnTotemIcons(
 
             final subWpJson = (st['waypoints'] as List?) ?? [];
             final subWps = subWpJson.map<Waypoint>((wp) => Waypoint.fromJson(wp as Map<String, dynamic>)).toList();
+            subWps.sort(Waypoint.compareByPosition);
 
             subTourWaypoints.addAll(subWps);
           }
@@ -995,7 +998,8 @@ Future<void> _spawnTotemIcons(
 
           if (mounted) {
             setState(() {
-              _waypoints = [...mainWaypoints, ...subTourWaypoints];
+              _waypoints = [...mainWaypoints, ...subTourWaypoints]
+                ..sort(Waypoint.compareByPosition);
               _offlineImagesByWaypoint = imagesByWp;
               _offlineResourcesByWaypoint = resourcesByWp;
               _isLoadingWaypoints = false;

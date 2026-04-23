@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../services/local_state_service.dart';
 import 'zlib_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 
 class TravelListItemCard extends ConsumerWidget {
@@ -92,13 +93,38 @@ class TravelListItemCard extends ConsumerWidget {
                         //       imageHeight ??
                         //       (height != null ? height! * 0.7 : null),
                         // ),
-                        child: ZlibImage(
-                          url:
+                        // child: ZlibImage(
+                        //   url:
+                        //       "${_apiService.getCurrentBaseUrl()}/stream_minio_resource/?tour=${tourId!}",
+                        //   width: double.infinity,
+                        //   height:
+                        //       imageHeight ?? (height != null ? height! * 0.7 : null),
+                        //   fit: BoxFit.cover,
+                        // ),
+                        child: CachedNetworkImage(
+                          imageUrl:
                               "${_apiService.getCurrentBaseUrl()}/stream_minio_resource/?tour=${tourId!}",
                           width: double.infinity,
                           height:
-                              imageHeight ?? (height != null ? height! * 0.7 : null),
+                              imageHeight ??
+                              (height != null ? height! * 0.7 : null),
                           fit: BoxFit.cover,
+                          memCacheWidth: 900,
+                          maxWidthDiskCache: 1200,
+                          placeholder:
+                              (context, url) => const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                          errorWidget:
+                              (context, url, error) => Container(
+                                color: Colors.grey.shade200,
+                                child: const Icon(
+                                  Icons.broken_image,
+                                  color: Colors.grey,
+                                ),
+                              ),
                         ),
                       ),
                       if (isCompleted)

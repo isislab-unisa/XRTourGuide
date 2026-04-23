@@ -8,6 +8,7 @@ class Waypoint {
   final List<String> images;
   final String category;
   final List<Waypoint>? subWaypoints;
+  final int position;
 
   Waypoint({
     required this.id,
@@ -18,6 +19,7 @@ class Waypoint {
     required this.longitude,
     required this.images,
     required this.category,
+    required this.position,
     this.subWaypoints,
   });
 
@@ -50,6 +52,7 @@ class Waypoint {
       images: images,
       // images: [],
       category: json['category'] != null ? json['category'] as String : "Generale",
+      position: (json["position"] as num?)?.toInt() ?? 0,
       subWaypoints: json["sub_waypoints"] != null ? (json['sub_waypoints'] as List<dynamic>?)
           ?.map((sub) => Waypoint.fromJson(sub as Map<String, dynamic>))
           .toList() : null,
@@ -66,6 +69,7 @@ class Waypoint {
       'lon': longitude,
       'images': images,
       'category': category,
+      'position': position,
       'sub_waypoints': subWaypoints?.map((wp) => wp.toJson()).toList(),
     };
   }
@@ -78,5 +82,11 @@ class Waypoint {
       }
     }
     return allWaypoints;
+  }
+
+  static int compareByPosition(Waypoint a, Waypoint b) {
+    final byPosition = a.position.compareTo(b.position);
+    if (byPosition != 0) return byPosition;
+    return a.id.compareTo(b.id);
   }
 }
