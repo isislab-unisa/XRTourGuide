@@ -20,7 +20,9 @@ from django.shortcuts import redirect, get_object_or_404
 from ..services.tour_portability import TourPortabilityService, TourPortabilityError
 from ..forms.tour_import_form import TourImportForm
 import tempfile
-import os
+from pathlib import Path
+import time
+from django.utils.text import slugify
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
@@ -418,38 +420,26 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
         service = TourPortabilityService()
 
-        fd, temp_zip_path = tempfile.mkstemp(suffix=".zip")
-        os.close(fd)
+        export_dir = Path(tempfile.gettempdir()) / "xr_tour_exports"
+        export_dir.mkdir(parents=True, exist_ok=True)
 
-        archive_path = service.export_tour(
-            tour,
-            include_subtours=True,
-            output_path=temp_zip_path,
+        archive_path = export_dir / f"tour_export_{tour.pk}_{int(time.time())}.zip"
+
+        archive_path = Path(
+            service.export_tour(
+                tour,
+                include_subtours=True,
+                output_path=archive_path,
+            )
         )
 
-        file_handle = open(archive_path, "rb")
         response = FileResponse(
-            file_handle,
+            open(archive_path, "rb"),
             as_attachment=True,
-            filename=f"tour_export_{tour.pk}.zip",
+            filename=f"tour_export_{slugify(tour.title) or tour.pk}.zip",
         )
 
-        original_close = response.close
-
-        def cleanup_close():
-            try:
-                original_close()
-            finally:
-                try:
-                    file_handle.close()
-                except Exception:
-                    pass
-                try:
-                    os.remove(archive_path)
-                except FileNotFoundError:
-                    pass
-
-        response.close = cleanup_close
+        response["Content-Length"] = str(archive_path.stat().st_size)
         return response
     
     def import_tour_view(self, request):

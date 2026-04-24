@@ -36,8 +36,10 @@ class TourPortabilityService:
         tour = self._get_export_tour(tour.pk if hasattr(tour, "pk") else int(tour), include_subtours)
 
         if output_path is None:
-            output_path = Path(tempfile.gettempdir()) / f"tour_export_{slugify(tour.title)}.zip"
-
+            export_dir = Path(tempfile.gettempdir()) / "xr_tour_exports"
+            export_dir.mkdir(parents=True, exist_ok=True)
+            output_path = export_dir / f"tour_export_{slugify(tour.title)}_{int(datetime.now(timezone.utc).timestamp())}.zip"
+            
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
