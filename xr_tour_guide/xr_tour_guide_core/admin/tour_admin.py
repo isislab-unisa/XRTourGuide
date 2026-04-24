@@ -94,10 +94,13 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     def export_button(self, obj):
         url = reverse("admin:xr_tour_guide_core_tour_export", args=[obj.pk])
         return format_html(
-            '<a class="button" href="{}" style="padding:4px 8px; border-radius:6px; background:#2563eb; color:white; text-decoration:none;">📦 Export</a>',
+            '<a class="button" href="{}" data-loader-link="true" '
+            'data-loader-text="Preparing export..." '
+            'data-loader-subtext="Please wait while the tour archive is being generated." '
+            'style="padding:4px 8px; border-radius:6px; background:#2563eb; color:white; text-decoration:none;">📦 Export</a>',
             url,
         )
-
+        
     @admin.display(description=_("Image License"))
     def license_notice(self, obj):
         return mark_safe(f'''

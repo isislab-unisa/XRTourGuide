@@ -242,7 +242,7 @@ class WaypointViewImageAdmin(ModelAdmin):
             return False
         if obj is None:
             return True
-        if not request.user.is_superuser and obj.user != request.user:
+        if not request.user.is_superuser and obj.waypoint.tour.user != request.user:
             return False
         return True
 
@@ -298,7 +298,7 @@ class WaypointViewLinkAdmin(ModelAdmin):
             return False
         if obj is None:
             return True
-        if not request.user.is_superuser and obj.user != request.user:
+        if not request.user.is_superuser and obj.waypoint.tour.user != request.user:
             return False
         return True
          

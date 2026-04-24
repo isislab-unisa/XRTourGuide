@@ -1,9 +1,22 @@
 {% extends "admin/base_site.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block bodyclass %}{{ block.super }} app-xr_tour_guide_core model-tour import-tour{% endblock %}
 
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="preload" as="image" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=3">
+    <script>
+        window.XRLoaderConfig = {
+            logoUrl: "{% static 'admin/img/XRTOURGUIDE.png' %}?v=3"
+        };
+    </script>
+    <script src="{% static 'admin/js/loader.js' %}?v=3"></script>
+{% endblock %}
+
 {% block content %}
+<img id="xr-preloaded-loader-logo" src="{% static 'admin/img/XRTOURGUIDE.png' %}?v=3" alt="" aria-hidden="true"
+    style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;" />
 <div id="content-main">
     <div class="mx-auto max-w-3xl">
         <div class="flex flex-col gap-6">
@@ -31,7 +44,7 @@
                 </ul>
             </div>
 
-            <form method="post" enctype="multipart/form-data" class="flex flex-col gap-6">
+            <form method="post" enctype="multipart/form-data" class="flex flex-col gap-6" data-loader-text="Importing tour..." data-loader-subtext="Uploading archive and recreating tour resources." data-loader-keep-visibile="true">
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
