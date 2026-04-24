@@ -22,5 +22,5 @@ CMD sh -c "\
     # python manage.py makemessages -l it && \
     # python translate_po.py --full && \
     # python manage.py compilemessages && \
-    gunicorn --bind 0.0.0.0:8001 xr_tour_guide.wsgi:application \
+    gunicorn --bind 0.0.0.0:8001 --timeout 900 --graceful-timeout 30 xr_tour_guide.wsgi:application \
 "

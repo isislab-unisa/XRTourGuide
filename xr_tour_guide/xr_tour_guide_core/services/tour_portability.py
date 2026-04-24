@@ -5,10 +5,12 @@ import tempfile
 import zipfile
 from pathlib import Path
 from datetime import datetime, timezone
+import logging
 
 from django.db import transaction
 from django.core.files import File
 from django.utils.text import slugify
+from django.db.models import Prefetch
 
 from ..models import (
     Tour,
@@ -18,6 +20,8 @@ from ..models import (
     MinioStorage,
     Status,
 )
+
+logger = logging.getLogger(__name__)
 
 class TourPortabilityError(Exception):
     pass
@@ -29,120 +33,178 @@ class TourPortabilityService:
     
     def export_tour(self, tour, include_subtours=True, output_path=None):
         storage = MinioStorage()
-        
-        temp_dir = Path(tempfile.mkdtemp(prefix="tour_export_"))
-        try:
-            manifest = {
-                "version": self.EXPORT_VERSION,
-                "exported_at": datetime.now(timezone.utc).isoformat(),
-                "source": "xr_tour_guide",
-                "tour": self._serialize_tour_fields(tour),
-                "waypoints": [],
-                "subtours": [],
-            }
-            
+        tour = self._get_export_tour(tour.pk if hasattr(tour, "pk") else int(tour), include_subtours)
+
+        if output_path is None:
+            output_path = Path(tempfile.gettempdir()) / f"tour_export_{slugify(tour.title)}.zip"
+
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        manifest = {
+            "version": self.EXPORT_VERSION,
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "source": "xr_tour_guide",
+            "tour": self._serialize_tour_fields(tour),
+            "waypoints": [],
+            "subtours": [],
+        }
+
+        with zipfile.ZipFile(
+            output_path,
+            "w",
+            compression=zipfile.ZIP_STORED,
+            allowZip64=True,
+            compresslevel=1,
+        ) as zf:
+            # cover image
             if tour.default_image:
-                rel_path = Path("files/tour") / Path(tour.default_image.name).name
-                self._copy_storage_file(storage, tour.default_image.name, temp_dir / rel_path)
-                manifest["tour"]["default_image"] = rel_path.as_posix()
-                
-            #Waypoints
-            for idx, waypoint in enumerate(tour.waypoints.order_by("position", "id"), start=1):
+                archive_name = f"files/tour/{Path(tour.default_image.name).name}"
+                written = self._write_storage_file_to_zip(
+                    storage,
+                    tour.default_image.name,
+                    zf,
+                    archive_name,
+                )
+                if written:
+                    manifest["tour"]["default_image"] = archive_name
+
+            # waypoints
+            for idx, waypoint in enumerate(tour.waypoints.all(), start=1):
                 wp_data = self._serialize_waypoint_fields(waypoint)
                 wp_prefix = Path("files/waypoints") / f"{idx:04d}"
-                
-                for img_idx, image in enumerate(waypoint.images.order_by("id"), start=1):
+
+                for img_idx, image in enumerate(waypoint.images.all(), start=1):
                     if not image.image:
                         continue
                     ext = Path(image.image.name).suffix or ".bin"
-                    rel_path = wp_prefix / "images" / f"{img_idx:02d}{ext}"
-                    self._copy_storage_file(storage, image.image.name, temp_dir / rel_path)
-                    wp_data["images"].append({
-                        "type": image.type_of_images,
-                        "path": rel_path.as_posix(),
-                    })
-                    
+                    archive_name = (wp_prefix / "images" / f"{img_idx:02d}{ext}").as_posix()
+
+                    written = self._write_storage_file_to_zip(
+                        storage,
+                        image.image.name,
+                        zf,
+                        archive_name,
+                    )
+                    if written:
+                        wp_data["images"].append({
+                            "type": image.type_of_images,
+                            "path": archive_name,
+                        })
+
                 resources_map = {
                     "pdf": waypoint.pdf_item,
                     "audio": waypoint.audio_item,
                     "video": waypoint.video_item,
                     "readme": waypoint.readme_item,
                 }
+
                 for key, field_file in resources_map.items():
-                    if field_file:
-                        ext = Path(field_file.name).suffix or ".bin"
-                        rel_path = wp_prefix / "resources" / f"{key}{ext}"
-                        self._copy_storage_file(storage, field_file.name, temp_dir / rel_path)
-                        wp_data["resources"][key] = rel_path.as_posix()
-                        
-                wp_data["links"] = list(waypoint.links.order_by("id").values_list("link", flat=True))
-                
+                    if not field_file:
+                        continue
+
+                    ext = Path(field_file.name).suffix or ".bin"
+                    archive_name = (wp_prefix / "resources" / f"{key}{ext}").as_posix()
+
+                    written = self._write_storage_file_to_zip(
+                        storage,
+                        field_file.name,
+                        zf,
+                        archive_name,
+                    )
+                    if written:
+                        wp_data["resources"][key] = archive_name
+
+                wp_data["links"] = [link.link for link in waypoint.links.all() if link.link]
                 manifest["waypoints"].append(wp_data)
-                
-            #Subtours
+
+            # subtours
             if include_subtours:
-                for sub_tour in tour.sub_tours.all().order_by("id"):
+                for sub_tour in tour.sub_tours.all():
                     sub_manifest = {
                         "tour": self._serialize_tour_fields(sub_tour),
                         "waypoints": [],
                     }
-                    
+
                     if sub_tour.default_image:
-                        rel_path = (Path("files/subtours") / f"{slugify(sub_tour.title or str(sub_tour.pk))}" / "tour" / Path(sub_tour.default_image.name).name)
-                        self._copy_storage_file(storage, sub_tour.default_image.name, temp_dir / rel_path)
-                        sub_manifest["tour"]["default_image"] = rel_path.as_posix()
-                        
-                    for idx, waypoint in enumerate(sub_tour.waypoints.order_by("position", "id"), start=1):
+                        archive_name = (
+                            Path("files/subtours")
+                            / slugify(sub_tour.title or str(sub_tour.pk))
+                            / "tour"
+                            / Path(sub_tour.default_image.name).name
+                        ).as_posix()
+
+                        written = self._write_storage_file_to_zip(
+                            storage,
+                            sub_tour.default_image.name,
+                            zf,
+                            archive_name,
+                        )
+                        if written:
+                            sub_manifest["tour"]["default_image"] = archive_name
+
+                    for idx, waypoint in enumerate(sub_tour.waypoints.all(), start=1):
                         wp_data = self._serialize_waypoint_fields(waypoint)
-                        wp_prefix = (Path("files/subtours") / f"{slugify(sub_tour.title or str(sub_tour.pk))}" / "waypoints" / f"{idx:04d}")
-                        
-                        for img_idx, image in enumerate(waypoint.images.order_by("id"), start=1):
+                        wp_prefix = (
+                            Path("files/subtours")
+                            / slugify(sub_tour.title or str(sub_tour.pk))
+                            / "waypoints"
+                            / f"{idx:04d}"
+                        )
+
+                        for img_idx, image in enumerate(waypoint.images.all(), start=1):
                             if not image.image:
                                 continue
                             ext = Path(image.image.name).suffix or ".bin"
-                            rel_path = wp_prefix / "images" / f"{img_idx:02d}{ext}"
-                            self._copy_storage_file(storage, image.image.name, temp_dir / rel_path)
-                            wp_data["images"].append({
-                                "type": image.type_of_images,
-                                "path": rel_path.as_posix(),
-                            })
-                            
-                        resource_map = {
+                            archive_name = (wp_prefix / "images" / f"{img_idx:02d}{ext}").as_posix()
+
+                            written = self._write_storage_file_to_zip(
+                                storage,
+                                image.image.name,
+                                zf,
+                                archive_name,
+                            )
+                            if written:
+                                wp_data["images"].append({
+                                    "type": image.type_of_images,
+                                    "path": archive_name,
+                                })
+
+                        resources_map = {
                             "pdf": waypoint.pdf_item,
                             "audio": waypoint.audio_item,
                             "video": waypoint.video_item,
                             "readme": waypoint.readme_item,
                         }
-                        
-                        for key, field_file in resource_map.items():
-                            if field_file:
-                                ext = Path(field_file.name).suffix or ".bin"
-                                rel_path = wp_prefix / key / f"{key}{ext}"
-                                self._copy_storage_file(storage, field_file.name, temp_dir / rel_path)
-                                wp_data["resources"][key] = rel_path.as_posix()
-                                
-                        wp_data["links"] = list(waypoint.links.order_by("id").values_list("link", flat=True))
-                        
+
+                        for key, field_file in resources_map.items():
+                            if not field_file:
+                                continue
+
+                            ext = Path(field_file.name).suffix or ".bin"
+                            archive_name = (wp_prefix / "resources" / f"{key}{ext}").as_posix()
+
+                            written = self._write_storage_file_to_zip(
+                                storage,
+                                field_file.name,
+                                zf,
+                                archive_name,
+                            )
+                            if written:
+                                wp_data["resources"][key] = archive_name
+
+                        wp_data["links"] = [link.link for link in waypoint.links.all() if link.link]
                         sub_manifest["waypoints"].append(wp_data)
-                        
+
                     manifest["subtours"].append(sub_manifest)
-                    
-            manifest_path = temp_dir / "manifest.json"
-            manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
-            
-            if output_path is None:
-                output_path = temp_dir.parent / f"tour_export_{slugify(tour.title)}.zip"
-            output_path = Path(output_path)
-            
-            with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-                for file_path in temp_dir.rglob("*"):
-                    if file_path.is_file():
-                        zf.write(file_path, file_path.relative_to(temp_dir))
-                        
-            return str(output_path)
-        
-        finally:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+
+            zf.writestr(
+                "manifest.json",
+                json.dumps(manifest, indent=2, ensure_ascii=False),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+
+        return str(output_path)
             
     @transaction.atomic
     def import_tour(self, archive_file, owner=None, create_copy=True):
@@ -368,3 +430,53 @@ class TourPortabilityService:
             if not str(member_path).startswith(str(target_dir)):
                 raise TourPortabilityError(f"Unsafe file path detected in ZIP: {member.filename}")
             zip_file.extract(member, target_dir)
+            
+    def _waypoint_export_queryset(self):
+        return Waypoint.objects.order_by("position", "id").prefetch_related(
+            Prefetch("images", queryset=WaypointViewImage.objects.order_by("id")),
+            Prefetch("links", queryset=WaypointViewLink.objects.order_by("id")),
+        )
+        
+    def _get_export_tour(self, tour_id, include_subtours=True):
+        qs = Tour.objects.prefetch_related(
+            Prefetch("waypoints", queryset=self._waypoint_export_queryset())
+        )
+        
+        if include_subtours:
+            subtour_qs = Tour.objects.order_by("id").prefetch_related(
+                Prefetch("waypoints", queryset=self._waypoint_export_queryset())
+            )
+            qs = qs.prefetch_related(Prefetch("sub_tours", queryset=subtour_qs))
+            
+        return qs.get(pk=tour_id)
+    
+    def _compression_for_filename(self, filename):
+        ext = Path(filename).suffix.lower()
+        if ext in {
+            ".jpg", ".jpeg", ".png", ".gif", ".webp",
+            ".mp4", ".mkv", ".mov",
+            ".mp3", ".wav",
+            ".pdf", ".zip"
+        }:
+            return zipfile.ZIP_STORED
+        return zipfile.ZIP_DEFLATED
+    
+    def _write_storage_file_to_zip(self, storage, source_name, zf, archive_name):
+        if not source_name:
+            return None
+        
+        try:
+            with storage.open(source_name, 'rb') as src:
+                info = zipfile.ZipInfo(archive_name)
+                info.compress_type = self._compression_for_filename(source_name)
+                info.date_time = datetime.now(timezone.utc).timetuple()[:6]
+                
+                with zf.open(info, 'w') as dst:
+                    shutil.copyfileobj(src, dst, length=1024*1024)
+                    
+            return archive_name
+        except Exception as exc:
+            logger.warning('Skipping export file %s: %s', source_name, exc)
+            return None
+        
+    

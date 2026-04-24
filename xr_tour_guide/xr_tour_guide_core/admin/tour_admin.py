@@ -421,13 +421,35 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         fd, temp_zip_path = tempfile.mkstemp(suffix=".zip")
         os.close(fd)
 
-        archive_path = service.export_tour(tour, include_subtours=True, output_path=temp_zip_path)
+        archive_path = service.export_tour(
+            tour,
+            include_subtours=True,
+            output_path=temp_zip_path,
+        )
 
+        file_handle = open(archive_path, "rb")
         response = FileResponse(
-            open(archive_path, "rb"),
+            file_handle,
             as_attachment=True,
             filename=f"tour_export_{tour.pk}.zip",
         )
+
+        original_close = response.close
+
+        def cleanup_close():
+            try:
+                original_close()
+            finally:
+                try:
+                    file_handle.close()
+                except Exception:
+                    pass
+                try:
+                    os.remove(archive_path)
+                except FileNotFoundError:
+                    pass
+
+        response.close = cleanup_close
         return response
     
     def import_tour_view(self, request):
