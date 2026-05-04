@@ -15,6 +15,7 @@ import threading
 import subprocess
 import base64
 import dotenv
+import json
 
 dotenv.load_dotenv()
 
@@ -41,6 +42,7 @@ class Request(BaseModel):
     model_url: str | None = None
     poi_name: str | None = None
     poi_id: str | None = None
+    waypoint_gps: dict | None = None
 
 
 app = FastAPI()
@@ -132,6 +134,7 @@ def run_training_subproc(
     tflite_model: str,
     tour_id: int,
     skip_pytorch: bool = False,
+    waypoint_gps_json: str | None = None,
 ):
     try:
         cmd = [
@@ -146,6 +149,9 @@ def run_training_subproc(
             "--tour-id",
             str(tour_id),
         ]
+        
+        if waypoint_gps_json:
+            cmd.extend(["--waypoint-gps-json", waypoint_gps_json])
         
         if skip_pytorch:
             cmd.append("--skip-pytorch")
@@ -171,8 +177,14 @@ def run_training_subproc(
 
 def run_train(request: Request, view_dir: str, data_path: str):
     print("Content of directory:", os.listdir(data_path), flush=True)
-    tflite_model_path = "./resnet50.tflite"
+    tflite_model_path = "./EfficientNetLite0.tflite"
     try:
+        waypoint_gps_json = None
+        if request.waypoint_gps is not None:
+            waypoint_gps_json = os.path.join(view_dir, "waypoint_gps.json")
+            with open(waypoint_gps_json, "w", encoding="utf-8") as f:
+                json.dump(request.waypoint_gps, f, ensure_ascii=False, indent=2)
+        
         # RUN THE FULL PIPELINE
         result = run_training_subproc(
             input_dir=data_path,
@@ -180,6 +192,7 @@ def run_train(request: Request, view_dir: str, data_path: str):
             tflite_model=tflite_model_path,
             tour_id=int(request.poi_id),
             skip_pytorch=False,
+            waypoint_gps_json=waypoint_gps_json,
         )
         
         if not result:
