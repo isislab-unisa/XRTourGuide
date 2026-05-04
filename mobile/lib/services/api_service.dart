@@ -451,22 +451,19 @@ class ApiService {
     }
   }
 
-  Future<Response> inference(String imageBase64, int tourId, {String? baseUrl}) async {
+  Future<Response> inference(String imageBase64, int tourId, double? gpsLat, double? gpsLon, double? gpsAccuracyM, {String? baseUrl}) async {
     try {
       final formData = FormData.fromMap({
         'img': imageBase64,
         'tour_id': tourId,
+        if (gpsLat != null) 'gps_lat': gpsLat,
+        if (gpsLon != null) 'gps_lon': gpsLon,
+        if (gpsAccuracyM != null) 'gps_accuracy_m': gpsAccuracyM,
       });
 
-      var results_data = {};
       final response = await dio.post('/inference/', data: formData, options: _getOptions(baseUrl: baseUrl));
-      // if (response.data.get("result") == -1) {
-      //   results_data["result"] = -1;
-      //   results_data["available_resources"] = response.data.get("available_resources");
-      // } else {
-      //   return response.data["result"];
-      // }
       return response;
+      
     } catch (e) {
       print('Failed inference: $e');
       rethrow;

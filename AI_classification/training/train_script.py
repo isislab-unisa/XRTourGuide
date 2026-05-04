@@ -14,9 +14,6 @@ import argparse
 import sys
 import traceback
 import numpy as np
-import torch
-import torchvision.models as models
-import torchvision.transforms as transforms
 from PIL import Image
 from tqdm import tqdm
 import cv2
@@ -32,7 +29,6 @@ from common.preprocessing import (
     get_reference_variant_weights,
 )
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 INPUT_SIZE = 224
 MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
@@ -78,7 +74,7 @@ def load_waypoint_gps_metadata(metadata_path: Path | None):
     with open(metadata_path, "r", encoding="utf-8") as f:
         data = json.load(f)
         
-    if isinstance(data, dict) and "waypoints" in data and isinstance(data["waypoint"], list):
+    if isinstance(data, dict) and "waypoints" in data and isinstance(data["waypoints"], list):
         normalized = {}
         for item in data["waypoints"]:
             name = item.get("name") or item.get("waypoint_name")

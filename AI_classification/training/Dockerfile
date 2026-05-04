@@ -11,10 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 libgomp1 \
 && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY training/requirements.txt ./requirements.txt
 RUN pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
 
 COPY . .
+
+WORKDIR /workspace/training
 
 EXPOSE 8090
 

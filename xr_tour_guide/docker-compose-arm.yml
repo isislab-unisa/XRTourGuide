@@ -138,7 +138,9 @@ services:
   ai_training:
     platform: linux/arm64/v8
     # image: cromo_ai_classification:training
-    build: ../AI_classification/training
+    build:
+      context: ../AI_classification
+      dockerfile: training/Dockerfile
     container_name: ai_training_tour_guide
     environment:
       - PYTHONUNBUFFERED=1
@@ -152,7 +154,9 @@ services:
 
   ai_inference:
     platform: linux/arm64/v8
-    build: ../AI_classification/inference
+    build:
+      context: ../AI_classification
+      dockerfile: inference/Dockerfile
     container_name: ai_inference_tour_guide
     environment:
       - PYTHONUNBUFFERED=1

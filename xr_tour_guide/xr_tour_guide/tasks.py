@@ -37,6 +37,7 @@ def call_api_and_save(self, tour_id):
             raise self.retry(exc=lock_error, countdown=10)
         
         print("Lock acquisito, procedo con la build...")
+        waypoints_gps = []
         try:
             storage = MinioStorage()
             if not storage.exists(f"{tour.pk}/data/"):
@@ -59,6 +60,17 @@ def call_api_and_save(self, tour_id):
                             storage.save(f"{tour.pk}/data/train/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
                         for image in waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value)[train:]:
                             storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split('/')[-1]}", image.image)
+                        
+                    lat = float(waypoint.coordinates.split(",")[0].strip()) if waypoint.coordinates else None
+                    lon = float(waypoint.coordinates.split(",")[1].strip()) if waypoint.coordinates else None
+                    if lat is not None and lon is not None:
+                        gps_info = {
+                            "name": waypoint.title,
+                            "lat": lat,
+                            "lon": lon,
+                            "radius_m": 65
+                        }
+                        waypoints_gps.append(gps_info)
                             
             waypoints = tour.waypoints.all()
             for waypoint in waypoints:
@@ -77,6 +89,19 @@ def call_api_and_save(self, tour_id):
                     for image in images[train:]:
                         storage.save(f"{tour.pk}/data/test/{waypoint.title}/{image.image.name.split("/")[-1]}", image.image)
                         
+                #GPS COORD
+                if waypoint.coordinates is not None:
+                    coord = waypoint.coordinates
+                    lat = float(coord.split(",")[0].strip())
+                    lon = float(coord.split(",")[1].strip())
+                    gps_info = {
+                        "name": waypoint.title,
+                        "lat": lat,
+                        "lon": lon,
+                        "radius_m": 65
+                    }
+                    waypoints_gps.append(gps_info)
+                        
         except Exception as e:
             print(f"Errore nella creazione delle cartelle per il train e test: {e}")
         try:
@@ -84,6 +109,9 @@ def call_api_and_save(self, tour_id):
                 "poi_name": tour.title,
                 "poi_id": str(tour.id),
                 "data_url": f"{tour_id}",
+                "waypoint_gps": {
+                    "waypoints": waypoints_gps
+                }
             }
 
             try:
@@ -92,7 +120,7 @@ def call_api_and_save(self, tour_id):
                 response = requests.post(url, headers=headers, json=payload, verify=False)
             except Exception as e:  
                 print(f"Errore nella chiamata API: {e}")
-                               
+                
             print("Response status code:", response.status_code)
             print(response)
             

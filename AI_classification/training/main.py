@@ -1,8 +1,13 @@
 import sys
 import os
 import traceback
+from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+CURRENT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = CURRENT_DIR.parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -127,6 +132,11 @@ def write_s3_file(file_path, remote_path):
     except Exception as e:
         print(f"Error writing file {file_path} to S3: {e}", flush=True)
 
+def _stream_output(stream, prefix=""):
+    for line in iter(stream.readline, ""):
+        if line:
+            print(f"{prefix}{line.rstrip()}", flush=True)
+    stream.close()
 
 def run_training_subproc(
     input_dir: str,
@@ -137,9 +147,12 @@ def run_training_subproc(
     waypoint_gps_json: str | None = None,
 ):
     try:
+        train_script = CURRENT_DIR / "train_script.py"
+        
         cmd = [
             "python",
-            "train_script.py",
+            "-u",
+            str(train_script),
             "--input-dir",
             input_dir,
             "--output-dir",
@@ -158,15 +171,37 @@ def run_training_subproc(
         
         print("Running command:", " ".join(cmd), flush=True)
 
-        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+        # result = subprocess.run(cmd, check=False, capture_output=True, text=True, cwd=str(CURRENT_DIR))
         
-        if result.stdout:
-            print("Training output:", result.stdout, flush=True)
+        # if result.stdout:
+        #     print("Training output:", result.stdout, flush=True)
             
-        if result.stderr:
-            print("Training error output:", result.stderr, flush=True)
+        # if result.stderr:
+        #     print("Training error output:", result.stderr, flush=True)
+        
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(CURRENT_DIR),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+        
+        threads = [
+            threading.Thread(target=_stream_output, args=(proc.stdout, "Training output")),
+            threading.Thread(target=_stream_output, args=(proc.stderr, "Training error output")),
+        ]
+        for t in threads:
+            t.daemon = True
+            t.start()
             
-        if result.returncode != 0:
+        returncode = proc.wait()
+        
+        for t in threads:
+            t.join()
+            
+        if returncode != 0:
             raise Exception(f"Training subprocess failed with return code {result.returncode}")
         
         return True
@@ -177,7 +212,7 @@ def run_training_subproc(
 
 def run_train(request: Request, view_dir: str, data_path: str):
     print("Content of directory:", os.listdir(data_path), flush=True)
-    tflite_model_path = "./EfficientNetLite0.tflite"
+    tflite_model_path = str(CURRENT_DIR / "./EfficientNetLite0.tflite")
     try:
         waypoint_gps_json = None
         if request.waypoint_gps is not None:
@@ -202,17 +237,15 @@ def run_train(request: Request, view_dir: str, data_path: str):
         offline_model_path = os.path.join(view_dir, "training_data.json")
         print("AAAAAAAA", model_path, flush=True)
         
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found at {model_path}")
         if not os.path.exists(offline_model_path):
             raise FileNotFoundError(f"Offline model file not found at {offline_model_path}")
         
         print("Files exist, proceeding to upload to S3", flush=True)
         
         # LOAD ON MINIO
-        write_s3_file(
-            model_path, f"{request.poi_id}/model.pt"
-        )
+        # write_s3_file(
+        #     model_path, f"{request.poi_id}/model.pt"
+        # )
         
         write_s3_file(
             offline_model_path, f"{request.poi_id}/training_data.json"
@@ -221,7 +254,7 @@ def run_train(request: Request, view_dir: str, data_path: str):
         callback_payload = {
             "poi_id": int(request.poi_id),
             "poi_name": request.poi_name,
-            "model_url": f"{request.poi_id}/model.pt",
+            "model_url": f"{request.poi_id}/training_data.json",
             "index_url": f"{request.poi_id}/training_data.json",
             "status": "COMPLETED",
         }

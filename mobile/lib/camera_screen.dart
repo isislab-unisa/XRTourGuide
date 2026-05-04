@@ -498,7 +498,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   Future<void> _initializeOfflineRecognizer() async {
     try {
       _offlineRecognitionService = OfflineRecognitionService();
-      await _offlineRecognitionService!.initEmbedderFromAsset('assets/models/ResNet50.tflite');
+      await _offlineRecognitionService!.initEmbedderFromAsset('assets/models/EfficientNetLite0.tflite');
       await _offlineRecognitionService!.initIndexForTour(widget.tourId);
       print('Offline recognizer initialized for tour ${widget.tourId}');
     } catch (e) {
@@ -1490,7 +1490,17 @@ Future<void> _spawnTotemIcons(
           'orientation': orientation,
         });
 
-        waypointId = await _offlineRecognitionService!.matchFromImageBytes(rotatedBytes, sensorOrientation: 0);
+        // waypointId = await _offlineRecognitionService!.matchFromImageBytes(rotatedBytes, sensorOrientation: 0);
+
+        waypointId = await _offlineRecognitionService!.matchFromImageBytes(
+          rotatedBytes,
+          sensorOrientation: 0,
+          useGeometry: false,
+          queryLat: _currentPosition?.latitude,
+          queryLon: _currentPosition?.longitude,
+          queryAccuracyM: _currentPosition?.accuracy,
+        );
+
         if (waypointId != -1) {
           availableResources = {
             "readme": 0,
@@ -1518,7 +1528,16 @@ Future<void> _spawnTotemIcons(
           'orientation': _cameraController!.description.sensorOrientation,
         });
         final String base64Image = base64Encode(rotatedBytes);
-        final result = await _apiService.inference(base64Image, widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
+
+        final result = await _apiService.inference(
+          base64Image,
+          widget.tourId,
+          _currentPosition?.latitude,
+          _currentPosition?.longitude,
+          _currentPosition?.accuracy,
+          baseUrl: _apiService.getCurrentBaseUrl()
+        );
+
         waypointId = result.data["result"] ?? -1;
         availableResources = result.data["available_resources"] ?? {};
         print("AVAILABLE RESOURCES: $availableResources");

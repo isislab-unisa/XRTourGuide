@@ -45,13 +45,14 @@ def build(request):
     operation_summary="Complete the build process for a tour",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=['poi_name', 'poi_id', 'model_url', 'status'],
+        required=['poi_name', 'poi_id', 'index_url', 'status'],
         properties={
             'poi_name': openapi.Schema(type=openapi.TYPE_STRING, description='Name of the POI/tour'),
             'poi_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the POI/tour'),
-            'model_url': openapi.Schema(type=openapi.TYPE_STRING, description='URL of the model'),
+            'index_url': openapi.Schema(type=openapi.TYPE_STRING, description='URL of the JSON index'),
+            'model_url': openapi.Schema(type=openapi.TYPE_STRING, description='Legacy URL of the PyTorch model', nullable=True),
             'status': openapi.Schema(type=openapi.TYPE_STRING, description='Build status (COMPLETED or FAILED)'),
-        },
+        }
     ),
     responses={
         200: openapi.Response(description="Build completed successfully"),
@@ -66,6 +67,7 @@ def complete_build(request):
     storage = MinioStorage()
     tour_title = request.data.get('poi_name')
     tour_id = request.data.get('poi_id')
+    index_url = request.data.get('index_url')
     model_url = request.data.get('model_url')
     status = request.data.get('status')
 
@@ -74,7 +76,7 @@ def complete_build(request):
     if status == "COMPLETED":
         try:
             tour = Tour.objects.get(pk=int(tour_id))
-            tour.model_path = model_url
+            tour.model_path = index_url
             tour.status = "BUILT"
             tour.save()
         except Tour.DoesNotExist:
@@ -206,16 +208,20 @@ def inference(request):
 
     payload = {
         "poi_id": str(tour_id),
-        "inference_image": request.data.get('img'),
-        "model_url": f"{tour.pk}/model.pt",
         "poi_name": tour.title,
+        "inference_image": request.data.get('img'),
+        "model_url": f"{tour.pk}/training_data.json",
+        "index_url": f"{tour.pk}/training_data.json",
+        "gps_lat": request.data.get('gps_lat'),
+        "gps_lon": request.data.get('gps_lon'),
+        "gps_accuracy_m": request.data.get('gps_accuracy_m'),
     }
     url = os.getenv("INFERENCE_ENDPOINT")
     headers = {"Content-type": "application/json"}
     response = requests.post(url, headers=headers, json=payload)
 
     result = response.json()
-    print(f"RESPONSE: {result.get("message")}", flush=True)
+    print(f"RESPONSE: {result.get('message')}", flush=True)
 
     print("INFERENCE DONE", flush=True)
     

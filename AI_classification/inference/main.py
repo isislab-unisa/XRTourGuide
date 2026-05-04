@@ -1,7 +1,12 @@
 import sys
 import os
+from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+CURRENT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = CURRENT_DIR.parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
@@ -129,7 +134,12 @@ def write_s3_file(file_path, remote_path):
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}    
-    
+
+def _stream_output(stream, prefix=""):
+    for line in iter(stream.readline, ""):
+        if line:
+            print(f"{prefix}{line.rstrip()}", flush=True)
+    stream.close()    
 
 @app.post("/inference")
 async def inference(request: Request):
@@ -187,11 +197,14 @@ async def inference(request: Request):
             f.write(input_image_bytes)
         print("DATA DOWNLOADED", flush=True)
         
-        tflite_model_path = "./EfficientNetLite0.tflite"
+        tflite_model_path = str(CURRENT_DIR / "./EfficientNetLite0.tflite")
+        
+        inference_script = CURRENT_DIR / "inference_script.py"
 
         cmd = [
             "python",
-            "inference_script.py",
+            "-u",
+            str(inference_script),
             "--image-path", image_path,
             "--index-json", model_path,
             "--tflite-model", tflite_model_path,
@@ -210,26 +223,61 @@ async def inference(request: Request):
             cmd.append("--skip-geometry")
         
         print(f"Running command: {' '.join(cmd)}", flush=True)
-        result_proc = subprocess.run(cmd, capture_output=True, text=True)
         
-        print(result_proc.stdout, flush=True)
+        # result_proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(CURRENT_DIR))
+        # print(result_proc.stdout, flush=True)
+        
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(CURRENT_DIR),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1
+        )
+        
+        stdout_lines = []
+        stderr_lines = []
+        
+        stdout_thread = threading.Thread(
+            target=_stream_output,
+            args=(proc.stdout, "Inference output: ", stdout_lines),
+            daemon=True
+        )
+        stderr_thread = threading.Thread(
+            target=_stream_output,
+            args=(proc.stderr, "Inference error output: ", stderr_lines),
+            daemon=True
+        )
+        
+        stdout_thread.start()
+        stderr_thread.start()
+        
+        returncode = proc.wait()
+        
+        stdout_thread.join()
+        stderr_thread.join()
+        
+        result_str = "\n".join(stdout_lines).strip()
+        result_err = "\n".join(stderr_lines).strip()
 
-        if result_proc.returncode != 0:
-            print("Inference failed:", result_proc.stderr, flush=True)
+        if returncode != 0:
+            print("Inference failed:", result_err, flush=True)
             raise CustomHTTPException(
                 status_code=500,
-                detail=f"Inference failed: {result_proc.stderr}",
+                detail=f"Inference failed: {result_err}",
                 error_code=1006
             )
 
         print("INFERENCE DONE", flush=True)
-        result_str = result_proc.stdout.strip()
 
         if "Recognized waypoint:" in result_str:
             print("Inference successful:", result_str)
             result = result_str.split("Recognized waypoint: ")[1].strip()
         elif "No matching waypoint found." in result_str:
             result = "No matching waypoint found."
+        else:
+            result = result_str or "Inference completed with unrecognized output format."
 
         shutil.rmtree(data_dir, ignore_errors=True)
 

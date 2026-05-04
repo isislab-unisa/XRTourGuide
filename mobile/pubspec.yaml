@@ -126,7 +126,7 @@ flutter:
     - assets/int-exterior.jpg
     - assets/things.png
     - assets/translations/
-    - assets/models/ResNet50.tflite
+    - assets/models/EfficientNetLite0.tflite
     - assets/models/
     - assets/models/AR/totem_base/
     - assets/models/AR/totem_body/
