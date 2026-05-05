@@ -54,7 +54,7 @@ GEOMETRY_RESCUE_MIN_MARGIN = 0.015
 
 TOP_WAYPOINTS_TO_VERIFY = 5
 TOP_ITEMS_FOR_WAYPOINT_SCORE = 3
-MULTI_VIEW_ENABLED = True
+MULTI_VIEW_ENABLED = False #TODO: valutare effetiva efficacia
 
 GPS_PRIOR_WEIGHT = 0.20
 GPS_DEFAULT_RADIUS_M = 75.0
@@ -713,53 +713,40 @@ def apply_gps_prior_to_ranked(ranked_waypoints, query_lat, query_lon, query_accu
     adjusted.sort(key=lambda x: x["final_score"], reverse=True)
     return adjusted
 
-def main():
-    parser = argparse.ArgumentParser(description="Classifica una query usando indice TFLite/JSON.")
-    parser.add_argument("--image-path", required=True, help="Percorso immagine di query")
-    parser.add_argument("--index-json", required=True, help="Percorso training_data.json")
-    parser.add_argument("--tflite-model", required=True, help="Percorso modello TFLite")
-    parser.add_argument(
-        "--skip-geometry",
-        action="store_true",
-        help="Compatibilità: pipeline embedding-only.",
-    )
-    parser.add_argument("--gps-lat", type=float, default=None, help="Latitudine GPS della query")
-    parser.add_argument("--gps-lon", type=float, default=None, help="Longitudine GPS della query")
-    parser.add_argument("--gps-accuracy-m", type=float, default=GPS_DEFAULT_ACCURACY_M, help="Precisione GPS della query in metri")
-    args = parser.parse_args()
+def prepare_index_content(waypoint_index):
+    return {
+        "waypoint_index": waypoint_index,
+        "centroids": compute_waypoint_centroids(waypoint_index),
+        "calibrations": calibrate_index_from_originals(waypoint_index),
+        "view_weights": get_query_view_weights(),
+    }
 
-    if not os.path.exists(args.index_json):
-        print(f"Indice JSON non trovato: {args.index_json}")
-        print("No matching waypoint found.")
-        return None
-
-    if not os.path.exists(args.tflite_model):
-        print(f"Modello TFLite non trovato: {args.tflite_model}")
-        print("No matching waypoint found.")
-        return None
-
-    with open(args.index_json, "r", encoding="utf-8") as f:
-        waypoint_index = json.load(f)
-
-    interpreter = load_tflite_interpreter(Path(args.tflite_model))
-
-    print(f"\n📸 Query: {args.image_path}")
-
+def run_inference(
+    image_path,
+    context,
+    interpreter,
+    skip_geometry = False,
+    gps_lat = None,
+    gps_lon = None,
+    gps_accuracy_m = GPS_DEFAULT_ACCURACY_M,
+):
+    waypoint_index = context["waypoint_index"]
+    centroids = context["centroids"]
+    calibration = context["calibrations"]
+    view_weights = context["view_weights"]
+    
     if MULTI_VIEW_ENABLED:
         query_embeddings = extract_query_embeddings_multi_view_tflite(
-            args.image_path,
+            image_path,
             interpreter,
         )
     else:
-        image = Image.open(args.image_path).convert("RGB")
+        image = Image.open(image_path).convert("RGB")
         processed = preprocess_image_dart_compatible(image)
         query_embeddings = {"center": run_tflite_embedder(interpreter, processed)}
-
-    view_weights = get_query_view_weights()
-    centroids = compute_waypoint_centroids(waypoint_index)
-    calibration = calibrate_index_from_originals(waypoint_index)
-    quality = assess_image_quality(args.image_path)
-
+        
+    quality = assess_image_quality(image_path)
+    
     ranked_waypoints = rank_waypoints_by_similarity(
         query_embeddings,
         waypoint_index,
@@ -768,21 +755,21 @@ def main():
         view_weights=view_weights,
     )
     
-    if args.gps_lat is not None and args.gps_lon is not None:
+    if gps_lat is not None and gps_lon is not None:
         ranked_waypoints = apply_gps_prior_to_ranked(
             ranked_waypoints,
-            query_lat=args.gps_lat,
-            query_lon=args.gps_lon,
-            query_accuracy_m=args.gps_accuracy_m,
+            query_lat = gps_lat,
+            query_lon = gps_lon,
+            query_accuracy_m=gps_accuracy_m,
         )
-    
+        
     if not ranked_waypoints:
         print("No matching waypoint found.")
         return None
-
+    
     print("\nTop waypoint candidates:")
-    if args.gps_lat is not None and args.gps_lon is not None:
-        print(f"(GPS prior applied with query location: lat={args.gps_lat}, lon={args.gps_lon}, accuracy={args.gps_accuracy_m}m)")
+    if gps_lat is not None and gps_lon is not None:
+        print(f"(GPS prior applied with query location: lat={gps_lat}, lon={gps_lon}, accuracy={gps_accuracy_m}m)")
         for candidate in ranked_waypoints[:TOP_WAYPOINTS_TO_VERIFY]:
             print(
                 f"  - {candidate['waypoint_name']} | "
@@ -804,37 +791,38 @@ def main():
                 f"votes={candidate['view_vote_count']}"
             )
 
+    
     top1 = ranked_waypoints[0]
     top2_final = ranked_waypoints[1]["final_score"] if len(ranked_waypoints) > 1 else 0.0
     top2_orig = ranked_waypoints[1]["original_consensus_score"] if len(ranked_waypoints) > 1 else 0.0
     top2_gps_adjustment = ranked_waypoints[1].get("gps_adjustment", 0.0) if len(ranked_waypoints) > 1 else 0.0
-
+    
     final_margin = top1["final_score"] - top2_final
     original_margin = top1["original_consensus_score"] - top2_orig
-
+    
     vote_ratio = top1["view_vote_ratio"]
     original_vote_ratio = top1["original_view_vote_ratio"]
     
     quality_bump = float(quality["threshold_bump"])
-
+    
     min_similarity_threshold = calibration["min_similarity_threshold"] + min(quality_bump, 0.04)
     soft_accept_threshold = calibration["soft_accept_threshold"] + quality_bump
     direct_accept_threshold = max(
         calibration["direct_accept_threshold"] + quality_bump,
-        soft_accept_threshold + 0.045,
+        soft_accept_threshold + 0.045
     )
-
+    
     top1_geometry = {"passed": False, "strong": False, "inliers": 0, "ratio": 0.0, "refs_checked": 0}
     top2_geometry = {"passed": False, "strong": False, "inliers": 0, "ratio": 0.0, "refs_checked": 0}
 
-    if not args.skip_geometry:
-        top1_geometry = verify_candidate_geometry(args.image_path, top1, waypoint_index)
+    if not skip_geometry:
+        top1_geometry = verify_candidate_geometry(image_path, top1, waypoint_index)
 
         if len(ranked_waypoints) > 1 and (
             final_margin < 0.10 or top2_final >= soft_accept_threshold - 0.04
         ):
-            top2_geometry = verify_candidate_geometry(args.image_path, ranked_waypoints[1], waypoint_index)
-
+            top2_geometry = verify_candidate_geometry(image_path, ranked_waypoints[1], waypoint_index)
+    
     print(
         f"Calibration -> neg_p90={calibration['negative_p90']:.4f} | "
         f"neg_p95={calibration['negative_p95']:.4f} | "
@@ -874,7 +862,7 @@ def main():
         f"vote_ratio={vote_ratio:.2f} | "
         f"orig_vote_ratio={original_vote_ratio:.2f}"
     )
-    
+
     variant_only_risk = (
         top1["original_consensus_score"] < ORIGINAL_MIN_FOR_SOFT and
         top1["consensus_score"] > top1["original_consensus_score"] + 0.08
@@ -923,10 +911,10 @@ def main():
             not top1_geometry["passed"]
         )
     )
-    
+
     gps_promoted_condition = (
-        args.gps_lat is not None
-        and args.gps_lon is not None
+        gps_lat is not None
+        and gps_lon is not None
         and top1.get("gps_available", False)
         and top1.get("gps_distance_m") is not None
         and top1.get("gps_radius_m") is not None
@@ -938,7 +926,7 @@ def main():
         and (top1.get("gps_adjustment", 0.0) - top2_gps_adjustment) >= 0.12
         and top1["gps_distance_m"] <= max(
             top1["gps_radius_m"],
-            args.gps_accuracy_m or GPS_DEFAULT_ACCURACY_M,
+            gps_accuracy_m or GPS_DEFAULT_ACCURACY_M,
             GPS_DEFAULT_RADIUS_M,
         )
         and not top2_geometry.get("strong", False)
@@ -960,15 +948,62 @@ def main():
     )
 
     if top1["final_score"] < min_similarity_threshold and not geometry_rescue_condition:
-        print("No matching waypoint found.")
+        print("No matching waypoint found")
         return None
 
     if direct_condition or gps_promoted_condition or soft_condition or geometry_rescue_condition:
         print(f"Recognized waypoint: {top1['waypoint_name']}")
         return top1["waypoint_name"]
 
-    print("No matching waypoint found.")
+    print("No matching waypoint found")
     return None
+
+def main():
+    parser = argparse.ArgumentParser(description="Classifica una query usando indice TFLite/JSON.")
+    parser.add_argument("--image-path", required=True, help="Percorso immagine di query")
+    parser.add_argument("--index-json", required=True, help="Percorso training_data.json")
+    parser.add_argument("--tflite-model", required=True, help="Percorso modello TFLite")
+    parser.add_argument(
+        "--skip-geometry",
+        action="store_true",
+        help="Compatibilità: pipeline embedding-only.",
+    )
+    parser.add_argument("--gps-lat", type=float, default=None, help="Latitudine GPS della query")
+    parser.add_argument("--gps-lon", type=float, default=None, help="Longitudine GPS della query")
+    parser.add_argument("--gps-accuracy-m", type=float, default=GPS_DEFAULT_ACCURACY_M, help="Precisione GPS della query in metri")
+    args = parser.parse_args()
+
+    if not os.path.exists(args.index_json):
+        print(f"Indice JSON non trovato: {args.index_json}")
+        print("No matching waypoint found.")
+        return None
+
+    if not os.path.exists(args.tflite_model):
+        print(f"Modello TFLite non trovato: {args.tflite_model}")
+        print("No matching waypoint found.")
+        return None
+
+    with open(args.index_json, "r", encoding="utf-8") as f:
+        waypoint_index = json.load(f)
+
+    interpreter = load_tflite_interpreter(Path(args.tflite_model))
+    context = prepare_index_content(waypoint_index)
+
+    print(f"\n📸 Query: {args.image_path}")
+    result = run_inference(
+        image_path=args.image_path,
+        context=context,
+        interpreter=interpreter,
+        skip_geometry=args.skip_geometry,
+        gps_lat=args.gps_lat,
+        gps_lon=args.gps_lon,
+        gps_accuracy_m=args.gps_accuracy_m,
+    )
+
+    if result:
+        print(f"Recognized waypoint: {result}")
+    else:
+        print("No matching waypoint found.")
 
 if __name__ == "__main__":
     main()

@@ -14,12 +14,17 @@ from fastapi.middleware.cors import CORSMiddleware
 import boto3
 from urllib.parse import urlparse
 import shutil
-import requests
 import threading
-import subprocess
 import base64
 from fastapi.responses import JSONResponse
 import dotenv
+import json
+import tempfile
+from inference_script import (
+    load_tflite_interpreter,
+    prepare_index_content,
+    run_inference,
+)
 
 dotenv.load_dotenv()
 
@@ -72,6 +77,14 @@ s3 = boto3.client(
     aws_access_key_id=os.getenv("MINIO_ROOT_USER"),
     aws_secret_access_key=os.getenv("MINIO_ROOT_PASSWORD"),
 )
+
+TFLITE_MODEL_PATH = str(CURRENT_DIR / "./EfficientNetLite0.tflite")
+
+INTERPRETER = load_tflite_interpreter(TFLITE_MODEL_PATH)
+INTERPRETER_LOCK = threading.Lock()
+
+TOUR_INDEX_CACHE = {}
+TOUR_INDEX_CACHE_LOCK = threading.Lock()
 
 def download_minio_folder(prefix: str, local_dir: str, s3_client):
     """
@@ -130,6 +143,66 @@ def write_s3_file(file_path, remote_path):
     except Exception as e:
         print(f"Error writing file {file_path} to S3: {e}")
 
+def get_cached_tour_context(index_url: str):
+    if not index_url:
+        raise CustomHTTPException(
+            status_code=400,
+            detail="Missing index_url/model_url",
+            error_code=1002,
+        )
+
+    bucket = os.getenv("AWS_STORAGE_BUCKET_NAME")
+
+    try:
+        head = s3.head_object(Bucket=bucket, Key=index_url)
+        etag = head.get("ETag", "").strip('"')
+    except Exception as e:
+        print(f"Error checking index metadata: {e}", flush=True)
+        raise CustomHTTPException(
+            status_code=404,
+            detail="Model not found",
+            error_code=1003,
+        )
+
+    cache_key = f"{index_url}:{etag}"
+
+    with TOUR_INDEX_CACHE_LOCK:
+        cached = TOUR_INDEX_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+
+    try:
+        response = s3.get_object(Bucket=bucket, Key=index_url)
+        raw = response["Body"].read()
+        waypoint_index = json.loads(raw.decode("utf-8"))
+        context = prepare_index_content(waypoint_index)
+    except Exception as e:
+        print(f"Error loading/parsing index from S3: {e}", flush=True)
+        raise CustomHTTPException(
+            status_code=500,
+            detail="Error loading model index",
+            error_code=1007,
+        )
+
+    with TOUR_INDEX_CACHE_LOCK:
+        keys_to_remove = [
+            key for key in TOUR_INDEX_CACHE
+            if key.startswith(f"{index_url}:")
+        ]
+        for key in keys_to_remove:
+            TOUR_INDEX_CACHE.pop(key, None)
+
+        TOUR_INDEX_CACHE[cache_key] = context
+
+    return context
+
+def decode_base64_image(data: str) -> bytes:
+    if data.startswith("data:"):
+        data = data.split(",")[1]
+    missing_padding = len(data) % 4
+    if missing_padding:
+        data += "=" * (4 - missing_padding)
+    return base64.b64decode(data)
 
 @app.get("/")
 async def read_root():
@@ -149,145 +222,248 @@ def _stream_output(stream, prefix="", collector=None):
     finally:
         stream.close()   
 
-@app.post("/inference")
-async def inference(request: Request):
-    try:
-        # body = await request.json()
-        model_url = request.index_url or request.model_url
-        poi_name = request.poi_name
-        poi_id = request.poi_id
-        input_image_b64 = request.inference_image
+# @app.post("/inference")
+# async def inference(request: Request):
+#     try:
+#         # body = await request.json()
+#         model_url = request.index_url or request.model_url
+#         poi_name = request.poi_name
+#         poi_id = request.poi_id
+#         input_image_b64 = request.inference_image
         
-        skip_geometry = bool(request.skip_geometry) if request.skip_geometry is not None else False
+#         skip_geometry = bool(request.skip_geometry) if request.skip_geometry is not None else False
+
+#         print(f"Requested model: {model_url}", flush=True)
+
+#         model, key = read_s3_file(model_url)
+#         if model is None:
+#             raise CustomHTTPException(
+#                 status_code=404, detail="Model not found", error_code=1003
+#             )
+
+#         model_dir = os.path.join("/models", poi_name)
+#         os.makedirs(model_dir, exist_ok=True)
+        
+#         model_path = os.path.join(model_dir, "training_data.json")
+#         with open(model_path, "wb") as f:
+#             f.write(model)
+            
+#         print("MODEL DOWNLOADED", flush=True)
+
+#         if not input_image_b64:
+#             raise CustomHTTPException(
+#                 status_code=404, detail="Image not found", error_code=1004
+#             )
+
+#         def decode_base64_image(data: str) -> bytes:
+#             if data.startswith("data:"):
+#                 data = data.split(",")[1]
+#             missing_padding = len(data) % 4
+#             if missing_padding:
+#                 data += "=" * (4 - missing_padding)
+#             return base64.b64decode(data)
+
+#         try:
+#             input_image_bytes = decode_base64_image(input_image_b64)
+#         except Exception as e:
+#             print("Error decoding base64 image:", e, flush=True)
+#             raise CustomHTTPException(
+#                 status_code=400, detail="Invalid base64 image", error_code=1005
+#             )
+
+#         data_dir = os.path.join("/data", poi_name)
+#         os.makedirs(data_dir, exist_ok=True)
+#         image_path = os.path.join(data_dir, "input_image.jpg")
+#         with open(image_path, "wb") as f:
+#             f.write(input_image_bytes)
+#         print("DATA DOWNLOADED", flush=True)
+        
+#         tflite_model_path = str(CURRENT_DIR / "./EfficientNetLite0.tflite")
+        
+#         inference_script = CURRENT_DIR / "inference_script.py"
+
+#         cmd = [
+#             "python",
+#             "-u",
+#             str(inference_script),
+#             "--image-path", image_path,
+#             "--index-json", model_path,
+#             "--tflite-model", tflite_model_path,
+#         ]
+        
+#         if request.gps_lat is not None and request.gps_lon is not None:
+#             cmd.extend([
+#                 "--gps-lat", str(request.gps_lat),
+#                 "--gps-lon", str(request.gps_lon),
+#             ])
+            
+#             if request.gps_accuracy_m is not None:
+#                 cmd.extend(["--gps-accuracy-m", str(request.gps_accuracy_m)])
+        
+#         if skip_geometry:
+#             cmd.append("--skip-geometry")
+        
+#         print(f"Running command: {' '.join(cmd)}", flush=True)
+        
+#         # result_proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(CURRENT_DIR))
+#         # print(result_proc.stdout, flush=True)
+        
+#         proc = subprocess.Popen(
+#             cmd,
+#             cwd=str(CURRENT_DIR),
+#             stdout=subprocess.PIPE,
+#             stderr=subprocess.PIPE,
+#             text=True,
+#             bufsize=1
+#         )
+        
+#         stdout_lines = []
+#         stderr_lines = []
+        
+#         stdout_thread = threading.Thread(
+#             target=_stream_output,
+#             args=(proc.stdout, "Inference output: ", stdout_lines),
+#             daemon=True
+#         )
+#         stderr_thread = threading.Thread(
+#             target=_stream_output,
+#             args=(proc.stderr, "Inference error output: ", stderr_lines),
+#             daemon=True
+#         )
+        
+#         stdout_thread.start()
+#         stderr_thread.start()
+        
+#         returncode = proc.wait()
+        
+#         stdout_thread.join()
+#         stderr_thread.join()
+        
+#         result_str = "\n".join(stdout_lines).strip()
+#         result_err = "\n".join(stderr_lines).strip()
+
+#         if returncode != 0:
+#             print("Inference failed:", result_err, flush=True)
+#             raise CustomHTTPException(
+#                 status_code=500,
+#                 detail=f"Inference failed: {result_err}",
+#                 error_code=1006
+#             )
+
+#         print("INFERENCE DONE", flush=True)
+
+#         if "Recognized waypoint:" in result_str:
+#             print("Inference successful:", result_str)
+#             result = result_str.split("Recognized waypoint: ")[1].strip()
+#         elif "No matching waypoint found." in result_str:
+#             result = "No matching waypoint found."
+#         else:
+#             result = result_str or "Inference completed with unrecognized output format."
+
+#         shutil.rmtree(data_dir, ignore_errors=True)
+
+#         return JSONResponse(
+#             status_code=200,
+#             content={
+#                 "model_url": model_url,
+#                 "report_url": f"/reports/{poi_name}",
+#                 "view_name": poi_name,
+#                 "poi_id": poi_id,
+#                 "message": result,
+#             },
+#         )
+
+#     except CustomHTTPException as e:
+#         raise e
+#     except Exception as e:
+#         print(f"Unexpected error: {e}", flush=True)
+#         raise CustomHTTPException(status_code=500, detail=str(e), error_code=1001)
+
+@app.post("/inference")
+async def inference(http_request: Request):
+    try:
+        content_type = http_request.headers.get("content-type", "")
+
+        image_bytes = None
+
+        if content_type.startswith("multipart/form-data"):
+            form = await http_request.form()
+
+            model_url = form.get("index_url") or form.get("model_url")
+            poi_name = form.get("poi_name")
+            poi_id = form.get("poi_id")
+            skip_geometry = str(form.get("skip_geometry", "false")).lower() == "true"
+
+            gps_lat = form.get("gps_lat")
+            gps_lon = form.get("gps_lon")
+            gps_accuracy_m = form.get("gps_accuracy_m")
+
+            gps_lat = float(gps_lat) if gps_lat not in (None, "", "null") else None
+            gps_lon = float(gps_lon) if gps_lon not in (None, "", "null") else None
+            gps_accuracy_m = float(gps_accuracy_m) if gps_accuracy_m not in (None, "", "null") else None
+
+            uploaded = form.get("image") or form.get("img")
+            if uploaded is None:
+                raise CustomHTTPException(
+                    status_code=404,
+                    detail="Image not found",
+                    error_code=1004,
+                )
+
+            image_bytes = await uploaded.read()
+
+        else:
+            body = await http_request.json()
+
+            model_url = body.get("index_url") or body.get("model_url")
+            poi_name = body.get("poi_name")
+            poi_id = body.get("poi_id")
+            skip_geometry = bool(body.get("skip_geometry", False))
+
+            gps_lat = body.get("gps_lat")
+            gps_lon = body.get("gps_lon")
+            gps_accuracy_m = body.get("gps_accuracy_m")
+
+            input_image_b64 = body.get("inference_image") or body.get("img")
+
+            if not input_image_b64:
+                raise CustomHTTPException(
+                    status_code=404,
+                    detail="Image not found",
+                    error_code=1004,
+                )
+
+            image_bytes = decode_base64_image(input_image_b64)
 
         print(f"Requested model: {model_url}", flush=True)
 
-        model, key = read_s3_file(model_url)
-        if model is None:
-            raise CustomHTTPException(
-                status_code=404, detail="Model not found", error_code=1003
-            )
+        context = get_cached_tour_context(model_url)
 
-        model_dir = os.path.join("/models", poi_name)
-        os.makedirs(model_dir, exist_ok=True)
-        
-        model_path = os.path.join(model_dir, "training_data.json")
-        with open(model_path, "wb") as f:
-            f.write(model)
-            
-        print("MODEL DOWNLOADED", flush=True)
-
-        if not input_image_b64:
-            raise CustomHTTPException(
-                status_code=404, detail="Image not found", error_code=1004
-            )
-
-        def decode_base64_image(data: str) -> bytes:
-            if data.startswith("data:"):
-                data = data.split(",")[1]
-            missing_padding = len(data) % 4
-            if missing_padding:
-                data += "=" * (4 - missing_padding)
-            return base64.b64decode(data)
-
-        try:
-            input_image_bytes = decode_base64_image(input_image_b64)
-        except Exception as e:
-            print("Error decoding base64 image:", e, flush=True)
-            raise CustomHTTPException(
-                status_code=400, detail="Invalid base64 image", error_code=1005
-            )
-
-        data_dir = os.path.join("/data", poi_name)
+        data_dir = os.path.join("/data", str(poi_id or poi_name or "unknown"))
         os.makedirs(data_dir, exist_ok=True)
+
         image_path = os.path.join(data_dir, "input_image.jpg")
+
         with open(image_path, "wb") as f:
-            f.write(input_image_bytes)
-        print("DATA DOWNLOADED", flush=True)
-        
-        tflite_model_path = str(CURRENT_DIR / "./EfficientNetLite0.tflite")
-        
-        inference_script = CURRENT_DIR / "inference_script.py"
+            f.write(image_bytes)
 
-        cmd = [
-            "python",
-            "-u",
-            str(inference_script),
-            "--image-path", image_path,
-            "--index-json", model_path,
-            "--tflite-model", tflite_model_path,
-        ]
-        
-        if request.gps_lat is not None and request.gps_lon is not None:
-            cmd.extend([
-                "--gps-lat", str(request.gps_lat),
-                "--gps-lon", str(request.gps_lon),
-            ])
-            
-            if request.gps_accuracy_m is not None:
-                cmd.extend(["--gps-accuracy-m", str(request.gps_accuracy_m)])
-        
-        if skip_geometry:
-            cmd.append("--skip-geometry")
-        
-        print(f"Running command: {' '.join(cmd)}", flush=True)
-        
-        # result_proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(CURRENT_DIR))
-        # print(result_proc.stdout, flush=True)
-        
-        proc = subprocess.Popen(
-            cmd,
-            cwd=str(CURRENT_DIR),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1
-        )
-        
-        stdout_lines = []
-        stderr_lines = []
-        
-        stdout_thread = threading.Thread(
-            target=_stream_output,
-            args=(proc.stdout, "Inference output: ", stdout_lines),
-            daemon=True
-        )
-        stderr_thread = threading.Thread(
-            target=_stream_output,
-            args=(proc.stderr, "Inference error output: ", stderr_lines),
-            daemon=True
-        )
-        
-        stdout_thread.start()
-        stderr_thread.start()
-        
-        returncode = proc.wait()
-        
-        stdout_thread.join()
-        stderr_thread.join()
-        
-        result_str = "\n".join(stdout_lines).strip()
-        result_err = "\n".join(stderr_lines).strip()
+        print("IMAGE READY", flush=True)
 
-        if returncode != 0:
-            print("Inference failed:", result_err, flush=True)
-            raise CustomHTTPException(
-                status_code=500,
-                detail=f"Inference failed: {result_err}",
-                error_code=1006
+        with INTERPRETER_LOCK:
+            result = run_inference(
+                image_path=image_path,
+                context=context,
+                interpreter=INTERPRETER,
+                skip_geometry=skip_geometry,
+                gps_lat=gps_lat,
+                gps_lon=gps_lon,
+                gps_accuracy_m=gps_accuracy_m,
             )
-
-        print("INFERENCE DONE", flush=True)
-
-        if "Recognized waypoint:" in result_str:
-            print("Inference successful:", result_str)
-            result = result_str.split("Recognized waypoint: ")[1].strip()
-        elif "No matching waypoint found." in result_str:
-            result = "No matching waypoint found."
-        else:
-            result = result_str or "Inference completed with unrecognized output format."
 
         shutil.rmtree(data_dir, ignore_errors=True)
+
+        if result is None:
+            result = "No matching waypoint found."
 
         return JSONResponse(
             status_code=200,
@@ -304,4 +480,8 @@ async def inference(request: Request):
         raise e
     except Exception as e:
         print(f"Unexpected error: {e}", flush=True)
-        raise CustomHTTPException(status_code=500, detail=str(e), error_code=1001)
+        raise CustomHTTPException(
+            status_code=500,
+            detail=str(e),
+            error_code=1001,
+        )

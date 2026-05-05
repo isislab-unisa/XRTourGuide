@@ -1527,15 +1527,25 @@ Future<void> _spawnTotemIcons(
           'bytes': bytes,
           'orientation': _cameraController!.description.sensorOrientation,
         });
-        final String base64Image = base64Encode(rotatedBytes);
+
+        // final String base64Image = base64Encode(rotatedBytes);
+
+        // final result = await _apiService.inference(
+        //   base64Image,
+        //   widget.tourId,
+        //   _currentPosition?.latitude,
+        //   _currentPosition?.longitude,
+        //   _currentPosition?.accuracy,
+        //   baseUrl: _apiService.getCurrentBaseUrl()
+        // );
 
         final result = await _apiService.inference(
-          base64Image,
+          rotatedBytes,
           widget.tourId,
           _currentPosition?.latitude,
           _currentPosition?.longitude,
           _currentPosition?.accuracy,
-          baseUrl: _apiService.getCurrentBaseUrl()
+          baseUrl: _apiService.getCurrentBaseUrl(),
         );
 
         waypointId = result.data["result"] ?? -1;

@@ -206,19 +206,58 @@ def inference(request):
     except Tour.DoesNotExist:
         return JsonResponse({"error": "POI not found"}, status=404)
 
+    # payload = {
+    #     "poi_id": str(tour_id),
+    #     "poi_name": tour.title,
+    #     "inference_image": request.data.get('img'),
+    #     "model_url": f"{tour.pk}/training_data.json",
+    #     "index_url": f"{tour.pk}/training_data.json",
+    #     "gps_lat": request.data.get('gps_lat'),
+    #     "gps_lon": request.data.get('gps_lon'),
+    #     "gps_accuracy_m": request.data.get('gps_accuracy_m'),
+    # }
+    # url = os.getenv("INFERENCE_ENDPOINT")
+    # headers = {"Content-type": "application/json"}
+    # response = requests.post(url, headers=headers, json=payload)
+    
     payload = {
         "poi_id": str(tour_id),
         "poi_name": tour.title,
-        "inference_image": request.data.get('img'),
         "model_url": f"{tour.pk}/training_data.json",
         "index_url": f"{tour.pk}/training_data.json",
-        "gps_lat": request.data.get('gps_lat'),
-        "gps_lon": request.data.get('gps_lon'),
-        "gps_accuracy_m": request.data.get('gps_accuracy_m'),
+        "gps_lat": request.data.get("gps_lat"),
+        "gps_lon": request.data.get("gps_lon"),
+        "gps_accuracy_m": request.data.get("gps_accuracy_m"),
     }
+
     url = os.getenv("INFERENCE_ENDPOINT")
-    headers = {"Content-type": "application/json"}
-    response = requests.post(url, headers=headers, json=payload)
+
+    uploaded_file = request.FILES.get("img") or request.FILES.get("image")
+
+    if uploaded_file is not None:
+        files = {
+            "image": (
+                uploaded_file.name or "query.jpg",
+                uploaded_file.read(),
+                uploaded_file.content_type or "image/jpeg",
+            )
+        }
+
+        response = requests.post(
+            url,
+            data=payload,
+            files=files,
+            timeout=60,
+        )
+    else:
+        payload["inference_image"] = request.data.get("img")
+
+        response = requests.post(
+            url,
+            headers={"Content-type": "application/json"},
+            json=payload,
+            timeout=60,
+        )
 
     result = response.json()
     print(f"RESPONSE: {result.get('message')}", flush=True)

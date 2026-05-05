@@ -4,6 +4,7 @@ import 'secure_storage_service.dart';
 import 'auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:typed_data';
 
 
 class ApiService {
@@ -34,6 +35,8 @@ class ApiService {
 
   // static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
   static const String centralizedUrl = 'https://xrtourguide.eu/communityserver/';
+  // static const String centralizedUrl = 'http://172.16.15.134/communityserver/';
+
 
 
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {
@@ -451,26 +454,59 @@ class ApiService {
     }
   }
 
-  Future<Response> inference(String imageBase64, int tourId, double? gpsLat, double? gpsLon, double? gpsAccuracyM, {String? baseUrl}) async {
-    try {
-      final formData = FormData.fromMap({
-        'img': imageBase64,
-        'tour_id': tourId,
-        if (gpsLat != null) 'gps_lat': gpsLat,
-        if (gpsLon != null) 'gps_lon': gpsLon,
-        if (gpsAccuracyM != null) 'gps_accuracy_m': gpsAccuracyM,
-      });
+  // Future<Response> inference(String imageBase64, int tourId, double? gpsLat, double? gpsLon, double? gpsAccuracyM, {String? baseUrl}) async {
+  //   try {
+  //     final formData = FormData.fromMap({
+  //       'img': imageBase64,
+  //       'tour_id': tourId,
+  //       if (gpsLat != null) 'gps_lat': gpsLat,
+  //       if (gpsLon != null) 'gps_lon': gpsLon,
+  //       if (gpsAccuracyM != null) 'gps_accuracy_m': gpsAccuracyM,
+  //     });
 
-      final response = await dio.post('/inference/', data: formData, options: _getOptions(baseUrl: baseUrl));
-      return response;
+  //     final response = await dio.post('/inference/', data: formData, options: _getOptions(baseUrl: baseUrl));
+  //     return response;
       
-    } catch (e) {
-      print('Failed inference: $e');
-      rethrow;
+  //   } catch (e) {
+  //     print('Failed inference: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  Future<Response> inference(
+    Uint8List imageBytes,
+    int tourId,
+    double? gpsLat,
+    double? gpsLon,
+    double? gpsAccuracyM, {
+      String? baseUrl,
+    }) async {
+      try {
+        final formData = FormData.fromMap({
+          'img': MultipartFile.fromBytes(
+            imageBytes,
+            filename: 'query.jpg',
+          ),
+          'tour_id': tourId,
+          if (gpsLat != null) 'gps_lat': gpsLat,
+          if (gpsLon != null) 'gps_lon': gpsLon,
+          if (gpsAccuracyM != null) 'gps_accuracy_m': gpsAccuracyM,
+        });
+
+        final response = await dio.post(
+          '/inference/',
+          data: formData,
+          options: _getOptions(baseUrl: baseUrl),
+        );
+
+        return response;
+      } catch (e) {
+        print('Failed inference: $e');
+        rethrow;
+      }
     }
-  }
     
-    Future<Response> loadResource(int waypointId, String resourceType, {String? baseUrl}) async {
+  Future<Response> loadResource(int waypointId, String resourceType, {String? baseUrl}) async {
     print("Loading resource type: $resourceType for waypoint ID: $waypointId from baseUrl: $baseUrl");
     try {
       final response = await dio.get('/get_waypoint_resources/',
