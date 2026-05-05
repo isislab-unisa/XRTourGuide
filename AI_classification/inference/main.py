@@ -135,11 +135,19 @@ def write_s3_file(file_path, remote_path):
 async def read_root():
     return {"Hello": "World"}    
 
-def _stream_output(stream, prefix=""):
-    for line in iter(stream.readline, ""):
-        if line:
-            print(f"{prefix}{line.rstrip()}", flush=True)
-    stream.close()    
+def _stream_output(stream, prefix="", collector=None):
+    try:
+        for line in iter(stream.readline, ""):
+            if not line:
+                continue
+
+            line = line.rstrip()
+            print(f"{prefix}{line}", flush=True)
+
+            if collector is not None:
+                collector.append(line)
+    finally:
+        stream.close()   
 
 @app.post("/inference")
 async def inference(request: Request):
