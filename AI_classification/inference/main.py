@@ -8,7 +8,7 @@ PROJECT_ROOT = CURRENT_DIR.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request as FastAPIRequest
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import boto3
@@ -45,7 +45,7 @@ class Response(BaseModel):
     message: str | None = None
 
 
-class Request(BaseModel):
+class InferenceRequest(BaseModel):
     data_url: str | None = None
     inference_image: str | None = None
     model_url: str | None = None
@@ -380,7 +380,7 @@ def _stream_output(stream, prefix="", collector=None):
 #         raise CustomHTTPException(status_code=500, detail=str(e), error_code=1001)
 
 @app.post("/inference")
-async def inference(http_request: Request):
+async def inference(http_request: FastAPIRequest):
     try:
         content_type = http_request.headers.get("content-type", "")
 
