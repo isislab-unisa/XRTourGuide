@@ -155,11 +155,11 @@ def load_model(request, tour_id):
         return JsonResponse({"error": "POI not found"}, status=404)
     storage = MinioStorage()
     if storage.exists(
-        f"{tour_id}/model.pt"
+        f"{tour_id}/training_data.json"
     ):
-        model_file = storage.open(f"/{tour_id}/model.pt")
+        model_file = storage.open(f"/{tour_id}/training_data.json")
         os.makedirs("models", exist_ok=True)
-        with open(f"models/model_{tour_id}.pt", "wb") as f:
+        with open(f"models/training_data_{tour_id}.json", "wb") as f:
             for chunk in model_file.chunks():
                 f.write(chunk)
     else:
