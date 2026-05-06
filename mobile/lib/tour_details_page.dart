@@ -27,6 +27,7 @@ import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
 import 'elements/zlib_image.dart';
 import 'services/analytics_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'consultation_screen.dart';
 
 
 
@@ -1456,7 +1457,6 @@ Future<void> _loadWaypoints() async {
                                     builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude, isOffline: widget.isOffline),
                                   ),
                                 );
-                                print('Activate AR Guide');
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
@@ -2380,8 +2380,9 @@ Widget _buildWaypointItem({
                       ),
                     ],
 
-                    if(!isSubWaypoint && _tourDetails?.status != "BUILT" && _tourDetails?.category == "GUIDE") ...[
+                    // if(!isSubWaypoint && _tourDetails?.status != "BUILT" && _tourDetails?.category == "GUIDE") ...[
                     // if(!isSubWaypoint && _tourDetails?.category == "GUIDE") ...[
+                    if(!isSubWaypoint) ...[
                       const SizedBox(height: 8),
                       SizedBox(
                         width: double.infinity,
@@ -2389,16 +2390,28 @@ Widget _buildWaypointItem({
                           onPressed: () {
                             Navigator.push(
                               context,
+                              // MaterialPageRoute(
+                              //   builder: (context) => ARCameraScreen(
+                              //     tourId: widget.tourId,
+                              //     latitude: latitude,
+                              //     longitude: longitude,
+                              //     isOffline: widget.isOffline,
+                              //     enableRecognition: false,
+                              //     initialWaypointId: waypointIndex,
+                              //   ),
+                              // ),
                               MaterialPageRoute(
-                                builder: (context) => ARCameraScreen(
-                                  tourId: widget.tourId,
-                                  latitude: latitude,
-                                  longitude: longitude,
-                                  isOffline: widget.isOffline,
-                                  enableRecognition: false,
-                                  initialWaypointId: waypointIndex,
-                                ),
+                                builder:
+                                    (context) => ConsultationScreen(
+                                      tourId: widget.tourId,
+                                      waypointId: waypointIndex,
+                                      landmarkName: title,
+                                      landmarkDescription: description,
+                                      landmarkImages: images,
+                                      isOffline: widget.isOffline,
+                                    ),
                               ),
+
                             );
                           },
                           icon: const Icon(Icons.art_track_outlined, color: AppColors.primary),

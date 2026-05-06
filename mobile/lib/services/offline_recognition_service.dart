@@ -71,13 +71,29 @@ class OfflineRecognitionService {
   Future<void> initEmbedderFromAsset(String assetPath) async {
     try {
       final modelData = await rootBundle.load(assetPath);
-      // print("MODEL DATA DEBUG: ${modelData.lengthInBytes} bytes loaded from $assetPath");
       _embedder = await Interpreter.fromBuffer(modelData.buffer.asUint8List());
       final outputShape = _embedder!.getOutputTensor(0).shape;
       _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
-      print('1) Interpreter loaded successfully from asset: $assetPath (output dim $_modelOutputDim)');
+      print('Interpreter loaded successfully from asset: $assetPath (output dim $_modelOutputDim)');
     } catch (e) {
       print('Error loading interpreter from asset: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> initEmbedderFromBytes(Uint8List modelBytes) async {
+    try {
+      _embedder = await Interpreter.fromBuffer(modelBytes);
+
+      final outputShape = _embedder!.getOutputTensor(0).shape;
+      _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
+
+      print(
+        'Interpreter loaded successfully from bytes '
+        '(output dim $_modelOutputDim)',
+      );
+    } catch (e) {
+      print('Error loading interpreter from bytes: $e');
       rethrow;
     }
   }

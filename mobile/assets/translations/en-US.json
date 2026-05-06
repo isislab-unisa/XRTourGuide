@@ -125,5 +125,13 @@
     "report_test": "Report a problem with the app",
     "title": "Title",
     "title_hint": "Enter a brief title",
-    "report_alert": "Compile both title and description to send"
+    "report_alert": "Compile both title and description to send",
+    "rec_failure_1": "Recognition failed. Make sure you frame the point of interest correctly and try again.",
+    "rec_failure_2": "I can't recognize this point of interest. Try moving slowly or getting closer.",
+    "rec_failure_3": "Recognition is difficult. Try improving the lighting or cleaning the camera lens.",
+    "rec_failure_4": "I can't identify this point of interest. Try framing a wider area or changing the angle.",
+    "rec_failure_5": "Recognition failed. Make sure you have a stable internet connection and try again.",
+    "rec_failure_6": "The image isn't clear enough. Try again while holding the phone more steadily.",
+    "rec_failure_7": "Recognition failed. Try taking a new photo while avoiding reflections or shadows.",
+    "rec_failure_8": "No point was recognized. Move closer to the point of interest and try again."
 }

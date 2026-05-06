@@ -44,12 +44,14 @@ import 'package:ar_flutter_plugin_updated/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin_updated/models/ar_node.dart';
 import 'package:ar_flutter_plugin_updated/models/ar_hittest_result.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'models/ARPlatformConfig.dart';
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
 import 'elements/audio_player.dart';
 import 'elements/video_player.dart';
+import 'elements/zlib_image.dart';
 
 // Enum for recognition states
 enum RecognitionState {
@@ -146,6 +148,19 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   // Recognition state
   RecognitionState _recognitionState = RecognitionState.ready;
+
+  String _recognitionFailureMessage = "";
+
+  final List<String> _recognitionFailureMessages = [
+    "rec_failure_1".tr(),
+    "rec_failure_2".tr(),
+    "rec_failure_3".tr(),
+    "rec_failure_4".tr(),
+    "rec_failure_5".tr(),
+    "rec_failure_6".tr(),
+    "rec_failure_7".tr(),
+    "rec_failure_8".tr(),
+  ];
 
   int _recognizedWaypointId = -1; // Store recognized waypoint ID
   Map<String, dynamic> _availableResources = {}; // Store available resources
@@ -247,6 +262,15 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     super.dispose();
   }
 
+  String _getRandomRecognitionFailureMessage() {
+    if (_recognitionFailureMessages.isEmpty) {
+      return "Recognition failed. Please try again.";
+    }
+
+    final randomIndex = Random().nextInt(_recognitionFailureMessages.length);
+    return _recognitionFailureMessages[randomIndex];
+  }
+
   Future<void> _enterStubRecognizedState() async {
     try{
       await _getTourWaypoints();
@@ -320,6 +344,11 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       });
       _successAnimationController.reset();
       _successAnimationController.forward();
+      _sheetController.animateTo(
+        _initialSheetSize + 0.20,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
       _startAROverlayAnimation();
     } catch(e) {
       print("Error entering stub recognized state: $e");
@@ -795,6 +824,7 @@ Future<void> _spawnTotemIcons(
     });
     _successAnimationController.reset();
     _successAnimationController.forward();
+
     _startAROverlayAnimation();
     // await _checkTourCompletion();
   }
@@ -830,79 +860,76 @@ Future<void> _spawnTotemIcons(
             decoration: TextDecoration.underline,
           ),
         ),
+
         ImgConfig(
           builder: (url, attributes) {
             print("Loading image from URL: $url");
-            // Gestisci immagini locali con protocollo file://
+
             if (url.startsWith('file://')) {
               String localPath;
-              try{
+              try {
                 localPath = Uri.parse(url).toFilePath();
-              } catch(e) {
+              } catch (e) {
                 localPath = url.substring(7);
               }
+
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
-                child: Image.file(
-                  File(localPath),
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    print("Error loading local image: $error");
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.broken_image,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Image not found: ${localPath.split('/').last}'),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              );
-            } else {
-              // Immagini remote (modalità online)
-              return Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: Image.network(
-                  url,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Column(
-                        children: [
-                          Icon(
-                            Icons.broken_image,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(height: 8),
-                          Text('Failed to load image'),
-                        ],
-                      ),
-                    );
-                  },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: ZlibImage(
+                    filePath: localPath,
+                    fit: BoxFit.cover,
+                    useCache: false,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey.shade600,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               );
             }
+
+            return Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  memCacheWidth: 1200,
+                  maxWidthDiskCache: 1600,
+                  placeholder:
+                      (context, url) => const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  errorWidget: (context, url, error) {
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey.shade600,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
           },
         ),
         BlockquoteConfig(
@@ -1234,22 +1261,18 @@ Future<void> _spawnTotemIcons(
         if (imagesList.isNotEmpty) {
           StringBuffer mdBuffer = StringBuffer("# ${widget.landmarkName}\n\n");
 
-          for (String imgPath in imagesList) {
-            File? imageFile = await _loadAndDecompressResource(
-              imgPath,
-              widget.isOffline,
-              'jpg',
-            );
+          for (final imgPath in imagesList) {
+            final markdownImageUrl = widget.isOffline
+                ? Uri.file(imgPath).toString()
+                : imgPath.startsWith("http")
+                    ? imgPath
+                    : "${_apiService.getCurrentBaseUrl()}$imgPath";
 
-            if (imageFile != null) {
-              final fileUri = Uri.file(imageFile.path).toString();
-              print("Image file URI: $fileUri");
-              mdBuffer.writeln("![Image]($fileUri)\n\n");
-            }
-
-            _currentMarkdownContent = mdBuffer.toString();
-
+            mdBuffer.writeln("![Image]($markdownImageUrl)\n\n");
           }
+
+          _currentMarkdownContent = mdBuffer.toString();
+
         } else {
           _currentMarkdownContent = "# ${widget.landmarkName}\n\nNo images available for this waypoint.";
         }
@@ -1358,11 +1381,12 @@ Future<void> _spawnTotemIcons(
         );
     }
 
-    // _sheetController.animateTo(
-    //   _initialSheetSize + 0.25,
-    //   duration: const Duration(milliseconds: 300),
-    //   curve: Curves.easeInOut,
-    // );
+    _sheetController.animateTo(
+      _initialSheetSize + 0.25,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+
     if (mounted && contentToDisplay != null){
       setState(() {
         _currentActiveContent = contentToDisplay;
@@ -1446,6 +1470,8 @@ Future<void> _spawnTotemIcons(
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
+    await WidgetsBinding.instance.endOfFrame;
+
     // // --- TEST CODE: BYPASS INFERENCE ---
     // // Simula un ritardo di scansione
     // await Future.delayed(const Duration(seconds: 2));
@@ -1528,17 +1554,6 @@ Future<void> _spawnTotemIcons(
           'orientation': _cameraController!.description.sensorOrientation,
         });
 
-        // final String base64Image = base64Encode(rotatedBytes);
-
-        // final result = await _apiService.inference(
-        //   base64Image,
-        //   widget.tourId,
-        //   _currentPosition?.latitude,
-        //   _currentPosition?.longitude,
-        //   _currentPosition?.accuracy,
-        //   baseUrl: _apiService.getCurrentBaseUrl()
-        // );
-
         final result = await _apiService.inference(
           rotatedBytes,
           widget.tourId,
@@ -1571,7 +1586,11 @@ Future<void> _spawnTotemIcons(
           'is_offline': widget.isOffline,
         }));
 
-        setState(() => _recognitionState = RecognitionState.failure);
+        _showError(_getRandomRecognitionFailureMessage());
+        setState(() {
+          _recognitionFailureMessage = _getRandomRecognitionFailureMessage();
+          _recognitionState = RecognitionState.failure;
+        });        
         _failureAnimationController.forward();
         Timer(const Duration(seconds: 3), () {
           if (mounted) _resetRecognition();
@@ -1582,10 +1601,13 @@ Future<void> _spawnTotemIcons(
       unawaited(_analytics.logEvent(name: 'recognition_error', parameters: {
         'tour_id': widget.tourId,
         'is_offline': widget.isOffline,
-        'error': e.toString(),
+        'error': e,
       }));
-      _showError("Recognition failed: $e");
-      setState(() => _recognitionState = RecognitionState.failure);
+      _showError(_getRandomRecognitionFailureMessage());
+      setState(() {
+        _recognitionFailureMessage = _getRandomRecognitionFailureMessage();
+        _recognitionState = RecognitionState.failure;
+      });      
       _failureAnimationController.forward();
       Timer(const Duration(seconds: 3), () {
         if (mounted) _resetRecognition();
@@ -1713,6 +1735,7 @@ Future<void> _spawnTotemIcons(
 
     setState(() {
       _recognitionState = RecognitionState.ready;
+      _recognitionFailureMessage = "";
     });
 
     _successAnimationController.reset();

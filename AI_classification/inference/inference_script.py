@@ -54,14 +54,14 @@ GEOMETRY_RESCUE_MIN_MARGIN = 0.015
 
 TOP_WAYPOINTS_TO_VERIFY = 5
 TOP_ITEMS_FOR_WAYPOINT_SCORE = 3
-MULTI_VIEW_ENABLED = False #TODO: valutare effetiva efficacia
+MULTI_VIEW_ENABLED = False #TODO: valutare effettiva efficacia
 
-GPS_PRIOR_WEIGHT = 0.20
-GPS_DEFAULT_RADIUS_M = 75.0
+GPS_PRIOR_WEIGHT = 0.20 #Quanto puo' aggiungere o rimuovere il GPS dal punteggio finale
+GPS_DEFAULT_RADIUS_M = 75.0 #Raggio di confidenza predefinito per i punti GPS degli item (considerando anche possibili errori o spostamenti)
 GPS_DEFAULT_ACCURACY_M = 30.0
 GPS_MIN_CONFIDENCE = 0.25
-GPS_FAR_MULTIPLIER = 4.0
-GPS_MIN_FAR_DISTANCE_M = 250.0
+GPS_FAR_MULTIPLIER = 4.0 #Distanza a cui considerare un punto GPS come "lontano" (e quindi con affinity 0) in base al raggio di confidenza. Es: 4x il raggio -> entro 4x il raggio -> affinity > 0 | oltre 4x il raggio -> affinity = 0
+GPS_MIN_FAR_DISTANCE_M = 250.0 #Distanza minima a cui considerare un punto GPS come "lontano" indipendentemente dal raggio di confidenza (utile per evitare che punti con raggio molto piccolo abbiano affinity > 0 anche a distanze elevate)
 
 
 def load_tflite_interpreter(tflite_path: Path):

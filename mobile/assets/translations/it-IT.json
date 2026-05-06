@@ -125,5 +125,13 @@
     "report_test": "Segnala un problema con l'app",
     "title": "Titolo",
     "title_hint": "Inserisci un titolo breve",
-    "report_alert": "Compila sia il titolo che la descrizione per inviare la segnalazione"
+    "report_alert": "Compila sia il titolo che la descrizione per inviare la segnalazione",
+    "rec_failure_1": "Riconoscimento fallito. Assicurati di inquadrare correttamente il punto di interesse e riprova.",
+    "rec_failure_2": "Non riesco a riconoscere questo punto di interesse. Prova a muoverti lentamente o ad avvicinarti.",
+    "rec_failure_3": "Riconoscimento difficile. Prova a migliorare l'illuminazione o a pulire la lente della fotocamera.",
+    "rec_failure_4": "Non riesco a identificare questo punto di interesse. Prova a inquadrare un'area più ampia o a cambiare angolazione.",
+    "rec_failure_5": "Riconoscimento non riuscito. Assicurati di avere una connessione internet stabile e riprova.",
+    "rec_failure_6": "L'immagine non è abbastanza chiara. Riprova tenendo il telefono più stabile.",
+    "rec_failure_7": "Riconoscimento fallito. Prova a scattare una nuova foto evitando riflessi o ombre.",
+    "rec_failure_8": "Nessun punto riconosciuto. Avvicinati al luogo di interesse e riprova."
 }
