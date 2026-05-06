@@ -71,9 +71,10 @@ class OfflineRecognitionService {
   Future<void> initEmbedderFromAsset(String assetPath) async {
     try {
       final modelData = await rootBundle.load(assetPath);
-      _embedder = await Interpreter.fromBuffer(modelData.buffer.asUint8List());
-      final outputShape = _embedder!.getOutputTensor(0).shape;
-      _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
+      // _embedder = await Interpreter.fromBuffer(modelData.buffer.asUint8List());
+      // final outputShape = _embedder!.getOutputTensor(0).shape;
+      // _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
+      await initEmbedderFromBytes(modelData.buffer.asUint8List());
       print('Interpreter loaded successfully from asset: $assetPath (output dim $_modelOutputDim)');
     } catch (e) {
       print('Error loading interpreter from asset: $e');
@@ -116,7 +117,14 @@ class OfflineRecognitionService {
   //Load the offline JSON index
   Future<void> initIndexForTour(int tourId) async {
     final appDir = await getApplicationDocumentsDirectory();
-    final tourDir = Directory('${appDir.path}/offline_tours_data/tour_$tourId');
+    final tourDirPath = '${appDir.path}/offline_tours_data/tour_$tourId';
+
+    await initIndexForTourDirectory(tourId, tourDirPath);
+  }
+
+  Future<void> initIndexForTourDirectory(int tourId, String tourDirPath) async {
+
+    final tourDir = Directory(tourDirPath);
 
     final indexJsonFile = File('${tourDir.path}/training_data.json');
     if (!await indexJsonFile.exists()) {

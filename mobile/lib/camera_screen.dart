@@ -46,6 +46,8 @@ import 'package:ar_flutter_plugin_updated/models/ar_hittest_result.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'models/ARPlatformConfig.dart';
+import 'services/offline_recognition_isolate_service.dart';
+
 
 // New imports for media players/viewers
 import 'elements/pdf_viewer.dart';
@@ -137,7 +139,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   late LocalStateService _localStateService;
   late OfflineStorageService _offlineService;
   late AnalyticsService _analytics;
-  OfflineRecognitionService? _offlineRecognitionService;
+  // OfflineRecognitionService? _offlineRecognitionService;
+  OfflineRecognitionIsolateService? _offlineRecognitionService;
+
   bool _isProcessingFrame = false;
 
 
@@ -257,7 +261,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _pulseAnimationController.dispose();
     _successAnimationController.dispose();
     _failureAnimationController.dispose();
-    _offlineRecognitionService?.dispose();
+    unawaited(_offlineRecognitionService?.dispose());
     _clearTempFiles();
     super.dispose();
   }
@@ -524,14 +528,30 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     );
   }
 
+  // Future<void> _initializeOfflineRecognizer() async {
+  //   try {
+  //     _offlineRecognitionService = OfflineRecognitionService();
+  //     await _offlineRecognitionService!.initEmbedderFromAsset('assets/models/EfficientNetLite0.tflite');
+  //     await _offlineRecognitionService!.initIndexForTour(widget.tourId);
+  //     print('Offline recognizer initialized for tour ${widget.tourId}');
+  //   } catch (e) {
+  //     print('Error initializing offline recognizer: $e');
+  //     _showError('Error initializing offline recognizer.');
+  //   }
+  // }
+
   Future<void> _initializeOfflineRecognizer() async {
     try {
-      _offlineRecognitionService = OfflineRecognitionService();
-      await _offlineRecognitionService!.initEmbedderFromAsset('assets/models/EfficientNetLite0.tflite');
-      await _offlineRecognitionService!.initIndexForTour(widget.tourId);
-      print('Offline recognizer initialized for tour ${widget.tourId}');
+      _offlineRecognitionService = OfflineRecognitionIsolateService();
+
+      await _offlineRecognitionService!.init(
+        tourId: widget.tourId,
+        modelAssetPath: 'assets/models/EfficientNetLite0.tflite',
+      );
+
+      print('Offline recognizer isolate initialized for tour ${widget.tourId}');
     } catch (e) {
-      print('Error initializing offline recognizer: $e');
+      print('Error initializing offline recognizer isolate: $e');
       _showError('Error initializing offline recognizer.');
     }
   }
@@ -1470,7 +1490,8 @@ Future<void> _spawnTotemIcons(
     // Start pulse animation
     _pulseAnimationController.repeat(reverse: true);
 
-    await WidgetsBinding.instance.endOfFrame;
+    // await WidgetsBinding.instance.endOfFrame;
+    // await Future.delayed(const Duration(milliseconds: 50));
 
     // // --- TEST CODE: BYPASS INFERENCE ---
     // // Simula un ritardo di scansione
