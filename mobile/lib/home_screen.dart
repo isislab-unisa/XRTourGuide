@@ -18,7 +18,8 @@ import "package:easy_localization/easy_localization.dart";
 import "elements/zlib_image.dart";
 import 'package:geolocator/geolocator.dart';
 import 'providers/home_providers.dart'; // Importa i nuovi provider
-import 'services/analytics_service.dart'; // Importa il servizio di analytics
+import 'services/analytics_service.dart';
+import 'utils/responsive.dart'; // Importa il servizio di analytics
 
 
 
@@ -214,7 +215,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
         title: Text(
           "XRTOURGUIDE",
           style: TextStyle(
-            fontSize: MediaQuery.of(context).size.width * 0.06,
+            fontSize: context.r.sp(24),
             fontWeight: FontWeight.bold,
             fontFamily: "point_panther",
           ),
@@ -307,9 +308,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildHeaderImage(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    // final screenHeight = MediaQuery.of(context).size.height;
     return Container(
-      height: screenHeight * 0.25,
+      height: context.r.homeHeaderHeight(),
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/background_app.jpg'),
@@ -379,8 +380,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     if (!_isLoadingOfflineTours && _offlineTours.isEmpty)
       return const SizedBox.shrink();
 
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final cardHeight = context.r.homeTourCardHeight();
+    final cardWidth = context.r.homeTourCardWidth();
+    final imageHeight = context.r.homeTourCardImageHeight();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -394,8 +396,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
             ),
             child: Text(
               'offline_tours'.tr(),
-              style: const TextStyle(
-                fontSize: 20,
+              style: TextStyle(
+                fontSize: context.r.sp(20),
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -403,12 +405,12 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
           ),
           if (_isLoadingOfflineTours)
             SizedBox(
-              height: screenHeight * 0.25,
+              height: cardHeight,
               child: const Center(child: CircularProgressIndicator()),
             )
           else
             SizedBox(
-              height: screenHeight * 0.25,
+              height: cardHeight,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: _offlineTours.length,
@@ -421,8 +423,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                     ),
                     child: OfflineTourCard(
                       tourData: tour,
-                      cardWidth: screenWidth * 0.6,
-                      imageHeight: 140,
+                      cardWidth: cardWidth,
+                      imageHeight: imageHeight,
+                      height: cardHeight - 8,
                       onTap:
                           () => Navigator.push(
                             context,
@@ -446,8 +449,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildNearbyToursSection(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final cardHeight = context.r.homeTourCardHeight();
+    final cardWidth = context.r.homeTourCardWidth();
+    final imageHeight = context.r.homeTourCardImageHeight();
 
     // Usa il provider per ottenere lo stato
     final nearbyToursState = ref.watch(nearbyToursProvider);
@@ -464,8 +468,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
             ),
             child: Text(
               'recent_tours'.tr(),
-              style: const TextStyle(
-                fontSize: 20,
+              style: TextStyle(
+                fontSize: context.r.sp(20),
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -475,12 +479,12 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
               (nearbyToursState.tours == null ||
                   nearbyToursState.tours!.isEmpty))
             SizedBox(
-              height: screenHeight * 0.25,
+              height: cardHeight,
               child: const Center(child: CircularProgressIndicator()),
             )
           else
             SizedBox(
-              height: screenHeight * 0.25,
+              height: cardHeight,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: nearbyToursState.tours?.length ?? 0,
@@ -496,8 +500,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                       imagePath: tour.imagePath,
                       title: tour.title,
                       description: tour.description,
-                      cardWidth: screenWidth * 0.6,
-                      imageHeight: 140,
+                      cardWidth: cardWidth,
+                      imageHeight: imageHeight,
+                      height: cardHeight - 8,
                       category: tour.category,
                       rating: tour.rating,
                       reviewCount: tour.reviewCount,
@@ -557,8 +562,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
             ),
             child: Text(
               'categories'.tr(),
-              style: const TextStyle(
-                fontSize: 18,
+              style: TextStyle(
+                fontSize: context.r.sp(18),
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -613,10 +618,10 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                                 child: Text(
                                   category.name[0].toUpperCase() +
                                       category.name.substring(1).toLowerCase(),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: context.r.sp(16),
                                   ),
                                 ),
                               ),
@@ -643,6 +648,7 @@ class OfflineTourCard extends StatefulWidget {
   final Map<String, dynamic> tourData;
   final double cardWidth;
   final double imageHeight;
+  final double height;
   final VoidCallback onTap;
 
   const OfflineTourCard({
@@ -650,6 +656,7 @@ class OfflineTourCard extends StatefulWidget {
     required this.tourData,
     required this.cardWidth,
     required this.imageHeight,
+    required this.height,
     required this.onTap,
   }) : super(key: key);
 
@@ -684,6 +691,7 @@ class _OfflineTourCardState extends State<OfflineTourCard> {
       onTap: widget.onTap,
       child: SizedBox(
         width: widget.cardWidth,
+        height: widget.height,
         child: Card(
           elevation: 2.0,
           shape: RoundedRectangleBorder(
@@ -704,15 +712,6 @@ class _OfflineTourCardState extends State<OfflineTourCard> {
                   color: Colors.grey.shade200,
                   child:
                       _imagePath != null
-                          // ? Image.file(
-                          //   File(_imagePath!),
-                          //   fit: BoxFit.cover,
-                          //   errorBuilder:
-                          //       (context, error, stackTrace) => Icon(
-                          //         Icons.broken_image,
-                          //         color: Colors.grey.shade400,
-                          //       ),
-                          // )
                           ? ZlibImage(
                             filePath: _imagePath!,
                             // width: widget.cardWidth,
@@ -741,9 +740,9 @@ class _OfflineTourCardState extends State<OfflineTourCard> {
                     // Title
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: context.r.sp(16),
                         color: AppColors.textPrimary,
                       ),
                       maxLines: 1,
@@ -753,8 +752,8 @@ class _OfflineTourCardState extends State<OfflineTourCard> {
                     // Description
                     Text(
                       description,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: context.r.sp(14),
                         color: AppColors.textSecondary,
                       ),
                       maxLines: 1,

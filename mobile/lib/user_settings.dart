@@ -10,6 +10,7 @@ import 'services/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'services/analytics_service.dart';
+import 'utils/responsive.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -413,8 +414,8 @@ void _handleBack(BuildContext context) {
                         // User name
                         Text(
                           '${_user!.name} ${_user!.surname}',
-                          style: const TextStyle(
-                            fontSize: 20,
+                          style: TextStyle(
+                            fontSize: context.r.sp(20),
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
                           ),
@@ -423,8 +424,8 @@ void _handleBack(BuildContext context) {
                         // User email
                         Text(
                           _user!.mail,
-                          style: const TextStyle(
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontSize: context.r.sp(14),
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -505,7 +506,7 @@ void _handleBack(BuildContext context) {
             Text(
               title,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: context.r.sp(16),
                 fontWeight: FontWeight.w500,
                 color: textColor,
               ),
@@ -537,7 +538,7 @@ void _handleBack(BuildContext context) {
           'personal_info_title'.tr(),
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 18,
+            fontSize: context.r.sp(18),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -556,7 +557,7 @@ void _handleBack(BuildContext context) {
                     Text(
                       'name'.tr(),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: context.r.sp(16),
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
                       ),
@@ -593,7 +594,7 @@ void _handleBack(BuildContext context) {
                     Text(
                       'surname'.tr(),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: context.r.sp(16),
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
                       ),
@@ -632,7 +633,7 @@ void _handleBack(BuildContext context) {
                     Text(
                       'email'.tr(),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: context.r.sp(16),
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
                       ),
@@ -673,7 +674,7 @@ void _handleBack(BuildContext context) {
                     Text(
                       'description'.tr(),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: context.r.sp(16),
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
                       ),
@@ -731,7 +732,7 @@ void _handleBack(BuildContext context) {
                   ),
                   child: Text(
                     'save'.tr(),
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: context.r.sp(16), fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -757,7 +758,7 @@ void _handleBack(BuildContext context) {
           'account_security_title',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 18,
+            fontSize: context.r.sp(18),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -840,8 +841,8 @@ void _handleBack(BuildContext context) {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: context.r.sp(16),
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),
@@ -890,7 +891,7 @@ void _handleBack(BuildContext context) {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: context.r.sp(16),
                       fontWeight: FontWeight.w500,
                       color: titleColor,
                     ),
@@ -899,8 +900,8 @@ void _handleBack(BuildContext context) {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: context.r.sp(12),
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -934,7 +935,7 @@ void _handleBack(BuildContext context) {
           'language'.tr(),
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 18,
+            fontSize: context.r.sp(18),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -986,7 +987,7 @@ void _handleBack(BuildContext context) {
                           Text(
                             language["name"],
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: context.r.sp(16),
                               fontWeight:
                                   isSelected
                                       ? FontWeight.bold
@@ -1025,11 +1026,11 @@ void _handleBack(BuildContext context) {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => _handleBack(context),
         ),
-        title: const Text(
+        title: Text(
           'help_support_title',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 18,
+            fontSize: context.r.sp(18),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -1110,10 +1111,10 @@ void _handleBack(BuildContext context) {
           const SizedBox(height: 20),
 
           // Logout title
-          const Text(
+          Text(
             'Logout',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: context.r.sp(20),
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
@@ -1139,7 +1140,7 @@ void _handleBack(BuildContext context) {
           Text(
             'logout_confirm'.tr(),
             style: TextStyle(
-              fontSize: 16,
+              fontSize: context.r.sp(16),
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),
@@ -1236,7 +1237,7 @@ void _handleBack(BuildContext context) {
             Text(
               'delete_account_title'.tr(),
               style: TextStyle(
-                fontSize: 20,
+                fontSize: context.r.sp(20),
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -1253,7 +1254,7 @@ void _handleBack(BuildContext context) {
                     'delete_account_confirm'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: context.r.sp(16),
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -1374,7 +1375,7 @@ void _handleBack(BuildContext context) {
             Text(
               'change_password'.tr(),
               style: TextStyle(
-                fontSize: 20,
+                fontSize: context.r.sp(20),
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -1389,7 +1390,7 @@ void _handleBack(BuildContext context) {
                   Text(
                     'old_password',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: context.r.sp(16),
                       fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
@@ -1427,7 +1428,7 @@ void _handleBack(BuildContext context) {
                   Text(
                     'new_password'.tr(),
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: context.r.sp(16),
                       fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
@@ -1465,7 +1466,7 @@ void _handleBack(BuildContext context) {
                   Text(
                     'confirm_new_password'.tr(),
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: context.r.sp(16),
                       fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),

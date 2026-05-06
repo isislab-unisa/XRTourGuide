@@ -54,6 +54,7 @@ import 'elements/pdf_viewer.dart';
 import 'elements/audio_player.dart';
 import 'elements/video_player.dart';
 import 'elements/zlib_image.dart';
+import 'utils/responsive.dart';
 
 // Enum for recognition states
 enum RecognitionState {
@@ -853,23 +854,23 @@ Future<void> _spawnTotemIcons(
   MarkdownConfig _buildMarkdownConfig() {
     return MarkdownConfig(
       configs: [
-        const PConfig(
+        PConfig(
           textStyle: TextStyle(
-            fontSize: 16,
+            fontSize: context.r.sp(16),
             height: 1.5,
             color: AppColors.textSecondary,
           ),
         ),
         H1Config(
-          style: const TextStyle(
-            fontSize: 24,
+          style: TextStyle(
+            fontSize: context.r.sp(24),
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
         ),
         H2Config(
-          style: const TextStyle(
-            fontSize: 20,
+          style: TextStyle(
+            fontSize: context.r.sp(20),
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -1950,10 +1951,10 @@ Future<void> _spawnTotemIcons(
       return const SizedBox.shrink();
     }
 
+    final responsive = context.r;
     // Configuration for AR overlay elements
-    final double arIconRadius =
-        screenWidth * 0.28; // Radius for the AR icons circle
-    final double iconSize = 70.0; // Size of the _buildSimpleAROverlay widget
+    final double arIconRadius = responsive.consultationIconRadius(); // Radius for the AR icons circle
+    final double iconSize = responsive.consultationIconRadius(); // Size of the _buildSimpleAROverlay widget
 
     final iconsData = _getAvailableIconsData();
 
@@ -2183,12 +2184,14 @@ Future<void> _spawnTotemIcons(
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    final buttonSize = context.r.roundButtonSize();
+
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 25,
+      top: MediaQuery.of(context).padding.top + context.r.space(25),
       left: 15,
       child: Container(
-        width: screenWidth * 0.15,
-        height: screenHeight * 0.07,
+        width: buttonSize,
+        height: buttonSize,
         decoration: BoxDecoration(
           color: AppColors.background.withOpacity(0.9),
           shape: BoxShape.circle,
@@ -2219,7 +2222,7 @@ Widget _buildMiniMap(BuildContext context) {
     final mapSize = screenWidth * 0.35;
 
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 16,
+      top: MediaQuery.of(context).padding.top + context.r.space(25),
       right: 16,
       child: Container(
         width: mapSize,
@@ -2395,10 +2398,10 @@ Widget _buildMiniMap(BuildContext context) {
                       child: Center(
                         child: Text(
                           '${index + 1}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 10,
+                            fontSize: context.r.sp(10),
                           ),
                         ),
                       ),
@@ -2476,8 +2479,7 @@ Widget _buildMiniMap(BuildContext context) {
   Widget build(BuildContext context) {
     // Define the size for the static semi-transparent circle
     // It should be large enough to encompass the largest state of the central button (e.g., ready state button size 80)
-    final double staticOuterCircleSize =
-        250.0; // Example size, adjust as needed
+    final double staticOuterCircleSize = context.r.consultationOuterCircleSize(); // Example size, adjust as needed
 
     final screenWidth = MediaQuery.of(context).size.width;
     final mapSize = screenWidth * 0.35;
@@ -2533,7 +2535,7 @@ Widget _buildMiniMap(BuildContext context) {
 
           if (_recognitionState == RecognitionState.success && widget.enableRecognition)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 16 + miniMapHeight + 10,
+              top: MediaQuery.of(context).padding.top + context.r.space(16) + miniMapHeight + context.r.space(10),
               right: 16,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -2575,10 +2577,10 @@ Widget _buildMiniMap(BuildContext context) {
                   color: Colors.black87,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   "Punto Riconosciuto! \n Tocca il pavimento per posizionare il Totem",
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(color: Colors.white, fontSize: context.r.sp(16)),
                 )
               )
             )

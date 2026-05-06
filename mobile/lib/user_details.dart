@@ -12,6 +12,7 @@ import 'review_list.dart';
 import 'main.dart'; // Adjust import based on your project structure
 import "package:easy_localization/easy_localization.dart";
 import 'services/analytics_service.dart';
+import 'utils/responsive.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -203,8 +204,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                           // User name
                           Text(
                             '${_user!.name} ${_user!.surname}',
-                            style: const TextStyle(
-                              fontSize: 20,
+                            style: TextStyle(
+                              fontSize: context.r.sp(20),
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
@@ -213,8 +214,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                           // User email
                           Text(
                             _user!.mail,
-                            style: const TextStyle(
-                              fontSize: 14,
+                            style: TextStyle(
+                              fontSize: context.r.sp(14),
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -230,8 +231,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   _user!.city,
-                                  style: const TextStyle(
-                                    fontSize: 14,
+                                  style: TextStyle(
+                                    fontSize: context.r.sp(14),
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
@@ -264,8 +265,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                                     const SizedBox(height: 8),
                                     Text(
                                       _user!.description,
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      style: TextStyle(
+                                        fontSize: context.r.sp(14),
                                         color: AppColors.textSecondary,
                                         height: 1.5,
                                       ),
@@ -288,7 +289,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                             Text(
                               'your_reviews'.tr(),
                               style: TextStyle(
-                                fontSize: 23,
+                                fontSize: context.r.sp(23),
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
@@ -296,8 +297,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                             const SizedBox(width: 8),
                             Text(
                               '(${_totalReviewCount.toString()})',
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: TextStyle(
+                                fontSize: context.r.sp(16),
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -355,7 +356,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                                 Text(
                                   'more'.tr(),
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: context.r.sp(16),
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.primary,
                                   ),
@@ -377,7 +378,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                             child: Text(
                               "no_reviews".tr(),
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: context.r.sp(16),
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -404,7 +405,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                               Text(
                                 'report_test'.tr(),
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: context.r.sp(16),
                                   fontWeight: FontWeight.bold,
                                   color: Colors.redAccent,
                                 ),
@@ -633,7 +634,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                   Text(
                     'guest'.tr(), // As shown in profile_guest.jpg
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: context.r.sp(20),
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
@@ -665,7 +666,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                             child: Text(
                               'login'.tr(), // As shown in profile_guest.jpg
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: context.r.sp(16),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -690,7 +691,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                         //     child: const Text(
                         //       'Registrati', // As shown in profile_guest.jpg
                         //       style: TextStyle(
-                        //         fontSize: 16,
+                        //         fontSize: context.r.sp(16),
                         //         fontWeight: FontWeight.bold,
                         //       ),
                         //     ),
@@ -786,16 +787,16 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: context.r.sp(16),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     Text(
                       date,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: context.r.sp(12),
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -816,8 +817,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                     const SizedBox(width: 4),
                     Text(
                       rating.toString(),
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: context.r.sp(14),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
@@ -833,8 +834,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
           // Review comment
           Text(
             comment,
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: context.r.sp(14),
               color: AppColors.textSecondary,
               height: 1.5,
             ),
@@ -848,7 +849,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
           //   child: const Text(
           //     'Read more',
           //     style: TextStyle(
-          //       fontSize: 14,
+          //       fontSize: context.r.sp(14),
           //       fontWeight: FontWeight.bold,
           //       color: AppColors.primary,
           //     ),
@@ -880,8 +881,8 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
             child: Text(
               'offline_mode_user_details'.tr(),
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: context.r.sp(16),
                 color: AppColors.textSecondary,
               ),
             ),

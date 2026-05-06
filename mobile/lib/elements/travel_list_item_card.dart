@@ -3,6 +3,7 @@ import '../models/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../services/local_state_service.dart';
+import '../utils/responsive.dart';
 import 'zlib_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -172,7 +173,7 @@ class TravelListItemCard extends ConsumerWidget {
                         //           Text(
                         //             category!,
                         //             style: const TextStyle(
-                        //               fontSize: 14,
+                        //               fontSize: context.r.sp(14),
                         //               color: AppColors.textSecondary,
                         //             ),
                         //           ),
@@ -193,7 +194,7 @@ class TravelListItemCard extends ConsumerWidget {
                         //                     '${rating!.toStringAsFixed(1).toString()}',
                         //                     style: const TextStyle(
                         //                       fontWeight: FontWeight.bold,
-                        //                       fontSize: 14,
+                        //                       fontSize: context.r.sp(14),
                         //                       color: AppColors.textPrimary,
                         //                     ),
                         //                   ),
@@ -201,7 +202,7 @@ class TravelListItemCard extends ConsumerWidget {
                         //                     Text(
                         //                       ' ($reviewCount)',
                         //                       style: const TextStyle(
-                        //                         fontSize: 14,
+                        //                         fontSize: context.r.sp(14),
                         //                         color: AppColors.textSecondary,
                         //                       ),
                         //                     ),
@@ -214,7 +215,7 @@ class TravelListItemCard extends ConsumerWidget {
                         //                   Text(
                         //                     totViews ?? '0',
                         //                     style: const TextStyle(
-                        //                       fontSize: 14,
+                        //                       fontSize: context.r.sp(14),
                         //                       fontWeight: FontWeight.bold,
                         //                       color: AppColors.textSecondary,
                         //                     ),
@@ -240,8 +241,8 @@ class TravelListItemCard extends ConsumerWidget {
                                       category!,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      style: TextStyle(
+                                        fontSize: context.r.sp(14),
                                         color: AppColors.textSecondary,
                                       ),
                                     ),
@@ -264,17 +265,17 @@ class TravelListItemCard extends ConsumerWidget {
                                         ),
                                         Text(
                                           rating!.toStringAsFixed(1),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 14,
+                                            fontSize: context.r.sp(14),
                                             color: AppColors.textPrimary,
                                           ),
                                         ),
                                         if (reviewCount != null)
                                           Text(
                                             '($reviewCount)',
-                                            style: const TextStyle(
-                                              fontSize: 14,
+                                            style: TextStyle(
+                                              fontSize: context.r.sp(14),
                                               color: AppColors.textSecondary,
                                             ),
                                           ),
@@ -285,8 +286,8 @@ class TravelListItemCard extends ConsumerWidget {
                                         ),
                                         Text(
                                           totViews ?? '0',
-                                          style: const TextStyle(
-                                            fontSize: 14,
+                                          style: TextStyle(
+                                            fontSize: context.r.sp(14),
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.textSecondary,
                                           ),
@@ -298,6 +299,7 @@ class TravelListItemCard extends ConsumerWidget {
                             ),
                           ),
                         // Title of the list item.
+                        SizedBox(height: context.r.space(4)), // Small space between category and title
                         Text(
                           title, // Use the title parameter
                           maxLines: 1,
@@ -311,11 +313,11 @@ class TravelListItemCard extends ConsumerWidget {
                         // Short description of the list item.
                         Text(
                           description, // Use the description parameter
-                          style: const TextStyle(
-                            fontSize: 12,
+                          style: TextStyle(
+                            fontSize: context.r.sp(12),
                             color: AppColors.textSecondary,
                           ),
-                          maxLines: 1, // Limit the description to one line
+                          maxLines: 2, // Limit the description to one line
                           overflow:
                               TextOverflow.ellipsis, // Add "..." if text overflows
                         ),

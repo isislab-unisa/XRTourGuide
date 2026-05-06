@@ -21,6 +21,8 @@ import 'dart:convert';
 import 'services/api_service.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 
+import 'utils/responsive.dart';
+
 // This is a top-level function and MUST NOT be a method of a class.
 // It serves as the entry point for FlutterDownloader's background tasks.
 @pragma('vm:entry-point')
@@ -197,6 +199,18 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     return MaterialApp(
       title: "app_name".tr(),
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: mediaQuery.textScaler.clamp(
+              minScaleFactor: 0.9,
+              maxScaleFactor: 1.15
+            ),
+          ),
+          child: child!,
+        );
+      },
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
@@ -398,9 +412,9 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
             const SizedBox(width: 12),
             Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 16,
+                fontSize: context.r.sp(16),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -437,9 +451,9 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
         ),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: context.r.sp(16),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -465,8 +479,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: context.r.sp(16),
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),
@@ -557,7 +571,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                           Text(
                             'onboarding_title'.tr(),
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: context.r.sp(28),
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
@@ -571,7 +585,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               'onboarding_subtitle'.tr(),
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: context.r.sp(16),
                                 color: AppColors.textSecondary,
                                 height: 1.5,
                               ),
@@ -727,7 +741,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
             Text(
               'password_reset'.tr(),
               style: TextStyle(
-                fontSize: 20,
+                fontSize: context.r.sp(20),
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -925,7 +939,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       Text(
                         'login_title'.tr(),
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: context.r.sp(28),
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
@@ -936,7 +950,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                         child: Text(
                           'login_subtitle'.tr(),
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: context.r.sp(16),
                             color: AppColors.textSecondary,
                             height: 1.5,
                           ),
@@ -1162,7 +1176,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                     Text(
                       'create_account_title'.tr(),
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: context.r.sp(28),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
@@ -1173,7 +1187,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       child: Text(
                         'create_account_subtitle'.tr(),
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: context.r.sp(16),
                           color: AppColors.textSecondary,
                           height: 1.5,
                         ),

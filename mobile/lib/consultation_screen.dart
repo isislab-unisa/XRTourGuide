@@ -20,6 +20,7 @@ import 'models/app_colors.dart';
 import 'services/api_service.dart';
 import 'services/offline_tour_service.dart';
 import 'services/tour_service.dart';
+import 'utils/responsive.dart';
 
 class ConsultationScreen extends ConsumerStatefulWidget {
   final int tourId;
@@ -394,23 +395,23 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
   MarkdownConfig _buildMarkdownConfig() {
     return MarkdownConfig(
       configs: [
-        const PConfig(
+        PConfig(
           textStyle: TextStyle(
-            fontSize: 16,
+            fontSize: context.r.sp(16),
             height: 1.5,
             color: AppColors.textSecondary,
           ),
         ),
         H1Config(
-          style: const TextStyle(
-            fontSize: 24,
+          style: TextStyle(
+            fontSize: context.r.sp(24),
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
         ),
         H2Config(
-          style: const TextStyle(
-            fontSize: 20,
+          style: TextStyle(
+            fontSize: context.r.sp(20),
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -754,8 +755,8 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
       children: [
         Text(
           _landmarkName,
-          style: const TextStyle(
-            fontSize: 24,
+          style: TextStyle(
+            fontSize: context.r.sp(24),
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -763,7 +764,7 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
         const SizedBox(height: 12),
         Text(
           message,
-          style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: context.r.sp(16), color: AppColors.textSecondary),
         ),
       ],
     );
@@ -835,8 +836,11 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
     final centerX = screenWidth / 2;
     final centerY = screenHeight / 2;
 
-    final iconRadius = screenWidth * 0.28;
-    const iconSize = 70.0;
+    final responsive = context.r;
+
+
+    final iconRadius = responsive.consultationIconRadius();
+    final iconSize = responsive.consultationIconSize();
 
     final iconsData = _getAvailableIconsData();
     final visibleIcons =
@@ -922,13 +926,14 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
   Widget _buildBackButton(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    final buttonSize = context.r.roundButtonSize();
 
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 25,
+      top: MediaQuery.of(context).padding.top + context.r.space(25),
       left: 15,
       child: Container(
-        width: screenWidth * 0.15,
-        height: screenHeight * 0.07,
+        width: buttonSize,
+        height: buttonSize,
         decoration: BoxDecoration(
           color: AppColors.background.withOpacity(0.9),
           shape: BoxShape.circle,
@@ -1023,7 +1028,7 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const staticOuterCircleSize = 250.0;
+    final staticOuterCircleSize = context.r.consultationOuterCircleSize();
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 148, 145, 145),

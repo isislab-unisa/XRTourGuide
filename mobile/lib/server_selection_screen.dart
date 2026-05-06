@@ -5,6 +5,7 @@ import 'models/app_colors.dart';
 import 'main.dart'; // Importiamo main per accedere a AuthFlowScreen
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'utils/responsive.dart';
 
 
 class WelcomeScreen extends ConsumerStatefulWidget {
@@ -93,9 +94,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ),
                 child: Text(
                   text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
-                    fontSize: 16,
+                    fontSize: context.r.sp(16),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -113,9 +114,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ),
                 child: Text(
                   text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: context.r.sp(16),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -152,8 +153,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           // SizedBox(height: 20),
                           Text(
                             "XRTOURGUIDE", // O usa una chiave di traduzione se preferisci
-                            style: const TextStyle(
-                              fontSize: 28,
+                            style: TextStyle(
+                              fontSize: context.r.sp(28),
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                               letterSpacing: 1.2,
@@ -167,8 +168,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                             child: Text(
                               "server_selection_description".tr(),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: TextStyle(
+                                fontSize: context.r.sp(16),
                                 color: AppColors.textSecondary,
                                 height: 1.5,
                               ),
@@ -178,7 +179,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       ),
                     ),
 
-                    SizedBox(height: screenHeight * 0.1), // Spazio centrale
+                    SizedBox(height: context.r.space(48)), // Spazio centrale
                     // --- SEZIONE PULSANTI ---
                     if (_isLoading)
                       const CircularProgressIndicator()

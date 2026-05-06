@@ -28,6 +28,7 @@ import 'elements/zlib_image.dart';
 import 'services/analytics_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'consultation_screen.dart';
+import 'utils/responsive.dart';
 
 
 
@@ -666,7 +667,7 @@ Future<void> _loadWaypoints() async {
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: isSelectedMappa ? 25 : (isSelected ? 22 : (isItineraryView ? 16 : 14)),
+                    fontSize: isSelectedMappa ? context.r.sp(25) : (isSelected ? context.r.sp(22) : (isItineraryView ? context.r.sp(16) : context.r.sp(14))),
                   ),
                 ),
               ),
@@ -775,7 +776,7 @@ Future<void> _loadWaypoints() async {
 
           // Back button (positioned on top of the map)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
+            top: MediaQuery.of(context).padding.top + context.r.space(8),
             left: 16,
             child: Container(
               width: screenWidth * 0.15,
@@ -811,7 +812,7 @@ Future<void> _loadWaypoints() async {
           if (widget.isGuest == false && _tourDetails!.status == "BUILT")
           // if (widget.isGuest == false)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
+              top: MediaQuery.of(context).padding.top + context.r.space(8),
               right: 16,
               child: Container(
                 width: screenWidth * 0.15,
@@ -929,16 +930,16 @@ Future<void> _loadWaypoints() async {
                                     children: [
                                       Text(
                                         selectedWaypoint.category,
-                                        style: const TextStyle(
-                                          fontSize: 14,
+                                        style: TextStyle(
+                                          fontSize: context.r.sp(14),
                                           color:
                                               AppColors.textSecondary,
                                         ),
                                       ),
                                       Text(
                                         selectedWaypoint.title,
-                                        style: const TextStyle(
-                                          fontSize: 18,
+                                        style: TextStyle(
+                                          fontSize: context.r.sp(18),
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.textPrimary,
                                         ),
@@ -946,7 +947,7 @@ Future<void> _loadWaypoints() async {
                                       Text(
                                         'Tap on markers to navigate',
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: context.r.sp(12),
                                           color: Colors.grey.shade600,
                                           fontStyle: FontStyle.italic,
                                         ),
@@ -979,7 +980,7 @@ Future<void> _loadWaypoints() async {
                             Text(
                               'description'.tr(),
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: context.r.sp(18),
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
@@ -987,8 +988,8 @@ Future<void> _loadWaypoints() async {
                             const SizedBox(height: 8),
                             Text(
                               selectedWaypoint.description,
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: TextStyle(
+                                fontSize: context.r.sp(16),
                                 height: 1.5,
                                 color: AppColors.textSecondary,
                               ),
@@ -1000,7 +1001,7 @@ Future<void> _loadWaypoints() async {
                             // const Text(
                             //   'Tour Progress',
                             //   style: TextStyle(
-                            //     fontSize: 18,
+                            //     fontSize: context.r.sp(18),
                             //     fontWeight: FontWeight.bold,
                             //     color: AppColors.textPrimary,
                             //   ),
@@ -1009,7 +1010,7 @@ Future<void> _loadWaypoints() async {
                             // Text(
                             //   'Waypoint ${_selectedWaypointIndex + 1} of ${_waypoints.length}',
                             //   style: const TextStyle(
-                            //     fontSize: 14,
+                            //     fontSize: context.r.sp(14),
                             //     color: AppColors.textSecondary,
                             //   ),
                             // ),
@@ -1049,7 +1050,7 @@ Future<void> _loadWaypoints() async {
                               Text(
                                 'photos'.tr(),
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: context.r.sp(18),
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                 ),
@@ -1199,7 +1200,7 @@ Future<void> _loadWaypoints() async {
               children: [
                 // Image gallery
                 SizedBox(
-                  height: 300,
+                  height: context.r.heroImageHeight(),
                   width: double.infinity,
                   child: PageView.builder(
                     controller: _pageController,
@@ -1248,7 +1249,7 @@ Future<void> _loadWaypoints() async {
 
                 // Back button
                 Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
+                  top: MediaQuery.of(context).padding.top + context.r.space(8),
                   left: 16,
                   child: Container(
                     width: screenWidth * 0.15,
@@ -1290,9 +1291,9 @@ Future<void> _loadWaypoints() async {
                     ),
                     child: Text(
                       '${_currentImageIndex + 1}/1',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: context.r.sp(12),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1321,8 +1322,8 @@ Future<void> _loadWaypoints() async {
                           "created_by".tr(namedArgs: {'creator': _tourDetails?.creator ?? ''}),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
+                          style: TextStyle(
+                            fontSize: context.r.sp(12),
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                           ),
@@ -1336,8 +1337,8 @@ Future<void> _loadWaypoints() async {
                           textAlign: TextAlign.end,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
+                          style: TextStyle(
+                            fontSize: context.r.sp(12),
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                           ),
@@ -1378,8 +1379,8 @@ Future<void> _loadWaypoints() async {
                               const SizedBox(width: 8),
                               Text(
                                 '${_tourDetails!.rating.toStringAsFixed(1).toString()} (${_tourDetails!.reviewCount.toString()})',
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                style: TextStyle(
+                                  fontSize: context.r.sp(14),
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textSecondary,
                                 ),
@@ -1393,8 +1394,8 @@ Future<void> _loadWaypoints() async {
                               ),
                               Text(
                                 _tourDetails!.totViews.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                style: TextStyle(
+                                  fontSize: context.r.sp(14),
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textSecondary,
                                 ),
@@ -1408,8 +1409,8 @@ Future<void> _loadWaypoints() async {
                                 _tourDetails!.title,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 24,
+                                style: TextStyle(
+                                  fontSize: context.r.sp(24),
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                 ),
@@ -1427,8 +1428,8 @@ Future<void> _loadWaypoints() async {
                               const SizedBox(width: 4),
                               Text(
                                 _tourDetails!.location,
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                style: TextStyle(
+                                  fontSize: context.r.sp(14),
                                   color: AppColors.textSecondary,
                                 ),
                               ),
@@ -1557,7 +1558,7 @@ Future<void> _loadWaypoints() async {
                       Text(
                         'tour_highlights'.tr(),
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: context.r.sp(18),
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
@@ -1565,8 +1566,8 @@ Future<void> _loadWaypoints() async {
                       const SizedBox(height: 8),
                       Text(
                         _tourDetails!.description,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: TextStyle(
+                          fontSize: context.r.sp(14),
                           color: AppColors.textSecondary,
                           height: 1.5,
                         ),
@@ -1594,7 +1595,7 @@ Future<void> _loadWaypoints() async {
                           Text(
                             'verified_reviews'.tr(),
                             style: TextStyle(
-                              fontSize: 23,
+                              fontSize: context.r.sp(23),
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
@@ -1602,8 +1603,8 @@ Future<void> _loadWaypoints() async {
                           const SizedBox(width: 8),
                           Text(
                             '(${_tourDetails!.reviewCount})',
-                            style: const TextStyle(
-                              fontSize: 16,
+                            style: TextStyle(
+                              fontSize: context.r.sp(16),
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -1626,8 +1627,8 @@ Future<void> _loadWaypoints() async {
                         children: [
                           Text(
                             _tourDetails!.rating.toStringAsFixed(1).toString(),
-                            style: const TextStyle(
-                              fontSize: 48,
+                            style: TextStyle(
+                              fontSize: context.r.sp(48),
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
@@ -1669,8 +1670,8 @@ Future<void> _loadWaypoints() async {
                                 ),
                                 Text(
                                   'based_on_reviews'.tr(namedArgs: {'count': '${_tourDetails!.reviewCount}'}),
-                                  style: const TextStyle(
-                                    fontSize: 14,
+                                  style: TextStyle(
+                                    fontSize: context.r.sp(14),
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
@@ -1723,13 +1724,13 @@ Future<void> _loadWaypoints() async {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 'More',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: context.r.sp(16),
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primary,
                                 ),
@@ -1970,7 +1971,7 @@ Future<void> _loadWaypoints() async {
                   softWrap: false,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: context.r.sp(14),
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     color: buttonColor != null
                       ? Colors.black
@@ -2263,8 +2264,8 @@ Widget _buildWaypointItem({
                     // Description
                     Text(
                       description,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: context.r.sp(14),
                         color: AppColors.textSecondary,
                         height: 1.5,
                       ),
@@ -2440,7 +2441,7 @@ Widget _buildWaypointItem({
                             Text(
                               'Sub-locations',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: context.r.sp(16),
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
@@ -2507,7 +2508,7 @@ Widget _buildWaypointItem({
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 10,
+                  fontSize: context.r.sp(10),
                 ),
               ),
             ),
@@ -2521,7 +2522,7 @@ Widget _buildWaypointItem({
                 Text(
                   subWaypoint.title,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: context.r.sp(14),
                     fontWeight: FontWeight.w500,
                     color: AppColors.textPrimary,
                   ),
@@ -2530,7 +2531,7 @@ Widget _buildWaypointItem({
                   Text(
                     subWaypoint.description,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: context.r.sp(12),
                       color: AppColors.textSecondary,
                     ),
                     maxLines: 2,
@@ -2601,16 +2602,16 @@ Widget _buildWaypointItem({
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: context.r.sp(16),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     Text(
                       date,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: context.r.sp(12),
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -2631,8 +2632,8 @@ Widget _buildWaypointItem({
                     const SizedBox(width: 4),
                     Text(
                       rating.toStringAsFixed(1).toString(),
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: context.r.sp(14),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
@@ -2648,8 +2649,8 @@ Widget _buildWaypointItem({
           // Review comment
           Text(
             comment,
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: context.r.sp(14),
               color: AppColors.textSecondary,
               height: 1.5,
             ),
@@ -2663,7 +2664,7 @@ Widget _buildWaypointItem({
           //   child: const Text(
           //     'Read more',
           //     style: TextStyle(
-          //       fontSize: 14,
+          //       fontSize: context.r.sp(14),
           //       fontWeight: FontWeight.bold,
           //       color: AppColors.primary,
           //     ),
@@ -2712,7 +2713,7 @@ void _showLeaveReviewSheet(int tourId) {
                       child: Text(
                         'leave_review'.tr(),
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: context.r.sp(20),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -2742,7 +2743,7 @@ void _showLeaveReviewSheet(int tourId) {
                     Text(
                       'comments'.tr(),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: context.r.sp(16),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -2787,7 +2788,7 @@ void _showLeaveReviewSheet(int tourId) {
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 32, vertical: 12),
-                            textStyle: TextStyle(fontSize: 20),
+                            textStyle: TextStyle(fontSize: context.r.sp(20)),
                           ),
                           onPressed: () {
                             Navigator.pop(context); // Close the sheet
@@ -2801,7 +2802,7 @@ void _showLeaveReviewSheet(int tourId) {
                               horizontal: 32, vertical: 12),
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            textStyle: const TextStyle(fontSize: 20),
+                            textStyle: TextStyle(fontSize: context.r.sp(20)),
                           ),
                           onPressed: () {
                             final rating = _userRating;
@@ -2862,8 +2863,8 @@ void _showLeaveReviewSheet(int tourId) {
               const SizedBox(width: 12),
               Text(
                 "offline_access".tr(),
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: context.r.sp(16),
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -2875,8 +2876,8 @@ void _showLeaveReviewSheet(int tourId) {
             _isAvailableOffline
                 ? "tour_available_offline".tr()
                 : "download_tour_offline_description".tr(),
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: context.r.sp(14),
               color: AppColors.textSecondary,
             ),
           ),

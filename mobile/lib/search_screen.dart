@@ -9,6 +9,7 @@ import 'models/tour.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import 'services/analytics_service.dart';
+import 'utils/responsive.dart';
 
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -174,8 +175,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                   opacity: _searchBarAnimation,
                   child: Container(
                     // Responsive width based on screen size
-                    width: screenWidth - 32,
-                    height: 50,
+                    width: double.infinity,
+                    height: context.r.buttonHeight(),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(25),
@@ -197,7 +198,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                         hintText: 'search_hint'.tr(),
                         hintStyle: TextStyle(
                           color: AppColors.textSecondary.withOpacity(0.7),
-                          fontSize: 16,
+                          fontSize: context.r.sp(16),
                         ),
                         prefixIcon: const Icon(
                           Icons.search,
@@ -331,21 +332,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                   // Destination name
                   Text(
                     name,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: context.r.sp(16),
                       fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  // Show description if available
-                  // if (description.isNotEmpty)
-                  //   Text(
-                  //     description,
-                  //     style: TextStyle(
-                  //       fontSize: 14,
-                  //       color: AppColors.textSecondary.withOpacity(0.7),
-                  //     ),
-                  //   ),
                 ],
               ),
             ),
