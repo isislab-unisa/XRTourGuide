@@ -253,3 +253,22 @@ def remove_sub_tours():
     tours = Tour.objects.filter(is_subtour=True, parent_tours__isnull=True, created_at__lt=difference)
     for tour in tours:
         tour.delete()
+        
+@shared_task
+def clear_ai_inference_cache():
+    url = os.getenv("INFERENCE_CACHE_CLEAR_ENDPOINT")
+    
+    if not url:
+        print("INFERENCE_CACHE_CLEAR_ENDPOINT non è configurato.")
+        return "INFERENCE_CACHE_CLEAR_ENDPOINT non configurato"
+    
+    headers = {}
+    
+    try:
+        response = requests.post(url, timeout=30)
+        print(f"Cache clear response: {response.status_code} - {response.text}")
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Error clearing AI inference cache: {e}", flush=True)
+        raise

@@ -148,6 +148,7 @@ REDIS_URL=redis://redis:6379
 CALLBACK_ENDPOINT=http://web:8001/complete_build/
 TRAIN_ENDPOINT=http://ai_training:8090/train_model
 INFERENCE_ENDPOINT=http://ai_inference:8050/inference
+INFERENCE_CACHE_CLEAR_ENDPOINT=http://ai_inference:8050/cache/clear
 PMTILES_URL=http://pmtiles-server:8081/extract
 
 #Community server
