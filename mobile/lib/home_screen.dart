@@ -425,7 +425,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                       tourData: tour,
                       cardWidth: cardWidth,
                       imageHeight: imageHeight,
-                      height: cardHeight - 8,
+                      height: cardHeight,
                       onTap:
                           () => Navigator.push(
                             context,
@@ -449,9 +449,12 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildNearbyToursSection(BuildContext context) {
-    final cardHeight = context.r.homeTourCardHeight();
-    final cardWidth = context.r.homeTourCardWidth();
-    final imageHeight = context.r.homeTourCardImageHeight();
+    // final cardHeight = context.r.homeTourCardHeight();
+    // final cardWidth = context.r.homeTourCardWidth();
+    // final imageHeight = context.r.homeTourCardImageHeight();
+    const cardHeight = TravelListItemCard.compactHeight;
+    const cardWidth = TravelListItemCard.compactWidth;
+    const imageHeight = TravelListItemCard.compactImageHeight;
 
     // Usa il provider per ottenere lo stato
     final nearbyToursState = ref.watch(nearbyToursProvider);
@@ -502,7 +505,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                       description: tour.description,
                       cardWidth: cardWidth,
                       imageHeight: imageHeight,
-                      height: cardHeight - 8,
+                      height: cardHeight,
                       category: tour.category,
                       rating: tour.rating,
                       reviewCount: tour.reviewCount,
@@ -748,7 +751,7 @@ class _OfflineTourCardState extends State<OfflineTourCard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: context.r.space(8)),
                     // Description
                     Text(
                       description,

@@ -147,6 +147,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
                   category: tour.category,
                   rating: tour.rating,
                   reviewCount: tour.reviewCount,
+                  totViews: tour.totViews.toString(),
                   // isFavorite: tour['isFavorite'] ?? false,
                   onTap:
                       () {

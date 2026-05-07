@@ -234,7 +234,12 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _analytics = ref.read(analyticsServiceProvider);
     _offlineService = ref.read(offlineStorageServiceProvider);
     if (widget.enableRecognition) {
-      _initializeCamera();
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await Future.delayed(const Duration(milliseconds: 200));
+        _initializeCamera();
+      });
+      // _initializeCamera();
       _getCurrentLocation();
       if (widget.isOffline) {
         _initOfflineMap();
@@ -244,13 +249,23 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       _getCurrentLocation();
     }
     _initializeAnimations();
-    _setInitialContent();
+    // _setInitialContent();
 
-    if(!widget.enableRecognition) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      _setInitialContent();
+
+      if (!widget.enableRecognition) {
         _enterStubRecognizedState();
-      });
-    }
+      }
+    });
+
+    // if(!widget.enableRecognition) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _enterStubRecognizedState();
+    //   });
+    // }
   }
 
   @override
@@ -1069,8 +1084,9 @@ Future<void> _spawnTotemIcons(
 
   // Set the initial content for the draggable sheet
   void _setInitialContent() {
+    _getTourWaypoints();
+
     setState(() {
-      _getTourWaypoints();
       _currentMarkdownContent = """ 
       """;
       _currentActiveContent = MarkdownWidget(
@@ -2412,6 +2428,7 @@ Widget _buildMiniMap(BuildContext context) {
       ],
     );
   }
+
   // Build the draggable bottom sheet with landmark information
   Widget _buildDraggableSheet(BuildContext context) {
     return DraggableScrollableSheet(
