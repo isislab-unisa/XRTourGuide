@@ -262,6 +262,19 @@ Future<User> getUserDetails() async {
     return (reviews: finalReviews, totalCount: totalCount);
   }
 
+  Future<bool> hasUserReviewedTour(int tourId) async {
+    final response = await apiService.hasReviewedTour(
+      tourId,
+      baseUrl: apiService.getCurrentBaseUrl(),
+    );
+
+    if (response.statusCode == 200) {
+      final data = response.data as Map<String, dynamic>;
+      return data['has_reviewed'] == true;
+    }
+    throw Exception('Failed to check review status');
+  }
+
   Future<Map<String, dynamic>> getResourceByWaypointAndType(int waypointId, String type) async {
     Map<String, dynamic> resource = {};
     try {

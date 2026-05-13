@@ -27,15 +27,11 @@ class ApiService {
   '/stream_minio_resource/'
   ];
 
-  // static String appSignature = "com.isislab.xr_tour_guide";
-  static String appSignature = "com.picaresque.xrtourguide";
+  static String appSignature = "APP_SIGNATURE_XR_TOUR_GUIDE_MOBILE";
 
   static String basicUrl = 'https://';
-  // static const String centralizedUrl = 'http://';
 
-  // static const String centralizedUrl = 'https://xrtourguide.di.unisa.it/communityserver/';
-  static const String centralizedUrl = 'https://xrtourguide.eu/communityserver/';
-  // static const String centralizedUrl = 'http://172.16.15.134/communityserver/';
+  static const String centralizedUrl = 'COMMUNITY_SERVER_URL'; // Sostituisci con l'URL del tuo server centrale
 
 
 
@@ -444,6 +440,13 @@ class ApiService {
     }
   }
 
+  Future<Response> hasReviewedTour(int tourId, {String? baseUrl}) async {
+    return await dio.get(
+      '/has_reviewed_tour/$tourId/',
+      options: _getOptions(baseUrl: baseUrl),
+    );
+  }
+
   Future<Response> initializeInferenceModule(int tourId, {String? baseUrl}) async {
     try {
       final response = await dio.get('/load_model/$tourId', options: _getOptions(baseUrl: baseUrl));
@@ -453,25 +456,6 @@ class ApiService {
       rethrow;
     }
   }
-
-  // Future<Response> inference(String imageBase64, int tourId, double? gpsLat, double? gpsLon, double? gpsAccuracyM, {String? baseUrl}) async {
-  //   try {
-  //     final formData = FormData.fromMap({
-  //       'img': imageBase64,
-  //       'tour_id': tourId,
-  //       if (gpsLat != null) 'gps_lat': gpsLat,
-  //       if (gpsLon != null) 'gps_lon': gpsLon,
-  //       if (gpsAccuracyM != null) 'gps_accuracy_m': gpsAccuracyM,
-  //     });
-
-  //     final response = await dio.post('/inference/', data: formData, options: _getOptions(baseUrl: baseUrl));
-  //     return response;
-      
-  //   } catch (e) {
-  //     print('Failed inference: $e');
-  //     rethrow;
-  //   }
-  // }
 
   Future<Response> inference(
     Uint8List imageBytes,

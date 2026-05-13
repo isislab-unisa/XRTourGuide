@@ -92,6 +92,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   List<Review> _reviews = [];
   bool _isLoadingReviews = true;
   bool _hasUserAlreadyReviewed = false;
+  bool _isCheckingUserReview = false;
 
   double _userRating = 0.0;
   final TextEditingController _reviewController = TextEditingController();
@@ -137,6 +138,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       _loadData();
       // _incrementViewCount();
     }
+    if(!widget.isOffline && !widget.isGuest){
+      _checkUserReviewStatusNonBlocking();
+    }
     _checkLocationPermission();
     _loadScannedWaypoints();
     _checkOfflineAvailability();
@@ -163,34 +167,21 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       _loadTourDetails(),
       _loadWaypoints(),
       _loadReviews(),
-      _loadHasUserReviewed(),
     ]);
   }
 
-  Future<void> _loadHasUserReviewed() async {
-    if (widget.isGuest || widget.isOffline) {
-      if (mounted) {
-        setState(() => _hasUserAlreadyReviewed = false);
-      }
-      return;
-    }
-
+  Future<void> _checkUserReviewStatusNonBlocking() async {
+    setState(() => _isCheckingUserReview = true);
     try {
-      final result = await _tourService.getReviewByUser(0); // 0 => tutte
-      final hasReviewed = result.reviews.any((r) => r.tourId == widget.tourId);
-
-      if (mounted) {
-        setState(() {
-          _hasUserAlreadyReviewed = hasReviewed;
-        });
-      }
+      final hasReviewed = await _tourService.hasUserReviewedTour(widget.tourId);
+      if (!mounted) return;
+      setState(() {
+        _hasUserAlreadyReviewed = hasReviewed;
+        _isCheckingUserReview = false;
+      });
     } catch (_) {
-      // fallback prudente: non bloccare UI se errore
-      if (mounted) {
-        setState(() {
-          _hasUserAlreadyReviewed = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() => _isCheckingUserReview = false);
     }
   }
 
@@ -1639,7 +1630,7 @@ Future<void> _loadWaypoints() async {
                             ),
                           ),
                           const Spacer(),
-                          if (!widget.isGuest && !_hasUserAlreadyReviewed)
+                          if (!widget.isGuest && !_hasUserAlreadyReviewed && !_isCheckingUserReview)
                             IconButton(
                               onPressed: () {
                                 _showLeaveReviewSheet(_tourDetails!.id);
