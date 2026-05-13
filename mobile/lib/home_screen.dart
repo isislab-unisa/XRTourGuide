@@ -19,7 +19,8 @@ import "elements/zlib_image.dart";
 import 'package:geolocator/geolocator.dart';
 import 'providers/home_providers.dart'; // Importa i nuovi provider
 import 'services/analytics_service.dart';
-import 'utils/responsive.dart'; // Importa il servizio di analytics
+import 'utils/responsive.dart';
+import 'utils/platform_page_route.dart';
 
 
 
@@ -248,7 +249,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
         onTap: (int index) {
           if (index == 1) {
             Navigator.of(context).push(
-              MaterialPageRoute(
+              platformPageRoute(
                 builder:
                     (context) => UserDetailScreen(
                       isGuest: widget.isGuest,
@@ -346,7 +347,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
       child: GestureDetector(
         onTap:
             () => Navigator.of(context).push(
-              MaterialPageRoute(
+              platformPageRoute(
                 builder: (_) => SearchScreen(isGuest: widget.isGuest),
               ),
             ),
@@ -429,7 +430,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                       onTap:
                           () => Navigator.push(
                             context,
-                            MaterialPageRoute(
+                            platformPageRoute(
                               builder:
                                   (context) => TourDetailScreen(
                                     tourId: tour['id'],
@@ -527,7 +528,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                             
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
+                              platformPageRoute(
                                 builder:
                                     (context) => TourDetailScreen(
                                       tourId: tour.id,
@@ -585,7 +586,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                         onTap:
                             () => Navigator.push(
                               context,
-                              MaterialPageRoute(
+                              platformPageRoute(
                                 builder:
                                     (context) => CategoryDetailScreen(
                                       isGuest: widget.isGuest,

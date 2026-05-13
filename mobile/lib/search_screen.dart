@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
+import 'utils/platform_page_route.dart';
 
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -269,7 +270,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                             // Handle destination selection
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
+                              platformPageRoute(
                                 builder:
                                     (context) => TourDetailScreen(
                                       tourId: destination.id,

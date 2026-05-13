@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:easy_localization/easy_localization.dart";
 import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
+import 'utils/platform_page_route.dart';
 
 
 
@@ -164,7 +165,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
                         
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
+                          platformPageRoute(
                             builder:
                                 (context) => TourDetailScreen(
                                   tourId: tour.id,

@@ -13,6 +13,7 @@ import 'main.dart'; // Adjust import based on your project structure
 import "package:easy_localization/easy_localization.dart";
 import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
+import 'utils/platform_page_route.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -135,7 +136,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
   // Navigate to user settings
   void _navigateToUserSettings() async {
     final result = await Navigator.of(context).push(
-      MaterialPageRoute(
+      platformPageRoute(
         builder: (context) => UserProfileScreen(),
       ),
     );
@@ -333,7 +334,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
               
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
+                                platformPageRoute(
                                   builder:
                                       (context) => ReviewListScreen(
                                         isTour: false,
@@ -651,7 +652,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                             onPressed: () {
                               // TODO: Implement Log In navigation
                               Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
+                                platformPageRoute(
                                   builder: (context) => const AuthFlowScreen(),
                                 ),
                                 (route) => false,

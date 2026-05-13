@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
+import 'utils/platform_page_route.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -168,7 +169,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   void _navigateToExplore(BuildContext context) {
     // Navigate to TravelExplorerScreen
     // Navigator.of(context).pushReplacement(
-    //   MaterialPageRoute(builder: (context) => const TravelExplorerScreen()),
+    //   platformPageRoute(builder: (context) => const TravelExplorerScreen()),
     // );
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -320,7 +321,7 @@ void _handleBack(BuildContext context) {
     Navigator.of(context).pop(); // Close the bottom sheet
     await authService.logout(); // Call the logout method from AuthService
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
+      platformPageRoute(
         builder: (context) => const AuthChecker(),
       ),
       (route) => false,

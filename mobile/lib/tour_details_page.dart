@@ -29,6 +29,7 @@ import 'services/analytics_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'consultation_screen.dart';
 import 'utils/responsive.dart';
+import 'utils/platform_page_route.dart';
 
 
 
@@ -860,7 +861,7 @@ Future<void> _loadWaypoints() async {
                     //Initialize the inference module for the tour
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude, isOffline: widget.isOffline)),
+                      platformPageRoute(builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude, isOffline: widget.isOffline)),
                     );
                   },
                 ),
@@ -1483,7 +1484,7 @@ Future<void> _loadWaypoints() async {
 
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  platformPageRoute(
                                     builder: (context) => ARCameraScreen(tourId: widget.tourId, latitude: _tourDetails!.latitude, longitude: _tourDetails!.longitude, isOffline: widget.isOffline),
                                   ),
                                 );
@@ -1737,7 +1738,7 @@ Future<void> _loadWaypoints() async {
 
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
+                              platformPageRoute(
                                 builder: (context) => ReviewListScreen(
                                   tourName: _tourDetails!.title,
                                   tourId: widget.tourId,

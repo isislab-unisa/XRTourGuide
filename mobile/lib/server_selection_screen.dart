@@ -6,6 +6,7 @@ import 'main.dart'; // Importiamo main per accedere a AuthFlowScreen
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'utils/responsive.dart';
+import 'utils/platform_page_route.dart';
 
 
 class WelcomeScreen extends ConsumerStatefulWidget {
@@ -60,7 +61,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     // 2. Naviga alla schermata di Auth/Onboarding
     // Usiamo pushReplacement per non permettere di tornare indietro alla selezione
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const AuthChecker()),
+      platformPageRoute(builder: (context) => const AuthChecker()),
     );
   }
 

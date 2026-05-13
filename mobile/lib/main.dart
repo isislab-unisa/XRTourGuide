@@ -170,18 +170,18 @@ class _MyAppState extends ConsumerState<MyApp> {
     if (status == AuthStatus.authenticated) {
       // Costruisci stack: TravelExplorer -> TourDetail
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
+        platformPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
         (route) => false, // rimuove tutte le route precedenti
       );
       navigatorKey.currentState?.push(
-        MaterialPageRoute(
+        platformPageRoute(
           builder: (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
         ),
       );
       ref.read(pendingTourIdProvider.notifier).state = null;
     } else {
       navigatorKey.currentState?.push(
-        MaterialPageRoute(builder: (_) => const AuthFlowScreen()),
+        platformPageRoute(builder: (_) => const AuthFlowScreen()),
       );
     }
   }
@@ -257,11 +257,11 @@ class AuthChecker extends ConsumerWidget {
     if (status == AuthStatus.authenticated) {
 
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
+        platformPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
         (route) => false,
       );
       navigatorKey.currentState?.push(
-        MaterialPageRoute(
+        platformPageRoute(
           builder:
               (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
         ),
@@ -269,7 +269,7 @@ class AuthChecker extends ConsumerWidget {
       ref.read(pendingTourIdProvider.notifier).state = null;
     } else {
       navigatorKey.currentState?.push(
-        MaterialPageRoute(builder: (_) => const AuthFlowScreen()),
+        platformPageRoute(builder: (_) => const AuthFlowScreen()),
       );
     }
   }
@@ -688,7 +688,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                         setState(() {
                           //navigate to main page as guest
                           Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
+                            platformPageRoute(
                               builder:
                                   (context) =>
                                       TravelExplorerScreen(isGuest: true),
