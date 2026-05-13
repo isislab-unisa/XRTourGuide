@@ -67,6 +67,7 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
 
   final Map<String, Map<String, dynamic>> _preloadedContent = {};
   final Map<String, File> _cachedResources = {};
+  final Map<String, Map<String, dynamic>> _resourceMetaCache = {};
   final List<File> _tempFiles = [];
 
   Widget? _currentActiveContent;
@@ -100,6 +101,23 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
     _sheetController.dispose();
     _clearTempFiles();
     super.dispose();
+  }
+
+  Future<Map<String, dynamic>> _getResourceWithMetaCache(
+    int waypointId,
+    String resourceType,
+  ) async {
+    final key = '$waypointId:$resourceType';
+    final cached = _resourceMetaCache[key];
+    if (cached != null) return cached;
+
+    final response = await _tourService.getResourceByWaypointAndType(
+      waypointId,
+      resourceType,
+    );
+    final map = (response as Map<String, dynamic>);
+    _resourceMetaCache[key] = map;
+    return map;
   }
 
   Future<void> _loadAndPreloadResources() async {
@@ -535,12 +553,14 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
       } else if (widget.isOffline) {
         content = {};
       } else {
-        final response = await _tourService.getResourceByWaypointAndType(
-          waypointId,
-          queryType,
-        );
+        // final response = await _tourService.getResourceByWaypointAndType(
+        //   waypointId,
+        //   queryType,
+        // );
 
-        content = response;
+        // content = response;
+        content = await _getResourceWithMetaCache(waypointId, queryType);
+
 
         if (content.containsKey("url")) {
           content[queryType] = content["url"];
@@ -635,46 +655,112 @@ class _ConsultationScreenState extends ConsumerState<ConsultationScreen> {
         );
         break;
 
-      case "video":
-        final videoPath = content["video"]?.toString() ?? "";
+      // case "video":
+      //   final videoPath = content["video"]?.toString() ?? "";
 
+      //   if (videoPath.isNotEmpty) {
+      //     final videoFile = await _loadAndDecompressResource(
+      //       videoPath,
+      //       widget.isOffline,
+      //       "mp4",
+      //     );
+
+      //     if (videoFile != null) {
+      //       contentToDisplay = VideoPlayerWidget(
+      //         videoUrl: videoFile.path,
+      //         isLocalFile: true,
+      //       );
+      //     }
+      //   }
+
+      //   contentToDisplay ??= _buildEmptyContent("No video available.");
+      //   break;
+      case 'video':
+        final videoPath = (content['video'] ?? content['url'] ?? '').toString();
         if (videoPath.isNotEmpty) {
-          final videoFile = await _loadAndDecompressResource(
-            videoPath,
-            widget.isOffline,
-            "mp4",
-          );
-
-          if (videoFile != null) {
+          if (widget.isOffline) {
+            final videoFile = await _loadAndDecompressResource(
+              videoPath,
+              true,
+              'mp4',
+            );
+            contentToDisplay =
+                (videoFile != null)
+                    ? VideoPlayerWidget(
+                      videoUrl: videoFile.path,
+                      isLocalFile: true,
+                    )
+                    : const Center(
+                      child: Text("Errore nel caricamento del video"),
+                    );
+          } else {
+            final videoUrl =
+                videoPath.startsWith('http')
+                    ? videoPath
+                    : "${_apiService.getCurrentBaseUrl()}$videoPath";
             contentToDisplay = VideoPlayerWidget(
-              videoUrl: videoFile.path,
-              isLocalFile: true,
+              videoUrl: videoUrl,
+              isLocalFile: false,
             );
           }
+        } else {
+          contentToDisplay = const Center(
+            child: Text('No video available for this waypoint.'),
+          );
         }
-
-        contentToDisplay ??= _buildEmptyContent("No video available.");
         break;
 
-      case "document":
-        final pdfPath = content["pdf"]?.toString() ?? "";
+      // case "document":
+      //   final pdfPath = content["pdf"]?.toString() ?? "";
 
+      //   if (pdfPath.isNotEmpty) {
+      //     final pdfFile = await _loadAndDecompressResource(
+      //       pdfPath,
+      //       widget.isOffline,
+      //       "pdf",
+      //     );
+
+      //     if (pdfFile != null) {
+      //       contentToDisplay = PdfViewerWidget(
+      //         pdfUrl: pdfFile.path,
+      //         isLocalFile: true,
+      //       );
+      //     }
+      //   }
+
+      //   contentToDisplay ??= _buildEmptyContent("No document available.");
+      //   break;
+
+      case 'document':
+        final pdfPath = (content['pdf'] ?? content['url'] ?? '').toString();
         if (pdfPath.isNotEmpty) {
-          final pdfFile = await _loadAndDecompressResource(
-            pdfPath,
-            widget.isOffline,
-            "pdf",
-          );
-
-          if (pdfFile != null) {
+          if (widget.isOffline) {
+            final pdfFile = await _loadAndDecompressResource(
+              pdfPath,
+              true,
+              'pdf',
+            );
+            contentToDisplay =
+                (pdfFile != null)
+                    ? PdfViewerWidget(pdfUrl: pdfFile.path, isLocalFile: true)
+                    : const Center(
+                      child: Text("Errore nel caricamento del PDF"),
+                    );
+          } else {
+            final pdfUrl =
+                pdfPath.startsWith('http')
+                    ? pdfPath
+                    : "${_apiService.getCurrentBaseUrl()}$pdfPath";
             contentToDisplay = PdfViewerWidget(
-              pdfUrl: pdfFile.path,
-              isLocalFile: true,
+              pdfUrl: pdfUrl,
+              isLocalFile: false,
             );
           }
+        } else {
+          contentToDisplay = const Center(
+            child: Text('No PDF document available for this waypoint.'),
+          );
         }
-
-        contentToDisplay ??= _buildEmptyContent("No document available.");
         break;
 
       case "audio":

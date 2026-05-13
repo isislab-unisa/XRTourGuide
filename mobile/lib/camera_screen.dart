@@ -140,7 +140,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   late LocalStateService _localStateService;
   late OfflineStorageService _offlineService;
   late AnalyticsService _analytics;
-  // OfflineRecognitionService? _offlineRecognitionService;
   OfflineRecognitionIsolateService? _offlineRecognitionService;
 
   bool _isProcessingFrame = false;
@@ -211,6 +210,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   final List<File> _tempFiles = [];
 
   final Map<String, File> _cachedResources = {};
+  final Map<String, Map<String, dynamic>> _resourceMetaCache = {};
 
   //AR Variables
   bool _isARMode = false;
@@ -239,7 +239,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         await Future.delayed(const Duration(milliseconds: 200));
         _initializeCamera();
       });
-      // _initializeCamera();
       _getCurrentLocation();
       if (widget.isOffline) {
         _initOfflineMap();
@@ -260,12 +259,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         _enterStubRecognizedState();
       }
     });
-
-    // if(!widget.enableRecognition) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     _enterStubRecognizedState();
-    //   });
-    // }
   }
 
   @override
@@ -279,6 +272,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _failureAnimationController.dispose();
     unawaited(_offlineRecognitionService?.dispose());
     _clearTempFiles();
+    _resourceMetaCache.clear();
     super.dispose();
   }
 
@@ -289,6 +283,17 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     final randomIndex = Random().nextInt(_recognitionFailureMessages.length);
     return _recognitionFailureMessages[randomIndex];
+  }
+
+  Future<Map<String, dynamic>> _getResourceWithMetaCache(int waypointId, String resourceType) async {
+    final key = "$waypointId:$resourceType";
+    final cached = _resourceMetaCache[key];
+    if (cached != null) return cached;
+
+    final response = await _tourService.getResourceByWaypointAndType(waypointId, resourceType);
+    final map = (response as Map<String, dynamic>);
+    _resourceMetaCache[key] = map;
+    return map;
   }
 
   Future<void> _enterStubRecognizedState() async {
@@ -331,22 +336,43 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
             if (v is String && v.isNotEmpty) available[k] = 1;
           });
         } else {
-          for (final t in ["readme", "links", "images", "video", "pdf", "audio"]) {
-            try {
-              final resp = await _tourService.getResourceByWaypointAndType(waypointId, t);
-              if (resp != null) {
-                if (t == "images") {
-                  if (resp is List && resp.isNotEmpty) available["images"] = 1;
-                }else if (resp is String && resp.isNotEmpty) {
-                  available[t] = 1;
-                } else if (resp is Map && resp.isNotEmpty) {
-                  available[t] = 1;
+          // for (final t in ["readme", "links", "images", "video", "pdf", "audio"]) {
+          //   try {
+          //     final resp = await _tourService.getResourceByWaypointAndType(waypointId, t);
+          //     if (resp != null) {
+          //       if (t == "images") {
+          //         if (resp is List && resp.isNotEmpty) available["images"] = 1;
+          //       }else if (resp is String && resp.isNotEmpty) {
+          //         available[t] = 1;
+          //       } else if (resp is Map && resp.isNotEmpty) {
+          //         available[t] = 1;
+          //       }
+          //     }
+          //   } catch (e) {
+          //     print("Error checking resource $t for waypoint $waypointId: $e");
+          //   }
+          // }
+          final types = ["readme", "links", "images", "video", "pdf", "audio"];
+
+          await Future.wait(
+            types.map((t) async {
+              try {
+                final resp = await _getResourceWithMetaCache(waypointId, t);
+                if (resp.isNotEmpty) {
+                  if (t == "images") {
+                    final imgs = (resp["images"] as List?) ?? const [];
+                    if (imgs.isNotEmpty) available["images"] = 1;
+                  } else if (t == "links") {
+                    final links = (resp["links"] as List?) ?? const [];
+                    if (links.isNotEmpty) available["links"] = 1;
+                  } else {
+                    final url = resp["url"] ?? resp[t];
+                    if (url is String && url.isNotEmpty) available[t] = 1;
+                  }
                 }
-              }
-            } catch (e) {
-              print("Error checking resource $t for waypoint $waypointId: $e");
-            }
-          }
+              } catch (_) {}
+            }),
+          );
         }
       }
 
@@ -543,18 +569,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       tileProvider: NetworkTileProvider(),
     );
   }
-
-  // Future<void> _initializeOfflineRecognizer() async {
-  //   try {
-  //     _offlineRecognitionService = OfflineRecognitionService();
-  //     await _offlineRecognitionService!.initEmbedderFromAsset('assets/models/EfficientNetLite0.tflite');
-  //     await _offlineRecognitionService!.initIndexForTour(widget.tourId);
-  //     print('Offline recognizer initialized for tour ${widget.tourId}');
-  //   } catch (e) {
-  //     print('Error initializing offline recognizer: $e');
-  //     _showError('Error initializing offline recognizer.');
-  //   }
-  // }
 
   Future<void> _initializeOfflineRecognizer() async {
     try {
@@ -1169,11 +1183,12 @@ Future<void> _spawnTotemIcons(
         };
 
       } else {
-        final response = await _tourService.getResourceByWaypointAndType(
-          waypointId,
-          queryType,
-        );
-        content = response as Map<String, dynamic>;
+        // final response = await _tourService.getResourceByWaypointAndType(
+        //   waypointId,
+        //   queryType,
+        // );
+        // content = response as Map<String, dynamic>;
+        content = await _getResourceWithMetaCache(waypointId, queryType);
         if(content.containsKey("url")){
           content[queryType] = content["url"];
         }
@@ -1322,60 +1337,127 @@ Future<void> _spawnTotemIcons(
         );
         break;
 
+      // case 'video':
+      //   final videoPath = content['video'] ?? '';
+      //   print("Video path: $videoPath");
+      //   if (videoPath.isNotEmpty) {
+      //     File? videoFile = await _loadAndDecompressResource(
+      //         videoPath,
+      //         widget.isOffline,
+      //         'mp4',
+      //     );
+
+      //     if (videoFile != null) {
+      //       contentToDisplay = VideoPlayerWidget(
+      //         videoUrl: videoFile.path,
+      //         isLocalFile: true, //Sempre true perché è un file locale temporaneo
+      //       );
+      //     } else {
+      //       contentToDisplay = const Center(child: Text("Errore nel caricamento del video"));
+      //     }
+
+      //   } else {
+      //     contentToDisplay = const Center(
+      //       child: Text(
+      //         'No video available for this waypoint.',
+      //         style: TextStyle(color: AppColors.textPrimary),
+      //       ),
+      //     );
+      //   }
+      //   break;
+
       case 'video':
-        final videoPath = content['video'] ?? '';
-        print("Video path: $videoPath");
+        final videoPath = (content['video'] ?? content['url'] ?? '').toString();
         if (videoPath.isNotEmpty) {
-          File? videoFile = await _loadAndDecompressResource(
+          if (widget.isOffline) {
+            final videoFile = await _loadAndDecompressResource(
               videoPath,
-              widget.isOffline,
+              true,
               'mp4',
-          );
-
-          if (videoFile != null) {
-            contentToDisplay = VideoPlayerWidget(
-              videoUrl: videoFile.path,
-              isLocalFile: true, //Sempre true perché è un file locale temporaneo
             );
+            contentToDisplay =
+                (videoFile != null)
+                    ? VideoPlayerWidget(
+                      videoUrl: videoFile.path,
+                      isLocalFile: true,
+                    )
+                    : const Center(
+                      child: Text("Errore nel caricamento del video"),
+                    );
           } else {
-            contentToDisplay = const Center(child: Text("Errore nel caricamento del video"));
+            final videoUrl =
+                videoPath.startsWith('http')
+                    ? videoPath
+                    : "${_apiService.getCurrentBaseUrl()}$videoPath";
+            contentToDisplay = VideoPlayerWidget(
+              videoUrl: videoUrl,
+              isLocalFile: false,
+            );
           }
-
         } else {
           contentToDisplay = const Center(
-            child: Text(
-              'No video available for this waypoint.',
-              style: TextStyle(color: AppColors.textPrimary),
-            ),
+            child: Text('No video available for this waypoint.'),
           );
         }
         break;
 
+      // case 'document':
+      //   final pdfPath = content['pdf'] ?? '';
+      //   print("PDF path: $pdfPath");
+      //   if (pdfPath.isNotEmpty) {
+      //     File? pdfFile = await _loadAndDecompressResource(
+      //       pdfPath,
+      //       widget.isOffline,
+      //       'pdf',
+      //     );
+
+      //     if (pdfFile != null) {
+      //       contentToDisplay = PdfViewerWidget(
+      //         pdfUrl: pdfFile.path,
+      //         isLocalFile: true, //Sempre true perché è un file locale temporaneo
+      //       );
+      //     } else {
+      //       contentToDisplay = const Center(child: Text("Errore nel caricamento del PDF"));
+      //     }
+
+      //   } else {
+      //     contentToDisplay = const Center(
+      //       child: Text(
+      //         'No PDF document available for this waypoint.',
+      //         style: TextStyle(color: AppColors.textPrimary),
+      //       ),
+      //     );
+      //   }
+      //   break;
+
       case 'document':
-        final pdfPath = content['pdf'] ?? '';
-        print("PDF path: $pdfPath");
+        final pdfPath = (content['pdf'] ?? content['url'] ?? '').toString();
         if (pdfPath.isNotEmpty) {
-          File? pdfFile = await _loadAndDecompressResource(
-            pdfPath,
-            widget.isOffline,
-            'pdf',
-          );
-
-          if (pdfFile != null) {
-            contentToDisplay = PdfViewerWidget(
-              pdfUrl: pdfFile.path,
-              isLocalFile: true, //Sempre true perché è un file locale temporaneo
+          if (widget.isOffline) {
+            final pdfFile = await _loadAndDecompressResource(
+              pdfPath,
+              true,
+              'pdf',
             );
+            contentToDisplay =
+                (pdfFile != null)
+                    ? PdfViewerWidget(pdfUrl: pdfFile.path, isLocalFile: true)
+                    : const Center(
+                      child: Text("Errore nel caricamento del PDF"),
+                    );
           } else {
-            contentToDisplay = const Center(child: Text("Errore nel caricamento del PDF"));
+            final pdfUrl =
+                pdfPath.startsWith('http')
+                    ? pdfPath
+                    : "${_apiService.getCurrentBaseUrl()}$pdfPath";
+            contentToDisplay = PdfViewerWidget(
+              pdfUrl: pdfUrl,
+              isLocalFile: false,
+            );
           }
-
         } else {
           contentToDisplay = const Center(
-            child: Text(
-              'No PDF document available for this waypoint.',
-              style: TextStyle(color: AppColors.textPrimary),
-            ),
+            child: Text('No PDF document available for this waypoint.'),
           );
         }
         break;
