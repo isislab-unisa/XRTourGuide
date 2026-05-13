@@ -90,6 +90,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
   List<Review> _reviews = [];
   bool _isLoadingReviews = true;
+  bool _hasUserAlreadyReviewed = false;
 
   double _userRating = 0.0;
   final TextEditingController _reviewController = TextEditingController();
@@ -161,7 +162,35 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       _loadTourDetails(),
       _loadWaypoints(),
       _loadReviews(),
+      _loadHasUserReviewed(),
     ]);
+  }
+
+  Future<void> _loadHasUserReviewed() async {
+    if (widget.isGuest || widget.isOffline) {
+      if (mounted) {
+        setState(() => _hasUserAlreadyReviewed = false);
+      }
+      return;
+    }
+
+    try {
+      final result = await _tourService.getReviewByUser(0); // 0 => tutte
+      final hasReviewed = result.reviews.any((r) => r.tourId == widget.tourId);
+
+      if (mounted) {
+        setState(() {
+          _hasUserAlreadyReviewed = hasReviewed;
+        });
+      }
+    } catch (_) {
+      // fallback prudente: non bloccare UI se errore
+      if (mounted) {
+        setState(() {
+          _hasUserAlreadyReviewed = false;
+        });
+      }
+    }
   }
 
   Future<void> _initOfflineMap() async {
@@ -1512,7 +1541,7 @@ Future<void> _loadWaypoints() async {
                     },
                   ),
                   SizedBox(width: 10),
-                  if (_tourDetails != null && _tourDetails!.category != "INDOOR" && _tourDetails!.category != "Cibo")
+                  if (_tourDetails != null && _tourDetails!.category != "INDOOR" && _tourDetails!.category != "GUIDE")
                     _buildNavTab(
                       icon: Icons.map_outlined,
                       label: 'map_tab'.tr(),
@@ -1609,16 +1638,17 @@ Future<void> _loadWaypoints() async {
                             ),
                           ),
                           const Spacer(),
-                          IconButton(
-                            onPressed: () {
-                              _showLeaveReviewSheet(_tourDetails!.id);
-                            },
-                            icon: Icon(
-                              Icons.add_circle,
-                              color: AppColors.primary,
-                              size: 60,
-                              ),
-                            )
+                          if (!widget.isGuest && !_hasUserAlreadyReviewed)
+                            IconButton(
+                              onPressed: () {
+                                _showLeaveReviewSheet(_tourDetails!.id);
+                              },
+                              icon: Icon(
+                                Icons.add_circle,
+                                color: AppColors.primary,
+                                size: 60,
+                                ),
+                              )
                         ],
                       ),
                       // const SizedBox(height: 4),
@@ -1792,7 +1822,7 @@ Future<void> _loadWaypoints() async {
                   ),
                 ),
             ] else if (_selectedTab == 'Itinerario') ...[
-              if (_tourDetails != null && _tourDetails!.category != "INDOOR" && _tourDetails!.category != "Cibo")
+              if (_tourDetails != null && _tourDetails!.category != "INDOOR" && _tourDetails!.category != "GUIDE")
                 // Interactive Map view using flutter_map
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -2361,7 +2391,7 @@ Widget _buildWaypointItem({
                       ),
 
                     // Navigate button - SOLO per waypoints principali
-                    if (!isSubWaypoint && _tourDetails!.category != "INDOOR") ...[
+                    if (!isSubWaypoint && _tourDetails!.category != "INDOOR" && _tourDetails!.category != "GUIDE") ...[
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
@@ -2391,16 +2421,6 @@ Widget _buildWaypointItem({
                           onPressed: () {
                             Navigator.push(
                               context,
-                              // MaterialPageRoute(
-                              //   builder: (context) => ARCameraScreen(
-                              //     tourId: widget.tourId,
-                              //     latitude: latitude,
-                              //     longitude: longitude,
-                              //     isOffline: widget.isOffline,
-                              //     enableRecognition: false,
-                              //     initialWaypointId: waypointIndex,
-                              //   ),
-                              // ),
                               MaterialPageRoute(
                                 builder:
                                     (context) => ConsultationScreen(
@@ -2809,6 +2829,13 @@ void _showLeaveReviewSheet(int tourId) {
                             final comment = _reviewController.text;
 
                             _apiService.leaveReview(tourId, rating, comment, baseUrl: _apiService.getCurrentBaseUrl());
+
+                            if (mounted) {
+                              setState(() {
+                                _hasUserAlreadyReviewed = true;
+                              });
+                            }
+
                             unawaited(_analytics.logEvent(name: 'leave_review', parameters: {'tour_id': tourId, 'rating': rating, "source": "about_screen"}));
                             _loadData();
 

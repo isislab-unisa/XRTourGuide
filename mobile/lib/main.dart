@@ -20,6 +20,7 @@ import 'tour_details_page.dart';
 import 'dart:convert';
 import 'services/api_service.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'utils/platform_page_route.dart';
 
 import 'utils/responsive.dart';
 
@@ -337,7 +338,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
             content: Text('register_success_message'.tr()),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.only(bottom: 40, left: 16, right: 16),
+            margin: EdgeInsets.only(top: 40, left: 16, right: 16),
             duration: Duration(seconds: 5),
           ),
         );
