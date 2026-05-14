@@ -531,6 +531,14 @@ class ApiService {
     }
   }
 
+  Future<Response> downloadOfflineBundle(int tourId, String savePath, {String? baseUrl}) async {
+    return dio.download(
+      '/download_offline_bundle/$tourId/',
+      savePath,
+      options: _getOptions(baseUrl: baseUrl),
+    );
+  }
+
 
 
 }

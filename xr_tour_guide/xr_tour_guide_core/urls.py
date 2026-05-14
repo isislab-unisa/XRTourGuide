@@ -59,4 +59,5 @@ urlpatterns = [
     path("tour-informations/", tour_informations, name="tour_informations"),
     path('increment-reports/', increment_reports, name="increment_reports"),
     path('has_reviewed_tour/<int:tour_id>/', has_reviewed_tour, name="has_reviewed_tour"),
+    path("download_offline_bundle/<int:tour_id>/", download_offline_bundle, name="download_offline_bundle"),
 ]

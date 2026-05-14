@@ -295,9 +295,13 @@ class TourPortabilityService:
                             )
 
                 # links
-                for link in wp_data.get("links", []):
-                    if link:
-                        WaypointViewLink.objects.create(waypoint=waypoint, link=link)
+                links_to_create = [
+                    WaypointViewLink(waypoint=waypoint, link=link)
+                    for link in wp_data.get("links", [])
+                    if link
+                ]
+                if links_to_create:
+                        WaypointViewLink.objects.bulk_create(links_to_create, batch_size=500)
 
             # subtours
             for sub_data in manifest.get("subtours", []):
@@ -367,9 +371,14 @@ class TourPortabilityService:
                                     type_of_images=img.get("type", "DEFAULT"),
                                 )
 
-                    for link in wp_data.get("links", []):
-                        if link:
-                            WaypointViewLink.objects.create(waypoint=waypoint, link=link)
+                    links_to_create = [
+                        WaypointViewLink(waypoint=waypoint, link=link)
+                        for link in wp_data.get("links", [])
+                        if link
+                    ]
+                    if links_to_create:
+                            WaypointViewLink.objects.bulk_create(links_to_create, batch_size=500)
+
 
                 tour.sub_tours.add(sub_tour)
 

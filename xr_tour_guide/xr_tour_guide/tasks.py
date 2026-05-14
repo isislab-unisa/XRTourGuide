@@ -272,3 +272,16 @@ def clear_ai_inference_cache():
     except Exception as e:
         print(f"Error clearing AI inference cache: {e}", flush=True)
         raise
+    
+@shared_task(queue='api_tasks')
+def generate_offline_bundle(tour_id):
+    from xr_tour_guide_core.services.offline_bundle_service import OfflineBundleService
+
+    try:
+        service = OfflineBundleService()
+        result = service.build_offline_bundle(tour_id)
+        print(f"Offline bundle generated: {result}")
+        return result
+    except Exception as e:
+        print(f"Offline bundle generation failed for tour {tour_id}: {e}")
+        return {"ok": False, "error": str(e)}

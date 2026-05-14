@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import path, reverse
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
@@ -95,6 +95,8 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         url = reverse("admin:xr_tour_guide_core_tour_export", args=[obj.pk])
         return format_html(
             '<a class="button" href="{}" data-loader-link="true" '
+            'data-loader-download="true" '
+            'data-loader-keep-visible="true" '
             'data-loader-text="Preparing export..." '
             'data-loader-subtext="Please wait while the tour archive is being generated." '
             'style="padding:4px 8px; border-radius:6px; background:#2563eb; color:white; text-decoration:none;">📦 Export</a>',
@@ -365,6 +367,9 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             )
         else:
             super().delete_model(request, obj)
+            
+    def response_delete(self, request, obj_display, obj_id):
+        return HttpResponseRedirect(reverse("admin:index"))
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         obj = self.get_object(request, object_id)
@@ -443,6 +448,16 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         )
 
         response["Content-Length"] = str(archive_path.stat().st_size)
+        
+        dl_token = request.GET.get("dl_token")
+        if dl_token:
+            response.set_cookie(
+                key=f"dl_{dl_token}",
+                value="1",
+                max_age=300,
+                samesite="Lax",
+            )        
+        
         return response
     
     def import_tour_view(self, request):

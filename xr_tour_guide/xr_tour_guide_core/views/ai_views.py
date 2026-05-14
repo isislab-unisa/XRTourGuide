@@ -17,6 +17,8 @@ from django.conf import settings
 from ..authentication import JWTFastAPIAuthentication
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from xr_tour_guide.tasks import generate_offline_bundle
+
 
 redis_client = redis.StrictRedis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
 
@@ -79,6 +81,7 @@ def complete_build(request):
             tour.model_path = index_url
             tour.status = "BUILT"
             tour.save()
+            generate_offline_bundle.delay(tour.id)
         except Tour.DoesNotExist:
             return JsonResponse({"error": "POI not found"}, status=404)
         except Exception as e:

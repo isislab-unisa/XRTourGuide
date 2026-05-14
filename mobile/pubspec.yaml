@@ -72,6 +72,8 @@ dependencies:
   firebase_analytics: ^12.2.0
   firebase_crashlytics: ^5.1.0
   cached_network_image: ^3.4.1
+  archive: ^4.0.9
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -95,7 +97,6 @@ dependency_overrides:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   fonts:
     - family: point_panther
       fonts:

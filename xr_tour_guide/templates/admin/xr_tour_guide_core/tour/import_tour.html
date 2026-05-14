@@ -44,7 +44,7 @@
                 </ul>
             </div>
 
-            <form method="post" enctype="multipart/form-data" class="flex flex-col gap-6" data-loader-text="Importing tour..." data-loader-subtext="Uploading archive and recreating tour resources." data-loader-keep-visibile="true">
+            <form method="post" enctype="multipart/form-data" class="flex flex-col gap-6" data-loader-text="Importing tour..." data-loader-subtext="Uploading archive and recreating tour resources." data-loader-keep-visible="true">
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
