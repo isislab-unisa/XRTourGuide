@@ -33,7 +33,7 @@ class ClickableCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     
     class Media:
         css = {
-            'all': ['admin/css/clickable_checkboxes.css']
+            # 'all': ['admin/css/clickable_checkboxes.css']
         }
 
 class TourForm(forms.ModelForm):
