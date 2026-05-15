@@ -37,7 +37,11 @@ def build(request):
     if tour.status == "READY":
         tour.status = "ENQUEUED"
         tour.save()
-        call_api_and_save.apply_async(args=[tour.id], queue='api_tasks')
+        
+        if tour.category == "GUIDE":
+            generate_offline_bundle.delay(tour.id)
+        else:
+            call_api_and_save.apply_async(args=[tour.id], queue='api_tasks')
     else:
         return JsonResponse({"message": "Tour already built"}, status=400)
     return redirect(settings.LOGIN_REDIRECT_URL)

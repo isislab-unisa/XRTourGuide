@@ -2857,6 +2857,7 @@ void _showLeaveReviewSheet(int tourId) {
   }
 
   Widget _buildOfflineSection() {
+    final bool canDownloadOffline = _isAvailableOffline || _tourDetails?.status == "BUILT";
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -2904,7 +2905,8 @@ void _showLeaveReviewSheet(int tourId) {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _isDownloading ? null : (_isAvailableOffline ? _confirmRemoveOfflineTour : _downloadTourOffline),
+              // onPressed: _isDownloading ? null : (_isAvailableOffline ? _confirmRemoveOfflineTour : _downloadTourOffline),
+              onPressed: (_isDownloading || !canDownloadOffline) ? null : (_isAvailableOffline ? _confirmRemoveOfflineTour : _downloadTourOffline),
               icon: _isDownloading
                   ? const SizedBox(
                     width: 20,
@@ -2921,7 +2923,7 @@ void _showLeaveReviewSheet(int tourId) {
                   : (_isAvailableOffline ? "remove".tr() : "download_for_offline".tr()),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isAvailableOffline ? Colors.red : AppColors.primary,
+                backgroundColor: !canDownloadOffline ? Colors.grey : (_isAvailableOffline ? Colors.red : AppColors.primary),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(

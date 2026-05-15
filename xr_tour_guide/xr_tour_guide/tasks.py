@@ -276,12 +276,29 @@ def clear_ai_inference_cache():
 @shared_task(queue='api_tasks')
 def generate_offline_bundle(tour_id):
     from xr_tour_guide_core.services.offline_bundle_service import OfflineBundleService
+    from xr_tour_guide_core.models import Tour, Status
 
     try:
         service = OfflineBundleService()
         result = service.build_offline_bundle(tour_id)
+        try:
+            tour = Tour.objects.get(pk=tour_id)
+            if tour.status == Status.ENQUEUED:
+                tour.status = Status.BUILT
+                tour.save(update_fields=["status"])
+        except Tour.DoesNotExist:
+            pass
+        
         print(f"Offline bundle generated: {result}")
         return result
     except Exception as e:
+        try:
+            tour = Tour.objects.get(pk=tour_id)
+            if tour.status == Status.ENQUEUED:
+                tour.status = Status.FAILED
+                tour.save(update_fields=["status"])
+        except Exception:
+            pass
+        
         print(f"Offline bundle generation failed for tour {tour_id}: {e}")
         return {"ok": False, "error": str(e)}
