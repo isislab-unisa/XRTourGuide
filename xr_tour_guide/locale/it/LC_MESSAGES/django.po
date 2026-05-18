@@ -727,7 +727,7 @@ msgstr "immagini caricate"
 #: xr_tour_guide_core/admin/waypoint_admin.py:131
 #: xr_tour_guide_core/admin/waypoint_admin.py:219
 msgid "Manage"
-msgstr "Gestisci"
+msgstr "Cancella"
 
 #: xr_tour_guide_core/admin/waypoint_admin.py:163
 #: xr_tour_guide_core/admin/waypoint_admin.py:234
@@ -1486,7 +1486,7 @@ msgstr ""
 
 #: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1655
 msgid "Nilus Trail"
-msgstr "Percorso niliano"
+msgstr "Cammino di San Nilo"
 
 #: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1656
 msgid ""
@@ -1498,7 +1498,7 @@ msgstr ""
 
 #: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1676
 msgid "Morigerati Heritage"
-msgstr "Patrimonio di Morigerati"
+msgstr "Museo di Morigerati"
 
 #: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1677
 msgid ""
@@ -1668,3 +1668,48 @@ msgstr "Email inviata con successo! Registrazione in corso..."
 #: xr_tour_guide_public/templates/xr_tour_guide_public/register.html:685
 msgid "Too many requests. Please wait before trying again."
 msgstr "Troppe richieste. Attendi prima di riprovare."
+
+msgid "Acknowledgements"
+msgstr "Ringraziamenti"
+
+msgid "We would like to thank the people, institutions, and communities that contributed to the development of XRTourGuide."
+msgstr "Desideriamo ringraziare le persone, le istituzioni e le comunità che hanno contribuito allo sviluppo di XRTourGuide."
+
+msgid "Local Communities"
+msgstr "Comunità locali"
+
+msgid "We thank the local communities for their participation, feedback, and continuous support throughout the co-creation process."
+msgstr "Ringraziamo le comunità locali per la partecipazione, i feedback e il supporto continuo durante tutto il processo di co-creazione."
+
+msgid "Cultural Institutions"
+msgstr "Istituzioni culturali"
+
+msgid "We acknowledge the museums, associations, and cultural organizations that shared knowledge, materials, and expertise."
+msgstr "Ringraziamo i musei, le associazioni e le organizzazioni culturali che hanno condiviso conoscenze, materiali e competenze."
+
+msgid "Research and Innovation Partners"
+msgstr "Partner di ricerca e innovazione"
+
+msgid "We thank the research teams and innovation partners who contributed to the design, development, and validation of the platform."
+msgstr "Ringraziamo i gruppi di ricerca e i partner per l'innovazione che hanno contribuito alla progettazione, allo sviluppo e alla validazione della piattaforma."
+
+msgid "FUTURAL Project"
+msgstr "Progetto FUTURAL"
+
+msgid "This work has been developed within the FUTURAL project, which supports innovation and smart solutions for rural areas."
+msgstr "Questo lavoro è stato sviluppato nell'ambito del progetto FUTURAL, che sostiene l'innovazione e le soluzioni smart per le aree rurali."
+
+msgid "LocalProducts"
+msgstr "Prodotti Locali"
+
+msgid "FUTURAL Logo"
+msgstr "Logo FUTURAL"
+
+msgid "Co-funded by the European Union."
+msgstr "Cofinanziato dall'Unione europea."
+
+msgid "Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or European Research Executive Agency. Neither the European Union nor the granting authority can be held responsible for them."
+msgstr "Le opinioni e i punti di vista espressi sono tuttavia esclusivamente quelli degli autori e non riflettono necessariamente quelli dell'Unione europea o dell'Agenzia esecutiva europea per la ricerca. Né l'Unione europea né l'autorità concedente possono esserne ritenute responsabili."
+
+msgid "XRTourGuide is part of the FUTURAL project, empowering the future through innovative smart solutions for rural areas."
+msgstr "XRTourGuide fa parte del progetto FUTURAL, che punta a dare slancio al futuro attraverso soluzioni intelligenti e innovative per le aree rurali." 
