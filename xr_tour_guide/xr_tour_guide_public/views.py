@@ -315,6 +315,7 @@ def reset_password(request):
     
 @require_http_methods(["POST"])
 def google_mobile_login(request):
+    print("google_mobile_login HIT", request.method, request.path, flush=True)
     try:
         raw_body = request.body.decode("utf-8")
         data = json.loads(raw_body)
