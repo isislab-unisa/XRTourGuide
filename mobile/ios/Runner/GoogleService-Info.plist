@@ -26,5 +26,13 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:386701849330:ios:d8e0fe1356926b6533d66b</string>
+	<key>CLIENT_ID</key>
+	<string>836098828698-020786p0cm2n3h7n08rkk7epkken6ebh.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.836098828698-020786p0cm2n3h7n08rkk7epkken6ebh</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.picaresque.xrtourguide</string>
 </dict>
 </plist>

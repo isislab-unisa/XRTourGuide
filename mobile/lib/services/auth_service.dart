@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'secure_storage_service.dart';
 import 'package:dio/dio.dart';
 import 'api_service.dart';
 import 'analytics_service.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 enum AuthStatus { authenticated, unauthenticated, loading, registering }
 
@@ -15,12 +18,17 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService(ref);
 });
 
+const String googleIosClientId = String.fromEnvironment("GOOGLE_IOS_CLIENT_ID", defaultValue: "");
+const String googleWebClientId = String.fromEnvironment("GOOGLE_WEB_CLIENT_ID", defaultValue: "");
+
 
 class AuthService extends ChangeNotifier {
   final Ref ref;
   late final ApiService apiService;
   late final AnalyticsService _analytics;
   final SecureStorageService _storageService = SecureStorageService();
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _googleInitialized = false;
   AuthStatus _authStatus = AuthStatus.loading;
   AuthStatus get authStatus => _authStatus;
 
@@ -214,10 +222,59 @@ class AuthService extends ChangeNotifier {
     _authStatus = AuthStatus.loading;
     notifyListeners();
 
+    try {
+      await _ensureGoogleInitialized();
+      await _googleSignIn.signOut();
+    } catch (_) {}
+
     await _storageService.deleteAllTokens();
     _authStatus = AuthStatus.unauthenticated;
 
     _analytics.setUserId(null);
     notifyListeners();
+  }
+
+  Future<void> _ensureGoogleInitialized() async {
+    print(googleWebClientId);
+    if (_googleInitialized) return;
+
+    await _googleSignIn.initialize(
+      clientId: (Platform.isIOS && googleIosClientId.isNotEmpty) ? googleIosClientId : null,
+      serverClientId: googleWebClientId.isNotEmpty ? googleWebClientId : null,
+    );
+    _googleInitialized = true;
+  }
+
+  Future<void> loginWithGoogle() async {
+    try {
+      await _ensureGoogleInitialized();
+
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
+
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      final String? idToken = googleAuth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception("Missing Google ID token");
+      }
+
+      final response = await apiService.googleMobileLogin(idToken);
+
+      final accessToken = response.data['access'];
+      final refreshToken = response.data['refresh'];
+      final int userId = response.data['user']["id"];
+
+      await _storageService.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+
+      _authStatus = AuthStatus.authenticated;
+      _analytics.setUserId(userId.toString());
+      notifyListeners();
+    } catch (e) {
+      print("Google Login Error: $e");
+      rethrow;
+    }
   }
 }

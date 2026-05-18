@@ -609,19 +609,36 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             ),
                             onPressed: () async {
                               // Print a message through snackbar
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Coming Soon...."),
-                                  backgroundColor: Colors.blue,
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.only(
-                                    bottom: 40,
-                                    left: 16,
-                                    right: 16,
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   SnackBar(
+                              //     content: Text("Coming Soon...."),
+                              //     backgroundColor: Colors.blue,
+                              //     behavior: SnackBarBehavior.floating,
+                              //     margin: const EdgeInsets.only(
+                              //       bottom: 40,
+                              //       left: 16,
+                              //       right: 16,
+                              //     ),
+                              //     duration: const Duration(seconds: 3),
+                              //   ),
+                              // );
+                              try {
+                                await _authService.loginWithGoogle();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Google login failed: ${e.toString()}"),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.only(
+                                      bottom: 40,
+                                      left: 16,
+                                      right: 16,
+                                    ),
+                                    duration: const Duration(seconds: 5),
                                   ),
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
+                                );
+                              }
                             },
                             context: context,
                           ),
@@ -1070,19 +1087,30 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             ),
                             onPressed: () async {
                               // Print a message through snackbar
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Coming Soon...."),
-                                  backgroundColor: Colors.blue,
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.only(
-                                    bottom: 40,
-                                    left: 16,
-                                    right: 16,
-                                  ),
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   SnackBar(
+                              //     content: Text("Coming Soon...."),
+                              //     backgroundColor: Colors.blue,
+                              //     behavior: SnackBarBehavior.floating,
+                              //     margin: const EdgeInsets.only(
+                              //       bottom: 40,
+                              //       left: 16,
+                              //       right: 16,
+                              //     ),
+                              //     duration: const Duration(seconds: 3),
+                              //   ),
+                              // );
+
+                              try {
+                                await _authService.loginWithGoogle();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Google login failed: $e"),
+                                    backgroundColor: Colors.red,
+                                  )
+                                );
+                              }
                             },
                           ),
                           const SizedBox(width: 20),
@@ -1303,7 +1331,19 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             ),
                           ),
                           //TODO: Add Google register logic
-                          onPressed: () => print('Google register'),
+                          onPressed: () async {
+                            try {
+                              await authService.loginWithGoogle();
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Google registration failed: ${e.toString()}"),
+                                  backgroundColor: Colors.red,
+                                  duration: const Duration(seconds: 5),
+                                ),
+                              );
+                            }
+                          },
                         ),
                         const SizedBox(width: 20),
                         _buildSocialIconButton(

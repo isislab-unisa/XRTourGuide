@@ -24,14 +24,17 @@ class ApiService {
   '/tour_waypoints/',
   '/get_waypoint_resources/',
   '/health_check/',
-  '/stream_minio_resource/'
+  '/stream_minio_resource/',
+  '/google-mobile-login/',
   ];
 
   static String appSignature = "APP_SIGNATURE_XR_TOUR_GUIDE_MOBILE";
 
   static String basicUrl = 'https://';
 
-  static const String centralizedUrl = 'COMMUNITY_SERVER_URL'; // Sostituisci con l'URL del tuo server centrale
+  static const String centralizedUrl =
+      'COMMUNITY_SERVER_URL'; // Sostituisci con l'URL del tuo server centrale
+
 
 
 
@@ -197,6 +200,20 @@ class ApiService {
       return response;
     } catch (e) {
       print('Failed to fetch profile details: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> googleMobileLogin(String idToken, {String? baseUrl}) async {
+    try {
+      final response = await dio.post(
+        '/google-mobile-login/',
+        data: {'id_token': idToken},
+        options: _getOptions(baseUrl: baseUrl),
+      );
+      return response;
+    } catch (e) {
+      print('Failed Google mobile login: $e');
       rethrow;
     }
   }

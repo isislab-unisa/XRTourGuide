@@ -716,9 +716,17 @@ table.tours-tbl {
                                         <form method="post" action="{% url 'build' %}" style="display:inline;">
                                             {% csrf_token %}
                                             <input type="hidden" name="tour_id" value="{{ tour.pk }}">
-                                            <button type="submit" class="btn-xs btn-xs-train">
+                                            <!-- <button type="submit" class="btn-xs btn-xs-train">
                                                 <i data-lucide="cpu" width="13" height="13"></i>
                                                 {% trans "Train" %}
+                                            </button> -->
+                                            <button type="submit" class="btn-xs btn-xs-train">
+                                                <i data-lucide="{% if tour.category == 'GUIDE' %}package{% else %}cpu{% endif %}" width="13" height="13"></i>
+                                                {% if tour.category == "GUIDE" %}
+                                                    {% trans "Build offline" %}
+                                                {% else %}
+                                                    {% trans "Train" %}
+                                                {% endif %}
                                             </button>
                                         </form>
                                     {% elif tour.status == "BUILDING" %}

@@ -17,7 +17,7 @@ class ClickableCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         option = super().create_option(name, value, label, selected, index, subindex, attrs)
         
         if value:
-            print(f"VALUE: {value}", flush=True)
+            # print(f"VALUE: {value}", flush=True)
             change_url = reverse(f'admin:{self.app_label}_{self.model_name}_change', args=[value])
             
             original_label = option['label']
