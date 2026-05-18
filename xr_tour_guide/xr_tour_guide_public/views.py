@@ -9,6 +9,7 @@ import os
 import json
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 
 from xr_tour_guide_core.models import CustomUser as User
 
@@ -312,7 +313,8 @@ def reset_password(request):
         return HttpResponse("Email already verified", status=response.status_code)
     else:
         return HttpResponse("Error sending email", status=response.status_code)
-    
+
+@csrf_exempt
 @require_http_methods(["POST"])
 def google_mobile_login(request):
     print("google_mobile_login HIT", request.method, request.path, flush=True)
