@@ -6,6 +6,10 @@
 {% block extrahead %}
     {{ block.super }}
     <link rel="preload" as="image" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=3">
+    <link rel="icon" type="image/png" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=4">
+    <link rel="shortcut icon" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=4">
+    <link rel="apple-touch-icon" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=4">
+    <link rel="stylesheet" href="{% static 'admin/css/xrtourguide-brand.css' %}">
     <script>
         window.XRLoaderConfig = {
             logoUrl: "{% static 'admin/img/XRTOURGUIDE.png' %}?v=3"

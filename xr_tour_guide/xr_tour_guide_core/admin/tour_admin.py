@@ -29,6 +29,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     hide_ordering_field = True
     compressed_fields = True
     
+    change_form_template = "admin/xr_tour_guide_core/tour/change_form.html"
     list_display = ('title', 'place', 'category', 'status_badge', 'creation_time', 'user', 'export_button')
     readonly_fields = ['user', 'creation_time', 'status_info', 'status_badge', 'status', 'license_notice']
     list_filter = ['category', 'status', 'place', 'creation_time']
@@ -370,6 +371,11 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             
     def response_delete(self, request, obj_display, obj_id):
         return HttpResponseRedirect(reverse("admin:index"))
+    
+    def add_view(self, request, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["title"] = _("New Tour")
+        return super().add_view(request, form_url, extra_context)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         obj = self.get_object(request, object_id)
@@ -380,6 +386,11 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                 level=messages.ERROR
             )
             return redirect('admin:%s_%s_changelist' % (obj._meta.app_label, obj._meta.model_name))
+        
+        extra_context = extra_context or {}
+        if obj:
+            extra_context["title"] = f"Edit"
+        
         return super().change_view(request, object_id, form_url, extra_context)
     
     def has_change_permission(self, request, obj=None):

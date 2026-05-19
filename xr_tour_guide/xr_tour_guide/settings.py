@@ -283,14 +283,15 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 UNFOLD = {
-    "SITE_TITLE": "Xr Tour Guide Login",
-    "SITE_HEADER": "Xr Tour Guide",
+    "SITE_TITLE": "XRTourGuide",
+    "SITE_HEADER": "XRTourGuide",
     # "SITE_TAGLINE": "Gestione contenuti",
-    # "SITE_LOGO": "/static/viewer/xr_tour_guide.png",
+    "SITE_LOGO": "/static/admin/img/XRTOURGUIDE.png",
     "SHOW_VIEW_ON_SITE": False,
     "DASHBOARD_CALLBACK": "xr_tour_guide.views.dashboard_callback",
     "STYLES": [
         lambda request: static("unfold/css/styles.css"),
+        lambda request: static("admin/css/xrtourguide-brand.css"),
     ],
     
     "SIDEBAR": {

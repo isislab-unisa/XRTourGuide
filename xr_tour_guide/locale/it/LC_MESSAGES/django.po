@@ -1227,6 +1227,15 @@ msgstr "Casi d'uso"
 msgid "Log In"
 msgstr "Accedi"
 
+msgid "Log out"
+msgstr "Logout"
+
+msgid "Log Out"
+msgstr "Logout"
+
+msgid "Logout"
+msgstr "Logout"
+
 #: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1412
 #: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1449
 #: xr_tour_guide_public/templates/xr_tour_guide_public/register.html:623

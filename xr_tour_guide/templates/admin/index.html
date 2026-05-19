@@ -4,7 +4,7 @@
 {% block breadcrumbs %}{% endblock %}
 
 {% block title %}
-    {% trans "Dashboard" %}
+    {% trans "Dashboard | XRTourGuide" %}
 {% endblock %}
 
 {% block extrahead %}
@@ -18,7 +18,10 @@
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
+<link rel="icon" type="image/png" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=4">
+<link rel="shortcut icon" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=4">
+<link rel="apple-touch-icon" href="{% static 'admin/img/XRTOURGUIDE.png' %}?v=4">
+<link rel="stylesheet" href="{% static 'admin/css/xrtourguide-brand.css' %}">
 <style>
 :root {
     --primary:        #4f46e5;
@@ -735,8 +738,10 @@ table.tours-tbl {
                                             {% trans "Building…" %}
                                         </button>
                                     {% endif %}
-                                    <a href="{% url 'admin:xr_tour_guide_core_tour_change' tour.pk %}" class="btn-xs btn-xs-view">
-                                        <i data-lucide="eye" width="13" height="13"></i>
+                                        <a href="{% url 'admin:xr_tour_guide_core_tour_change' tour.pk %}" class="btn-xs btn-xs-view" data-loader-link="true"
+                                            data-loader-text="Opening tour..." data-loader-subtext="Loading tour data, waypoints, and resources."
+                                            data-loader-hide-after="8000">                                        
+                                            <i data-lucide="eye" width="13" height="13"></i>
                                         {% trans "View" %}
                                     </a>
                                     <a href="{% url 'admin:xr_tour_guide_core_tour_export' tour.pk %}" class="btn-xs btn-xs-view" data-loader-link="true"
