@@ -1077,14 +1077,36 @@
     }
 
     .impact-card {
+        display: block;
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 50px 40px;
+        padding: 0;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
         text-align: center;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .impact-card-content {
+        padding: 32px 28px 36px;
+    }
+
+    .impact-card-image {
+        width: 100%;
+        height: 180px;
+        object-fit: contain;
+        object-position: center;
+        display: block;
+        background: #ffffff;
+        padding: 18px;
+    }
+
+    .impact-card:focus-visible {
+        outline: 3px solid rgba(128, 90, 213, 0.35);
+        outline-offset: 3px;
     }
 
     .impact-card::before {
@@ -1449,10 +1471,9 @@
         </a>
         
         <ul class="navbar-menu">
-            <li><a href="#challenge">{% trans "The Challenge" %}</a></li>
-            <li><a href="#solution">{% trans "Our Solution" %}</a></li>
-            <li><a href="#features">{% trans "Features" %}</a></li>
             <li><a href="#tours">{% trans "Use Cases" %}</a></li>
+            <li><a href="#impact">{% trans "Acknowledgements" %}</a></li>
+            <li><a href="#footer">{% trans "Contacts" %}</a></li>
         </ul>
 
         <div class="navbar-actions">
@@ -1486,10 +1507,9 @@
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu">
     <ul>
-        <li><a href="#challenge">{% trans "The Challenge" %}</a></li>
-        <li><a href="#solution">{% trans "Our Solution" %}</a></li>
-        <li><a href="#features">{% trans "Features" %}</a></li>
         <li><a href="#tours">{% trans "Use Cases" %}</a></li>
+        <li><a href="#impact">{% trans "Acknowledgements" %}</a></li>
+        <li><a href="#footer">{% trans "Contacts" %}</a></li>
     </ul>
     
     <!-- Language Switcher for Mobile -->
@@ -1526,7 +1546,6 @@
             </p>
             <div class="hero-cta">
                 <a href="{% url 'register_platform' %}" class="btn btn-hero btn-hero-primary">{% trans "Discover How" %}</a>
-                <a href="#features" class="btn btn-hero btn-hero-secondary">{% trans "Learn More" %}</a>
             </div>
         </div>
         <div class="hero-visual">
@@ -1592,7 +1611,7 @@
                                 decoding="async" alt="{% trans 'MushroomMate' %}">
                             <div class="use-case-card-body">
                                 <h5>{% trans "LocalProducts" %}</h5>
-                                <p>{% trans "Scan a local product to instantly identify it, reveal origin and producer stories, get tasting tips, and access purchase or visit options." %}</p>
+                                <p>{% trans "Explore local products around you, reveal origin and producer stories, get tasting tips, and visit purchase options." %}</p>
                             </div>
                         </div>
                     </div>
@@ -1622,18 +1641,42 @@
             </p>
         </div>
         <div class="impact-grid">
-            <div class="impact-card">
-                <h4>Comunità Montana Bussento Lambro e Mingardo (CMBLM)</h4>
-            </div>
-            <div class="impact-card">
-                <h4>Liceo Scientifico "Leonardo da Vinci" Vallo della Lucania - SA</h4>
-            </div>
-            <div class="impact-card">
-                <h4>CAI - Monte Bulgheria</h4>
-            </div>
-            <div class="impact-card">
-                <h4>Dandelion Social Innovation Lab</h4>
-            </div>
+            <a class="impact-card" href="https://www.cmbussento.it/hh/index.php" target="_blank" rel="noopener noreferrer">
+                <img class="impact-card-image"
+                    src="{% static 'xr_tour_guide_public/img/acknowledgements/logo_bussento.jpg' %}"
+                    alt="{% trans 'Comunità Montana Bussento Lambro e Mingardo (CMBLM)' %}" loading="lazy" decoding="async">
+                <div class="impact-card-content">
+                    <h4>Comunità Montana Bussento Lambro e Mingardo (CMBLM)</h4>
+                </div>
+            </a>
+        
+            <a class="impact-card" href="https://www.scientificovallo.edu.it/" target="_blank" rel="noopener noreferrer">
+                <img class="impact-card-image"
+                    src="{% static 'xr_tour_guide_public/img/acknowledgements/liceo.jpg' %}"
+                    alt="{% trans 'Liceo Scientifico "Leonardo da Vinci" Vallo della Lucania - SA' %}" loading="lazy" decoding="async">
+                <div class="impact-card-content">
+                    <h4>Liceo Scientifico "Leonardo da Vinci" Vallo della Lucania - SA</h4>
+                </div>
+            </a>
+        
+            <a class="impact-card" href="https://www.caimontebulgheria.it/" target="_blank"
+                rel="noopener noreferrer">
+                <img class="impact-card-image"
+                    src="{% static 'xr_tour_guide_public/img/acknowledgements/cai.jpg' %}"
+                    alt="{% trans 'CAI - Monte Bulgheria' %}" loading="lazy" decoding="async">
+                <div class="impact-card-content">
+                    <h4>CAI - Monte Bulgheria</h4>
+                </div>
+            </a>
+        
+            <a class="impact-card" href="https://www.dandelionlab.org/en/home-eng/" target="_blank" rel="noopener noreferrer">
+                <img class="impact-card-image"
+                    src="{% static 'xr_tour_guide_public/img/acknowledgements/dandelion.jpg' %}"
+                    alt="{% trans 'Dandelion Social Innovation Lab' %}" loading="lazy" decoding="async">
+                <div class="impact-card-content">
+                    <h4>Dandelion Social Innovation Lab</h4>
+                </div>
+            </a>
         </div>
     </div>
 </section>
@@ -1654,7 +1697,7 @@
 </section>
 
 <!-- FOOTER -->
-<footer class="footer">
+<footer class="footer" id="footer">
     <div class="footer-content">
         <img src="{% static 'xr_tour_guide_public/img/futural-logo.png' %}" alt="{% trans 'FUTURAL Logo' %}"
             class="footer-logo">
