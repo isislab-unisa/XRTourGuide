@@ -1512,13 +1512,9 @@ msgstr ""
 msgid "MushroomMate"
 msgstr "MushroomMate"
 
-#: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1698
-msgid ""
-"Identifying local mushroom species and sharing traditional recipes, "
-"promoting food culture and knowledge transfer."
-msgstr ""
-"Identifica le specie locali di funghi e condivide ricette tradizionali, "
-"promuovendo la cultura gastronomica e il trasferimento di conoscenze."
+#: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1614
+msgid "Explore local products around you, reveal origin and producer stories, get tasting tips, and visit purchase options."
+msgstr "Scopri i prodotti locali della tua zona, scopri le storie delle loro origini e dei loro produttori, ricevi consigli per la degustazione e scopri dove acquistarli."
 
 #: xr_tour_guide_public/templates/xr_tour_guide_public/landing_page/landing_page.html:1719
 msgid "Expected Impact"
@@ -1713,3 +1709,6 @@ msgstr "Le opinioni e i punti di vista espressi sono tuttavia esclusivamente que
 
 msgid "XRTourGuide is part of the FUTURAL project, empowering the future through innovative smart solutions for rural areas."
 msgstr "XRTourGuide fa parte del progetto FUTURAL, che punta a dare slancio al futuro attraverso soluzioni intelligenti e innovative per le aree rurali." 
+
+msgid "Contacts"
+msgstr "Contatti"
