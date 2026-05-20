@@ -22,7 +22,8 @@ from ..authentication import JWTFastAPIAuthentication
 import os
 import dotenv
 from django.http import HttpResponse
-from ..services.map_extract_service import ensure_pmtiles_for_tour
+from urllib.parse import quote
+
 
 dotenv.load_dotenv()
 
@@ -240,94 +241,69 @@ def increment_view_count(request):
 
     return Response({"detail": "View count incremented successfully"}, status=status.HTTP_200_OK)
 
-# @swagger_auto_schema(
-#     method='post',
-#     operation_summary="Extract and download pmtiles file for a tour based on waypoint coordinates",
-#     manual_parameters=[
-#         openapi.Parameter(
-#             'tour_id',
-#             openapi.IN_PATH,
-#             description="ID of the tour",
-#             type=openapi.TYPE_INTEGER,
-#             required=True
-#         )
-#     ],
-#     responses={
-#         200: openapi.Response(description="Pmtiles file returned successfully"),
-#         400: openapi.Response(description="Tour not found or invalid waypoints")
-#     }
-# )
-# @api_view(['POST'])
-# @authentication_classes([JWTFastAPIAuthentication])
-# @permission_classes([IsAuthenticated])
-# def cut_map(request, tour_id):
-#     storage = MinioStorage()
-
-#     try:
-#         tour = Tour.objects.get(pk=tour_id)
-#     except Tour.DoesNotExist:
-#         return JsonResponse({"error": "Tour not found"}, status=400)
-
-#     waypoints = tour.waypoints.order_by('position', 'id')
-#     if not waypoints.exists():
-#         return JsonResponse({"error": "No waypoints found for this tour"}, status=400)
-
-#     lons, lats = [], []
-#     for wp in waypoints:
-#         try:
-#             lat_str, lon_str = wp.coordinates.split(",")
-#             lat, lon = float(lat_str.strip()), float(lon_str.strip())
-#             lats.append(lat)
-#             lons.append(lon)
-#         except Exception:
-#             continue
-
-#     if not lats or not lons:
-#         return JsonResponse({"error": "Waypoints have invalid coordinates"}, status=400)
-
-#     min_lon, max_lon = min(lons), max(lons)
-#     min_lat, max_lat = min(lats), max(lats)
-#     print("BBOX: ", min_lon, min_lat, max_lon, max_lat, flush=True)
-#     bbox = f"{min_lon - 0.1},{min_lat - 0.1},{max_lon + 0.1},{max_lat + 0.1}"
-#     print("BBOX: ", bbox, flush=True)
-
-#     payload = {
-#         "tour_id": str(tour_id),
-#         "bbox": bbox
-#     }
-#     url = os.getenv("PMTILES_URL")
-#     headers = {"Content-type": "application/json"}
-#     response = requests.post(url, headers=headers, json=payload)
-#     if response.status_code != 200:
-#         return JsonResponse({"error": "Failed to extract pmtiles"}, status=400)
-    
-#     file = storage.open(f"/{tour_id}/tour_{tour_id}.pmtiles", mode='rb')
-#     return FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}.pmtiles")
-
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Extract and download pmtiles file for a tour based on waypoint coordinates",
+    manual_parameters=[
+        openapi.Parameter(
+            'tour_id',
+            openapi.IN_PATH,
+            description="ID of the tour",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(description="Pmtiles file returned successfully"),
+        400: openapi.Response(description="Tour not found or invalid waypoints")
+    }
+)
 @api_view(['POST'])
 @authentication_classes([JWTFastAPIAuthentication])
 @permission_classes([IsAuthenticated])
 def cut_map(request, tour_id):
-    result = ensure_pmtiles_for_tour(tour_id)
-    if not result.get("ok"):
-        return JsonResponse({"error": result.get("error", "Failed to extract pmtiles")}, status=400)
-
     storage = MinioStorage()
-    file = storage.open(result["key"], mode='rb')
+
+    try:
+        tour = Tour.objects.get(pk=tour_id)
+    except Tour.DoesNotExist:
+        return JsonResponse({"error": "Tour not found"}, status=400)
+
+    waypoints = tour.waypoints.order_by('position', 'id')
+    if not waypoints.exists():
+        return JsonResponse({"error": "No waypoints found for this tour"}, status=400)
+
+    lons, lats = [], []
+    for wp in waypoints:
+        try:
+            lat_str, lon_str = wp.coordinates.split(",")
+            lat, lon = float(lat_str.strip()), float(lon_str.strip())
+            lats.append(lat)
+            lons.append(lon)
+        except Exception:
+            continue
+
+    if not lats or not lons:
+        return JsonResponse({"error": "Waypoints have invalid coordinates"}, status=400)
+
+    min_lon, max_lon = min(lons), max(lons)
+    min_lat, max_lat = min(lats), max(lats)
+    print("BBOX: ", min_lon, min_lat, max_lon, max_lat, flush=True)
+    bbox = f"{min_lon - 0.1},{min_lat - 0.1},{max_lon + 0.1},{max_lat + 0.1}"
+    print("BBOX: ", bbox, flush=True)
+
+    payload = {
+        "tour_id": str(tour_id),
+        "bbox": bbox
+    }
+    url = os.getenv("PMTILES_URL")
+    headers = {"Content-type": "application/json"}
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code != 200:
+        return JsonResponse({"error": "Failed to extract pmtiles"}, status=400)
+    
+    file = storage.open(f"/{tour_id}/tour_{tour_id}.pmtiles", mode='rb')
     return FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}.pmtiles")
-
-@api_view(['GET'])
-@authentication_classes([JWTFastAPIAuthentication])
-@permission_classes([IsAuthenticated])
-def download_offline_bundle(request, tour_id):
-    storage = MinioStorage()
-    key = f"{tour_id}/offline/offline_bundle.zip"
-    if not storage.exists(key):
-        return Response({"detail": "Offline bundle not ready"}, status=404)
-
-    file = storage.open(key, mode='rb')
-    response = FileResponse(file, as_attachment=True, filename=f"tour_{tour_id}_offline.zip", content_type="application/zip")
-    return response
 
 @swagger_auto_schema(
     method='get',
@@ -525,8 +501,8 @@ def tour_informations(request):
         
         tour_data.pop('coordinates', None)
         
-        tour_data['default_img_url'] = f"{domain}stream_minio_resource/?tour={tour_id}&file=default_image"
-        tour_data['deep_link'] = f"{domain}tour/{tour_id}/"
+        tour_data['default_img_url'] = f"{domain}/stream_minio_resource/?tour={tour_id}&file=default_image"
+        tour_data['deep_link'] = f"{domain}/tour/{tour_id}/"
         
         tour = Tour.objects.get(id=tour_id)
         if tour.user:
@@ -544,18 +520,24 @@ def tour_informations(request):
         for waypoint in waypoints:
             wp_coordinates = waypoint.coordinates or '0.0, 0.0'
             
+            image_urls = [
+                f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file={quote(img.image.name, safe='/')}"
+                for img in waypoint.images.all()
+                if img.image
+            ]
+            
             waypoint_info = {
                 'id': waypoint.id,
                 'title': waypoint.title,
                 'description': waypoint.description or '',
                 'location': wp_coordinates,
                 'resources': {
-                    'readme': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=readme",
-                    'audio': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=audio",
-                    'pdf': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=pdf",
-                    'markdown': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=markdown",
-                    'video': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=video",
-                    'links': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=links"
+                    'readme': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=readme",
+                    'audio': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=audio",
+                    'pdf': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=pdf",
+                    'video': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=video",
+                    'links': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=links",
+                    'images': image_urls,
                 }
             }
             
