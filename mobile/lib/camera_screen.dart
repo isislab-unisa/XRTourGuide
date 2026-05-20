@@ -336,22 +336,6 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
             if (v is String && v.isNotEmpty) available[k] = 1;
           });
         } else {
-          // for (final t in ["readme", "links", "images", "video", "pdf", "audio"]) {
-          //   try {
-          //     final resp = await _tourService.getResourceByWaypointAndType(waypointId, t);
-          //     if (resp != null) {
-          //       if (t == "images") {
-          //         if (resp is List && resp.isNotEmpty) available["images"] = 1;
-          //       }else if (resp is String && resp.isNotEmpty) {
-          //         available[t] = 1;
-          //       } else if (resp is Map && resp.isNotEmpty) {
-          //         available[t] = 1;
-          //       }
-          //     }
-          //   } catch (e) {
-          //     print("Error checking resource $t for waypoint $waypointId: $e");
-          //   }
-          // }
           final types = ["readme", "links", "images", "video", "pdf", "audio"];
 
           await Future.wait(
