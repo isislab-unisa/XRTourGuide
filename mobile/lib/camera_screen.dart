@@ -149,6 +149,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
+  double _minZoomLevel = 1.0;
+  double _maxZoomLevel = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _baseZoomLevel = 1.0;
 
   // Recognition state
   RecognitionState _recognitionState = RecognitionState.ready;
@@ -589,6 +593,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       }
 
       _cameras = await availableCameras();
+      print("Available cameras: ${_cameras!.map((c) => c.name).join(", ")}");
       if (_cameras != null && _cameras!.isNotEmpty) {
         final controller = CameraController(
           _cameras![0], // Use the first camera (usually back camera)
@@ -599,6 +604,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
 
         await controller.initialize();
+        _minZoomLevel = await controller.getMinZoomLevel();
+        _maxZoomLevel = await controller.getMaxZoomLevel();
+        _currentZoomLevel = _minZoomLevel;
+        await controller.setZoomLevel(_currentZoomLevel);
         if (!mounted) return;
 
         if (_isARMode) {
@@ -617,6 +626,25 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       }
     } catch (e) {
       print('Error initializing camera: $e');
+    }
+  }
+
+  void _handleScaleStart(ScaleStartDetails details) {
+    _baseZoomLevel = _currentZoomLevel;
+  }
+
+  Future<void> _handleScaleUpdate(ScaleUpdateDetails details) async {
+    if (_cameraController == null || !_isCameraInitialized) return;
+
+    final newZoom = (_baseZoomLevel * details.scale).clamp(_minZoomLevel, _maxZoomLevel);
+
+    if ((newZoom - _currentZoomLevel).abs() < 0.02) return;
+
+    _currentZoomLevel = newZoom;
+    await _cameraController!.setZoomLevel(_currentZoomLevel);
+
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -1320,36 +1348,6 @@ Future<void> _spawnTotemIcons(
           shrinkWrap: true,
         );
         break;
-
-      // case 'video':
-      //   final videoPath = content['video'] ?? '';
-      //   print("Video path: $videoPath");
-      //   if (videoPath.isNotEmpty) {
-      //     File? videoFile = await _loadAndDecompressResource(
-      //         videoPath,
-      //         widget.isOffline,
-      //         'mp4',
-      //     );
-
-      //     if (videoFile != null) {
-      //       contentToDisplay = VideoPlayerWidget(
-      //         videoUrl: videoFile.path,
-      //         isLocalFile: true, //Sempre true perché è un file locale temporaneo
-      //       );
-      //     } else {
-      //       contentToDisplay = const Center(child: Text("Errore nel caricamento del video"));
-      //     }
-
-      //   } else {
-      //     contentToDisplay = const Center(
-      //       child: Text(
-      //         'No video available for this waypoint.',
-      //         style: TextStyle(color: AppColors.textPrimary),
-      //       ),
-      //     );
-      //   }
-      //   break;
-
       case 'video':
         final videoPath = (content['video'] ?? content['url'] ?? '').toString();
         if (videoPath.isNotEmpty) {
@@ -1384,36 +1382,6 @@ Future<void> _spawnTotemIcons(
           );
         }
         break;
-
-      // case 'document':
-      //   final pdfPath = content['pdf'] ?? '';
-      //   print("PDF path: $pdfPath");
-      //   if (pdfPath.isNotEmpty) {
-      //     File? pdfFile = await _loadAndDecompressResource(
-      //       pdfPath,
-      //       widget.isOffline,
-      //       'pdf',
-      //     );
-
-      //     if (pdfFile != null) {
-      //       contentToDisplay = PdfViewerWidget(
-      //         pdfUrl: pdfFile.path,
-      //         isLocalFile: true, //Sempre true perché è un file locale temporaneo
-      //       );
-      //     } else {
-      //       contentToDisplay = const Center(child: Text("Errore nel caricamento del PDF"));
-      //     }
-
-      //   } else {
-      //     contentToDisplay = const Center(
-      //       child: Text(
-      //         'No PDF document available for this waypoint.',
-      //         style: TextStyle(color: AppColors.textPrimary),
-      //       ),
-      //     );
-      //   }
-      //   break;
-
       case 'document':
         final pdfPath = (content['pdf'] ?? content['url'] ?? '').toString();
         if (pdfPath.isNotEmpty) {
@@ -1927,7 +1895,11 @@ Future<void> _spawnTotemIcons(
     return SizedBox(
       width: double.infinity,
       height: double.infinity,
-      child: CameraPreview(_cameraController!),
+      child: GestureDetector(
+        onScaleStart: _handleScaleStart,
+        onScaleUpdate: _handleScaleUpdate,
+        child: CameraPreview(_cameraController!)
+      ),
     );
   }
 
