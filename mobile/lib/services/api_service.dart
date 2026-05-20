@@ -209,7 +209,13 @@ class ApiService {
       final response = await dio.post(
         '/google-mobile-login/',
         data: {'id_token': idToken},
-        options: _getOptions(baseUrl: baseUrl),
+        options: _getOptions(
+          baseUrl: baseUrl ?? getCurrentBaseUrl(),
+          options: Options(
+            followRedirects: false,
+            validateStatus: (status) => status != null && status < 400,
+          )
+        ),
       );
       return response;
     } catch (e) {

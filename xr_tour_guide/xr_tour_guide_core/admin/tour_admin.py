@@ -104,7 +104,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
             url,
         )
         
-    @admin.display(description=_("Image License"))
+    @admin.display(description=_("License"))
     def license_notice(self, obj):
         return mark_safe(f'''
             <div style="
