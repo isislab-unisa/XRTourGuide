@@ -5,6 +5,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import io
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from django.core.files.base import ContentFile
 from django.db.models import Prefetch
@@ -24,6 +26,10 @@ from .map_extract_service import ensure_pmtiles_for_tour
 
 logger = logging.getLogger(__name__)
 
+IMAGE_MAX_SIZE = (1600, 1600)
+IMAGE_JPEG_QUALITY = 75
+OPTIMIZE_IMAGES_FOR_OFFLINE = True
+INCLUDE_VIDEO_IN_OFFLINE_BUNDLE = False
 
 class OfflineBundleError(Exception):
     pass
@@ -290,6 +296,35 @@ class OfflineBundleService:
         return wp_data
 
     # ------------------------- ZIP ADDERS -------------------------
+    
+    def _optimized_image_bytes(self, storage_key: str) -> Optional[bytes]:
+        try:
+            with self.storage.open(storage_key, mode="rb") as src:
+                original = src.read()
+
+            with Image.open(io.BytesIO(original)) as img:
+                img = ImageOps.exif_transpose(img)
+
+                if img.mode not in ("RGB", "L"):
+                    img = img.convert("RGB")
+                elif img.mode == "L":
+                    img = img.convert("RGB")
+
+                img.thumbnail(self.IMAGE_MAX_SIZE, Image.Resampling.LANCZOS)
+
+                out = io.BytesIO()
+                img.save(
+                    out,
+                    format="JPEG",
+                    quality=self.IMAGE_JPEG_QUALITY,
+                    optimize=True,
+                    progressive=True,
+                )
+                return out.getvalue()
+
+        except (UnidentifiedImageError, OSError) as exc:
+            logger.warning("Image optimization failed for %s: %s", storage_key, exc)
+            return None
 
     def _add_tour_default_image(
         self,
@@ -338,23 +373,33 @@ class OfflineBundleService:
             src_key = img_obj.image.name
             src_ext = Path(src_key).suffix.lower() or ".jpg"
 
-            # manteniamo suffisso .zlib per compatibilità naming attuale
-            # ma contenuto resta originale (decoder mobile gestisce raw/zlib)
-            arc_rel = f"{waypoint_prefix}/image_{idx}{src_ext}.zlib"
+            arc_rel = f"{waypoint_prefix}/image_{idx}.jpg.zlib"
 
             if self.storage.exists(src_key):
-                self._zip_add_storage_key(zf, src_key, arc_rel)
-                local_images.append(arc_rel)
+                optimized = self._optimized_image_bytes(src_key)
 
+                if optimized:
+                    zf.writestr(
+                        arc_rel,
+                        optimized,
+                        compress_type=zipfile.ZIP_STORED,
+                    )
+                else:
+                    self._zip_add_storage_key(zf, src_key, arc_rel)
+
+                local_images.append(arc_rel)
+                
         waypoint_json_record["local_images"] = local_images
 
         # resources file fields
         res_map: List[Tuple[str, Any]] = [
             ("readme", waypoint.readme_item),
             ("audio", waypoint.audio_item),
-            ("video", waypoint.video_item),
             ("pdf", waypoint.pdf_item),
         ]
+        
+        if self.INCLUDE_VIDEO_IN_OFFLINE_BUNDLE:
+            res_map.append(("video", waypoint.video_item))
 
         for res_name, field in res_map:
             if not field:
