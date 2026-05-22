@@ -525,8 +525,8 @@ def tour_informations(request):
         
         tour_data.pop('coordinates', None)
         
-        tour_data['default_img_url'] = f"{domain}stream_minio_resource/?tour={tour_id}&file=default_image"
-        tour_data['deep_link'] = f"{domain}tour/{tour_id}/"
+        tour_data['default_img_url'] = f"{domain}/stream_minio_resource/?tour={tour_id}&file=default_image"
+        tour_data['deep_link'] = f"{domain}/tour/{tour_id}/"
         
         tour = Tour.objects.get(id=tour_id)
         if tour.user:
@@ -544,18 +544,25 @@ def tour_informations(request):
         for waypoint in waypoints:
             wp_coordinates = waypoint.coordinates or '0.0, 0.0'
             
+            image_urls = [
+                f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file={quote(img.image.name, safe='/')}"
+                for img in waypoint.images.all()
+                if img.image
+            ]
+            
             waypoint_info = {
                 'id': waypoint.id,
                 'title': waypoint.title,
                 'description': waypoint.description or '',
                 'location': wp_coordinates,
                 'resources': {
-                    'readme': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=readme",
-                    'audio': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=audio",
-                    'pdf': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=pdf",
-                    'markdown': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=markdown",
-                    'video': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=video",
-                    'links': f"{domain}stream_minio_resource/?waypoint={waypoint.id}&file=links"
+                    'readme': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=readme",
+                    'audio': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=audio",
+                    'pdf': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=pdf",
+                    'markdown': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=markdown",
+                    'video': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=video",
+                    'links': f"{domain}/stream_minio_resource/?waypoint={waypoint.id}&file=links",
+                    'images': image_urls
                 }
             }
             
