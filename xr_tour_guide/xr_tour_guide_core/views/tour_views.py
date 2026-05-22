@@ -23,6 +23,8 @@ import os
 import dotenv
 from django.http import HttpResponse
 from ..services.map_extract_service import ensure_pmtiles_for_tour
+from urllib.parse import quote
+
 
 dotenv.load_dotenv()
 
