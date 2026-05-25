@@ -494,6 +494,8 @@ async def apple_login(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 
