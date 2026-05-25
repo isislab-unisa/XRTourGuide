@@ -91,13 +91,17 @@ def complete_build(request):
         except Exception as e:
             return JsonResponse({"error": f"Error saving POI: {str(e)}"}, status=500)
 
-        send_mail(
-            'Build completata',
-            f"Lezione {tour.title} buildata.",
-            os.environ.get('EMAIL_HOST_USER'),
-            [tour.user.email],
-            fail_silently=False,
-        )
+        try:
+            if tour.user and tour.user.email:
+                send_mail(
+                    'Build completata',
+                    f"Lezione {tour.title} buildata.",
+                    os.environ.get('EMAIL_HOST_USER'),
+                    [tour.user.email],
+                    fail_silently=True,
+                )
+        except Exception as e:
+            print(f"Errore nell'invio dell'email: {e}")
 
         try:
             redis_client.delete("build_lock")
@@ -120,13 +124,17 @@ def complete_build(request):
         tour.status = "FAILED"
         tour.save()
 
-        send_mail(
-            'Build fallita',
-            f"Build Fallita {tour.title}.",
-            os.environ.get('EMAIL_HOST_USER'),
-            [tour.user.email],
-            fail_silently=False,
-        )
+        try:
+            if tour.user and tour.user.email:
+                send_mail(
+                    'Build fallita',
+                    f"Build Fallita {tour.title}.",
+                    os.environ.get('EMAIL_HOST_USER'),
+                    [tour.user.email],
+                    fail_silently=True,
+                )
+        except Exception as e:
+            print(f"Errore nell'invio dell'email: {e}")
 
         try:
             redis_client.delete("build_lock")
