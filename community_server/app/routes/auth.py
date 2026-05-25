@@ -85,7 +85,7 @@ def _generate_unique_username(db: Session, email: str) -> str:
 def verify_apple_identity_token(identity_token: str) -> dict:
     import requests
     from jose import jwt
-    from jose.expections import JWTError
+    from jose.exceptions import JWTError
     
     APPLE_ISSUER = "https://appleid.apple.com"
     APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys"
