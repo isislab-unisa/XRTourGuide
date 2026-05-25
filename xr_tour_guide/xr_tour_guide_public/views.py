@@ -398,3 +398,103 @@ def google_mobile_login(request):
         return JsonResponse({"detail": "Invalid JSON in request"}, status=400)
     except Exception as e:
         return JsonResponse({"detail": f"Server error: {str(e)}"}, status=500)
+    
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def apple_mobile_login(request):
+    print("apple_mobile_login HIT", request.method, request.path, flush=True)
+    try:
+        raw_body = request.body.decode("utf-8")
+        data = json.loads(raw_body)
+        
+        identity_token = data.get("identity_token")
+        authorization_code = data.get("authorization_code")
+        given_name = data.get("given_name", "")
+        family_name = data.get("family_name", "")
+        email = data.get("email")
+        
+        if not identity_token:
+            return JsonResponse({"detail": "Identity token required"}, status=400)
+        
+        if not authorization_code:
+            return JsonResponse({"detail": "Authorization code required"}, status=400)
+        
+        idp_url = f"{get_community_server_base_url()}/api/apple-login/"
+
+        response = requests.post(
+            idp_url,
+            json={
+                "identity_token": identity_token,
+                "authorization_code": authorization_code,
+                "given_name": given_name,
+                "family_name": family_name,
+                "email": email
+            },
+            headers=get_idp_headers(),
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            error_data = response.json() if response.content else {"detail": "Authentication failed"}
+            return JsonResponse(
+                {"detail": error_data.get("detail", "Authentication failed")},
+                status=response.status_code,
+            )
+
+        data = response.json()
+        user_data = data["user"]
+
+        try:
+            user = User.objects.get(email=user_data["email"])
+            user.username = user_data["username"]
+            user.first_name = user_data.get("name", "")
+            user.last_name = user_data.get("surname", "")
+            user.city = user_data.get("city", "Not provided") or "Not provided"
+            user.description = user_data.get("description", "Not provided") or "Not provided"
+            user.is_staff = False
+        except User.DoesNotExist:
+            user = User.objects.create_user(
+                username=user_data["username"],
+                email=user_data["email"],
+                first_name=user_data.get("name", ""),
+                last_name=user_data.get("surname", ""),
+                city=user_data.get("city", "Not provided") or "Not provided",
+                description=user_data.get("description", "Not provided") or "Not provided",
+                is_staff=False,
+            )
+
+        try:
+            group = Group.objects.get(name="User")
+            user.groups.add(group)
+        except Group.DoesNotExist:
+            print("Warning: Group 'User' does not exist")
+
+        user.save()
+
+        return JsonResponse(
+            {
+                "access": data["access"],
+                "refresh": data["refresh"],
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "name": user.first_name,
+                    "surname": user.last_name,
+                    "city": user.city,
+                    "description": user.description,
+                },
+            },
+            status=200,
+        )
+
+    except requests.exceptions.RequestException:
+        return JsonResponse(
+            {"detail": "Connection error to authentication server"},
+            status=500,
+        )
+    except json.JSONDecodeError:
+        return JsonResponse({"detail": "Invalid JSON in request"}, status=400)
+    except Exception as e:
+        return JsonResponse({"detail": f"Server error: {str(e)}"}, status=500)

@@ -26,7 +26,7 @@ class ApiService {
   '/health_check/',
   '/stream_minio_resource/',
   '/google-mobile-login/',
-  'apple-mobile-login/',
+  '/apple-mobile-login/',
   ];
 
   static String appSignature = "APP_SIGNATURE_XR_TOUR_GUIDE_MOBILE";
@@ -35,7 +35,6 @@ class ApiService {
 
   static const String centralizedUrl =
       'COMMUNITY_SERVER_URL'; // Sostituisci con l'URL del tuo server centrale
-
 
 
 
@@ -235,7 +234,7 @@ class ApiService {
   }) async {
     try {
       final response = await dio.post(
-        '/apple-mobile-login',
+        '/apple-mobile-login/',
         data: {
           'identity_token': identityToken,
           'authorization_code': authorizationCode,

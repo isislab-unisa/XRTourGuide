@@ -65,7 +65,72 @@ class UserRegister(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     id_token: str
+    
+class AppleLoginRequest(BaseModel):
+    identity_token: str
+    authorization_code: Optional[str] = None
+    given_name: Optional[str] = None
+    family_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    
+def _generate_unique_username(db: Session, email: str) -> str:
+    base_username = email.split("@")[0]
+    username = base_username
+    counter = 1
+    while db.query(models.User).filter(models.User.username == username).first():
+        username = f"{base_username}{counter}"
+        counter += 1
+    return username
 
+def verify_apple_identity_token(identity_token: str) -> dict:
+    import requests
+    from jose import jwt
+    from jose.expections import JWTError
+    
+    APPLE_ISSUER = "https://appleid.apple.com"
+    APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys"
+    
+    allowed_client_ids = [
+        value.strip() for value in os.getenv("APPLE_CLIENT_IDS", "").split(",") if value.strip()
+    ]
+    
+    if not allowed_client_ids:
+        raise HTTPException(status_code=500, detail="Apple OAuth not configured properly")
+    
+    try:
+        unverified_header = jwt.get_unverified_header(identity_token)
+        kid = unverified_header.get("kid")
+        
+        keys_response = requests.get(APPLE_KEYS_URL, timeout=10)
+        keys_response.raise_for_status()
+        apple_keys = keys_response.json().get("keys", [])
+        
+        key = next((item for item in apple_keys if item.get("kid") == kid), None)
+        
+        if not key:
+            raise HTTPException(status_code=401, detail="Invalid Apple token: key not found")
+        
+        last_error = None
+        
+        for audience in allowed_client_ids:
+            try:
+                return jwt.decode(
+                    identity_token,
+                    key,
+                    algorithms=[key.get("alg", "RS256")],
+                    audience = audience,
+                    issuer = APPLE_ISSUER
+                )
+            except JWTError as e:
+                last_error = e
+        
+        raise HTTPException(status_code=401, detail=f"Invalid Apple token: {str(last_error)}")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Apple token verification failed: {str(e)}")
+    
 @router.get("/", response_class=HTMLResponse)
 async def root(request: Request, db: Session = Depends(get_db)):
     services = db.query(models.Services).all()
@@ -326,6 +391,111 @@ async def google_login(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
+
+@router.post(
+    "/api/apple-login/",
+    summary="Login or register using Apple OAuth",
+    responses={
+        200: {"description": "Apple login successful"},
+        400: {"description": "Email not provided by Apple"},
+        401: {"description": "Invalid token issuer or account is deactivated"},
+        500: {"description": "Apple OAuth not configured or authentication error"}
+    },
+)
+async def apple_login(
+    data: AppleLoginRequest,
+    db: Session = Depends(get_db),
+    service: Services = Depends(verify_service_or_mobile)
+):
+    try:
+        payload = verify_apple_identity_token(data.identity_token)
+        
+        apple_id = payload.get("sub")
+        token_email = payload.get("email")
+        email = data.email or token_email
+        
+        given_name = data.given_name or ""
+        family_name = data.family_name or ""
+        
+        if not apple_id:
+            raise HTTPException(status_code=401, detail="Invalid Apple token: subject (sub) claim missing")
+        
+        user = db.query(models.User).filter(models.User.apple_id == apple_id).first()
+        
+        if not user and email:
+            user = db.query(models.User).filter(models.User.email == email).first()
+            
+        if not user:
+            if not email:
+                raise HTTPException(status_code=400, detail="Email not provided by Apple")
+            
+            username = _generate_unique_username(db, email)
+            
+            user = models.User(
+                username=username,
+                email=email,
+                name=given_name,
+                surname=family_name,
+                active=True,
+                email_verified=True,
+                apple_id=apple_id,
+                role=models.UserRole.USER
+            )
+            
+            user.set_password(secrets.token_urlsafe(32))
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            if not user.apple_id:
+                user.apple_id = apple_id
+                
+            if not user.email_verified:
+                user.email_verified = True
+                
+            if not user.active:
+                raise HTTPException(status_code=401, detail="Account is deactivated")
+            
+            if given_name and not user.name:
+                user.name = given_name
+                
+            if family_name and not user.surname:
+                user.surname = family_name
+                
+            db.commit()
+            db.refresh(user)
+            
+        access_token = create_access_token({
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email
+        })
+        
+        refresh_token = create_refresh_token({
+            "user_id": user.id,
+            "username": user.username
+        })
+        
+        return {
+            "access": access_token,
+            "refresh": refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "name": user.name,
+                "surname": user.surname,
+                "city": user.city,
+                "description": user.description
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
+
 
 @router.post(
     "/api/verify/",
