@@ -127,8 +127,10 @@ def verify_apple_identity_token(identity_token: str) -> dict:
         raise HTTPException(status_code=401, detail=f"Invalid Apple token: {str(last_error)}")
     
     except HTTPException:
+        print(f"Apple verify_identity HTTP error: {e.status_code} - {e.detail}", flush=True)
         raise
     except Exception as e:
+        print(f"Apple verify_identity error: {e.status_code} - {e.detail}", flush=True)
         raise HTTPException(status_code=401, detail=f"Apple token verification failed: {str(e)}")
     
 @router.get("/", response_class=HTMLResponse)
@@ -492,10 +494,12 @@ async def apple_login(
         }
         
     except HTTPException:
+        print(f"Apple login HTTP error: {e.status_code} - {e.detail}", flush=True)
         raise
     except Exception as e:
         import traceback
         traceback.print_exc()
+        print(f"Apple login error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 
