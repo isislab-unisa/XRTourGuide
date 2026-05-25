@@ -26,6 +26,7 @@ class ApiService {
   '/health_check/',
   '/stream_minio_resource/',
   '/google-mobile-login/',
+  'apple-mobile-login/',
   ];
 
   static String appSignature = "APP_SIGNATURE_XR_TOUR_GUIDE_MOBILE";
@@ -220,6 +221,39 @@ class ApiService {
       return response;
     } catch (e) {
       print('Failed Google mobile login: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> appleMobileLogin({
+    required String identityToken,
+    required String authorizationCode,
+    String? givenName,
+    String? familyName,
+    String? email,
+    String? baseUrl,
+  }) async {
+    try {
+      final response = await dio.post(
+        '/apple-mobile-login',
+        data: {
+          'identity_token': identityToken,
+          'authorization_code': authorizationCode,
+          'given_name': givenName,
+          'family_name': familyName,
+          'email': email,
+        },
+        options: _getOptions(
+          baseUrl: baseUrl ?? getCurrentBaseUrl(),
+          options: Options(
+            followRedirects: false,
+            validateStatus: (status) => status != null && status < 400,
+          ),
+        ),
+      );
+      return response;
+    } catch (e) {
+      print('Failed Apple mobile login: $e');
       rethrow;
     }
   }

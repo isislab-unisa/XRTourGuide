@@ -29,12 +29,7 @@ import 'utils/responsive.dart';
 @pragma('vm:entry-point')
 void downloadCallback(String id, int status, int progress) {
   print('Download task ($id) is $status and progress is $progress');
-  // You can implement custom logic here, like updating UI using isolates or state management.
 }
-
-// final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
-//   return AuthService();
-// });
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -608,27 +603,13 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               ),
                             ),
                             onPressed: () async {
-                              // Print a message through snackbar
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   SnackBar(
-                              //     content: Text("Coming Soon...."),
-                              //     backgroundColor: Colors.blue,
-                              //     behavior: SnackBarBehavior.floating,
-                              //     margin: const EdgeInsets.only(
-                              //       bottom: 40,
-                              //       left: 16,
-                              //       right: 16,
-                              //     ),
-                              //     duration: const Duration(seconds: 3),
-                              //   ),
-                              // );
                               try {
                                 await _authService.loginWithGoogle();
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text("Google login failed: ${e.toString()}"),
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: const Color.fromARGB(255, 15, 6, 5),
                                     behavior: SnackBarBehavior.floating,
                                     margin: const EdgeInsets.only(
                                       bottom: 40,
@@ -643,6 +624,38 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             context: context,
                           ),
                           const SizedBox(height: 20),
+                          if (Platform.isIOS)
+                            _buildSocialButton(
+                              text: 'Sign in with Apple',
+                              icon: const Icon(
+                                Icons.apple,
+                                color: Colors.black,
+                                size: 22,
+                              ),
+                              onPressed: () async {
+                                try {
+                                  await _authService.loginWithApple();
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Apple login failed: ${e.toString()}",
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                      margin: const EdgeInsets.only(
+                                        bottom: 40,
+                                        left: 16,
+                                        right: 16,
+                                      ),
+                                      duration: const Duration(seconds: 5),
+                                    ),
+                                  );
+                                }
+                              },
+                              context: context,
+                            ),
+                            const SizedBox(height: 20),
                           Container(
                             margin: EdgeInsets.symmetric(
                               horizontal:
@@ -1086,21 +1099,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               ),
                             ),
                             onPressed: () async {
-                              // Print a message through snackbar
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   SnackBar(
-                              //     content: Text("Coming Soon...."),
-                              //     backgroundColor: Colors.blue,
-                              //     behavior: SnackBarBehavior.floating,
-                              //     margin: const EdgeInsets.only(
-                              //       bottom: 40,
-                              //       left: 16,
-                              //       right: 16,
-                              //     ),
-                              //     duration: const Duration(seconds: 3),
-                              //   ),
-                              // );
-
                               try {
                                 await _authService.loginWithGoogle();
                               } catch (e) {
@@ -1114,6 +1112,36 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             },
                           ),
                           const SizedBox(width: 20),
+                          if (Platform.isIOS)
+                            _buildSocialIconButton(
+                              icon: const Icon(
+                                Icons.apple,
+                                color: Colors.black,
+                                size: 22,
+                              ),
+                              onPressed: () async {
+                                try {
+                                  await _authService.loginWithApple();
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Apple login failed: ${e.toString()}",
+                                      ),
+                                      backgroundColor: Colors.red,
+                                      behavior: SnackBarBehavior.floating,
+                                      margin: const EdgeInsets.only(
+                                        bottom: 40,
+                                        left: 16,
+                                        right: 16,
+                                      ),
+                                      duration: const Duration(seconds: 5),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 20),
                         ],
                       ),
                       SizedBox(height: screenHeight * 0.04),
@@ -1330,7 +1358,6 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               ),
                             ),
                           ),
-                          //TODO: Add Google register logic
                           onPressed: () async {
                             try {
                               await authService.loginWithGoogle();
@@ -1346,25 +1373,36 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                           },
                         ),
                         const SizedBox(width: 20),
-                        _buildSocialIconButton(
-                          icon: const Icon(
-                            Icons.facebook,
-                            color: Colors.blue,
-                            size: 28,
-                          ),
-                          //TODO: Add Facebook register logic
-                          onPressed: () => print('Facebook register'),
-                        ),
-                        // const SizedBox(width: 20),
-                        // _buildSocialIconButton(
-                        //   icon: const Icon(
-                        //     Icons.apple,
-                        //     color: Colors.black,
-                        //     size: 28,
-                        //   ),
-                        //   //TODO: Add Apple register logic
-                        //   onPressed: () => print('Apple register'),
-                        // ),
+                        if (Platform.isIOS)
+                          _buildSocialIconButton(
+                            icon: const Icon(
+                              Icons.apple,
+                              color: Colors.black,
+                              size: 22,
+                            ),
+                            onPressed: () async {
+                              try {
+                                await _authService.loginWithApple();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Apple login failed: ${e.toString()}",
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.only(
+                                      bottom: 40,
+                                      left: 16,
+                                      right: 16,
+                                    ),
+                                    duration: const Duration(seconds: 5),
+                                  ),
+                                );
+                              }
+                            },
+                          ),   
+                        const SizedBox(width: 20),                   
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.04),

@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'api_service.dart';
 import 'analytics_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 enum AuthStatus { authenticated, unauthenticated, loading, registering }
 
@@ -151,7 +152,7 @@ class AuthService extends ChangeNotifier {
     try {
       // final response = await dio.post('/register/',
       //  data: {'username': username, 'password': password, 'first_name': name, 'last_name': surname, 'email': mail, 'description': description, 'city': city});
-      final response = await apiService.register(
+      await apiService.register(
         username,
         password,
         name,
@@ -173,7 +174,7 @@ class AuthService extends ChangeNotifier {
   ) async {
 
     try {
-      final response = await apiService.deleteAccount(
+      await apiService.deleteAccount(
         password,
       );
       _authStatus = AuthStatus.unauthenticated;
@@ -186,7 +187,7 @@ class AuthService extends ChangeNotifier {
 
   Future<void> updatePassword(String oldPassword, String newPassword) async {
     try {
-      final response = await apiService.updatePassword(oldPassword, newPassword);
+      await apiService.updatePassword(oldPassword, newPassword);
     } catch (e) {
       print("Change Password error: $e");
     }
@@ -194,7 +195,7 @@ class AuthService extends ChangeNotifier {
 
   Future<void> updateAccount(String firstName, String lastName, String mail, String description) async {
     try {
-      final response = await apiService.updateAccount(
+      await apiService.updateAccount(
         firstName,
         lastName,
         mail,
@@ -274,6 +275,52 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       print("Google Login Error: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> loginWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final identityToken = credential.identityToken;
+      final authorizationCode = credential.authorizationCode;
+
+      if (identityToken == null || identityToken.isEmpty) {
+        throw Exception("Missing Apple identity token");
+      }
+
+      if (authorizationCode.isEmpty) {
+        throw Exception("Missing Apple authorization code");
+      }
+
+      final response = await apiService.appleMobileLogin(
+        identityToken: identityToken,
+        authorizationCode: authorizationCode,
+        givenName: credential.givenName,
+        familyName: credential.familyName,
+        email: credential.email,
+      );
+
+      final accessToken = response.data['access'];
+      final refreshToken = response.data['refresh'];
+      final int userId = response.data['user']["id"];
+
+      await _storageService.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken
+      );
+
+      _authStatus = AuthStatus.authenticated;
+      _analytics.setUserId(userId.toString());
+      notifyListeners();
+    } catch (e) {
+      print("Apple Login Error: $e");
       rethrow;
     }
   }
