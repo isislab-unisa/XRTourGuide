@@ -126,8 +126,8 @@ def verify_apple_identity_token(identity_token: str) -> dict:
         
         raise HTTPException(status_code=401, detail=f"Invalid Apple token: {str(last_error)}")
     
-    except HTTPException:
-        print(f"Apple verify_identity HTTP error: {e.status_code} - {e.detail}", flush=True)
+    except HTTPException as he:
+        print(f"Apple verify_identity HTTP error: {he.status_code} - {he.detail}", flush=True)
         raise
     except Exception as e:
         print(f"Apple verify_identity error: {e.status_code} - {e.detail}", flush=True)
@@ -493,8 +493,8 @@ async def apple_login(
             }
         }
         
-    except HTTPException:
-        print(f"Apple login HTTP error: {e.status_code} - {e.detail}", flush=True)
+    except HTTPException as he:
+        print(f"Apple login HTTP error: {he.status_code} - {he.detail}", flush=True)
         raise
     except Exception as e:
         import traceback
