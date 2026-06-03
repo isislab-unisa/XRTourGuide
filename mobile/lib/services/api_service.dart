@@ -49,15 +49,15 @@ class ApiService {
 
           options.headers['x-app-package'] = appSignature;
 
-          print("Request: ${options.baseUrl} ${options.method} ${options.path}");
+          debugPrint("Request: ${options.baseUrl} ${options.method} ${options.path}");
 
           if (excludedPaths.any((path) => options.path.contains(path))) {
-            print("Skipping bearer token");
+            debugPrint("Skipping bearer token");
             return handler.next(options); // Skip adding token for excluded paths
           }
 
           final accessToken = await _storageService.getAccessToken();
-          print("Access Token: $accessToken");
+          debugPrint("Access Token: $accessToken");
           if (accessToken != null) {
             options.headers['Authorization'] = 'Bearer $accessToken';
           }
@@ -68,13 +68,13 @@ class ApiService {
               return handler.next(e); // Salta il refresh per questi endpoint
           }
 
-          print("Error: ${e.message}, Status Code: ${e.response?.statusCode}");
+          debugPrint("Error: ${e.message}, Status Code: ${e.response?.statusCode}");
           if (e.response?.statusCode == 401) {
             String? newAccessToken = "";
             try {
               newAccessToken = await _refreshToken();
             }catch (refreshError) {
-              print("Refresh Token Error: $refreshError");
+              debugPrint("Refresh Token Error: $refreshError");
               // If refresh fails, log the user out
               // await _storageService.deleteAllTokens();
               await ref.read(authServiceProvider).logout();
@@ -109,7 +109,7 @@ class ApiService {
       normalized = 'https://' + normalized;
     }
     basicUrl = normalized;
-    print('ApiService basicUrl set to: $normalized');
+    debugPrint('ApiService basicUrl set to: $normalized');
   }
 
 
@@ -139,7 +139,7 @@ class ApiService {
       return newAccessToken;
     } catch (e) {
       // If refresh fails, log the user out
-      print("Refresh Token Error: $e");
+      debugPrint("Refresh Token Error: $e");
       await ref.read(authServiceProvider).logout();
       return null;
     }
@@ -151,16 +151,16 @@ class ApiService {
     final host = uri.host;
     final port = uri.hasPort ? uri.port : (uri.scheme == "https" ? 443 : 80);
 
-    print("URI: ${uri}");
-    print("HOST: ${host}");
-    print("PORT: ${port}");
+    debugPrint("URI: ${uri}");
+    debugPrint("HOST: ${host}");
+    debugPrint("PORT: ${port}");
 
     try {
       final socket = await Socket.connect(host, port, timeout: timeout);
       socket.destroy();
       return true;
     } catch (e) {
-      print('Ping failed: $e');
+      debugPrint('Ping failed: $e');
       // return false;
     }
 
@@ -179,7 +179,7 @@ class ApiService {
       return true;
     } on DioException catch(e) {
       if (e.type == DioExceptionType.sendTimeout || e.type == DioExceptionType.receiveTimeout) {
-        print('Ping timeout: $e');
+        debugPrint('Ping timeout: $e');
         return false;
       } 
       return true;
@@ -199,7 +199,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to fetch profile details: $e');
+      debugPrint('Failed to fetch profile details: $e');
       rethrow;
     }
   }
@@ -219,7 +219,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed Google mobile login: $e');
+      debugPrint('Failed Google mobile login: $e');
       rethrow;
     }
   }
@@ -252,7 +252,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed Apple mobile login: $e');
+      debugPrint('Failed Apple mobile login: $e');
       rethrow;
     }
   }
@@ -266,10 +266,10 @@ class ApiService {
           validateStatus: (status) => status == 200 || status == 401, // Allow 401 for invalid credentials
         ),
       );
-      print('Login response: ${response.statusCode}, data: ${response.data}');
+      debugPrint('Login response: ${response.statusCode}, data: ${response.data}');
       return response;
     } catch (e) {
-      print('Failed to login: $e');
+      debugPrint('Failed to login: $e');
       rethrow;
     }
   }
@@ -290,7 +290,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to register: $e');
+      debugPrint('Failed to register: $e');
       rethrow;
     }
   }
@@ -308,7 +308,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to update profile: $e');
+      debugPrint('Failed to update profile: $e');
       rethrow;
     }
   }
@@ -325,7 +325,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to update password: $e');
+      debugPrint('Failed to update password: $e');
       rethrow;
     }
   }
@@ -340,7 +340,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to reset password: $e');
+      debugPrint('Failed to reset password: $e');
       rethrow;
     }
   }
@@ -355,7 +355,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to delete profile: $e');
+      debugPrint('Failed to delete profile: $e');
       rethrow;
     }
   }
@@ -375,7 +375,7 @@ class ApiService {
       }
       return response;
     } catch (e) {
-      print('Failed to fetch tours: $e');
+      debugPrint('Failed to fetch tours: $e');
       rethrow;
     }
   }
@@ -398,7 +398,7 @@ class ApiService {
       }
       return response;
     } catch (e) {
-      print('Failed to fetch tours: $e');
+      debugPrint('Failed to fetch tours: $e');
       rethrow;
     }
   }
@@ -409,7 +409,7 @@ class ApiService {
       final response = await dio.get("/tour_list/?searchTerm=$searchTerm&num_tours=10", options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
-      print('Failed to fetch tours: $e');
+      debugPrint('Failed to fetch tours: $e');
       rethrow;
     }
   }
@@ -420,7 +420,7 @@ class ApiService {
       final response = await dio.get("/tour_list/?category=$category&num_tours=10", options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
-      print('Failed to fetch tours: $e');
+      debugPrint('Failed to fetch tours: $e');
       rethrow;
     }
   }
@@ -431,7 +431,7 @@ class ApiService {
       final response = await dio.get('/tour_details/$tourId/', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
-      print('Failed to fetch tour details: $e');
+      debugPrint('Failed to fetch tour details: $e');
       rethrow;
     }
   }
@@ -441,7 +441,7 @@ class ApiService {
       final response = await dio.get('/get_reviews_by_tour_id/$tourId/', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
-      print('Failed to fetch tour reviews: $e');
+      debugPrint('Failed to fetch tour reviews: $e');
       rethrow;
     }
   }
@@ -451,7 +451,7 @@ class ApiService {
       final response = await dio.get('/get_reviews_by_user', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
-      print('Failed to fetch tour reviews: $e');
+      debugPrint('Failed to fetch tour reviews: $e');
       rethrow;
     }
   }
@@ -463,7 +463,7 @@ class ApiService {
       final response = await dio.get('/tour_waypoints/$tourId', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
-      print('Failed to fetch tour categories: $e');
+      debugPrint('Failed to fetch tour categories: $e');
       rethrow;
     }
   }
@@ -476,7 +476,7 @@ class ApiService {
       });
       return response;
     } catch (e) {
-      print('Failed to increment tour views: $e');
+      debugPrint('Failed to increment tour views: $e');
       rethrow;
     }
   }
@@ -491,7 +491,7 @@ class ApiService {
       });
       return response;
     } catch (e) {
-      print('Failed to fetch tour categories: $e');
+      debugPrint('Failed to fetch tour categories: $e');
       rethrow;
     }
   }
@@ -508,7 +508,7 @@ class ApiService {
       final response = await dio.get('/load_model/$tourId', options: _getOptions(baseUrl: baseUrl));
       return response;
     } catch (e) {
-      print('Failed to fetch tour categories: $e');
+      debugPrint('Failed to fetch tour categories: $e');
       rethrow;
     }
   }
@@ -541,13 +541,13 @@ class ApiService {
 
         return response;
       } catch (e) {
-        print('Failed inference: $e');
+        debugPrint('Failed inference: $e');
         rethrow;
       }
     }
     
   Future<Response> loadResource(int waypointId, String resourceType, {String? baseUrl}) async {
-    print("Loading resource type: $resourceType for waypoint ID: $waypointId from baseUrl: $baseUrl");
+    debugPrint("Loading resource type: $resourceType for waypoint ID: $waypointId from baseUrl: $baseUrl");
     try {
       final response = await dio.get('/get_waypoint_resources/',
         queryParameters: {
@@ -558,7 +558,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to fetch tour resources: $e');
+      debugPrint('Failed to fetch tour resources: $e');
       rethrow;
     }
   }
@@ -568,7 +568,7 @@ class ApiService {
       final response = dio.get("/get_services/");
       return response;
     } catch (e) {
-      print('Failed to fetch servers list: $e');
+      debugPrint('Failed to fetch servers list: $e');
       rethrow;
     }
   }
@@ -582,7 +582,7 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print('Failed to send report: $e');
+      debugPrint('Failed to send report: $e');
       rethrow;
     }
   }

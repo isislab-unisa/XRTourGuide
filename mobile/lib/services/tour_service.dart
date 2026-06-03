@@ -1,11 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:xr_tour_guide/models/tour.dart';
 import 'package:xr_tour_guide/models/category.dart';
 import 'package:xr_tour_guide/models/waypoint.dart';
 import 'package:xr_tour_guide/models/review.dart';
 import "package:xr_tour_guide/models/user.dart";
-import 'package:dio/dio.dart';
-import 'secure_storage_service.dart';
 import 'auth_service.dart';
 import 'api_service.dart';
 
@@ -29,7 +28,7 @@ class TourService {
         throw Exception('Failed to load tours');
       }
     } catch (e) {
-      print("Nearby Tours Retrieval error: $e");
+      debugPrint("Nearby Tours Retrieval error: $e");
       rethrow;
     }
   }
@@ -44,7 +43,7 @@ class TourService {
         throw Exception('Failed to load tours');
       }
     } catch (e) {
-      print("Nearby Tours Retrieval error: $e");
+      debugPrint("Nearby Tours Retrieval error: $e");
       rethrow;
     }
   }
@@ -60,7 +59,7 @@ class TourService {
           throw Exception('Failed to load tour details');
         }
       } catch (e) {
-        print("Tour Details Retrieval error: $e");
+        debugPrint("Tour Details Retrieval error: $e");
         rethrow;
       }
   }
@@ -75,7 +74,7 @@ class TourService {
         throw Exception('Failed to load tours');
       }
     } catch (e) {
-      print("Tours By category Retrieval error: $e");
+      debugPrint("Tours By category Retrieval error: $e");
       rethrow;
     }
   }
@@ -93,7 +92,7 @@ class TourService {
         throw Exception('Failed to load tours');
       }
     } catch (e) {
-      print("Nearby Tours Retrieval error: $e");
+      debugPrint("Nearby Tours Retrieval error: $e");
       rethrow;
     }
   }
@@ -149,7 +148,7 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
         throw Exception('Failed to load tour waypoints');
       }
     } catch (e) {
-      print("Tour Waypoints Retrieval error: $e");
+      debugPrint("Tour Waypoints Retrieval error: $e");
       rethrow;
     }
   }
@@ -164,7 +163,7 @@ Future<List<Waypoint>> getWaypointsByTour(int tourId) async {
         throw Exception('Failed to load tour reviews');
       }     
     } catch (e) {
-      print("Tour Reviews Retrieval error: $e");
+      debugPrint("Tour Reviews Retrieval error: $e");
       rethrow; 
     }
 
@@ -216,7 +215,7 @@ Future<User> getUserDetails() async {
       throw Exception('Failed to load user details');
     }
   } catch (e) {
-    print("User Details Retrieval error: $e");
+    debugPrint("User Details Retrieval error: $e");
     rethrow;
   }
 }
@@ -236,7 +235,7 @@ Future<User> getUserDetails() async {
         throw Exception('Failed to load user reviews');
       }
     } catch (e) {
-      print("User Reviews Retrieval error: $e");
+      debugPrint("User Reviews Retrieval error: $e");
       rethrow;
     }
 
@@ -285,7 +284,7 @@ Future<User> getUserDetails() async {
         throw Exception('Failed to load resource of type $type for waypoint $waypointId');
       }
     } catch (e) {
-      print("Resource Retrieval error: $e");
+      debugPrint("Resource Retrieval error: $e");
       rethrow;
     }
     return resource;

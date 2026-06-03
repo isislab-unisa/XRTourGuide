@@ -84,12 +84,12 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     // 2. If device is connected, check server reachability
     bool serverReachable = false;
     if (deviceConnected) {
-      // print("CHECKING SERVER REACHABILITY");
+      // debugPrint("CHECKING SERVER REACHABILITY");
       serverReachable = await _checkServerReachability();
     }
 
     final isNowOnline = deviceConnected && serverReachable;
-    // print("ONLINE?: ${isNowOnline}");
+    // debugPrint("ONLINE?: ${isNowOnline}");
 
     if (mounted) {
       setState(() {
@@ -144,7 +144,7 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     }
 
     // Carica tour
-    print("Loading online tours with forceRefresh=$forceRefresh");
+    debugPrint("Loading online tours with forceRefresh=$forceRefresh");
     Position? position = await _getCurrentPosition();
     ref.read(nearbyToursProvider.notifier).loadTours(
           forceRefresh: forceRefresh,

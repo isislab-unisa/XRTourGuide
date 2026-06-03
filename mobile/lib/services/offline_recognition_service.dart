@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -75,9 +76,9 @@ class OfflineRecognitionService {
       // final outputShape = _embedder!.getOutputTensor(0).shape;
       // _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
       await initEmbedderFromBytes(modelData.buffer.asUint8List());
-      print('Interpreter loaded successfully from asset: $assetPath (output dim $_modelOutputDim)');
+      debugPrint('Interpreter loaded successfully from asset: $assetPath (output dim $_modelOutputDim)');
     } catch (e) {
-      print('Error loading interpreter from asset: $e');
+      debugPrint('Error loading interpreter from asset: $e');
       rethrow;
     }
   }
@@ -89,12 +90,12 @@ class OfflineRecognitionService {
       final outputShape = _embedder!.getOutputTensor(0).shape;
       _modelOutputDim = outputShape.isNotEmpty ? outputShape.last : dim;
 
-      print(
+      debugPrint(
         'Interpreter loaded successfully from bytes '
         '(output dim $_modelOutputDim)',
       );
     } catch (e) {
-      print('Error loading interpreter from bytes: $e');
+      debugPrint('Error loading interpreter from bytes: $e');
       rethrow;
     }
   }
@@ -128,13 +129,13 @@ class OfflineRecognitionService {
 
     final indexJsonFile = File('${tourDir.path}/training_data.json');
     if (!await indexJsonFile.exists()) {
-      print('Index JSON file not found for tour $tourId at ${indexJsonFile.path}');
+      debugPrint('Index JSON file not found for tour $tourId at ${indexJsonFile.path}');
       return;
     }
 
     final tourDataFile = File('${tourDir.path}/tour_data.json');
     if (!await tourDataFile.exists()) {
-      print('Tour data JSON file not found for tour $tourId at ${tourDataFile.path}');
+      debugPrint('Tour data JSON file not found for tour $tourId at ${tourDataFile.path}');
       return;
     }
 
@@ -205,7 +206,7 @@ class OfflineRecognitionService {
         if (b64.isNotEmpty) {
           bytes = base64Decode(b64);
           if (bytes.length != rows * cols) {
-            print('Warning: descriptor bytes length mismatch for waypoint $wpName');
+            debugPrint('Warning: descriptor bytes length mismatch for waypoint $wpName');
             bytes = Uint8List(0);
           }
         }
@@ -231,13 +232,13 @@ class OfflineRecognitionService {
       }
     }
 
-    // print("NAMETOID: ${nameToId}");
+    // debugPrint("NAMETOID: ${nameToId}");
 
     if (_dbEmbeddings.isEmpty) {
       throw Exception("Indice offline vuoto o non valido per il tour $tourId");
     }
     _jsonIndexLoaded = true;
-    print('Offline index loaded for tour $tourId with ${_dbEmbeddings.length} images.');
+    debugPrint('Offline index loaded for tour $tourId with ${_dbEmbeddings.length} images.');
   }
 
   img.Image _preprocessImage(img.Image image) {
@@ -250,7 +251,7 @@ class OfflineRecognitionService {
       height: (image.height * scale).round(),
       interpolation: img.Interpolation.cubic,
     );
-    // print("  [Dart] Resized shape: ${resized.width}x${resized.height}");
+    // debugPrint("  [Dart] Resized shape: ${resized.width}x${resized.height}");
 
     // final cropX = ((resized.width - inputSize) / 2).round().clamp(0, resized.width - inputSize);
     // final cropY = ((resized.height - inputSize) / 2).round().clamp(0, resized.height - inputSize);
@@ -277,7 +278,7 @@ class OfflineRecognitionService {
         "[${pixel.r.toInt()}, ${pixel.g.toInt()}, ${pixel.b.toInt()}]",
       );
     }
-    // print("  [Dart] First 10 cropped RGB pixels:\n[${pixelLogs.join(', ')}]");
+    // debugPrint("  [Dart] First 10 cropped RGB pixels:\n[${pixelLogs.join(', ')}]");
 
     // 3. Normalize
     int bufferIndex = 0;
@@ -291,7 +292,7 @@ class OfflineRecognitionService {
     }
 
     // --- DEBUG LOGGING ---
-    // print(
+    // debugPrint(
     //   "  [Dart] First 30 normalized values:\n${floatBuffer.sublist(0, 30)}",
     // );
 
@@ -333,8 +334,8 @@ class OfflineRecognitionService {
     final normalizedEmbedding =
         n > 1e-6 ? embedding.map((e) => e / n).toList() : embedding;
 
-    // print("  [Dart] Embedding norm: $n");
-    // print(
+    // debugPrint("  [Dart] Embedding norm: $n");
+    // debugPrint(
     //   "  [Dart] First 10 embedding values:\n${normalizedEmbedding.sublist(0, 10)}",
     // );
 
@@ -954,7 +955,7 @@ class OfflineRecognitionService {
 
       return -1;
     } catch (e) {
-      print('OFFLINE ERROR: Exception during matching - $e');
+      debugPrint('OFFLINE ERROR: Exception during matching - $e');
       return -1;
     }
   }

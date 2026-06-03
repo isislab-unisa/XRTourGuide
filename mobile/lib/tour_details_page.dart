@@ -115,14 +115,14 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
   @override
   void initState() {
     super.initState();
-    print(
+    debugPrint(
       'TOUR initState: tourId=${widget.tourId}, isOffline=${widget.isOffline}',
     );
     try {
       _apiService = ref.read(apiServiceProvider);
-      print('TOUR apiService OK');
+      debugPrint('TOUR apiService OK');
     } catch (e) {
-      print('TOUR apiService ERROR: $e');
+      debugPrint('TOUR apiService ERROR: $e');
     }
     _tourService = ref.read(tourServiceProvider);
     _apiService = ref.read(apiServiceProvider);
@@ -130,11 +130,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     _offlineService = ref.read(offlineStorageServiceProvider);
     _analytics = ref.read(analyticsServiceProvider);
     if (widget.isOffline) {
-      print("OFFLINE TOUR");
+      debugPrint("OFFLINE TOUR");
       _initOfflineMap();
       _loadOfflineData();
     }else {
-      print("ONLINE TOUR");
+      debugPrint("ONLINE TOUR");
       _loadData();
       // _incrementViewCount();
     }
@@ -189,13 +189,13 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     final dir = await getApplicationDocumentsDirectory();
     final path = '${dir.path}/offline_tours_data/tour_${widget.tourId}/tour_${widget.tourId}.pmtiles';
     if (await File(path).exists()) {
-      print("PMTiles file found at $path");
+      debugPrint("PMTiles file found at $path");
       setState(() {
         _pmtilesPath = path;
         _futureTileProvider = PmTilesTileProvider.fromSource(_pmtilesPath!);
       });
     } else {
-      print("PMTiles file not found at $path");
+      debugPrint("PMTiles file not found at $path");
     }
   }
 
@@ -246,7 +246,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
           imagesByWp[id] = localImages;
         }
         final List subTours = (offlineData['sub_tours'] as List?) ?? [];
-        print("SUbtours: ${subTours}");
+        debugPrint("SUbtours: ${subTours}");
         for (final st in subTours) {
           final List subWp = (st['waypoints'] as List?) ?? [];
           for (final wp in subWp) {
@@ -310,7 +310,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         }
       }
     } catch (e) {
-      print("Error loading offline data: $e");
+      debugPrint("Error loading offline data: $e");
       if (mounted) {
         setState(() {
           _isLoadingTourDetails = false;
@@ -357,11 +357,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
         if(success){
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Tour downloaded for offline use'), backgroundColor: Colors.green),
+            SnackBar(content: Text('tour_downloaded_success'.tr()), backgroundColor: Colors.green),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to download tour'), backgroundColor: Colors.red),
+            SnackBar(content: Text('tour_download_failed'.tr()), backgroundColor: Colors.red),
           );
         }
       }
@@ -369,7 +369,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       if(mounted){
         setState(() => _isDownloading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error downloading tour: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('tour_download_failed'.tr()), backgroundColor: Colors.red),
         );
       }
     }
@@ -405,7 +405,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? 'Tour removed from offline storage' : 'Failed to remove tour'),
+            content: Text(success ? 'tour_removed_success'.tr() : 'tour_removed_failed'.tr()),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );
@@ -414,7 +414,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
       if (mounted) {
         setState(() => _isDownloading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error removing offline tour: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('tour_removed_failed'.tr()), backgroundColor: Colors.red),
         );
       }
     }
@@ -424,7 +424,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     try {
       await _apiService.incrementTourViews(widget.tourId, baseUrl: _apiService.getCurrentBaseUrl());
     } catch (e) {
-      print('Error incrementing view count: $e');
+      debugPrint('Error incrementing view count: $e');
     }
   }
 
@@ -439,7 +439,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         });
       }
     } catch (e) {
-      print('Error loading scanned waypoints: $e');
+      debugPrint('Error loading scanned waypoints: $e');
     }
   }
 
@@ -451,7 +451,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         setState(() {
           _tourDetails = tour;
           _isLoadingTourDetails = false;
-          print("STATUS: " + _tourDetails!.status);
+          debugPrint("STATUS: " + _tourDetails!.status);
         });
       }
     } catch (e) {
@@ -459,7 +459,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         setState(() {
           _isLoadingTourDetails = false;
         });
-        _showError('Error loading tour details');
+        _showError('error_loading_tour'.tr());
       }
     }
   }
@@ -500,7 +500,7 @@ Future<void> _loadWaypoints() async {
           _expandedWaypoints = [];
           _expandedSubWaypoints.clear();
         });
-        _showError('Error loading waypoints');
+        _showError('error_loading_waypoints'.tr());
       }
     }
   }
@@ -523,7 +523,7 @@ Future<void> _loadWaypoints() async {
         setState(() {
           _isLoadingReviews = false;
         });
-        _showError('Error loading reviews');
+        _showError('error_loading_reviews'.tr());
       }
     }
   }
@@ -550,13 +550,13 @@ Future<void> _loadWaypoints() async {
     if (_permission == LocationPermission.denied) {
       _permission = await Geolocator.requestPermission();
       if (_permission == LocationPermission.denied) {
-        print('Location permissions are denied.');
+        debugPrint('Location permissions are denied.');
         return;
       }
     }
 
     if (_permission == LocationPermission.deniedForever) {
-      print(
+      debugPrint(
         'Location permissions are permanently denied. Please enable them in settings.',
       );
       return;
@@ -587,13 +587,13 @@ Future<void> _loadWaypoints() async {
       if (await canLaunchUrl(Uri.parse(appleMapsUrl))) {
         await launchUrl(Uri.parse(appleMapsUrl));
       } else {
-        _showError('Could not launch Apple Maps');
+        _showError('error_launching_maps'.tr());
       }
     } else {
       if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
         await launchUrl(Uri.parse(googleMapsUrl));
       } else {
-        _showError('Could not launch Google Maps');
+        _showError('error_launching_maps'.tr());
       }
     }
   }
@@ -618,7 +618,7 @@ Future<void> _loadWaypoints() async {
       height: 60, // Increased size for better tapping
       child: GestureDetector(
         onTap: () {
-          print('Tapped on Waypoint ${index + 1}');
+          debugPrint('Tapped on Waypoint ${index + 1}');
           _centerMap(LatLng(waypoint.latitude, waypoint.longitude));
 
           if (!isItineraryView) {

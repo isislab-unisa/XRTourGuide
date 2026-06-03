@@ -22,7 +22,6 @@ import 'services/offline_tour_service.dart';
 import "dart:io";
 import "package:path_provider/path_provider.dart";
 import 'package:flutter_map_pmtiles/flutter_map_pmtiles.dart';
-import 'services/offline_recognition_service.dart';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:permission_handler/permission_handler.dart';
@@ -385,10 +384,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       );
       _startAROverlayAnimation();
     } catch(e) {
-      print("Error entering stub recognized state: $e");
+      debugPrint("Error entering stub recognized state: $e");
       _totemBodyNode = null;
       _arNodeToResourceType.clear();
-      _showError("Error loading initial content.");
+      _showError("tour_initial_content_error".tr());
     }
   }
 
@@ -441,7 +440,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         _futureTileProvider = PmTilesTileProvider.fromSource(_pmtilesPath!);
       });
     } else {
-      print("PMTiles file not found at $path");
+      debugPrint("PMTiles file not found at $path");
     }
   }
 
@@ -462,7 +461,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     if (_cachedResources.containsKey(sourcePath)) {
       final cachedFile = _cachedResources[sourcePath]!;
       if(await cachedFile.exists()) {
-        print("Using cached resource for $sourcePath");
+        debugPrint("Using cached resource for $sourcePath");
         return cachedFile;
       } else {
         _cachedResources.remove(sourcePath);
@@ -504,12 +503,12 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       _tempFiles.add(tempFile);
       _cachedResources[sourcePath] = tempFile;
 
-      print("Decompressed resource saved to ${tempFile.path}");
+      debugPrint("Decompressed resource saved to ${tempFile.path}");
       return tempFile;
 
     } catch(e) {
-      print("Error during handling of ZLib Resource: $e");
-      _showError( "Error during handling of ZLib Resource");
+      debugPrint("Error during handling of ZLib Resource: $e");
+      _showError("error_loading_resource".tr());
       return null;
     }
   }
@@ -519,10 +518,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       try{
         if (await file.exists()) {
           await file.delete();
-          print("Deleted temp file: ${file.path}");
+          debugPrint("Deleted temp file: ${file.path}");
         }
       } catch(e) {
-        print("Error deleting temp file ${file.path}: $e");
+        debugPrint("Error deleting temp file ${file.path}: $e");
       }
     }
     _tempFiles.clear();
@@ -567,10 +566,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         modelAssetPath: 'assets/models/EfficientNetLite0.tflite',
       );
 
-      print('Offline recognizer isolate initialized for tour ${widget.tourId}');
+      debugPrint('Offline recognizer isolate initialized for tour ${widget.tourId}');
     } catch (e) {
-      print('Error initializing offline recognizer isolate: $e');
-      _showError('Error initializing offline recognizer.');
+      debugPrint('Error initializing offline recognizer isolate: $e');
+      _showError('error_initializing_recognizer'.tr());
     }
   }
 
@@ -581,19 +580,19 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
       final status = await Permission.camera.status;
       if (status.isPermanentlyDenied) {
-        _showError('Camera permission is permanently denied. Please enable it from settings.');
+        _showError('camera_permission_error'.tr());
         await openAppSettings();
         return;
       }
       final camStatus = await Permission.camera.request();
-      print("Camera permission status: $camStatus");
+      debugPrint("Camera permission status: $camStatus");
       if (!camStatus.isGranted) {
-        _showError('Camera permission is required for recognition.');
+        _showError('camera_permission_error'.tr());
         return;
       }
 
       _cameras = await availableCameras();
-      print("Available cameras: ${_cameras!.map((c) => c.name).join(", ")}");
+      debugPrint("Available cameras: ${_cameras!.map((c) => c.name).join(", ")}");
       if (_cameras != null && _cameras!.isNotEmpty) {
         final controller = CameraController(
           _cameras![0], // Use the first camera (usually back camera)
@@ -625,7 +624,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
       }
     } catch (e) {
-      print('Error initializing camera: $e');
+      debugPrint('Error initializing camera: $e');
     }
   }
 
@@ -676,7 +675,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   Future<void> _onPlaneTap(List<ARHitTestResult> hits) async {
     if (_recognitionState != RecognitionState.success || _totemSpawned) {
       if(_recognitionState != RecognitionState.success) {
-        _showError("Esegui prima il riconoscimento");
+        _showError("firs_recognition".tr());
       }
       return;
     }
@@ -684,7 +683,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     // var hit = hits.firstWhere((element) => element.type == ARHitTestResultType.plane);
     final planeHits = hits.where((h) => h.type == ARHitTestResultType.plane).toList();
     if (planeHits.isEmpty) {
-      _showError(" Punta la fotocamera verso una superficie piana per visualizzare il totem AR");
+      _showError("ar_instruction".tr());
       return;
     }
     final hit = planeHits.first;
@@ -726,7 +725,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     if (didAddBase != true) {
       _totemSpawned = false;
-      print("[DEBUG] Failed to add Totem Base Node");
+      debugPrint("[DEBUG] Failed to add Totem Base Node");
       return;
     }
 
@@ -752,7 +751,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     if (didAddBody == true) {
       _totemBodyNode = bodyNode;
     } else {
-      print("[DEBUG] Failed to add Totem Body Node");
+      debugPrint("[DEBUG] Failed to add Totem Body Node");
     }
 
     // Crescita "logica" identica tra piattaforme.
@@ -837,7 +836,7 @@ Future<void> _spawnTotemIcons(
           _arNodeToResourceType[nodeName] = type;
         }
       } else {
-        print("[DEBUG] Failed to add icon node: $type");
+        debugPrint("[DEBUG] Failed to add icon node: $type");
       }
     }
   }
@@ -851,7 +850,7 @@ Future<void> _spawnTotemIcons(
     for (var nodeName in nodeNames) {
       if (_arNodeToResourceType.containsKey(nodeName)) {
         String type = _arNodeToResourceType[nodeName]!;
-        print("AR Icon Tapped: $type");
+        debugPrint("AR Icon Tapped: $type");
 
         _updateDraggableSheetContent(type, _recognizedWaypointId);
 
@@ -925,7 +924,7 @@ Future<void> _spawnTotemIcons(
 
         ImgConfig(
           builder: (url, attributes) {
-            print("Loading image from URL: $url");
+            debugPrint("Loading image from URL: $url");
 
             if (url.startsWith('file://')) {
               String localPath;
@@ -1034,7 +1033,7 @@ Future<void> _spawnTotemIcons(
             _isLoadingWaypoints = false;
           });
         }
-        _showError('Failed to load waypoints: $e');
+        _showError('error_loading_waypoints'.tr());
       }
     } else {
       try {
@@ -1059,7 +1058,7 @@ Future<void> _spawnTotemIcons(
             subTourWaypoints.addAll(subWps);
           }
 
-          print("Loading images and resources for offline waypoints...");
+          debugPrint("Loading images and resources for offline waypoints...");
 
           final Map<int, List<String>> imagesByWp = {};
           final Map<int, Map<String, dynamic>> resourcesByWp = {};
@@ -1101,8 +1100,8 @@ Future<void> _spawnTotemIcons(
             _isLoadingWaypoints = false;
           });
         }
-        print("Failed to load offline waypoints: $e");
-        _showError('Failed to load offline waypoints: $e');
+        debugPrint("Failed to load offline waypoints: $e");
+        _showError('error_loading_waypoints'.tr());
 
       }
     }
@@ -1204,10 +1203,10 @@ Future<void> _spawnTotemIcons(
         if(content.containsKey("url")){
           content[queryType] = content["url"];
         }
-        print("Retrieved content for waypoint $waypointId, type $queryType: $content");
+        debugPrint("Retrieved content for waypoint $waypointId, type $queryType: $content");
       }
     } catch (e) {
-      print("error retrieving content: $e");
+      debugPrint("error retrieving content: $e");
       type = 'error';
     }
 
@@ -1236,7 +1235,7 @@ Future<void> _spawnTotemIcons(
     switch (type) {
       case 'text':
         final readmePath = content['readme'] ?? '';
-        print("Readme path: $readmePath");
+        debugPrint("Readme path: $readmePath");
         if (readmePath.isNotEmpty) {
           File? textFile = await _loadAndDecompressResource(
             readmePath,
@@ -1280,21 +1279,21 @@ Future<void> _spawnTotemIcons(
                     linksList = decoded.map((e) => e.toString()).toList();
                   }
                 } catch (e) {
-                  print("Error decoding links JSON: $e");
+                  debugPrint("Error decoding links JSON: $e");
                   if (fileContent.isNotEmpty) {
                     linksList = fileContent.split('\n').where((line) => line.trim().isNotEmpty).toList();
                   }
                 }
               } 
               } catch (e) {
-                print("Error reading links file: $e");
+                debugPrint("Error reading links file: $e");
               }
             }
           } else {
             linksList = (content['links'] as List?)?.cast<String>() ?? [];
           }
 
-        print("Links list: $linksList");
+        debugPrint("Links list: $linksList");
 
         if(linksList.isNotEmpty) {
           StringBuffer mdBuffer = StringBuffer("# ${widget.landmarkName} Links\n\n");
@@ -1320,7 +1319,7 @@ Future<void> _spawnTotemIcons(
 
       case 'image':
         final imagesList = (content['images'] as List?)?.cast<String>() ?? [];
-        print("Images list: $imagesList");
+        debugPrint("Images list: $imagesList");
 
         if (imagesList.isNotEmpty) {
           StringBuffer mdBuffer = StringBuffer("# ${widget.landmarkName}\n\n");
@@ -1416,7 +1415,7 @@ Future<void> _spawnTotemIcons(
 
       case 'audio':
         final audioPath = content['audio'] ?? '';
-        print("Audio path: $audioPath");
+        debugPrint("Audio path: $audioPath");
         if (audioPath.isNotEmpty) {
           File? audioFile = await _loadAndDecompressResource(
             audioPath,
@@ -1525,7 +1524,7 @@ Future<void> _spawnTotemIcons(
         }
       }
     } catch (e) {
-      print('Error getting location: $e');
+      debugPrint('Error getting location: $e');
     }
   }
 
@@ -1577,7 +1576,7 @@ Future<void> _spawnTotemIcons(
       Map<String, dynamic> availableResources = {};
 
       if (widget.isOffline) {
-        print("OFFLINE RECOGNITION");
+        debugPrint("OFFLINE RECOGNITION");
         if(_offlineRecognitionService == null) {
           throw Exception("Offline Recognition Service not initialized");
         }
@@ -1637,7 +1636,7 @@ Future<void> _spawnTotemIcons(
 
         waypointId = result.data["result"] ?? -1;
         availableResources = result.data["available_resources"] ?? {};
-        print("AVAILABLE RESOURCES: $availableResources");
+        debugPrint("AVAILABLE RESOURCES: $availableResources");
       }
 
       _pulseAnimationController.stop();
@@ -1669,7 +1668,7 @@ Future<void> _spawnTotemIcons(
         });
       }
     } catch(e) {
-      print("Error during recognition: $e");
+      debugPrint("Error during recognition: $e");
       unawaited(_analytics.logEvent(name: 'recognition_error', parameters: {
         'tour_id': widget.tourId,
         'is_offline': widget.isOffline,
@@ -1701,7 +1700,7 @@ Future<void> _spawnTotemIcons(
         }
       }
 
-      print("All waypoint IDs: $allWaypointIds");
+      debugPrint("All waypoint IDs: $allWaypointIds");
 
       // Verifica se il tour è completato
       final isCompleted = await _localStateService.checkTourCompletion(
@@ -1713,7 +1712,7 @@ Future<void> _spawnTotemIcons(
         _showTourCompletedDialog();
       }
     } catch (e) {
-      print('Error checking tour completion: $e');
+      debugPrint('Error checking tour completion: $e');
     }
   }
 
@@ -2089,7 +2088,7 @@ Future<void> _spawnTotemIcons(
               assetPath: elementData['assetPath'],
               iconSize: iconSize, // Use the same size for all icons
               onTap: () {
-                print('${elementData['label']} Info icon tapped!'); 
+                debugPrint('${elementData['label']} Info icon tapped!'); 
                 _updateDraggableSheetContent(elementData['type'], _recognizedWaypointId);
               
               }
@@ -2113,7 +2112,7 @@ Future<void> _spawnTotemIcons(
                 assetPath: "assets/icons/back_icon.png",
                 iconSize: 50.0,
                 onTap: () {
-                  print("Close icon Tapped!");
+                  debugPrint("Close icon Tapped!");
                   _resetRecognition();
                 },
               ),
@@ -2163,7 +2162,7 @@ Future<void> _spawnTotemIcons(
             fit: BoxFit.contain, // Adjust BoxFit as needed
             // Optional: Add an error builder in case the asset fails to load
             errorBuilder: (context, error, stackTrace) {
-              print('Error loading asset: $assetPath, $error');
+              debugPrint('Error loading asset: $assetPath, $error');
               return Icon(
                 Icons.broken_image, // Placeholder for broken image
                 size: iconSize,

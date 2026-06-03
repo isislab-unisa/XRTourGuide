@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/tour.dart';
 import '../models/category.dart';
@@ -34,10 +35,10 @@ class NearbyToursNotifier extends StateNotifier<NearbyToursState> {
     double? lat,
     double? lon,
   }) async {
-    print("loadTours called with forceRefresh=$forceRefresh, lat=$lat, lon=$lon");
+    debugPrint("loadTours called with forceRefresh=$forceRefresh, lat=$lat, lon=$lon");
     // Se abbiamo già i dati e non è un refresh forzato, non fare nulla
     if (!forceRefresh && state.tours != null && state.tours!.isNotEmpty) {
-      print("Using cached tours data");
+      debugPrint("Using cached tours data");
       return;
     }
 
@@ -46,10 +47,10 @@ class NearbyToursNotifier extends StateNotifier<NearbyToursState> {
     try {
       List<Tour> tours;
       if (lat != null && lon != null) {
-        print("Loading tours for location: ($lat, $lon)");
+        debugPrint("Loading tours for location: ($lat, $lon)");
         tours = await _tourService.getNearbyTours(0, lat, lon);
       } else {
-        print("Loading tours without location");
+        debugPrint("Loading tours without location");
         tours = await _tourService.getAllNearbyTours(0);
       }
       state = state.copyWith(
@@ -59,7 +60,7 @@ class NearbyToursNotifier extends StateNotifier<NearbyToursState> {
       );
     } catch (e) {
       state = state.copyWith(isLoading: false);
-      print("Error loading tours: $e");
+      debugPrint("Error loading tours: $e");
     }
   }
 }

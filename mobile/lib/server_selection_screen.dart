@@ -31,31 +31,43 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 
   Future<void> _fetchServers() async {
-    try {
-      final response = await _apiService.getServersList();
-      if (response.statusCode == 200) {
-        setState(() {
-          _servers = response.data; // Supponendo che la risposta sia una lista di server
-          _isLoading = false;
-          _errorMessage = null;
-        });
-      } else {
-        setState(() {
-          _errorMessage = 'Errore nel caricamento dei server.';
-          _isLoading = false;
-        });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    const maxAttempts = 3;
+
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final response = await _apiService.getServersList();
+        if (response.statusCode == 200) {
+          final servers = response.data as List<dynamic>? ?? [];
+          setState(() {
+            _servers = servers;
+            _isLoading = false;
+            _errorMessage = servers.isEmpty ? "server_selection_error".tr() : null;
+          });
+          return;
+        }
+      } catch (e) {
+        debugPrint("Attempt $attempt: Failed to fetch servers - $e");
       }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Errore di rete: $e';
-        _isLoading = false;
-      });
+
+      if (attempt < maxAttempts) {
+        await Future.delayed(const Duration(seconds: 1)); // Attendi prima di ritentare
+      }
     }
+
+    setState(() {
+      _servers = [];
+      _isLoading = false;
+      _errorMessage = "server_selection_error".tr();
+    });
   }
 
   void _selectServerAndProceed(BuildContext context, String ip) {
     // 1. Imposta il server
-    print("Selected server IP: $ip");
+    debugPrint("Selected server IP: $ip");
     _apiService.updateBaseUrl(ip);
 
     // 2. Naviga alla schermata di Auth/Onboarding
@@ -189,10 +201,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             children: [
-                              Text(_errorMessage ?? "Nessun server disponibile", style: const TextStyle(color: Colors.red)),
+                              Text(_errorMessage ?? "server_selection_error".tr(), style: const TextStyle(color: Colors.red)),
                               ElevatedButton(
                                 onPressed: _fetchServers,
-                                child: const Text('Riprova'),
+                                child: Text('retry'.tr()),
                               )
                             ],
                           )
@@ -211,17 +223,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                             ),
                           );
                         }).toList(),
-
-                    // if (_servers.isEmpty && _errorMessage == null)
-                    //   Padding(
-                    //     padding: const EdgeInsets.all(16.0),
-                    //     child: Column(
-                    //       children: const [
-                    //         SizedBox(height: 16),
-                    //         Text('No servers available.'),
-                    //       ],
-                    //     ),
-                    //   ),
                   ],
                 ),
               ),

@@ -12,6 +12,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
 import 'utils/platform_page_route.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 // Enum to track which profile screen is currently active
@@ -21,6 +22,7 @@ enum ProfileScreenState {
   accountSecurity,
   appLanguage,
   helpSupport,
+  about,
 }
 
 // final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
@@ -46,10 +48,6 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   // User data - would typically come from a user service or state management
   User? _user;
   bool _isLoadingUserDetails = true;
-
-  // Security settings
-  bool _biometricEnabled = false;
-  bool _faceIdEnabled = false;
 
   // Language settings
   //TODO : Implement language selection logic
@@ -106,7 +104,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           // Set an error message if loading fails
           // _error = 'Failed to load user details: $e'; // You can uncomment this if you want to display the error directly
         });
-        _showError('Error loading user Details');
+        _showError('error_loading_user_details'.tr());
       }
     }
   }
@@ -167,11 +165,21 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
   // Navigate to home/explore screen
   void _navigateToExplore(BuildContext context) {
-    // Navigate to TravelExplorerScreen
-    // Navigator.of(context).pushReplacement(
-    //   platformPageRoute(builder: (context) => const TravelExplorerScreen()),
-    // );
     Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  void _navigateToAbout() {
+    setState(() {
+      _currentScreen = ProfileScreenState.about;
+    });
+  }
+
+  Future<void> _openExternalUrl(String url) async {
+    final uri = Uri.parse(url);
+
+    if(!await launchUrl(uri, mode: LaunchMode.externalApplication)){
+      _showError('error_launching_links'.tr());
+    }
   }
 
   // Show logout confirmation bottom sheet
@@ -221,15 +229,15 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
   }
 
-void _handleBack(BuildContext context) {
-  if (_currentScreen == ProfileScreenState.main) {
-    Navigator.of(context).pop(true); // Torna alla schermata precedente
-  } else {
-    setState(() {
-      _currentScreen = ProfileScreenState.main; // Torna alla schermata principale del profilo
-    });
+  void _handleBack(BuildContext context) {
+    if (_currentScreen == ProfileScreenState.main) {
+      Navigator.of(context).pop(true); // Torna alla schermata precedente
+    } else {
+      setState(() {
+        _currentScreen = ProfileScreenState.main; // Torna alla schermata principale del profilo
+      });
+    }
   }
-}
 
   // Save personal info changes
   void _savePersonalInfo() async {
@@ -289,12 +297,9 @@ void _handleBack(BuildContext context) {
     }
     if (newPassword.length < 6) {
       // Example validation
-      _showError('new_password_min_length');
+      _showError('new_password_min_length'.tr());
       return;
     }
-
-    print('Attempting to change password:');
-    print('Old: $oldPassword, New: $newPassword');
 
     _authService.updatePassword(oldPassword, newPassword);
 
@@ -327,8 +332,9 @@ void _handleBack(BuildContext context) {
       (route) => false,
     );                            
     // Navigate back to login or onboarding screen
-    print('User logged out');
+    debugPrint('User logged out');
   }
+
 
   // Build the main profile screen
   Widget _buildMainProfileScreen(BuildContext context) {
@@ -456,12 +462,11 @@ void _handleBack(BuildContext context) {
                     onTap: _navigateToAppLanguage,
                   ),
 
-                  // Help & Support
-                  // _buildMenuItemTile(
-                  //   title: 'help_support_title'.tr(),
-                  //   icon: Icons.help_outline,
-                  //   onTap: _navigateToHelpSupport,
-                  // ),
+                  _buildMenuItemTile(
+                    title: "About",
+                    icon: Icons.info_outline,
+                    onTap: _navigateToAbout,
+                  ),
 
                   // Logout - with different styling
                   _buildMenuItemTile(
@@ -771,28 +776,6 @@ void _handleBack(BuildContext context) {
             Expanded(
               child: ListView(
                 children: [
-                  // // Biometric ID toggle (Commented out as in your original)
-                  // _buildToggleSettingTile(
-                  //   title: 'Biometric ID',
-                  //   value: _biometricEnabled,
-                  //   onChanged: (value) {
-                  //     setState(() {
-                  //       _biometricEnabled = value;
-                  //     });
-                  //   },
-                  // ),
-
-                  // // Face ID toggle (Commented out as in your original)
-                  // _buildToggleSettingTile(
-                  //   title: 'Face ID',
-                  //   value: _faceIdEnabled,
-                  //   onChanged: (value) {
-                  //     setState(() {
-                  //       _faceIdEnabled = value;
-                  //     });
-                  //   },
-                  // ),
-
                   // Change Password option - NOW CALLS THE BOTTOM SHEET
                   _buildSettingTile(
                     title: 'change_password'.tr(),
@@ -1046,31 +1029,31 @@ void _handleBack(BuildContext context) {
                   _buildSettingTile(
                     title: 'FAQs',
                     onTap: () {
-                      print('Navigate to FAQs');
+                      debugPrint('Navigate to FAQs');
                     },
                   ),
                   _buildSettingTile(
                     title: 'Contact Support',
                     onTap: () {
-                      print('Navigate to Contact Support');
+                      debugPrint('Navigate to Contact Support');
                     },
                   ),
                   _buildSettingTile(
                     title: 'Report a Bug',
                     onTap: () {
-                      print('Navigate to Report a Bug');
+                      debugPrint('Navigate to Report a Bug');
                     },
                   ),
                   _buildSettingTile(
                     title: 'Privacy Policy',
                     onTap: () {
-                      print('Navigate to Privacy Policy');
+                      debugPrint('Navigate to Privacy Policy');
                     },
                   ),
                   _buildSettingTile(
                     title: 'Terms of Service',
                     onTap: () {
-                      print('Navigate to Terms of Service');
+                      debugPrint('Navigate to Terms of Service');
                     },
                   ),
                 ],
@@ -1080,6 +1063,170 @@ void _handleBack(BuildContext context) {
             // Bottom navigation bar
             _buildBottomNavBar(context, 1), // 1 = Profile tab selected
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutScreen(BuildContext context) {
+    final sponsors = [
+      {
+        "name": "Futural",
+        "logo": "assets/about/futural-logo.png",
+        "url": "https://futural-project.eu",
+      },
+      {
+        "name": "European Union",
+        "logo": "assets/about/europe.png",
+        "url": "https://european-union.europa.eu",
+      }
+    ];
+
+    final developers = [
+      {
+        "name": "Unisa",
+        "logo": "assets/about/logo_unisa.png",
+        "url": "https://www.unisa.it/",
+      },
+      {
+        "name": "Comunità Montana Bussento Lambro e Mingardo",
+        "logo": "assets/about/logo_bussento.png",
+        "url": "https://www.cmbussento.it",
+      },
+      {
+        "name": "Picaresque",
+        "logo": "assets/about/picaresque-logo.png",
+        "url": "https://tech.picaresquestudio.com/",
+      },
+    ];
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => _handleBack(context),
+        ),
+        title: Text(
+          'about_title'.tr(),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: context.r.sp(18),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'about_content'.tr(),
+                  style: TextStyle(
+                    fontSize: context.r.sp(16),
+                    color: AppColors.textPrimary,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+const SizedBox(height: 24),
+
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.center,
+                children:
+                    sponsors.map((partner) {
+                      return InkWell(
+                        onTap: () => _openExternalUrl(partner['url']!),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: 110,
+                          height: 90,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: AppColors.border),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.cardShadow,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            partner['logo']!,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              ),
+
+              const SizedBox(height: 32),
+
+              Text(
+                'about_developed_by'.tr(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: context.r.sp(16),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.center,
+                children:
+                    developers.map((partner) {
+                      return InkWell(
+                        onTap: () => _openExternalUrl(partner['url']!),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: 110,
+                          height: 90,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: AppColors.border),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.cardShadow,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            partner['logo']!,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1598,6 +1745,8 @@ void _handleBack(BuildContext context) {
         return _buildAppLanguageScreen(context);
       case ProfileScreenState.helpSupport:
         return _buildHelpSupportScreen(context);
+      case ProfileScreenState.about:
+        return _buildAboutScreen(context);
       default:
         return _buildMainProfileScreen(context);
     }

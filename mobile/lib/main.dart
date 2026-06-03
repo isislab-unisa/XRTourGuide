@@ -5,21 +5,15 @@ import 'models/app_colors.dart';
 import 'home_screen.dart';
 import 'package:flutter_downloader/flutter_downloader.dart'; // Import flutter_downloader
 import 'services/auth_service.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
-import 'package:url_launcher/url_launcher.dart';
 import "package:easy_localization/easy_localization.dart";
 import "server_selection_screen.dart";
 import "dart:io" show Platform;
-import "package:flutter/foundation.dart" show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:app_links/app_links.dart';
 import 'tour_details_page.dart';
 import 'dart:convert';
-import 'services/api_service.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'utils/platform_page_route.dart';
 
 import 'utils/responsive.dart';
@@ -28,7 +22,7 @@ import 'utils/responsive.dart';
 // It serves as the entry point for FlutterDownloader's background tasks.
 @pragma('vm:entry-point')
 void downloadCallback(String id, int status, int progress) {
-  print('Download task ($id) is $status and progress is $progress');
+  debugPrint('Download task ($id) is $status and progress is $progress');
 }
 
 final RouteObserver<ModalRoute<void>> routeObserver =
@@ -96,7 +90,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   Future<void> _initDeepLinks() async {
     final initialUri = await _appLinks.getInitialLink();
-    print('DEEPLINK initInitial: $initialUri');
+    debugPrint('DEEPLINK initInitial: $initialUri');
     if (initialUri != null) {
       _handleUri(initialUri);
     }
@@ -120,7 +114,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   }
 
   void _handleUri(Uri uri) {
-    print(
+    debugPrint(
       'DEEPLINK _handleUri: uri=$uri, path=${uri.pathSegments}, query=${uri.queryParameters}',
     );
     final tourId = _extractTourId(uri);
@@ -608,7 +602,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text("Google login failed: ${e.toString()}"),
+                                    content: Text("login_error".tr()),
                                     backgroundColor: const Color.fromARGB(255, 15, 6, 5),
                                     behavior: SnackBarBehavior.floating,
                                     margin: const EdgeInsets.only(
@@ -639,7 +633,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        "Apple login failed: ${e.toString()}",
+                                        "login_error".tr(),
                                       ),
                                       backgroundColor: Colors.red,
                                       behavior: SnackBarBehavior.floating,
@@ -866,7 +860,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(e.toString()),
+                                    content: Text("password_reset_error".tr()),
                                     backgroundColor: Colors.red,
                                     behavior: SnackBarBehavior.floating,
                                     margin: const EdgeInsets.only(
@@ -1028,7 +1022,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             // ),
                             GestureDetector(
                               onTap: () {
-                                print('Forgot password tapped');
+                                debugPrint('Forgot password tapped');
                                 _showDeleteAccountSheet(context);
                               },
                               child: Text(
@@ -1045,7 +1039,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       _buildPrimaryButton(
                         text: 'login'.tr(),
                         onPressed: () async {
-                          print("UserLogin");
+                          debugPrint("UserLogin");
                           try {
                             await authService.login(
                               _emailController.text,
@@ -1053,7 +1047,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             );
                           } catch (e) {
                             _showError(
-                              authService.loginErrorMessage ?? 'Login failed',
+                              'login_error'.tr(),
                             );
                           }
                         },
@@ -1104,7 +1098,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text("Google login failed: $e"),
+                                    content: Text("login_error".tr()),
                                     backgroundColor: Colors.red,
                                   )
                                 );
@@ -1126,7 +1120,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        "Apple login failed: ${e.toString()}",
+                                        "login_error".tr(),
                                       ),
                                       backgroundColor: Colors.red,
                                       behavior: SnackBarBehavior.floating,
@@ -1364,7 +1358,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text("Google registration failed: ${e.toString()}"),
+                                  content: Text("login_error".tr()),
                                   backgroundColor: Colors.red,
                                   duration: const Duration(seconds: 5),
                                 ),
@@ -1387,7 +1381,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      "Apple login failed: ${e.toString()}",
+                                      "login_error".tr(),
                                     ),
                                     backgroundColor: Colors.red,
                                     behavior: SnackBarBehavior.floating,

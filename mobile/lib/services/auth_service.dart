@@ -137,7 +137,7 @@ class AuthService extends ChangeNotifier {
       _analytics.setUserId(userId.toString());
       notifyListeners();
     } catch (e) {
-      print("Login Error: $e");
+      debugPrint("Login Error: $e");
       // _authStatus = AuthStatus.unauthenticated;
       _loginErrorMessage ??= "An error occurred during login. Please try again.";
       // notifyListeners();
@@ -179,7 +179,7 @@ class AuthService extends ChangeNotifier {
       );
       _authStatus = AuthStatus.unauthenticated;
     } catch (e) {
-      print("Delete account error: $e");
+      debugPrint("Delete account error: $e");
       _authStatus = AuthStatus.authenticated;
     }
     notifyListeners();
@@ -189,7 +189,7 @@ class AuthService extends ChangeNotifier {
     try {
       await apiService.updatePassword(oldPassword, newPassword);
     } catch (e) {
-      print("Change Password error: $e");
+      debugPrint("Change Password error: $e");
     }
   }
 
@@ -202,7 +202,7 @@ class AuthService extends ChangeNotifier {
         description,
       );
     } catch (e) {
-      print("Update Account error: $e");
+      debugPrint("Update Account error: $e");
     }
   }
 
@@ -212,14 +212,14 @@ class AuthService extends ChangeNotifier {
       return response;
       // Handle response if needed
     } catch (e) {
-      print("Reset Password error: $e");
+      debugPrint("Reset Password error: $e");
       rethrow;
     }
   }
 
 
   Future<void> logout() async {
-    print("Logout Called");
+    debugPrint("Logout Called");
     _authStatus = AuthStatus.loading;
     notifyListeners();
 
@@ -236,7 +236,7 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> _ensureGoogleInitialized() async {
-    print(googleWebClientId);
+    debugPrint(googleWebClientId);
     if (_googleInitialized) return;
 
     await _googleSignIn.initialize(
@@ -274,7 +274,7 @@ class AuthService extends ChangeNotifier {
       _analytics.setUserId(userId.toString());
       notifyListeners();
     } catch (e) {
-      print("Google Login Error: $e");
+      debugPrint("Google Login Error: $e");
       rethrow;
     }
   }
@@ -320,7 +320,7 @@ class AuthService extends ChangeNotifier {
       _analytics.setUserId(userId.toString());
       notifyListeners();
     } catch (e) {
-      print("Apple Login Error: $e");
+      debugPrint("Apple Login Error: $e");
       rethrow;
     }
   }

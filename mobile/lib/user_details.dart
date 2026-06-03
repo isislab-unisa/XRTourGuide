@@ -92,7 +92,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
         setState(() {
           _isLoadingUserDetails = false;
         });
-        _showError('Error loading user Details');
+        _showError('error_loading_user_details'.tr());
       }
     }
   }
@@ -114,7 +114,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
         setState(() {
           _isLoadingReviews = false;
         });
-        _showError('Error loading nearby tours');
+        _showError('error_loading_reviews'.tr());
       }
     }
   }
@@ -680,7 +680,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                         //   child: ElevatedButton(
                         //     onPressed: () {
                         //       // TODO: Implement Registrati navigation (Sign Up)
-                        //       print('Navigate to Registrati (Sign Up) screen');
+                        //       debugPrint('Navigate to Registrati (Sign Up) screen');
                         //     },
                         //     style: ElevatedButton.styleFrom(
                         //       backgroundColor: AppColors.primary,

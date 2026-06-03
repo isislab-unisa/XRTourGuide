@@ -1,4 +1,5 @@
 import 'package:ar_flutter_plugin_updated/models/ar_anchor.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 // Type definitions to enforce a consistent use of the API
@@ -27,7 +28,7 @@ class ARAnchorManager {
     _channel = MethodChannel('aranchors_$id');
     _channel.setMethodCallHandler(_platformCallHandler);
     if (debug) {
-      print("ARAnchorManager initialized");
+      debugPrint("ARAnchorManager initialized");
     }
   }
 
@@ -38,17 +39,17 @@ class ARAnchorManager {
 
   Future<dynamic> _platformCallHandler(MethodCall call) async {
     if (debug) {
-      print('_platformCallHandler call ${call.method} ${call.arguments}');
+      debugPrint('_platformCallHandler call ${call.method} ${call.arguments}');
     }
     try {
       switch (call.method) {
         case 'onError':
-          print(call.arguments);
+          debugPrint(call.arguments);
           break;
         case 'onCloudAnchorUploaded':
           final name = call.arguments["name"];
           final cloudanchorid = call.arguments["cloudanchorid"];
-          print(
+          debugPrint(
               "UPLOADED ANCHOR WITH ID: " + cloudanchorid + ", NAME: " + name);
           final currentAnchor =
               pendingAnchors.where((element) => element.name == name).first;
@@ -72,11 +73,11 @@ class ARAnchorManager {
           }
         default:
           if (debug) {
-            print('Unimplemented method ${call.method} ');
+            debugPrint('Unimplemented method ${call.method} ');
           }
       }
     } catch (e) {
-      print('Error caught: ' + e.toString());
+      debugPrint('Error caught: ' + e.toString());
     }
     return Future.value();
   }
@@ -109,7 +110,7 @@ class ARAnchorManager {
 
   /// Try to download anchor with the given ID from the Google Cloud Anchor API and add it to the scene
   Future<bool?> downloadAnchor(String cloudanchorid) async {
-    print("TRYING TO DOWNLOAD ANCHOR WITH ID " + cloudanchorid);
+    debugPrint("TRYING TO DOWNLOAD ANCHOR WITH ID " + cloudanchorid);
     _channel
         .invokeMethod<bool>('downloadAnchor', {"cloudanchorid": cloudanchorid});
   }

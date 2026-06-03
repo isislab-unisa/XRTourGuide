@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -79,14 +80,14 @@ class OfflineStorageService {
         // fallback opzionale: se bundle non pronto/non trovato, usa pipeline legacy
         final code = e.response?.statusCode;
         if (code == 404) {
-          print(
+          debugPrint(
             'Offline bundle not ready for tour $tourId',
           );
         }
         rethrow;
       }
     } catch (e) {
-      print('Error downloading tour offline: $e');
+      debugPrint('Error downloading tour offline: $e');
       await removeTourOffline(tourId);
       return false;
     }
@@ -294,7 +295,7 @@ class OfflineStorageService {
       }
       return null;
     } catch (e) {
-      print('Error reading offline tour data: $e');
+      debugPrint('Error reading offline tour data: $e');
       return null;
     }
   }
@@ -320,7 +321,7 @@ class OfflineStorageService {
 
       return true;
     } catch (e) {
-      print('Error removing offline tour: $e');
+      debugPrint('Error removing offline tour: $e');
       return false;
     }
   }
@@ -339,7 +340,7 @@ class OfflineStorageService {
       }
       return totalSize;
     } catch (e) {
-      print('Error calculating storage size: $e');
+      debugPrint('Error calculating storage size: $e');
       return 0;
     }
   }
@@ -357,7 +358,7 @@ class OfflineStorageService {
 
       return true;
     } catch (e) {
-      print('Error clearing offline data: $e');
+      debugPrint('Error clearing offline data: $e');
       return false;
     }
   }
