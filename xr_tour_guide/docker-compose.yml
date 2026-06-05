@@ -79,8 +79,6 @@ services:
     container_name: redis_tour_guide
     env_file:
       - .env
-    ports:
-      - "6379:6379"
     networks:
     - backend_net
 
