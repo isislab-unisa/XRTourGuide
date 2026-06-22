@@ -73,15 +73,15 @@ class Responsive {
   }
 
   double consultationOuterCircleSize() {
-    return clampDoubleValue(shortestSide * 0.64, 220, 280);
+    return clampDoubleValue(shortestSide * 0.64, 220, 290);
   }
 
   double consultationIconRadius() {
-    return clampDoubleValue(shortestSide * 0.28, 95, 125);
+    return consultationOuterCircleSize() / 2;
   }
 
   double consultationIconSize() {
-    return clampDoubleValue(shortestSide * 0.18, 58, 76);
+    return clampDoubleValue(shortestSide * 0.2, 60, 82);
   }
 
   double miniMapWidth() {

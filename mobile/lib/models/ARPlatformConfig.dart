@@ -39,16 +39,16 @@ class ARPlatformConfig {
 const androidARConfig = ARPlatformConfig(
   modelScaleCompensation: 1.0,
   totemOffsetY: 0.0,
-  gridStartX: -0.0035,
-  gridStartY: 0.034,
-  gridGapX: 0.006,
-  gridGapY: 0.006,
-  iconScaleTune: 1.0,
-  iconOffsetX: 0.0,
+  gridStartX: -0.00195,
+  gridStartY: 0.0185,
+  gridGapX: 0.00635,
+  gridGapY: 0.00635,
+  iconScaleTune: 0.0,
+  iconOffsetX:  0.0,
   iconOffsetY: 0.0,
-  iconOffsetZ: 0.001,
+  iconOffsetZ: 0.0,
   overlayRadiusFactor: 0.28,
-  overlayIconSize: 70.0,
+  overlayIconSize: 60.0,
 );
 
 const iosARConfig = ARPlatformConfig(

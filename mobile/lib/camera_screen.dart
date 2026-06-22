@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,17 +32,17 @@ import 'package:flutter/foundation.dart';
 import 'services/analytics_service.dart';
 
 // Import for AR
-import 'package:ar_flutter_plugin_updated/ar_flutter_plugin.dart';
-import 'package:ar_flutter_plugin_updated/datatypes/config_planedetection.dart';
-import 'package:ar_flutter_plugin_updated/datatypes/hittest_result_types.dart';
-import 'package:ar_flutter_plugin_updated/datatypes/node_types.dart';
-import 'package:ar_flutter_plugin_updated/managers/ar_location_manager.dart';
-import 'package:ar_flutter_plugin_updated/managers/ar_session_manager.dart';
-import 'package:ar_flutter_plugin_updated/managers/ar_object_manager.dart';
-import 'package:ar_flutter_plugin_updated/managers/ar_anchor_manager.dart';
-import 'package:ar_flutter_plugin_updated/models/ar_anchor.dart';
-import 'package:ar_flutter_plugin_updated/models/ar_node.dart';
-import 'package:ar_flutter_plugin_updated/models/ar_hittest_result.dart';
+import 'package:ar_flutter_plugin_plus/ar_flutter_plugin.dart';
+import 'package:ar_flutter_plugin_plus/datatypes/config_planedetection.dart';
+import 'package:ar_flutter_plugin_plus/datatypes/hittest_result_types.dart';
+import 'package:ar_flutter_plugin_plus/datatypes/node_types.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_location_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin_plus/managers/ar_anchor_manager.dart';
+import 'package:ar_flutter_plugin_plus/models/ar_anchor.dart';
+import 'package:ar_flutter_plugin_plus/models/ar_node.dart';
+import 'package:ar_flutter_plugin_plus/models/ar_hittest_result.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'models/ARPlatformConfig.dart';
@@ -226,6 +227,13 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
   ARNode? _totemBaseNode;
   ARNode? _totemBodyNode;
+
+  ARNode? _totemMarkdownCardNode;
+  Timer? _markdownScrollTimer;
+  int _markdownScrollFrame = 0;
+  double _markdownMaxScrollOffset = 0.0;
+  bool _markdownScrollDown = true;
+
   bool _totemSpawned = false;
 
   @override
@@ -276,6 +284,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     unawaited(_offlineRecognitionService?.dispose());
     _clearTempFiles();
     _resourceMetaCache.clear();
+    _markdownScrollTimer?.cancel();
     super.dispose();
   }
 
@@ -658,16 +667,18 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       arAnchorManager = anchorManager;
 
       arSessionManager!.onInitialize(
-        showFeaturePoints: false,
+        showFeaturePoints: true,
         showPlanes: true,
         showWorldOrigin: false,
         handlePans: false,
         handleRotation: false,
+        handleTaps: true,
       );
 
-      arObjectManager!.onInitialize();
-
-      arObjectManager!.onNodeTap = _onARNodeTap;
+      arObjectManager!.onInitialize(
+        androidScaleFactor: 1.0,
+        iosScaleFactor: 1.0,
+      );
 
       arSessionManager!.onPlaneOrPointTap = _onPlaneTap;
   }
@@ -691,9 +702,11 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     bool? didAddAnchor = await arAnchorManager?.addAnchor(anchor);
 
     if (didAddAnchor == true) {
-      _totemSpawned = true;
+      setState(() {
+        _totemSpawned = true;
+      });
       // arSessionManager!.onInitialize(showPlanes: false);
-      arSessionManager?.showPlanes(false);
+      // arSessionManager?.showPlanes(false);
       _spawnAndAnimateTotem(anchor);
     }
   }
@@ -707,8 +720,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         _totemStartScale * cfg.modelScaleCompensation;
 
     final structureNode = ARNode(
-      type: NodeType.localGLTF2,
-      uri: "assets/models/AR/totem_base/totem_base.gltf",
+      type: NodeType.localGLB,
+      uri: "assets/models/AR/totem_base/totem_base.glb",
       scale: vector.Vector3(
         initialVisualScale,
         initialVisualScale,
@@ -732,8 +745,8 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     _totemBaseNode = structureNode;
 
     final bodyNode = ARNode(
-      type: NodeType.localGLTF2,
-      uri: "assets/models/AR/totem_body/totem_body.gltf",
+      type: NodeType.localGLB,
+      uri: "assets/models/AR/totem_body/totem_body.glb",
       scale: vector.Vector3(
         initialVisualScale,
         initialVisualScale,
@@ -767,7 +780,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       if (currentLogicalScale >= _totemTargetScale) {
         currentLogicalScale = _totemTargetScale;
         timer.cancel();
-        _spawnTotemIcons(anchor, currentLogicalScale);
+        _spawnTotemMarkdownCard(anchor, currentLogicalScale);
       }
 
       final double visualScale =
@@ -779,85 +792,527 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     });
   }
 
-  final Map<String, String> _arNodeToResourceType = {};
-
-
-Future<void> _spawnTotemIcons(
+  Future<void> _spawnTotemMarkdownCard(
     ARPlaneAnchor anchor,
     double logicalTotemScale,
   ) async {
     final manager = arObjectManager;
-    if (manager == null || _totemBaseNode == null) return;
-
-    _arNodeToResourceType.clear();
+    if (manager == null) return;
 
     final cfg = arPlatformCfg;
 
-    final double scaleRatio = logicalTotemScale / _totemStartScale;
+    final String title =
+        widget.landmarkName.trim().isNotEmpty
+            ? widget.landmarkName.trim()
+            : "Waypoint";
 
-    final List<Map<String, dynamic>> iconsData =
-        _getAvailableIconsData()
-            .where((e) => e['isVisible'] == true)
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
+    final String readmeMarkdown = await _loadReadmeMarkdownForTotem();
 
-    const int columns = 2;
-    final double startX = cfg.gridStartX * scaleRatio;
-    final double startY = cfg.gridStartY * scaleRatio;
-    final double gapX = cfg.gridGapX * scaleRatio;
-    final double gapY = cfg.gridGapY * scaleRatio;
+    _markdownMaxScrollOffset = _calculateMarkdownMaxScrollOffset(
+      readmeMarkdown,
+    );
 
-    for (int i = 0; i < iconsData.length; i++) {
-      final data = iconsData[i];
-      final String modelPath = data['modelPath'] as String;
-      final String type = data['type'] as String;
+    final String cardGltfPath = await _createTotemMarkdownCardGltf(
+      title: title,
+      markdown: readmeMarkdown,
+      scrollOffset: 0,
+      frameIndex: 0,
+    );
 
-      final int row = i ~/ columns;
-      final int col = i % columns;
+    final double cardScale = 0.2 * cfg.modelScaleCompensation;
+    final vector.Vector3 cardPosition = vector.Vector3(-0.01, 0.9, -0.03);
 
-      final double x = startX + (col * gapX) + (cfg.iconOffsetX * scaleRatio);
-      final double y = startY - (row * gapY) + (cfg.iconOffsetY * scaleRatio);
-      final double z = cfg.iconOffsetZ * scaleRatio;
+    final cardNode = ARNode(
+      type: NodeType.fileSystemAppFolderGLTF2,
+      uri: cardGltfPath,
+      scale: vector.Vector3(cardScale, cardScale, cardScale),
+      position: cardPosition,
+      rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+      name: "[#]totem_markdown_card",
+    );
 
-      final double iconScale = 0.1 * scaleRatio * cfg.modelScaleCompensation * cfg.iconScaleTune;
+    final bool? didAdd = await manager.addNode(cardNode, planeAnchor: anchor);
 
-      final iconNode = ARNode(
-        type: NodeType.localGLTF2,
-        uri: modelPath,
-        scale: vector.Vector3(iconScale, iconScale, iconScale),
-        position: vector.Vector3(x, y, z),
-        rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+    debugPrint(
+      '[AR DEBUG] Markdown panel didAdd=$didAdd, '
+      'maxScroll=$_markdownMaxScrollOffset, '
+      'position=$cardPosition, '
+      'scale=$cardScale',
+    );
+
+    if (didAdd == true) {
+      _totemMarkdownCardNode = cardNode;
+
+      if (mounted) {
+        setState(() {
+          _currentActiveContent = _buildResourceButtonsContent();
+        });
+      }
+
+      _sheetController.animateTo(
+        _initialSheetSize + 0.15,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
       );
 
-      final bool? didAdd = await manager.addNode(iconNode, planeAnchor: anchor);
-      if (didAdd == true) {
-        final String? nodeName = iconNode.name;
-        if (nodeName != null) {
-          _arNodeToResourceType[nodeName] = type;
-        }
-      } else {
-        debugPrint("[DEBUG] Failed to add icon node: $type");
+      if (_markdownMaxScrollOffset > 8) {
+        _startMarkdownAutoScroll(
+          anchor: anchor,
+          title: title,
+          markdown: readmeMarkdown,
+          maxScrollOffset: _markdownMaxScrollOffset,
+        );
       }
+    } else {
+      debugPrint("[DEBUG] Failed to add Totem Markdown Card Node");
     }
   }
 
-  void _onARNodeTap(List<String> nodeNames) {
-    if (_totemBaseNode != null && _totemBaseNode!.name != null) {
-      nodeNames.remove(_totemBaseNode!.name);
+  Future<String> _loadReadmeMarkdownForTotem() async {
+    try {
+      Map<String, dynamic> content = {};
+
+      if (widget.isOffline) {
+        final resources =
+            _offlineResourcesByWaypoint[_recognizedWaypointId] ?? {};
+        content = {'readme': resources['readme']};
+      } else {
+        content = await _getResourceWithMetaCache(
+          _recognizedWaypointId,
+          'readme',
+        );
+
+        if (content.containsKey('url')) {
+          content['readme'] = content['url'];
+        }
+      }
+
+      final String readmePath = (content['readme'] ?? '').toString();
+
+      if (readmePath.isEmpty) {
+        return widget.landmarkDescription.trim().isNotEmpty
+            ? widget.landmarkDescription.trim()
+            : 'Nessun contenuto markdown disponibile.';
+      }
+
+      final File? textFile = await _loadAndDecompressResource(
+        readmePath,
+        widget.isOffline,
+        'md',
+      );
+
+      if (textFile == null) {
+        return widget.landmarkDescription.trim().isNotEmpty
+            ? widget.landmarkDescription.trim()
+            : 'Errore nel caricamento del contenuto markdown.';
+      }
+
+      return await textFile.readAsString();
+    } catch (e) {
+      debugPrint('[AR DEBUG] Error loading readme markdown for totem: $e');
+
+      return widget.landmarkDescription.trim().isNotEmpty
+          ? widget.landmarkDescription.trim()
+          : 'Errore nel caricamento del contenuto markdown.';
+    }
+  }
+
+  Future<String> _createTotemMarkdownCardGltf({
+      required String title,
+      required String markdown,
+      required double scrollOffset,
+      required int frameIndex,
+    }) async {
+      final Directory dir = await getApplicationDocumentsDirectory();
+
+      final Directory cardDir = Directory('${dir.path}/ar_markdown_card');
+      if (!await cardDir.exists()) {
+        await cardDir.create(recursive: true);
+      }
+
+      final String pngFileName = 'totem_markdown_card_$frameIndex.png';
+      final String gltfFileName = 'totem_markdown_card_$frameIndex.gltf';
+
+      final String pngPath = '${cardDir.path}/$pngFileName';
+      final String gltfPath = '${cardDir.path}/$gltfFileName';
+
+      // final String title = widget.landmarkName.trim();
+      // final String readmeMarkdown = await _loadReadmeMarkdownForTotem();
+
+      final Uint8List pngBytes = await _renderTotemMarkdownCardPng(
+        title: title,
+        markdown: markdown,
+        scrollOffset: scrollOffset,
+      );
+
+      await File(pngPath).writeAsBytes(pngBytes, flush: true);
+
+      final String gltf = _buildTexturedCardPlaneGltf(imageFileName: pngFileName);
+
+      await File(gltfPath).writeAsString(gltf, flush: true);
+
+      return gltfPath;
     }
 
-    // Cerchiamo se uno dei nodi toccati è nella nostra mappa di icone
-    for (var nodeName in nodeNames) {
-      if (_arNodeToResourceType.containsKey(nodeName)) {
-        String type = _arNodeToResourceType[nodeName]!;
-        debugPrint("AR Icon Tapped: $type");
+  double _calculateMarkdownMaxScrollOffset(String markdown) {
+    const double width = 740;
+    const double height = 1000;
 
-        _updateDraggableSheetContent(type, _recognizedWaypointId);
+    const Rect bodyRect = Rect.fromLTWH(36, 150, width - 72, height - 190);
 
+    final String cleanedMarkdown = _cleanMarkdownForTotem(markdown);
+
+    final TextPainter bodyPainter = TextPainter(
+      text: TextSpan(
+        text: cleanedMarkdown,
+        style: const TextStyle(color: Colors.black, fontSize: 30, height: 1.20),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    bodyPainter.layout(maxWidth: bodyRect.width);
+
+    final double overflow = bodyPainter.height - bodyRect.height;
+
+    return overflow > 0 ? overflow : 0.0;
+  }
+
+  Future<Uint8List> _renderTotemMarkdownCardPng({
+    required String title,
+    required String markdown,
+    required double scrollOffset,
+  }) async {
+    const double width = 740;
+    const double height = 1000;
+
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+
+    final Paint backgroundPaint = Paint() ..color = Colors.white;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(0, 0, width, height),
+        const Radius.circular(40),
+      ),
+      backgroundPaint,
+    );
+
+    final Paint borderPaint = Paint()
+      ..color = const Color(0xFF222222)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(8, 8, width - 16, height - 16),
+        const Radius.circular(34),
+      ),
+      borderPaint,
+    );
+
+    final TextPainter titlePainter = TextPainter(
+      text: TextSpan(
+        text: title,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 46,
+          fontWeight: FontWeight.bold,
+          height: 1.05,
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+      maxLines: 2,
+      ellipsis: '...',
+    );
+
+    titlePainter.layout(maxWidth: width - 72);
+    titlePainter.paint(canvas, const Offset(36, 40));
+
+    final String cleanedMarkdown = _cleanMarkdownForTotem(markdown);
+
+    const Rect bodyRect = Rect.fromLTWH(36, 150, width - 72, height - 190);
+
+    canvas.save();
+    canvas.clipRect(bodyRect);
+
+    final TextPainter bodyPainter = TextPainter(
+      text: TextSpan(
+        text: cleanedMarkdown,
+        style: const TextStyle(color: Colors.black, fontSize: 30, height: 1.20),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    bodyPainter.layout(maxWidth: bodyRect.width);
+
+    bodyPainter.paint(
+      canvas,
+      Offset(bodyRect.left, bodyRect.top - scrollOffset),
+    );
+
+    canvas.restore();
+    final ui.Picture picture = recorder.endRecording();
+    final ui.Image image = await picture.toImage(
+      width.toInt(),
+      height.toInt(),
+    );
+
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    return byteData!.buffer.asUint8List();
+  }
+
+  void _startMarkdownAutoScroll({
+    required ARPlaneAnchor anchor,
+    required String title,
+    required String markdown,
+    required double maxScrollOffset,
+  }) {
+    _markdownScrollTimer?.cancel();
+
+    double scrollOffset = 0.0;
+    _markdownScrollFrame = 0;
+    _markdownScrollDown = true;
+
+    int pauseTicks = 0;
+
+    _markdownScrollTimer = Timer.periodic(const Duration(milliseconds: 700), (
+      timer,
+    ) async {
+      if (!mounted || arObjectManager == null) {
+        timer.cancel();
         return;
       }
-    }
+
+      final oldNode = _totemMarkdownCardNode;
+      if (oldNode == null) {
+        timer.cancel();
+        return;
+      }
+
+      if (pauseTicks > 0) {
+        pauseTicks--;
+        return;
+      }
+
+      const double step = 24.0;
+
+      if (_markdownScrollDown) {
+        scrollOffset += step;
+
+        if (scrollOffset >= maxScrollOffset) {
+          scrollOffset = maxScrollOffset;
+          _markdownScrollDown = false;
+          pauseTicks = 3;
+        }
+      } else {
+        scrollOffset -= step;
+
+        if (scrollOffset <= 0) {
+          scrollOffset = 0;
+          _markdownScrollDown = true;
+          pauseTicks = 3;
+        }
+      }
+
+      _markdownScrollFrame++;
+
+      final String cardGltfPath = await _createTotemMarkdownCardGltf(
+        title: title,
+        markdown: markdown,
+        scrollOffset: scrollOffset,
+        frameIndex: _markdownScrollFrame,
+      );
+
+      final cfg = arPlatformCfg;
+      final double cardScale = 0.2 * cfg.modelScaleCompensation;
+      final vector.Vector3 cardPosition = vector.Vector3(-0.01, 0.9, -0.03);
+
+      arObjectManager!.removeNode(oldNode);
+
+      final newNode = ARNode(
+        type: NodeType.fileSystemAppFolderGLTF2,
+        uri: cardGltfPath,
+        scale: vector.Vector3(cardScale, cardScale, cardScale),
+        position: cardPosition,
+        rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+        name: "[#]totem_markdown_card_$_markdownScrollFrame",
+      );
+
+      final bool? didAdd = await arObjectManager!.addNode(
+        newNode,
+        planeAnchor: anchor,
+      );
+
+      if (didAdd == true) {
+        _totemMarkdownCardNode = newNode;
+      }
+    });
   }
+
+  String _cleanMarkdownForTotem(String markdown) {
+    return markdown
+        .replaceAll(RegExp(r'!\[[^\]]*\]\([^)]+\)'), '')
+        .replaceAll(RegExp(r'\[([^\]]+)\]\([^)]+\)'), r'$1')
+        .replaceAll(RegExp(r'#{1,6}\s*'), '')
+        .replaceAll(RegExp(r'[*_`>~]'), '')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
+  }
+
+  String _buildTexturedCardPlaneGltf({required String imageFileName}) {
+    final ByteData data = ByteData(92);
+
+    int offset = 0;
+
+    void writeFloat(double value) {
+      data.setFloat32(offset, value, Endian.little);
+      offset += 4;
+    }
+
+    void writeUint16(int value) {
+      data.setUint16(offset, value, Endian.little);
+      offset += 2;
+    }
+
+    // POSITION: 4 vertices, aspect ratio 4:3.
+    final List<double> positions = [
+      -1.0, 1.35, 0.0,
+      1.0, 1.35, 0.0,
+      1.0, -1.35, 0.0,
+      -1.0, -1.35, 0.0,
+    ];
+
+    for (final double value in positions) {
+      writeFloat(value);
+    }
+
+    // TEXCOORD_0
+    final List<double> uvs = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+
+    for (final double value in uvs) {
+      writeFloat(value);
+    }
+
+    // Indices
+    final List<int> indices = [0, 2, 1, 0, 3, 2];
+
+    for (final int value in indices) {
+      writeUint16(value);
+    }
+
+    final String bufferBase64 = base64Encode(data.buffer.asUint8List());
+
+    return '''
+{
+  "asset": {
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [0]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "totem_markdown_card"
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "TEXCOORD_0": 1
+          },
+          "indices": 2,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "card_material",
+      "doubleSided": true,
+      "alphaMode": "BLEND",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        },
+        "baseColorFactor": [1.0, 1.0, 1.0, 1.0],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.8
+      }
+    }
+  ],
+  "textures": [
+    {
+      "source": 0
+    }
+  ],
+  "images": [
+    {
+      "uri": "$imageFileName"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "data:application/octet-stream;base64,$bufferBase64",
+      "byteLength": 92
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 48,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 48,
+      "byteLength": 32,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 80,
+      "byteLength": 12,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC3",
+      "min": [-1.0, -1.35, 0.0],
+      "max": [1.0, 1.35, 0.0]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 4,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5123,
+      "count": 6,
+      "type": "SCALAR"
+    }
+  ]
+}
+''';
+  }
+
+  final Map<String, String> _arNodeToResourceType = {};
 
   void _handleRecognitionSuccess(int waypointId, Map<String, dynamic> availableResources, bool isOffline) async {
 
@@ -1458,8 +1913,26 @@ Future<void> _spawnTotemIcons(
     );
 
     if (mounted && contentToDisplay != null){
+      // setState(() {
+      //   _currentActiveContent = contentToDisplay;
+      // });
       setState(() {
-        _currentActiveContent = contentToDisplay;
+        _currentActiveContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _currentActiveContent = _buildResourceButtonsContent();
+                });
+              },
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Risorse'),
+            ),
+            const SizedBox(height: 8),
+            contentToDisplay!,
+          ],
+        );
       });
     }
   }
@@ -1782,7 +2255,12 @@ Future<void> _spawnTotemIcons(
     _totemSpawned = false;
     _totemBaseNode = null;
     _totemBodyNode = null;
+    _markdownScrollTimer?.cancel();
+    _markdownScrollTimer = null;
+    _totemMarkdownCardNode = null;
     _arNodeToResourceType.clear();
+    _markdownMaxScrollOffset = 0.0;
+    _markdownScrollFrame = 0;
     }
 
 
@@ -1825,6 +2303,66 @@ Future<void> _spawnTotemIcons(
     Navigator.of(context).pop();
   }
 
+  Widget _buildResourceButtonsContent() {
+    final List<Map<String, dynamic>> resources =
+        _getAvailableIconsData()
+            .where((e) => e['isVisible'] == true)
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.landmarkName,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Risorse disponibili',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        if (resources.isEmpty)
+          const Text(
+            'Nessuna risorsa disponibile per questo waypoint.',
+            style: TextStyle(color: AppColors.textSecondary),
+          )
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final resource in resources)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    _updateDraggableSheetContent(
+                      resource['type'] as String,
+                      _recognizedWaypointId,
+                    );
+                  },
+                  icon: Image.asset(
+                    resource['assetPath'] as String,
+                    width: 20,
+                    height: 20,
+                  ),
+                  label: Text(resource['label'] as String),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+
   List<Map<String, dynamic>> _getAvailableIconsData() {
     return [
       {
@@ -1849,7 +2387,7 @@ Future<void> _spawnTotemIcons(
         'assetPath': 'assets/icons/image.png',
         'modelPath': 'assets/models/AR/buttons/image/b4.gltf', // Modello 3D
         'angle': pi / 4.5, // Posizione 2D (Basso-Destra)
-        'isVisible': true, // Sempre visibile
+        'isVisible': _availableResources["images"] > 0, // Sempre visibile
       },
       {
         'type': 'video',
@@ -2007,7 +2545,7 @@ Future<void> _spawnTotemIcons(
     final responsive = context.r;
     // Configuration for AR overlay elements
     final double arIconRadius = responsive.consultationIconRadius(); // Radius for the AR icons circle
-    final double iconSize = responsive.consultationIconRadius(); // Size of the _buildSimpleAROverlay widget
+    final double iconSize = responsive.consultationIconSize(); // Size of the _buildSimpleAROverlay widget
 
     final iconsData = _getAvailableIconsData();
 
@@ -2099,18 +2637,18 @@ Future<void> _spawnTotemIcons(
         Builder(
           builder: (context) {
             final double closeAngle = -2 * pi / 1.01;
-            final double closeX = centerX + (arIconRadius * 1.15) * cos(closeAngle); 
-            final double closeY = centerY + (arIconRadius * 1.15) * sin(closeAngle);
+            final double closeX = centerX + (arIconRadius) * cos(closeAngle); 
+            final double closeY = centerY + (arIconRadius) * sin(closeAngle);
 
             return Positioned(
-              left: closeX - (50.0 / 2),
-              top: closeY - (50.0 / 2),
+              left: closeX - (iconSize / 2),
+              top: closeY - (iconSize / 2),
               child: _buildSimpleAROverlay(
                 label: "Close",
                 delay: 0.2,
                 isVisible: true,
                 assetPath: "assets/icons/back_icon.png",
-                iconSize: 50.0,
+                iconSize: iconSize,
                 onTap: () {
                   debugPrint("Close icon Tapped!");
                   _resetRecognition();
@@ -2138,7 +2676,7 @@ Future<void> _spawnTotemIcons(
 
     if (label == 'Close') {
       // Special case for the close icon
-      iconSize = 50.0;
+      iconSize = iconSize - 15.0;
       }
 
     // Animation logic based on _arOverlayProgress (from your state) and individual delay
