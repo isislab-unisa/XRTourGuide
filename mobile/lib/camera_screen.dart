@@ -414,23 +414,30 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       arAnchorManager = null;
       _totemSpawned = false;
       _totemBaseNode = null;
+      _totemBodyNode = null;
+      _totemMarkdownCardNode = null;
+      _markdownScrollTimer?.cancel();
 
       unawaited(_analytics.logEvent(name: "exit_ar_mode", parameters: {"tour_id": widget.tourId, "waypoint_id": _recognizedWaypointId}));
 
       await Future.delayed(const Duration(milliseconds: 500));
-      await _initializeCamera();
-    } else {
-      // Switching from Standard to AR
-      if (_cameraController != null) {
-        await _cameraController!.dispose();
-        _cameraController = null;
+      if (mounted) {
+        await _initializeCamera();
       }
+    } else {
+      final oldController = _cameraController;
+      // Switching from Standard to AR
 
       setState(() {
+        _cameraController = null;
         _isCameraInitialized = false;
       });
 
+      await oldController?.dispose();
+
       await Future.delayed(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
 
       setState(() {
         _isARMode = true;
@@ -677,7 +684,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
       arObjectManager!.onInitialize(
         androidScaleFactor: 1.0,
-        iosScaleFactor: 1.0,
+        iosScaleFactor: 0.01,
       );
 
       arSessionManager!.onPlaneOrPointTap = _onPlaneTap;
@@ -744,16 +751,24 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
     _totemBaseNode = structureNode;
 
+    final vector.Vector4 totemBodyRotation = Platform.isIOS
+      ? vector.Vector4(1.0, 0.0, 0.0, 0.0)
+      : vector.Vector4(1.0, 0.0, 0.0, 0.0);
+
+    final String totemBodyUri = Platform.isIOS
+      ? "assets/models/AR/totem_body/totem_body_ios.glb"
+      : "assets/models/AR/totem_body/totem_body.glb";
+
     final bodyNode = ARNode(
       type: NodeType.localGLB,
-      uri: "assets/models/AR/totem_body/totem_body.glb",
+      uri: totemBodyUri,
       scale: vector.Vector3(
         initialVisualScale,
         initialVisualScale,
         initialVisualScale,
       ),
       position: vector.Vector3(0, cfg.totemOffsetY, 0),
-      rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+      rotation: totemBodyRotation,
     );
 
     final bool? didAddBody = await manager.addNode(
@@ -820,14 +835,23 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     );
 
     final double cardScale = 0.2 * cfg.modelScaleCompensation;
-    final vector.Vector3 cardPosition = vector.Vector3(-0.01, 0.9, -0.03);
+    final double cardScaleIOS = 20 * cfg.modelScaleCompensation;
+    final vector.Vector3 cardPosition = Platform.isIOS
+      ? vector.Vector3(-0.01, 0.9, 0.03)
+      : vector.Vector3(-0.01, 0.9, -0.03);
+    final vector.Vector4 cardRotation = Platform.isIOS
+        ? vector.Vector4(0.0, 1.0, 0.0, 0.0)
+        : vector.Vector4(1.0, 0.0, 0.0, 0.0);
+    final vector.Vector3 cardScaleVector = Platform.isIOS
+      ? vector.Vector3(cardScaleIOS, cardScaleIOS, cardScaleIOS)
+      : vector.Vector3(cardScale , cardScale, cardScale);
 
     final cardNode = ARNode(
       type: NodeType.fileSystemAppFolderGLTF2,
       uri: cardGltfPath,
-      scale: vector.Vector3(cardScale, cardScale, cardScale),
+      scale: cardScaleVector,
       position: cardPosition,
-      rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+      rotation: cardRotation,
       name: "[#]totem_markdown_card",
     );
 
@@ -951,6 +975,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
 
       await File(gltfPath).writeAsString(gltf, flush: true);
 
+      if (Platform.isIOS) {
+        return 'ar_markdown_card/$gltfFileName';
+      }
       return gltfPath;
     }
 
@@ -1128,6 +1155,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
       final cfg = arPlatformCfg;
       final double cardScale = 0.2 * cfg.modelScaleCompensation;
       final vector.Vector3 cardPosition = vector.Vector3(-0.01, 0.9, -0.03);
+      final vector.Vector4 cardRotation = Platform.isIOS
+          ? vector.Vector4(0.0, 1.0, 0.0, 0.0)
+          : vector.Vector4(1.0, 0.0, 0.0, 0.0);
 
       arObjectManager!.removeNode(oldNode);
 
@@ -1136,7 +1166,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
         uri: cardGltfPath,
         scale: vector.Vector3(cardScale, cardScale, cardScale),
         position: cardPosition,
-        rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+        rotation: cardRotation,
         name: "[#]totem_markdown_card_$_markdownScrollFrame",
       );
 
@@ -1189,7 +1219,11 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     }
 
     // TEXCOORD_0
-    final List<double> uvs = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+    // final List<double> uvs = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+    final List<double> uvs =
+        Platform.isIOS
+            ? [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]
+            : [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
 
     for (final double value in uvs) {
       writeFloat(value);
@@ -2016,26 +2050,26 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     // await WidgetsBinding.instance.endOfFrame;
     // await Future.delayed(const Duration(milliseconds: 50));
 
-    // // --- TEST CODE: BYPASS INFERENCE ---
-    // // Simula un ritardo di scansione
-    // await Future.delayed(const Duration(seconds: 2));
+    // --- TEST CODE: BYPASS INFERENCE ---
+    // Simula un ritardo di scansione
+    await Future.delayed(const Duration(seconds: 2));
 
-    // // Usa il primo waypoint disponibile o un ID di default
-    // int waypointId = _waypoints.isNotEmpty ? _waypoints.first.id : 1;
+    // Usa il primo waypoint disponibile o un ID di default
+    int waypointId = _waypoints.isNotEmpty ? _waypoints.first.id : 1;
 
-    // // Simula la disponibilità di tutte le risorse
-    // Map<String, dynamic> availableResources = {
-    //   "readme": 1,
-    //   "links": 1,
-    //   "images": 1,
-    //   "video": 1,
-    //   "pdf": 1,
-    //   "audio": 1,
-    // };
+    // Simula la disponibilità di tutte le risorse
+    Map<String, dynamic> availableResources = {
+      "readme": 1,
+      "links": 1,
+      "images": 1,
+      "video": 1,
+      "pdf": 1,
+      "audio": 1,
+    };
 
-    // _handleRecognitionSuccess(waypointId, availableResources, widget.isOffline);
-    // return;
-    // // -----------------------------------
+    _handleRecognitionSuccess(waypointId, availableResources, widget.isOffline);
+    return;
+    // -----------------------------------
 
     try {
       Uint8List? bytes;
