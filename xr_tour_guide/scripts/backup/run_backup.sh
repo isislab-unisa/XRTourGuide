@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+trap 'echo "ERRORE alla linea $LINENO: comando fallito con exit code $?" >&2' ERR
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/backup.env"
@@ -218,20 +219,53 @@ MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump \
   log "Backup MySQL completato: $MYSQL_BACKUP_DIR/mysql_$TS.sql.gz"
 }
 
+get_container_env() {
+  local service="$1"
+  local var="$2"
+
+  docker compose exec -T "$service" printenv "$var" | tr -d '\r'
+}
+
 backup_minio() {
   log "Backup MinIO"
 
   cd "$APP_DIR"
 
-  docker run --rm \
+  local minio_user
+  local minio_password
+  local bucket_name
+
+  minio_user="$(get_container_env minio MINIO_ROOT_USER)"
+  minio_password="$(get_container_env minio MINIO_ROOT_PASSWORD)"
+  bucket_name="$(get_container_env web AWS_STORAGE_BUCKET_NAME)"
+
+  if [ -z "$minio_user" ] || [ -z "$minio_password" ]; then
+    fail "Impossibile ottenere le variabili d'ambiente MinIO dal container minio"
+  fi
+
+  if [ -z "$bucket_name" ]; then
+    fail "Impossibile ottenere le variabili d'ambiente MinIO dal container web"
+  fi
+
+  log "Avvio container minio/mc"
+
+  if ! docker run --rm \
     --network "$DOCKER_NETWORK" \
-    --env-file "$APP_DIR/.env" \
+    -e MINIO_ROOT_USER="$minio_user" \
+    -e MINIO_ROOT_PASSWORD="$minio_password" \
+    -e AWS_STORAGE_BUCKET_NAME="$bucket_name" \
     -v "$MINIO_BACKUP_DIR:/backup" \
+    --entrypoint /bin/sh \
     minio/mc@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3 \
-    sh -c '
-      mc alias set myminio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" &&
+    -c '
+      set -eux
+      echo "Setting up MinIO alias..."
+      mc alias set myminio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+      echo "Starting MinIO backup..."
       mc mirror --overwrite myminio/"$AWS_STORAGE_BUCKET_NAME" /backup/"$AWS_STORAGE_BUCKET_NAME"
-    '
+    '; then
+    fail "Backup MinIO fallito"
+  fi
 
   log "Backup MinIO completato: $MINIO_BACKUP_DIR"
 }

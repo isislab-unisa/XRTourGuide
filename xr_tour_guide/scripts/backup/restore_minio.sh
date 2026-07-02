@@ -1,6 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+get_container_env() {
+  local service="$1"
+  local var="$2"
+
+  docker compose exec -T "$service" printenv "$var" | tr -d '\r'
+}
+
+local minio_user
+local minio_password
+local bucket_name
+
+minio_user="$(get_container_env minio MINIO_ROOT_USER)"
+minio_password="$(get_container_env minio MINIO_ROOT_PASSWORD)"
+bucket_name="$(get_container_env web AWS_STORAGE_BUCKET_NAME)"
+
+if [ -z "$minio_user" ] || [ -z "$minio_password" ]; then
+  fail "Impossibile ottenere le variabili d'ambiente MinIO dal container minio"
+fi
+
+if [ -z "$bucket_name" ]; then
+  fail "Impossibile ottenere le variabili d'ambiente MinIO dal container web"
+fi
+
+
 if [ $# -ne 1 ]; then
   echo "Uso:"
   echo "  $0 /percorso/backup/minio/YYYYMMDD_HHMMSS"
@@ -38,10 +62,13 @@ sleep 5
 
 docker run --rm \
   --network "$DOCKER_NETWORK" \
-  --env-file "$APP_DIR/.env" \
+  -e MINIO_ROOT_USER="$minio_user" \
+  -e MINIO_ROOT_PASSWORD="$minio_password" \
+  -e AWS_STORAGE_BUCKET_NAME="$bucket_name" \
   -v "$BACKUP_DIR:/backup" \
+  --entrypoint /bin/sh \
   minio/mc@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3 \
-  sh -c '
+  -c '
     mc alias set myminio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" &&
     mc mirror --overwrite /backup/"$AWS_STORAGE_BUCKET_NAME" myminio/"$AWS_STORAGE_BUCKET_NAME"
   '
