@@ -53,3 +53,5 @@ app.*.map.json
 maps/
 UNISA/
 locale/
+
+xr_tour_guide/scripts/backup/backup.env
