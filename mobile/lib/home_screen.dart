@@ -22,8 +22,6 @@ import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
 import 'utils/platform_page_route.dart';
 
-
-
 class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
 
@@ -85,7 +83,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     bool serverReachable = false;
     if (deviceConnected) {
       // debugPrint("CHECKING SERVER REACHABILITY");
-      serverReachable = await _checkServerReachability();
+      serverReachable = true;
+      // serverReachable = await _checkServerReachability();
     }
 
     final isNowOnline = deviceConnected && serverReachable;
@@ -98,7 +97,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     }
 
     // Se siamo tornati online o è la prima volta, proviamo a caricare i dati (se non ci sono già)
-    if (isNowOnline && (wasOnline != isNowOnline || _isCheckingConnection || forceReload)) {
+    if (isNowOnline &&
+        (wasOnline != isNowOnline || _isCheckingConnection || forceReload)) {
       _loadOnlineData(forceRefresh: forceReload);
     }
   }
@@ -146,7 +146,9 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
     // Carica tour
     debugPrint("Loading online tours with forceRefresh=$forceRefresh");
     Position? position = await _getCurrentPosition();
-    ref.read(nearbyToursProvider.notifier).loadTours(
+    ref
+        .read(nearbyToursProvider.notifier)
+        .loadTours(
           forceRefresh: forceRefresh,
           lat: position?.latitude,
           lon: position?.longitude,
@@ -185,7 +187,8 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Future<void> _loadOfflineTours() async {
-    if (_offlineTours.isEmpty && mounted) setState(() => _isLoadingOfflineTours = true);
+    if (_offlineTours.isEmpty && mounted)
+      setState(() => _isLoadingOfflineTours = true);
     try {
       final tours = await _offlineService.getOfflineTours();
       if (mounted) setState(() => _offlineTours = tours);
@@ -450,9 +453,6 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   }
 
   Widget _buildNearbyToursSection(BuildContext context) {
-    // final cardHeight = context.r.homeTourCardHeight();
-    // final cardWidth = context.r.homeTourCardWidth();
-    // final imageHeight = context.r.homeTourCardImageHeight();
     const cardHeight = TravelListItemCard.compactHeight;
     const cardWidth = TravelListItemCard.compactWidth;
     const imageHeight = TravelListItemCard.compactImageHeight;
@@ -479,12 +479,18 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
               ),
             ),
           ),
-          if (nearbyToursState.isLoading &&
-              (nearbyToursState.tours == null ||
-                  nearbyToursState.tours!.isEmpty))
+          // if (nearbyToursState.isLoading &&
+          //     (nearbyToursState.tours == null ||
+          //         nearbyToursState.tours!.isEmpty))
+          if (nearbyToursState.isLoading || nearbyToursState.tours == null)
             SizedBox(
               height: cardHeight,
               child: const Center(child: CircularProgressIndicator()),
+            )
+          else if (nearbyToursState.tours!.isEmpty)
+            SizedBox(
+              height: cardHeight,
+              child: Center(child: Text("no_tours_available".tr())),
             )
           else
             SizedBox(
@@ -513,30 +519,29 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
                       totViews: tour.totViews.toString(),
                       creator: tour.creator,
                       lastEdited: tour.lastEdited,
-                      onTap:
-                          () {
-                            unawaited(
-                              _analytics.logEvent(
-                                name: "tour_open",
-                                parameters: {
-                                  "tour_id": tour.id,
-                                  "is_guest": widget.isGuest.toString(),
-                                  "source": "nearby_section",
-                                },
-                              ),
-                            );
-                            
-                            Navigator.push(
-                              context,
-                              platformPageRoute(
-                                builder:
-                                    (context) => TourDetailScreen(
-                                      tourId: tour.id,
-                                      isGuest: widget.isGuest,
-                                    ),
-                              ),
-                            );
-                          }
+                      onTap: () {
+                        unawaited(
+                          _analytics.logEvent(
+                            name: "tour_open",
+                            parameters: {
+                              "tour_id": tour.id,
+                              "is_guest": widget.isGuest.toString(),
+                              "source": "nearby_section",
+                            },
+                          ),
+                        );
+
+                        Navigator.push(
+                          context,
+                          platformPageRoute(
+                            builder:
+                                (context) => TourDetailScreen(
+                                  tourId: tour.id,
+                                  isGuest: widget.isGuest,
+                                ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },

@@ -9,6 +9,7 @@ import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'utils/responsive.dart';
 import 'utils/platform_page_route.dart';
+import 'providers/home_providers.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   final bool isGuest;
@@ -78,10 +79,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     });
   }
 
-  Future<void> _selectServerAndProceed(
-    String name,
-    String domain,
-  ) async {
+  Future<void> _selectServerAndProceed(String name, String domain) async {
     setState(() {
       _isLoading = true;
       _selectionErrorMessage = null;
@@ -114,6 +112,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     await ref
         .read(localStateServiceProvider)
         .saveSelectedServer(name: name, url: _apiService.getCurrentBaseUrl());
+
+    ref.invalidate(nearbyToursProvider);
+    ref.invalidate(categoriesProvider);
+
+    if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
       platformPageRoute(
@@ -369,10 +372,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                   context: context,
                                   isOutlined: false,
                                   onPressed:
-                                      () => _selectServerAndProceed(
-                                        name,
-                                        domain,
-                                      ),
+                                      () =>
+                                          _selectServerAndProceed(name, domain),
                                 );
                               },
                             ),

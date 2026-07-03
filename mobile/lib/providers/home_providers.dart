@@ -28,7 +28,7 @@ class NearbyToursState {
 class NearbyToursNotifier extends StateNotifier<NearbyToursState> {
   final TourService _tourService;
 
-  NearbyToursNotifier(this._tourService) : super(NearbyToursState());
+  NearbyToursNotifier(this._tourService) : super(NearbyToursState(isLoading: true));
 
   Future<void> loadTours({
     bool forceRefresh = false,

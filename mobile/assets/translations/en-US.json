@@ -154,5 +154,6 @@
     "rec_failure_8": "No point was recognized. Move closer to the point of interest and try again.",
     "server_selection_unavailable": "The selected server is currently unavailable. Please choose another server or try again later.",
     "change_server": "Change Content Server",
-    "guest_review_not_allowed": "Guest users cannot leave reviews. Please log in or create an account to leave a review."
+    "guest_review_not_allowed": "Guest users cannot leave reviews. Please log in or create an account to leave a review.",
+    "no_nearby_tours": "No Nearby Tours available. Please check back later or explore other areas."
 }

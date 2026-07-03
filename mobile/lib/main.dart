@@ -274,7 +274,7 @@ class _ServerGateState extends ConsumerState<ServerGate> {
 
     final available = await apiService.pingServer(
       urlToCheck: apiService.getCurrentBaseUrl(),
-      timeout: const Duration(seconds: 5),
+      timeout: const Duration(seconds: 2),
     );
 
     if (!mounted) return;

@@ -15,6 +15,7 @@ import 'utils/platform_page_route.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'server_selection_screen.dart';
 import 'services/local_state_service.dart';
+import 'providers/home_providers.dart';
 
 // Enum to track which profile screen is currently active
 enum ProfileScreenState {
@@ -351,6 +352,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   Future<void> _changeServer(BuildContext context) async {
     await ref.read(localStateServiceProvider).clearSelectedServer();
 
+    ref.invalidate(nearbyToursProvider);
+    ref.invalidate(categoriesProvider);
+    
     if (!mounted) return;
 
     Navigator.of(context).pushAndRemoveUntil(

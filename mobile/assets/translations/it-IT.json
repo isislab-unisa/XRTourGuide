@@ -153,5 +153,6 @@
     "rec_failure_8": "Nessun punto riconosciuto. Avvicinati al luogo di interesse e riprova.",
     "server_selection_unavailable": "Il server selezionato non e' disponibile. Riprova più tardi.",
     "change_server": "Cambia Server dei contenuti",
-    "guest_review_not_allowed": "Gli utenti ospiti non possono lasciare recensioni. Registrati o accedi per lasciare una recensione."
+    "guest_review_not_allowed": "Gli utenti ospiti non possono lasciare recensioni. Registrati o accedi per lasciare una recensione.",
+    "no_nearby_tours": "Nessun tour nelle vicinanze. Prova a cambiare posizione o a cercare un'altra destinazione."
 }
