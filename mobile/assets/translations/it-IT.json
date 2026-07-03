@@ -150,5 +150,8 @@
     "rec_failure_5": "Riconoscimento non riuscito. Assicurati di avere una connessione internet stabile e riprova.",
     "rec_failure_6": "L'immagine non è abbastanza chiara. Riprova tenendo il telefono più stabile.",
     "rec_failure_7": "Riconoscimento fallito. Prova a scattare una nuova foto evitando riflessi o ombre.",
-    "rec_failure_8": "Nessun punto riconosciuto. Avvicinati al luogo di interesse e riprova."
+    "rec_failure_8": "Nessun punto riconosciuto. Avvicinati al luogo di interesse e riprova.",
+    "server_selection_unavailable": "Il server selezionato non e' disponibile. Riprova più tardi.",
+    "change_server": "Cambia Server dei contenuti",
+    "guest_review_not_allowed": "Gli utenti ospiti non possono lasciare recensioni. Registrati o accedi per lasciare una recensione."
 }

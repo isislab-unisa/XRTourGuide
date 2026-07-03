@@ -13,7 +13,8 @@ import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
 import 'utils/platform_page_route.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'server_selection_screen.dart';
+import 'services/local_state_service.dart';
 
 // Enum to track which profile screen is currently active
 enum ProfileScreenState {
@@ -28,7 +29,6 @@ enum ProfileScreenState {
 // final authServiceProvider = ChangeNotifierProvider<AuthService>((ref) {
 //   return AuthService();
 // });
-
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   const UserProfileScreen({Key? key}) : super(key: key);
@@ -52,15 +52,25 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   // Language settings
   //TODO : Implement language selection logic
   final List<Map<String, dynamic>> _availableLanguages = [
-    {"name": "English(US)", "locale": const Locale('en', 'US'), "flag": "🇺🇸", "selected": false},
-    {"name": "Italiano", "locale": const Locale('it', 'IT'), "flag": "🇮🇹", "selected": true},
+    {
+      "name": "English(US)",
+      "locale": const Locale('en', 'US'),
+      "flag": "🇺🇸",
+      "selected": false,
+    },
+    {
+      "name": "Italiano",
+      "locale": const Locale('it', 'IT'),
+      "flag": "🇮🇹",
+      "selected": true,
+    },
   ];
 
   // Controllers for text fields (Personal Info)
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  
+
   final TextEditingController _emailController = TextEditingController();
 
   // NEW: Controllers for Change Password fields
@@ -177,7 +187,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   Future<void> _openExternalUrl(String url) async {
     final uri = Uri.parse(url);
 
-    if(!await launchUrl(uri, mode: LaunchMode.externalApplication)){
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       _showError('error_launching_links'.tr());
     }
   }
@@ -216,7 +226,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       },
     );
 
-    if (result == true && mounted){
+    if (result == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('delete_account_success'.tr()),
@@ -226,7 +236,6 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       // Esegui logout o naviga alla schermata iniziale
       _logout(context);
     }
-
   }
 
   void _handleBack(BuildContext context) {
@@ -234,7 +243,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       Navigator.of(context).pop(true); // Torna alla schermata precedente
     } else {
       setState(() {
-        _currentScreen = ProfileScreenState.main; // Torna alla schermata principale del profilo
+        _currentScreen =
+            ProfileScreenState
+                .main; // Torna alla schermata principale del profilo
       });
     }
   }
@@ -242,7 +253,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   // Save personal info changes
   void _savePersonalInfo() async {
     //TODO: Implement actual save logic, e.g., API call to update user details
-      _authService.updateAccount(
+    _authService.updateAccount(
       _firstNameController.text,
       _lastNameController.text,
       _emailController.text,
@@ -267,10 +278,14 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
   // Save language selection
   void _saveLanguageSelection(Locale selectedLocale) {
-
     context.setLocale(selectedLocale);
 
-    unawaited(_analytics.logEvent(name: 'change_language', parameters: {'language': selectedLocale.toString()}));
+    unawaited(
+      _analytics.logEvent(
+        name: 'change_language',
+        parameters: {'language': selectedLocale.toString()},
+      ),
+    );
 
     setState(() {
       _currentScreen = ProfileScreenState.main;
@@ -326,15 +341,27 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     Navigator.of(context).pop(); // Close the bottom sheet
     await authService.logout(); // Call the logout method from AuthService
     Navigator.of(context).pushAndRemoveUntil(
-      platformPageRoute(
-        builder: (context) => const AuthChecker(),
-      ),
+      platformPageRoute(builder: (context) => const AuthChecker()),
       (route) => false,
-    );                            
+    );
     // Navigate back to login or onboarding screen
     debugPrint('User logged out');
   }
 
+  Future<void> _changeServer(BuildContext context) async {
+    await ref.read(localStateServiceProvider).clearSelectedServer();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      platformPageRoute(
+        builder:
+            (_) =>
+                const WelcomeScreen(isGuest: false, initialErrorMessage: null),
+      ),
+      (route) => false,
+    );
+  }
 
   // Build the main profile screen
   Widget _buildMainProfileScreen(BuildContext context) {
@@ -394,27 +421,6 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                                 ),
                               ),
                             ),
-                            // Camera icon for changing profile picture
-                            // Positioned(
-                            //   bottom: 0,
-                            //   right: 0,
-                            //   child: Container(
-                            //     padding: const EdgeInsets.all(4),
-                            //     decoration: BoxDecoration(
-                            //       color: AppColors.background,
-                            //       shape: BoxShape.circle,
-                            //       border: Border.all(
-                            //         color: AppColors.primary,
-                            //         width: 2,
-                            //       ),
-                            //     ),
-                            //     child: const Icon(
-                            //       Icons.camera_alt,
-                            //       color: AppColors.primary,
-                            //       size: 20,
-                            //     ),
-                            //   ),
-                            // ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -466,6 +472,12 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     title: "About",
                     icon: Icons.info_outline,
                     onTap: _navigateToAbout,
+                  ),
+
+                  _buildMenuItemTile(
+                    title: 'change_server'.tr(),
+                    icon: Icons.dns_outlined,
+                    onTap: () => _changeServer(context),
                   ),
 
                   // Logout - with different styling
@@ -634,7 +646,6 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
                     const SizedBox(height: 20),
 
-
                     // Email field
                     Text(
                       'email'.tr(),
@@ -713,13 +724,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         ),
                       ),
                     ),
-
                   ],
                 ),
               ),
             ),
-
-
 
             // Save button
             Padding(
@@ -738,7 +746,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   ),
                   child: Text(
                     'save'.tr(),
-                    style: TextStyle(fontSize: context.r.sp(16), fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: context.r.sp(16),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -790,8 +801,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   _buildSettingTile(
                     title: 'delete_account_title'.tr(),
                     titleColor: Colors.red,
-                    subtitle:
-                        'delete_account_subtitle'.tr(),
+                    subtitle: 'delete_account_subtitle'.tr(),
                     onTap: () {
                       _showDeleteAccountSheet(context);
                       // Show delete account confirmation
@@ -934,7 +944,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 itemBuilder: (context, index) {
                   final language = _availableLanguages[index];
                   final languageLocale = language["locale"] as Locale;
-                  final isSelected = context.locale == languageLocale; 
+                  final isSelected = context.locale == languageLocale;
 
                   return InkWell(
                     onTap: () {
@@ -1079,7 +1089,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         "name": "European Union",
         "logo": "assets/about/europe.png",
         "url": "https://european-union.europa.eu",
-      }
+      },
     ];
 
     final developers = [
@@ -1142,7 +1152,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               Wrap(
                 spacing: 16,
@@ -1353,7 +1363,8 @@ const SizedBox(height: 24),
   }
 
   Widget _buildDeleteAccountSheet(BuildContext context) {
-  final TextEditingController _deletePasswordController = TextEditingController();
+    final TextEditingController _deletePasswordController =
+        TextEditingController();
 
     return Container(
       padding: EdgeInsets.only(
@@ -1462,7 +1473,9 @@ const SizedBox(height: 24),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () async {
-                            await _authService.deleteAccount(_deletePasswordController.text);
+                            await _authService.deleteAccount(
+                              _deletePasswordController.text,
+                            );
                             Navigator.of(context).pop(true); // Close the sheet
                           },
                           style: ElevatedButton.styleFrom(

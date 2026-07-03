@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:xr_tour_guide/services/local_state_service.dart';
 import 'models/app_colors.dart';
 import 'home_screen.dart';
 import 'package:flutter_downloader/flutter_downloader.dart'; // Import flutter_downloader
@@ -85,7 +86,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.initState();
     _appLinks = AppLinks();
     _initDeepLinks();
-
   }
 
   Future<void> _initDeepLinks() async {
@@ -129,7 +129,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     ref.read(pendingTourIdProvider.notifier).state = tourId;
     ref.read(pendingTourDomainProvider.notifier).state = domainUrl;
-    
+
     // _tryOpenPendingTour(ref.read(authServiceProvider).authStatus);
   }
 
@@ -159,12 +159,15 @@ class _MyAppState extends ConsumerState<MyApp> {
     if (status == AuthStatus.authenticated) {
       // Costruisci stack: TravelExplorer -> TourDetail
       navigatorKey.currentState?.pushAndRemoveUntil(
-        platformPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
+        platformPageRoute(
+          builder: (_) => const TravelExplorerScreen(isGuest: false),
+        ),
         (route) => false, // rimuove tutte le route precedenti
       );
       navigatorKey.currentState?.push(
         platformPageRoute(
-          builder: (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
+          builder:
+              (_) => TourDetailScreen(tourId: pendingTourId, isGuest: false),
         ),
       );
       ref.read(pendingTourIdProvider.notifier).state = null;
@@ -195,7 +198,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           data: mediaQuery.copyWith(
             textScaler: mediaQuery.textScaler.clamp(
               minScaleFactor: 0.9,
-              maxScaleFactor: 1.15
+              maxScaleFactor: 1.15,
             ),
           ),
           child: child!,
@@ -229,8 +232,81 @@ class _MyAppState extends ConsumerState<MyApp> {
           },
         ),
       ),
-      // home: const AuthChecker(),
-      home: const WelcomeScreen(),
+      home: const AuthChecker(),
+      // home: const WelcomeScreen(),
+    );
+  }
+}
+
+class ServerGate extends ConsumerStatefulWidget {
+  final bool isGuest;
+
+  const ServerGate({Key? key, required this.isGuest}) : super(key: key);
+
+  @override
+  ConsumerState<ServerGate> createState() => _ServerGateState();
+}
+
+class _ServerGateState extends ConsumerState<ServerGate> {
+  bool _loading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSavedServer();
+  }
+
+  Future<void> _checkSavedServer() async {
+    final localState = ref.read(localStateServiceProvider);
+    final apiService = ref.read(apiServiceProvider);
+
+    final savedUrl = await localState.getSelectedServerUrl();
+
+    if (savedUrl == null || savedUrl.isEmpty) {
+      setState(() {
+        _loading = false;
+      });
+      return;
+    }
+
+    apiService.updateBaseUrl(savedUrl);
+
+    final available = await apiService.pingServer(
+      urlToCheck: apiService.getCurrentBaseUrl(),
+      timeout: const Duration(seconds: 5),
+    );
+
+    if (!mounted) return;
+
+    if (available) {
+      Navigator.of(context).pushReplacement(
+        platformPageRoute(
+          builder: (_) => TravelExplorerScreen(isGuest: widget.isGuest),
+        ),
+      );
+    } else {
+      await localState.clearSelectedServer();
+
+      setState(() {
+        _loading = false;
+        _errorMessage = "server_selection_error".tr();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return WelcomeScreen(
+      isGuest: widget.isGuest,
+      initialErrorMessage: _errorMessage,
     );
   }
 }
@@ -244,9 +320,10 @@ class AuthChecker extends ConsumerWidget {
     if (status == AuthStatus.loading) return;
 
     if (status == AuthStatus.authenticated) {
-
       navigatorKey.currentState?.pushAndRemoveUntil(
-        platformPageRoute(builder: (_) => const TravelExplorerScreen(isGuest: false)),
+        platformPageRoute(
+          builder: (_) => const TravelExplorerScreen(isGuest: false),
+        ),
         (route) => false,
       );
       navigatorKey.currentState?.push(
@@ -278,7 +355,7 @@ class AuthChecker extends ConsumerWidget {
           body: Center(child: CircularProgressIndicator()),
         );
       case AuthStatus.authenticated:
-        return const TravelExplorerScreen(isGuest: false);
+        return const ServerGate(isGuest: false);
       case AuthStatus.unauthenticated:
         return const AuthFlowScreen();
       case AuthStatus.registering:
@@ -603,7 +680,12 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text("login_error".tr()),
-                                    backgroundColor: const Color.fromARGB(255, 15, 6, 5),
+                                    backgroundColor: const Color.fromARGB(
+                                      255,
+                                      15,
+                                      6,
+                                      5,
+                                    ),
                                     behavior: SnackBarBehavior.floating,
                                     margin: const EdgeInsets.only(
                                       bottom: 40,
@@ -632,9 +714,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                        "login_error".tr(),
-                                      ),
+                                      content: Text("login_error".tr()),
                                       backgroundColor: Colors.red,
                                       behavior: SnackBarBehavior.floating,
                                       margin: const EdgeInsets.only(
@@ -649,7 +729,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               },
                               context: context,
                             ),
-                            const SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Container(
                             margin: EdgeInsets.symmetric(
                               horizontal:
@@ -715,7 +795,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             platformPageRoute(
                               builder:
                                   (context) =>
-                                      TravelExplorerScreen(isGuest: true),
+                                      const ServerGate(isGuest: true),
                             ),
                           );
                         });
@@ -1046,9 +1126,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               _passwordController.text,
                             );
                           } catch (e) {
-                            _showError(
-                              'login_error'.tr(),
-                            );
+                            _showError('login_error'.tr());
                           }
                         },
                         context: context,
@@ -1100,7 +1178,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                   SnackBar(
                                     content: Text("login_error".tr()),
                                     backgroundColor: Colors.red,
-                                  )
+                                  ),
                                 );
                               }
                             },
@@ -1119,9 +1197,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                        "login_error".tr(),
-                                      ),
+                                      content: Text("login_error".tr()),
                                       backgroundColor: Colors.red,
                                       behavior: SnackBarBehavior.floating,
                                       margin: const EdgeInsets.only(
@@ -1135,7 +1211,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 }
                               },
                             ),
-                            const SizedBox(width: 20),
+                          const SizedBox(width: 20),
                         ],
                       ),
                       SizedBox(height: screenHeight * 0.04),
@@ -1380,9 +1456,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      "login_error".tr(),
-                                    ),
+                                    content: Text("login_error".tr()),
                                     backgroundColor: Colors.red,
                                     behavior: SnackBarBehavior.floating,
                                     margin: const EdgeInsets.only(
@@ -1395,8 +1469,8 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                                 );
                               }
                             },
-                          ),   
-                        const SizedBox(width: 20),                   
+                          ),
+                        const SizedBox(width: 20),
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.04),
