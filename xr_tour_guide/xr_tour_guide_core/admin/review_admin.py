@@ -31,7 +31,7 @@ class ReviewAdmin(ModelAdmin):
             return False
         if obj is None:
             return True
-        if obj.status in ['SERVING', 'BUILDING', 'ENQUEUED']:
+        if obj.tour.status in ['SERVING', 'BUILDING', 'ENQUEUED']:
             return False
         if not request.user.is_superuser and obj.user != request.user:
             return False
