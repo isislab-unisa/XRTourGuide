@@ -23,6 +23,7 @@ import tempfile
 from pathlib import Path
 import time
 from django.utils.text import slugify
+from xr_tour_guide.tasks import call_api_and_save, generate_offline_bundle
 
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
@@ -30,7 +31,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     compressed_fields = True
     
     change_form_template = "admin/xr_tour_guide_core/tour/change_form.html"
-    list_display = ('title', 'place', 'category', 'language', 'status_badge', 'creation_time', 'user', 'export_button')
+    list_display = ('title', 'place', 'category', 'language', 'status_badge', 'creation_time', 'user', 'action_buttons')
     readonly_fields = ['user', 'creation_time', 'status_info', 'status_badge', 'status', 'license_notice']
     list_filter = ['category', 'language', 'status', 'place', 'creation_time']
     search_fields = ('title', 'subtitle', 'description', 'place')
@@ -428,8 +429,134 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                 self.admin_site.admin_view(self.export_tour_view),
                 name="xr_tour_guide_core_tour_export",
             ),
+            path(
+                "<path:object_id>/build-tour/",
+                self.admin_site.admin_view(self.build_tour_view),
+                name="xr_tour_guide_core_tour_build",
+            ),
         ]
         return custom_urls + urls
+
+    def build_tour_view(self, request, object_id):
+        tour = get_object_or_404(Tour, pk=object_id)
+    
+        if not request.user.is_superuser and tour.user != request.user:
+            raise Http404()
+    
+        if tour.status != "READY":
+            self.message_user(
+                request,
+                _("❌ This tour cannot be built because it is not READY."),
+                level=messages.ERROR,
+            )
+            return redirect("admin:xr_tour_guide_core_tour_changelist")
+    
+        tour.status = "ENQUEUED"
+        tour.save(update_fields=["status"])
+    
+        if tour.category == "GUIDE":
+            generate_offline_bundle.delay(tour.id)
+            message = _("📦 Offline build started.")
+        else:
+            call_api_and_save.apply_async(args=[tour.id], queue="api_tasks")
+            message = _("🧠 Training started.")
+    
+        self.message_user(request, message, level=messages.SUCCESS)
+    
+        return redirect("admin:xr_tour_guide_core_tour_changelist")
+
+    @admin.display(description=_("Actions"))
+    def actions_buttons(self, obj):
+        change_url = reverse(
+            "admin:xr_tour_guide_core_tour_change",
+            args=[obj.pk],
+        )
+    
+        export_url = reverse(
+            "admin:xr_tour_guide_core_tour_export",
+            args=[obj.pk],
+        )
+    
+        build_url = reverse(
+            "admin:xr_tour_guide_core_tour_build",
+            args=[obj.pk],
+        )
+    
+        if obj.status == "READY":
+            build_label = _("Build offline") if obj.category == "GUIDE" else _("Train")
+            build_icon = "📦" if obj.category == "GUIDE" else "🧠"
+    
+            build_button = format_html(
+                '''
+                <a href="{}"
+                   class="button"
+                   style="display:inline-block; margin-right:4px; padding:4px 8px;
+                          border-radius:6px; background:#2563eb; color:white;
+                          text-decoration:none; font-size:12px; font-weight:600;">
+                    {} {}
+                </a>
+                ''',
+                build_url,
+                build_icon,
+                build_label,
+            )
+        elif obj.status == "BUILDING" or obj.status == "ENQUEUED":
+            build_button = format_html(
+                '''
+                <span style="display:inline-block; margin-right:4px; padding:4px 8px;
+                             border-radius:6px; background:#e5e7eb; color:#6b7280;
+                             font-size:12px; font-weight:600;">
+                    ⏳ {}
+                </span>
+                ''',
+                _("Building…"),
+            )
+        else:
+            build_button = ""
+    
+        view_button = format_html(
+            '''
+            <a href="{}"
+               class="button"
+               data-loader-link="true"
+               data-loader-text="Opening tour..."
+               data-loader-subtext="Loading tour data, waypoints, and resources."
+               style="display:inline-block; margin-right:4px; padding:4px 8px;
+                      border-radius:6px; background:#16a34a; color:white;
+                      text-decoration:none; font-size:12px; font-weight:600;">
+                👁 {}
+            </a>
+            ''',
+            change_url,
+            _("View"),
+        )
+    
+        export_button = format_html(
+            '''
+            <a href="{}"
+               class="button"
+               data-loader-link="true"
+               data-loader-download="true"
+               data-loader-keep-visible="true"
+               data-loader-text="Preparing export..."
+               data-loader-subtext="Please wait while the tour archive is being generated."
+               style="display:inline-block; margin-right:4px; padding:4px 8px;
+                      border-radius:6px; background:#7c3aed; color:white;
+                      text-decoration:none; font-size:12px; font-weight:600;">
+                ⬇ {}
+            </a>
+            ''',
+            export_url,
+            _("Export"),
+        )
+    
+        return format_html(
+            '<div style="display:flex; gap:4px; flex-wrap:wrap;">{}{}{}</div>',
+            build_button,
+            view_button,
+            export_button,
+        )
+
     
     def export_tour_view(self, request, object_id):
         tour = get_object_or_404(Tour, pk=object_id)
