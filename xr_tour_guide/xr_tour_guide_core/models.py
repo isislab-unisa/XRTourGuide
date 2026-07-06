@@ -1,4 +1,5 @@
 from datetime import timezone
+from random import choices
 from django.db import models
 from location_field.models.plain import PlainLocationField
 import dotenv
@@ -69,6 +70,10 @@ class Category(models.TextChoices):
     OUTDOOR = "OUTDOOR", _("OUTDOOR")
     GUIDE = "GUIDE", _("GUIDE")
     MIXED = "MIXED", _("Mixed")
+
+class TourLanguage(models.TextChoices):
+    IT = "it", _("Italian")
+    EN = "en", _("English")
         
 class TourQuerySet(models.QuerySet):
     def delete(self, *args, **kwargs):
@@ -86,6 +91,13 @@ class Tour(models.Model):
         choices=Category.choices,
         default=Category.INDOOR,
         verbose_name=_("Category")
+    )
+    language = models.CharField(
+        max_length=5,
+        choices=TourLanguage.choices,
+        default=TourLanguage.IT,
+        db_index=True,
+        verbose_name=_("Language"),
     )
     default_image = models.ImageField(upload_to=default_image_tour, storage=MinioStorage(), null=False, blank=False, validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'])], verbose_name=_("Default Image"))
     description = models.TextField(null=True, blank=True, verbose_name=_("Description"))
@@ -165,6 +177,13 @@ class Tour(models.Model):
 
         super().save(*args, **kwargs)
 
+def normalize_waypoint_positions_for_tour(tour):
+    waypoints = list(tour.waypoints.order_by("-is_preliminary_info", "position", "id"))
+
+    for index, waypoint in enumerate(waypoints):
+        if waypoint.position != index:
+            Waypoint.objects.filter(pk=waypoint.pk).update(position=index)
+
 class Waypoint(models.Model):
     title = models.CharField(max_length=200, blank=False, null=False, verbose_name=_("Title"))
     place = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Place"))
@@ -234,6 +253,8 @@ class Waypoint(models.Model):
 
             if updated_fields:
                 super().save(update_fields=updated_fields)
+
+        # normalize_waypoint_positions_for_tour(self.tour)
 
 
     class Meta:

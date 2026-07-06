@@ -57,6 +57,7 @@ class TourForm(forms.ModelForm):
             'coordinates': _('🗺️ Map Coordinates'),
             'default_image': _('🖼️ Cover Image'),
             'category': _('🏷️ Category'),
+            'language': _('🌐 Language'),
         }
         help_texts = {
             'title': _('A catchy and clear title (e.g.: "Historic Center Tour", "Journey Through Art and History")'),
@@ -66,6 +67,7 @@ class TourForm(forms.ModelForm):
             'default_image': _('A suggestive image that represents the tour'),
             'sub_tours': _('Select internal tours. Click on "✏️ Edit" to open and modify each tour.'),
             'category': _('The type of experience offered'),
+            'language': _('The language of the tour'),
         }
 
     def __init__(self, *args, **kwargs):

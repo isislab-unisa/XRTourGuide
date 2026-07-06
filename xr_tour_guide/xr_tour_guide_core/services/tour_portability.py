@@ -235,6 +235,7 @@ class TourPortabilityService:
                 place=tour_data["place"],
                 coordinates=tour_data["coordinates"],
                 category=tour_data["category"],
+                language=tour_data.get("language", "it"),
                 description=tour_data.get("description"),
                 user=owner,
                 status=Status.READY,
@@ -317,6 +318,7 @@ class TourPortabilityService:
                     place=sub_tour_data["place"],
                     coordinates=sub_tour_data["coordinates"],
                     category=sub_tour_data["category"],
+                    language=sub_tour_data.get("language", tour.language),
                     description=sub_tour_data.get("description"),
                     user=owner,
                     status=Status.READY,
@@ -412,6 +414,7 @@ class TourPortabilityService:
             "description": tour.description,
             "coordinates": tour.coordinates,
             "category": tour.category,
+            "language": tour.language,
             "default_image": None,
         }
         

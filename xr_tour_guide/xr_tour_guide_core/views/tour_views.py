@@ -76,6 +76,12 @@ def parse_coordinates(coord_str):
             openapi.IN_QUERY,
             description="Longitude for distance-based sorting",
             type=openapi.TYPE_NUMBER
+        ),
+        openapi.Parameter(
+            'language',
+            openapi.IN_QUERY,
+            description="Filter tours by language",
+            type=openapi.TYPE_STRING
         )
     ],
     responses={200: TourSerializer(many=True)}
@@ -89,8 +95,12 @@ def tour_list(request):
     num_tours = request.GET.get('num_tours', None)
     lat = request.GET.get('lat', None)
     lon = request.GET.get('lon', None)
+    language = request.GET.get('language', '').lower()
 
     queryset = Tour.objects.filter(parent_tours__isnull=True, is_subtour=False)
+
+    if language:
+        queryset = queryset.filter(language__iexact=language)
 
     if category:
         queryset = queryset.filter(category__iexact=category)

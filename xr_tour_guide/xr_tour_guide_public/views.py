@@ -27,6 +27,16 @@ def get_community_server_base_url():
 
     return f"http://{legacy_value}".rstrip("/")
 
+def extract_error_message(response, default_message="Login failed"):
+    try:
+        data = response.json()
+        return data.get("detail") or data.get('message') or default_message
+    except ValueError:
+        text = (response.text or "").strip()
+        if text:
+            return f"{default_message}: {text[:300]}"
+        return default_message
+
 def get_idp_headers():
     api_key = os.getenv('IDP_API_KEY')
     api_secret = os.getenv('IDP_API_SECRET')
@@ -105,7 +115,10 @@ def login(request):
             return redirect(settings.LOGIN_REDIRECT_URL)
         else:
             context = {
-                "error": response.json()["detail"],
+                "error": extract_error_message(
+                    response,
+                    default_message=f"Login failed with status {response.status_code}",
+                ),
                 "GOOGLE_CLIENT_ID": os.getenv('GOOGLE_CLIENT_ID', '')
             }
             return render(request, "account/login.html", context)
