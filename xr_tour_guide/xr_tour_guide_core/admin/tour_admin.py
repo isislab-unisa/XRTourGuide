@@ -31,7 +31,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     compressed_fields = True
     
     change_form_template = "admin/xr_tour_guide_core/tour/change_form.html"
-    list_display = ('title', 'place', 'category', 'language', 'status_badge', 'creation_time', 'user', 'action_buttons')
+    list_display = ('title', 'place', 'category', 'language', 'status_badge', 'creation_time', 'user', 'actions_buttons')
     readonly_fields = ['user', 'creation_time', 'status_info', 'status_badge', 'status', 'license_notice']
     list_filter = ['category', 'language', 'status', 'place', 'creation_time']
     search_fields = ('title', 'subtitle', 'description', 'place')
