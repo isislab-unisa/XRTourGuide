@@ -138,20 +138,22 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
   Future<void> _loadOnlineData({bool forceRefresh = false}) async {
     if (!_isOnline) return;
 
+    final language = context.locale.languageCode.toLowerCase();
+
     // Carica categorie (il provider gestisce il caching se non invalidato)
     if (forceRefresh) {
       ref.refresh(categoriesProvider);
     }
 
     // Carica tour
-    debugPrint("Loading online tours with forceRefresh=$forceRefresh");
+    debugPrint("Loading online tours with forceRefresh=$forceRefresh, language=$language");
     Position? position = await _getCurrentPosition();
-    ref
-        .read(nearbyToursProvider.notifier)
+    ref.read(nearbyToursProvider.notifier)
         .loadTours(
           forceRefresh: forceRefresh,
           lat: position?.latitude,
           lon: position?.longitude,
+          language: language
         );
   }
 

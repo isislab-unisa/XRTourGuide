@@ -78,7 +78,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
 
   Future<void> _loadSearchResults(String searchTerm) async {
     try {
-      final tours = await _tourService.getToursBySearchTerm(searchTerm);
+      final language = context.locale.languageCode.toLowerCase();
+      
+      final tours = await _tourService.getToursBySearchTerm(searchTerm, language: language);
       if (mounted) {
         setState(() {
           _filteredDestinations = tours;
@@ -228,9 +230,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
                       ),
                       onChanged: (value) {
                         // Refresh UI when text changes to show/hide clear button
-                        //TODO: Implement search logic here
                         _onSearchChanged(value);
-                        // setState(() {});
                       },
                     ),
                   ),

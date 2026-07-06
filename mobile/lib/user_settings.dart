@@ -253,7 +253,6 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
   // Save personal info changes
   void _savePersonalInfo() async {
-    //TODO: Implement actual save logic, e.g., API call to update user details
     _authService.updateAccount(
       _firstNameController.text,
       _lastNameController.text,
@@ -280,6 +279,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   // Save language selection
   void _saveLanguageSelection(Locale selectedLocale) {
     context.setLocale(selectedLocale);
+
+    ref.invalidate(nearbyToursProvider); // Invalidate nearby tours to reload with new language
+    ref.invalidate(categoriesProvider); // Invalidate categories to reload with new language
 
     unawaited(
       _analytics.logEvent(

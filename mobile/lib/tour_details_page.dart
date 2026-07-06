@@ -759,7 +759,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
               ),
               child: Center(
                 child: Text(
-                  '${index + 1}',
+                  isItineraryView ? '${index}' : '${index + 1}',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -2442,8 +2442,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                     )
                                   : Text(
                                       isSubWaypoint
-                                          ? '${(parentIndex ?? 0) + 1}.${index + 1}'
-                                          : '${index + 1}',
+                                          ? '${(parentIndex ?? 0)}.${index + 1}'
+                                          : '${index}',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,

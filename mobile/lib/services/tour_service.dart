@@ -18,9 +18,9 @@ class TourService {
   final ApiService apiService;
   TourService(this.apiService);
 
-  Future<List<Tour>> getNearbyTours(int timeout, double latitude, double longitude) async {
+  Future<List<Tour>> getNearbyTours(int timeout, double latitude, double longitude, {String? language}) async {
     try {
-      final response = await apiService.getNearbyTours(timeout, latitude, longitude, baseUrl: apiService.getCurrentBaseUrl());
+      final response = await apiService.getNearbyTours(timeout, latitude, longitude, baseUrl: apiService.getCurrentBaseUrl(), language: language);
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
@@ -33,9 +33,9 @@ class TourService {
     }
   }
 
-    Future<List<Tour>> getAllNearbyTours(int timeout) async {
+    Future<List<Tour>> getAllNearbyTours(int timeout, {String? language}) async {
     try {
-      final response = await apiService.getAllNearbyTours(timeout, baseUrl: apiService.getCurrentBaseUrl());
+      final response = await apiService.getAllNearbyTours(timeout, baseUrl: apiService.getCurrentBaseUrl(), language: language);
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
@@ -64,9 +64,9 @@ class TourService {
       }
   }
 
-  Future<List<Tour>> getToursByCategory(String category) async {
+  Future<List<Tour>> getToursByCategory(String category, {String? language}) async {
     try {
-      final response = await apiService.getTourByCategory(category, baseUrl: apiService.getCurrentBaseUrl());
+      final response = await apiService.getTourByCategory(category, baseUrl: apiService.getCurrentBaseUrl(), language: language);
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((tour) => Tour.fromJson(tour)).toList();
@@ -79,11 +79,12 @@ class TourService {
     }
   }
 
-  Future<List<Tour>> getToursBySearchTerm(String searchTerm) async {
+  Future<List<Tour>> getToursBySearchTerm(String searchTerm, {String? language}) async {
     try {
       final response = await apiService.getTourBySearchTerm(
         searchTerm.toLowerCase(),
         baseUrl: apiService.getCurrentBaseUrl(),
+        language: language,
       );
       if (response.statusCode == 200) {
         final data = response.data as List;

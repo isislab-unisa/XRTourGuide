@@ -55,7 +55,8 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
 
   Future<void> _loadCategoryTours() async {
     try {
-      final tours = await _tourService.getToursByCategory(widget.categoryName);
+      final language = context.locale.languageCode.toLowerCase();
+      final tours = await _tourService.getToursByCategory(widget.categoryName, language: language);
       if (mounted) {
         setState(() {
           _categoriesTour = tours;

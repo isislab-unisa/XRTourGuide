@@ -157,5 +157,6 @@
     "no_nearby_tours": "Nessun tour nelle vicinanze. Prova a cambiare posizione o a cercare un'altra destinazione.",
     "preliminary_info": "Informazioni preliminari",
     "no_map_waypoints": "Questo tour non contiene punti georeferenziati da mostrare sulla mappa.",
-    "no_recognizable_waypoints": "Questo tour non contiene punti riconoscibili."
+    "no_recognizable_waypoints": "Questo tour non contiene punti riconoscibili.",
+    "no_tours_for_language": "Non ci sono tour disponibili per la lingua selezionata."
 }
