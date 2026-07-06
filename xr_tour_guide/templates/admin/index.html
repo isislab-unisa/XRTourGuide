@@ -415,6 +415,40 @@ table.tours-tbl {
     50%       { box-shadow: 0 0 0 3px rgba(220,38,38,.2); }
 }
 
+.category-language-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.badge-lang {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.badge-lang-it {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.badge-lang-en {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.badge-lang-default {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
 /* Numeric cells */
 .num {
     font-family: 'JetBrains Mono', monospace;
@@ -492,6 +526,7 @@ table.tours-tbl {
     .btn { flex: 1; justify-content: center; }
     .tours-tbl thead th, .tours-tbl td { padding: .75rem .75rem; }
 }
+
 </style>
 {% endblock %}
 
@@ -612,7 +647,7 @@ table.tours-tbl {
                     <thead>
                         <tr>
                             <th>{% trans "Tour" %}</th>
-                            <th>{% trans "Category" %}</th>
+                            <th>{% trans "Category / Language" %}</th>
                             <th class="tc">{% trans "Status" %}</th>
                             <th class="tc">{% trans "Rating" %}</th>
                             <th class="tc">{% trans "Reviews" %}</th>
@@ -652,7 +687,26 @@ table.tours-tbl {
                             </td>
 
                             <!-- Category -->
-                            <td><span class="badge badge-cat">{{ tour.category }}</span></td>
+                            <!--<td><span class="badge badge-cat">{{ tour.category }}</span></td>-->
+                            <td>
+                                <div class="category-language-cell">
+                                    <span class="badge badge-cat">{{ tour.category }}</span>
+                            
+                                    {% if tour.language == "it" %}
+                                        <span class="badge badge-lang badge-lang-it">
+                                            🇮🇹 IT
+                                        </span>
+                                    {% elif tour.language == "en" %}
+                                        <span class="badge badge-lang badge-lang-en">
+                                            🇬🇧 EN
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-lang badge-lang-default">
+                                            {{ tour.language|default:"-"|upper }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
 
                             <!-- Status -->
                             <td class="tc">
