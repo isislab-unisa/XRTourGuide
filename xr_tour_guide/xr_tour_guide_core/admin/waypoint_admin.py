@@ -48,6 +48,25 @@ class WaypointAdmin(UnfoldNestedStackedInline):
                 '</div>'
             )
         }),
+        (_('ℹ️ Preliminary Information'), {
+            'fields': ('is_preliminary_info',),
+            'description': (
+                '<div style="background: light-dark(#eef2ff, #312e81); padding: 12px; border-radius: 6px; '
+                'margin-bottom: 12px; border-left: 4px solid light-dark(#6366f1, #a5b4fc); '
+                'color: light-dark(#312e81, #eef2ff);">'
+                '<strong>ℹ️ ' + str(_('What is this?')) + '</strong><br>' +
+                str(_('Enable this option when the point of interest is not a real geolocated stop, but an introductory or informational section shown at the beginning of the tour.')) +
+                '<br><br>'
+                '<strong>' + str(_('Effects:')) + '</strong>'
+                '<ul style="margin: 8px 0 0 18px; padding: 0;">'
+                '<li>' + str(_('It is shown in the itinerary and mobile app as preliminary information.')) + '</li>'
+                '<li>' + str(_('It is excluded from the map and geolocation-based navigation.')) + '</li>'
+                '<li>' + str(_('It is excluded from AI recognition and model training.')) + '</li>'
+                '<li>' + str(_('It is excluded from tour completion logic.')) + '</li>'
+                '</ul>'
+                '</div>'
+            ),
+        }),
         (_('🗺️ Map Location'), {
             'fields': ('place', 'coordinates',),
             'description': (
@@ -267,6 +286,7 @@ class WaypointAdmin(UnfoldNestedStackedInline):
             # 'admin/js/init_maps.js',
             'admin/js/init_markdown_editor.js',
             'admin/js/hide_waypoint_coordinates.js',
+            'admin/js/preliminary_waypoint.js'
         ]
         css = {
             'all': [

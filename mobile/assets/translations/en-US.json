@@ -155,5 +155,8 @@
     "server_selection_unavailable": "The selected server is currently unavailable. Please choose another server or try again later.",
     "change_server": "Change Content Server",
     "guest_review_not_allowed": "Guest users cannot leave reviews. Please log in or create an account to leave a review.",
-    "no_nearby_tours": "No Nearby Tours available. Please check back later or explore other areas."
+    "no_nearby_tours": "No Nearby Tours available. Please check back later or explore other areas.",
+    "preliminary_info": "Preliminary information",
+    "no_map_waypoints": "This tour has no georeferenced points to show on the map.",
+    "no_recognizable_waypoints": "This tour has no recognizable points."
 }

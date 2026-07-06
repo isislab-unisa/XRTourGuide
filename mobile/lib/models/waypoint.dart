@@ -9,6 +9,7 @@ class Waypoint {
   final String category;
   final List<Waypoint>? subWaypoints;
   final int position;
+  final bool isPreliminaryInfo;
 
   Waypoint({
     required this.id,
@@ -21,15 +22,18 @@ class Waypoint {
     required this.category,
     required this.position,
     this.subWaypoints,
+    this.isPreliminaryInfo = false,
   });
 
   factory Waypoint.fromJson(Map<String, dynamic> json) {
     final imagesJson = json['images'] as List<dynamic>?;
 
     // Supporta sia List<Map>{image_name} (online) che List<String> (offline)
-    final images = (imagesJson ?? [])
+    final images =
+        (imagesJson ?? [])
             .map<String>((img) {
-              if (img is Map<String, dynamic> && img.containsKey('image_name')) {
+              if (img is Map<String, dynamic> &&
+                  img.containsKey('image_name')) {
                 final name = img['image_name'];
                 return name as String;
               } else if (img is String) {
@@ -48,14 +52,17 @@ class Waypoint {
       description: json['description'] as String,
       latitude: (json['lat'] as num).toDouble(),
       longitude: (json['lon'] as num).toDouble(),
-      // images: imagesJson!.map((img) => img["image_name"] as String).toList(),
       images: images,
-      // images: [],
-      category: json['category'] != null ? json['category'] as String : "Generale",
+      category:
+          json['category'] != null ? json['category'] as String : "Generale",
       position: (json["position"] as num?)?.toInt() ?? 0,
-      subWaypoints: json["sub_waypoints"] != null ? (json['sub_waypoints'] as List<dynamic>?)
-          ?.map((sub) => Waypoint.fromJson(sub as Map<String, dynamic>))
-          .toList() : null,
+      isPreliminaryInfo: json['is_preliminary_info'] == true || json["isPreliminaryInfo"] == true,
+      subWaypoints:
+          json["sub_waypoints"] != null
+              ? (json['sub_waypoints'] as List<dynamic>?)
+                  ?.map((sub) => Waypoint.fromJson(sub as Map<String, dynamic>))
+                  .toList()
+              : null,
     );
   }
 
@@ -71,6 +78,8 @@ class Waypoint {
       'category': category,
       'position': position,
       'sub_waypoints': subWaypoints?.map((wp) => wp.toJson()).toList(),
+      'is_preliminary_info': isPreliminaryInfo,
+      'isPreliminaryInfo': isPreliminaryInfo,
     };
   }
 

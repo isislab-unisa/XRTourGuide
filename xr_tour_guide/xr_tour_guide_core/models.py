@@ -181,6 +181,8 @@ class Waypoint(models.Model):
     readme_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['md'])], verbose_name=_("Readme Item"))
     video_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp4', 'mkv', 'mov'])], verbose_name=_("Video Item"))
     audio_item = models.FileField(upload_to=upload_media_item, storage=MinioStorage(), null=True, blank=True, validators=[FileExtensionValidator(['mp3', 'wav'])], verbose_name=_("Audio Item"))
+
+    is_preliminary_info = models.BooleanField(default=False, verbose_name=_("Preliminary Information"), help_text=_("Indicates whether this waypoint is preliminary information for the tour."))
     
     def save(self, *args, **kwargs):
         if self.tour and self.tour.category == Category.INDOOR:
@@ -191,6 +193,11 @@ class Waypoint(models.Model):
                 Waypoint.objects.filter(tour=self.tour).aggregate(models.Max('position')).get("max_position")
             )
             self.position = 0 if last_position is None else last_position + 1
+
+        if self.is_preliminary_info:
+            self.coordinates = self.tour.coordinates
+        elif self.tour and self.tour.category == Category.INDOOR:
+            self.coordinates = self.tour.coordinates
             
         is_new = self.pk is None
         old_files = {

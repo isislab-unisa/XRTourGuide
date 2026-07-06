@@ -293,12 +293,12 @@ def inference(request):
         }
         return JsonResponse(response_data, status=200)
     
-    waypoint = tour.waypoints.filter(title=result.get("message")).first()
+    waypoint = tour.waypoints.filter(title=result.get("message"), is_preliminary_info=False).first()
 
     
     if waypoint is None:
         for sub_tour in tour.sub_tours.all():
-            waypoint = sub_tour.waypoints.filter(title=result.get("message")).first()
+            waypoint = sub_tour.waypoints.filter(title=result.get("message"), is_preliminary_info=False).first()
             if waypoint:
                 break
 

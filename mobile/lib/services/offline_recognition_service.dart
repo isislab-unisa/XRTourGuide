@@ -474,7 +474,7 @@ class OfflineRecognitionService {
       qGray,
       cv.Mat.empty(),
       keypoints: qKp,
-      description: qDesc,
+      descriptors: qDesc,
     );
 
     if (qDesc.isEmpty) {

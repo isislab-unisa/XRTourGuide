@@ -15,7 +15,7 @@ def ensure_pmtiles_for_tour(tour_id: int):
     except Tour.DoesNotExist:
         return {"ok": False, "error": "Tour not found"}
 
-    waypoints = tour.waypoints.order_by("position", "id")
+    waypoints = tour.waypoints.filter(is_preliminary_info=False).order_by("position", "id")
     if not waypoints.exists():
         return {"ok": False, "error": "No waypoints found for this tour"}
 

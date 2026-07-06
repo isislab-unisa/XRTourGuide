@@ -261,6 +261,7 @@ class TourPortabilityService:
                     place=wp_data.get("place"),
                     coordinates=wp_data["coordinates"],
                     description=wp_data.get("description"),
+                    is_preliminary_info=wp_data.get("is_preliminary_info", False)
                 )
 
                 # resources
@@ -340,6 +341,7 @@ class TourPortabilityService:
                         place=wp_data.get("place"),
                         coordinates=wp_data["coordinates"],
                         description=wp_data.get("description"),
+                        is_preliminary_info=wp_data.get("is_preliminary_info", False)
                     )
 
                     resources = wp_data.get("resources", {})
@@ -420,6 +422,7 @@ class TourPortabilityService:
             "description": waypoint.description,
             "coordinates": waypoint.coordinates,
             "place": waypoint.place,
+            "is_preliminary_info": waypoint.is_preliminary_info,
             "images": [],
             "links": [],
             "resources": {

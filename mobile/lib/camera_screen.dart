@@ -312,14 +312,16 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     try{
       await _getTourWaypoints();
 
+      final recognizableWaypoints = _waypoints.where((wp) => !wp.isPreliminaryInfo).toList();
+
       int waypointId = widget.initialWaypointId ?? -1;
       if (waypointId == -1){
-        if (_waypoints.isNotEmpty) waypointId = _waypoints.first.id;
+        if (recognizableWaypoints.isNotEmpty) waypointId = recognizableWaypoints.first.id;
       }
 
       Waypoint? wp;
       try {
-        wp = _waypoints.firstWhere((w) => w.id == waypointId);
+        wp = recognizableWaypoints.firstWhere((w) => w.id == waypointId);
       } catch(e) {
         wp = null;
       }
@@ -1508,7 +1510,9 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           setState(() {
             _waypoints = [];
             for (var waypoint in waypoints) {
-              _waypoints.add(waypoint);
+              if (!waypoint.isPreliminaryInfo) {
+                _waypoints.add(waypoint);
+              }
               if (waypoint.subWaypoints != null){
                 _waypoints.addAll(waypoint.subWaypoints!);
               }
@@ -2198,7 +2202,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
     try {
       // Ottieni tutti gli ID dei waypoint del tour corrente
       List<int> allWaypointIds =
-          _waypoints.map((waypoint) => waypoint.id).toList();
+          _waypoints.where((waypoint) => !waypoint.isPreliminaryInfo).map((waypoint) => waypoint.id).toList();
 
       // Aggiungi anche gli ID dei sub-waypoint se presenti
       for (var waypoint in _waypoints) {

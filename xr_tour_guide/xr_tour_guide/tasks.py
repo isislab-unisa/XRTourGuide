@@ -45,7 +45,7 @@ def call_api_and_save(self, tour_id):
                 storage.save(f"{tour.pk}/data/test/.keep", ContentFile(b""))
                 
             for subtours in tour.sub_tours.all():
-                waipoints = subtours.waypoints.all()
+                waipoints = subtours.waypoints.filter(is_preliminary_info=False)
                 for waypoint in waipoints:
                     num_img = len(waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value))
                     if num_img < 5:
@@ -72,7 +72,7 @@ def call_api_and_save(self, tour_id):
                         }
                         waypoints_gps.append(gps_info)
                             
-            waypoints = tour.waypoints.all()
+            waypoints = tour.waypoints.filter(is_preliminary_info=False)
             for waypoint in waypoints:
                 images = waypoint.images.filter(type_of_images=TypeOfImage.DEFAULT.value)
                 num_img = len(images)
