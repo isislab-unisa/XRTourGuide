@@ -1,47 +1,189 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .review-page {
+        color: light-dark(#111827, #e5e7eb);
+    }
+
+    .review-page-header {
+        margin-bottom: 24px;
+    }
+
+    .review-back-link {
+        color: light-dark(#2563eb, #60a5fa);
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .review-back-link:hover {
+        color: light-dark(#1d4ed8, #93c5fd);
+        text-decoration: underline;
+    }
+
+    .review-page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: light-dark(#111827, #f9fafb);
+        margin: 12px 0 0;
+    }
+
+    .review-page-subtitle {
+        margin-top: 4px;
+        font-size: 14px;
+        color: light-dark(#6b7280, #9ca3af);
+    }
+
+    .review-summary {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+    }
+
+    .review-card {
+        background: light-dark(#ffffff, #111827);
+        border: 1px solid light-dark(#e5e7eb, #374151);
+        color: light-dark(#111827, #e5e7eb);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.35));
+    }
+
+    .review-card + .review-card {
+        margin-top: 16px;
+    }
+
+    .review-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .review-title {
+        color: light-dark(#111827, #f9fafb);
+        font-weight: 700;
+    }
+
+    .review-muted {
+        color: light-dark(#6b7280, #9ca3af);
+    }
+
+    .review-small {
+        font-size: 13px;
+    }
+
+    .review-comment {
+        margin-top: 16px;
+        color: light-dark(#374151, #d1d5db);
+        white-space: pre-line;
+        line-height: 1.6;
+    }
+
+    .review-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .badge-blue {
+        background: light-dark(#dbeafe, #1e3a8a);
+        color: light-dark(#1d4ed8, #bfdbfe);
+        border: 1px solid light-dark(#93c5fd, #3b82f6);
+    }
+
+    .badge-yellow {
+        background: light-dark(#fef3c7, #78350f);
+        color: light-dark(#92400e, #fde68a);
+        border: 1px solid light-dark(#fcd34d, #f59e0b);
+    }
+
+    .badge-gray {
+        background: light-dark(#f3f4f6, #374151);
+        color: light-dark(#374151, #e5e7eb);
+        border: 1px solid light-dark(#d1d5db, #6b7280);
+    }
+
+    .review-delete-wrap {
+        margin-top: 16px;
+        text-align: right;
+    }
+
+    .review-delete-link {
+        color: light-dark(#dc2626, #f87171);
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .review-delete-link:hover {
+        color: light-dark(#b91c1c, #fca5a5);
+        text-decoration: underline;
+    }
+
+    .review-empty {
+        background: light-dark(#ffffff, #111827);
+        border: 1px solid light-dark(#e5e7eb, #374151);
+        color: light-dark(#6b7280, #9ca3af);
+        border-radius: 12px;
+        padding: 32px;
+        text-align: center;
+        box-shadow: 0 1px 3px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.35));
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="p-6">
-    <div class="mb-6">
+<div class="p-6 review-page">
+    <div class="review-page-header">
         <a href="{% url 'admin:xr_tour_guide_core_review_changelist' %}"
-           class="text-sm text-blue-600 hover:text-blue-800">
+           class="review-back-link">
             ← {% trans "Back to tours" %}
         </a>
 
-        <h1 class="text-2xl font-semibold mt-3">
+        <h1 class="review-page-title">
             {{ tour.title }}
         </h1>
 
-        <div class="text-sm text-gray-500 mt-1">
+        <div class="review-page-subtitle">
             {{ tour.place }} · {{ tour.category }}
             {% if tour.language %}
                 · {{ tour.language|upper }}
             {% endif %}
         </div>
 
-        <div class="mt-3 flex gap-2">
-            <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+        <div class="review-summary">
+            <span class="review-badge badge-blue">
                 {{ review_count }} {% trans "reviews" %}
             </span>
 
-            <span class="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-700">
+            <span class="review-badge badge-yellow">
                 ⭐ {% if avg_rating %}{{ avg_rating|floatformat:1 }}{% else %}-{% endif %}
             </span>
         </div>
     </div>
 
     {% if reviews %}
-        <div class="space-y-4">
+        <div class="review-list">
             {% for review in reviews %}
-                <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-start justify-between gap-4">
+                <div class="review-card">
+                    <div class="review-card-header">
                         <div>
-                            <div class="font-semibold text-gray-900">
+                            <div class="review-title">
                                 {{ review.user.username }}
                             </div>
 
-                            <div class="text-sm text-gray-500">
+                            <div class="review-muted review-small">
                                 {% if review.user.email %}
                                     {{ review.user.email }} ·
                                 {% endif %}
@@ -49,19 +191,19 @@
                             </div>
                         </div>
 
-                        <div class="rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-700">
+                        <div class="review-badge badge-yellow">
                             ⭐ {{ review.rating }}
                         </div>
                     </div>
 
-                    <div class="mt-4 whitespace-pre-line text-gray-700">
+                    <div class="review-comment">
                         {{ review.comment }}
                     </div>
 
-                    {% if has_delete_permission %}
-                        <div class="mt-4 text-right">
+                    {% if can_delete_reviews %}
+                        <div class="review-delete-wrap">
                             <a href="{% url 'admin:xr_tour_guide_core_review_delete' review.id %}"
-                               class="text-sm font-semibold text-red-600 hover:text-red-800">
+                               class="review-delete-link">
                                 {% trans "Delete" %}
                             </a>
                         </div>
@@ -70,7 +212,7 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-500">
+        <div class="review-empty">
             {% trans "No reviews found for this tour." %}
         </div>
     {% endif %}
