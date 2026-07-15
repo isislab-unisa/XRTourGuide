@@ -1,8 +1,12 @@
+from tensorflow.core.protobuf.struct_pb2 import NoneValue
+from typing_extensions import ReadOnly
+
 from django.contrib import admin
 from django import forms
 import nested_admin
 from unfold.admin import ModelAdmin
-from ..models import Tour
+from ..models import Tour, TourCollaborator
+from .permission import can_edit_tour, can_manage_tour_collaborators, can_view_tour, visible_tours_queryset, can_delete_tour
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.db import models
@@ -25,6 +29,34 @@ import time
 from django.utils.text import slugify
 from xr_tour_guide.tasks import call_api_and_save, generate_offline_bundle
 
+class TourCollaboratorInline(admin.TabularInline):
+    model = TourCollaborator
+    extra = 0
+    autocomplete_fields = ("user",)
+    fields = ("user", "role", "created_at")
+    readonly_fields = ("created_at",)
+
+    def has_view_permission(self, request, obj=None):
+        if obj is None:
+            return True
+
+        return can_view_tour(request.user, obj)
+    
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_manage_tour_collaborators(request.user, obj)
+
+    def has_add_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_manage_tour_collaborators(request.user, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_manage_tour_collaborators(request.user, obj)
+
 class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     show_facets = admin.ShowFacets.ALLOW
     hide_ordering_field = True
@@ -37,7 +69,7 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
     search_fields = ('title', 'subtitle', 'description', 'place')
     date_hierarchy = 'creation_time'
     form = TourForm
-    inlines = [WaypointAdmin]
+    inlines = [TourCollaboratorInline ,WaypointAdmin]
     
     fieldsets = (
         (None, {
@@ -318,13 +350,18 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
 
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
         
-        if not request.user.is_superuser:
-            qs = qs.filter(user=request.user)
+    #     if not request.user.is_superuser:
+    #         qs = qs.filter(user=request.user)
 
-        return qs
+    #     return qs
+    
+    def get_queryset(self, request):
+       qs = super().get_queryset(request)
+       return visible_tours_queryset(request.user, qs)
+    
     
     def changelist_view(self, request, extra_context=None):
         return super().changelist_view(request, extra_context)
@@ -394,27 +431,54 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
         
         return super().change_view(request, object_id, form_url, extra_context)
     
+    # def has_change_permission(self, request, obj=None):
+    #     has_permission = super().has_change_permission(request, obj)
+    #     if not has_permission:
+    #         return False
+    #     if obj is None:
+    #         return True
+    #     if obj.status in ['BUILDING', 'SERVING', 'ENQUEUED']:
+    #         return False
+    #     return True
+
+    # def has_delete_permission(self, request, obj=None):
+    #     has_permission = super().has_delete_permission(request, obj)
+    #     if not has_permission:
+    #         return False
+    #     if obj is None:
+    #         return True
+    #     if obj.status in ['SERVING', 'BUILDING', 'ENQUEUED']:
+    #         return False
+    #     if not request.user.is_superuser and obj.user != request.user:
+    #         return False
+    #     return True
+
     def has_change_permission(self, request, obj=None):
         has_permission = super().has_change_permission(request, obj)
         if not has_permission:
             return False
+    
         if obj is None:
             return True
+    
         if obj.status in ['BUILDING', 'SERVING', 'ENQUEUED']:
             return False
-        return True
+    
+        return can_edit_tour(request.user, obj)
 
     def has_delete_permission(self, request, obj=None):
         has_permission = super().has_delete_permission(request, obj)
         if not has_permission:
             return False
+    
         if obj is None:
             return True
+    
         if obj.status in ['SERVING', 'BUILDING', 'ENQUEUED']:
             return False
-        if not request.user.is_superuser and obj.user != request.user:
-            return False
-        return True
+    
+        return can_delete_tour(request.user, obj)
+
     
     def get_urls(self):
         urls = super().get_urls()

@@ -13,6 +13,7 @@ from django.urls import reverse
 from ..forms.waypoint_form import WaypointForm
 from .base import UnfoldNestedStackedInline
 from django.utils.translation import gettext_lazy as _
+from .permission import can_edit_tour, can_view_tour, visible_tours_queryset
 
 class WaypointAdmin(UnfoldNestedStackedInline):
     model = Waypoint
@@ -30,11 +31,13 @@ class WaypointAdmin(UnfoldNestedStackedInline):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+
+        visible_tours = visible_tours_queryset(
+            request.user,
+            Tour.objects.all(),
+        )
         
-        if not request.user.is_superuser:
-            qs = qs.filter(tour__user=request.user)
-        
-        return qs
+        return qs.filter(tour__in=visible_tours).distinct()
     
     fieldsets = (
         (_('📍 Basic Information'), {
@@ -269,15 +272,39 @@ class WaypointAdmin(UnfoldNestedStackedInline):
         PlainLocationField: {"widget": LocationWidget},
     }
     
-    def has_delete_permission(self, request, obj=None):
-        has_permission = super().has_delete_permission(request, obj)
-        if not has_permission:
-            return False
+    # def has_delete_permission(self, request, obj=None):
+    #     has_permission = super().has_delete_permission(request, obj)
+    #     if not has_permission:
+    #         return False
+    #     if obj is None:
+    #         return True
+    #     if not request.user.is_superuser and obj.user != request.user:
+    #         return False
+    #     return True
+
+    def has_view_permission(self, request, obj=None):
         if obj is None:
             return True
-        if not request.user.is_superuser and obj.user != request.user:
-            return False
-        return True
+        return can_view_tour(request.user, obj)
+    
+    
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_edit_tour(request.user, obj)
+    
+    
+    def has_add_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_edit_tour(request.user, obj)
+    
+    
+    def has_delete_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_edit_tour(request.user, obj)
+
     
     class Media:
         js = [
@@ -310,30 +337,78 @@ class WaypointViewImageAdmin(ModelAdmin):
             )
         return _("No image")
     
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+        
+    #     if not request.user.is_superuser:
+    #         qs = qs.filter(waypoint__tour__user=request.user)
+        
+    #     return qs
+    # 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+    
+        visible_tours = visible_tours_queryset(
+            request.user,
+            Tour.objects.all(),
+        )
+    
+        return qs.filter(waypoint__tour__in=visible_tours).distinct()
+
+    
+    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    #     if db_field.name == "waypoint":
+    #         if not request.user.is_superuser:
+    #             kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
         
-        if not request.user.is_superuser:
-            qs = qs.filter(waypoint__tour__user=request.user)
-        
-        return qs
+    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "waypoint":
-            if not request.user.is_superuser:
-                kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
-        
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+            visible_tours = visible_tours_queryset(
+                request.user,
+                Tour.objects.all(),
+            )
+    
+            kwargs["queryset"] = Waypoint.objects.filter(
+                tour__in=visible_tours,
+            ).distinct()
+    
+        return super().formfield_for_foreignkey(db_field, request, **kwargs) 
+    
+    
+    # def has_delete_permission(self, request, obj=None):
+    #     has_permission = super().has_delete_permission(request, obj)
+    #     if not has_permission:
+    #         return False
+    #     if obj is None:
+    #         return True
+    #     if not request.user.is_superuser and obj.waypoint.tour.user != request.user:
+    #         return False
+    #     return True
+
+    def has_view_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_view_tour(request.user, obj.waypoint.tour)
+    
+    
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_edit_tour(request.user, obj.waypoint.tour)
+    
     
     def has_delete_permission(self, request, obj=None):
         has_permission = super().has_delete_permission(request, obj)
         if not has_permission:
             return False
+    
         if obj is None:
             return True
-        if not request.user.is_superuser and obj.waypoint.tour.user != request.user:
-            return False
-        return True
+    
+        return can_edit_tour(request.user, obj.waypoint.tour)
+
 
 admin.site.register(WaypointViewImage, WaypointViewImageAdmin)
 
@@ -366,29 +441,77 @@ class WaypointViewLinkAdmin(ModelAdmin):
             )
         return _("No link")
     
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+        
+    #     if not request.user.is_superuser:
+    #         qs = qs.filter(waypoint__tour__user=request.user)
+        
+    #     return qs
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        
-        if not request.user.is_superuser:
-            qs = qs.filter(waypoint__tour__user=request.user)
-        
-        return qs
     
+        visible_tours = visible_tours_queryset(
+            request.user,
+            Tour.objects.all(),
+        )
+    
+        return qs.filter(waypoint__tour__in=visible_tours).distinct()
+
+    
+    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    #     if db_field.name == "waypoint":
+    #         if not request.user.is_superuser:
+    #             kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
+        
+    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "waypoint":
-            if not request.user.is_superuser:
-                kwargs["queryset"] = Waypoint.objects.filter(tour__user=request.user)
-        
+            visible_tours = visible_tours_queryset(
+                request.user,
+                Tour.objects.all(),
+            )
+    
+            kwargs["queryset"] = Waypoint.objects.filter(
+                tour__in=visible_tours,
+            ).distinct()
+    
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    
+    # def has_delete_permission(self, request, obj=None):
+    #     has_permission = super().has_delete_permission(request, obj)
+    #     if not has_permission:
+    #         return False
+    #     if obj is None:
+    #         return True
+    #     if not request.user.is_superuser and obj.waypoint.tour.user != request.user:
+    #         return False
+    #     return True
+
+    def has_view_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_view_tour(request.user, obj.waypoint.tour)
+    
+    
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return can_edit_tour(request.user, obj.waypoint.tour)
+    
     
     def has_delete_permission(self, request, obj=None):
         has_permission = super().has_delete_permission(request, obj)
         if not has_permission:
             return False
+    
         if obj is None:
             return True
-        if not request.user.is_superuser and obj.waypoint.tour.user != request.user:
-            return False
-        return True
+    
+        return can_edit_tour(request.user, obj.waypoint.tour)
+
          
 admin.site.register(WaypointViewLink, WaypointViewLinkAdmin)
