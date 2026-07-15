@@ -1,5 +1,5 @@
-from django.db import models
-from xr_tour_guide_core.models import Tour, TourCollaboratorRole
+from django.db.models import Q
+from xr_tour_guide_core.models import TourCollaboratorRole
 
 def can_view_tour(user, tour):
     """
@@ -32,8 +32,8 @@ def visible_tours_queryset(user, queryset):
         return queryset
         
     return queryset.filter(
-        models.Q(user=user) |
-        models.Q(collaborators__user=user)
+        Q(user=user) |
+        Q(collaborators__user=user)
     ).distinct()
 
 def can_delete_tour(user, tour):
