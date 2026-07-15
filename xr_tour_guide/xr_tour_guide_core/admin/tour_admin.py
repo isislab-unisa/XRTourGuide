@@ -25,8 +25,9 @@ from pathlib import Path
 import time
 from django.utils.text import slugify
 from xr_tour_guide.tasks import call_api_and_save, generate_offline_bundle
+from .base import UnfoldNestedTabularInline
 
-class TourCollaboratorInline(admin.TabularInline):
+class TourCollaboratorInline(UnfoldNestedTabularInline):
     model = TourCollaborator
     extra = 0
     autocomplete_fields = ("user",)
