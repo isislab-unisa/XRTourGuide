@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.db import models
 from ..forms.tour_forms import TourForm
-from .waypoint_admin import WaypointAdmin
+from .waypoint_admin import WaypointAdmin, ReadonlyWaypointInline
 from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
@@ -319,7 +319,56 @@ class TourAdmin(nested_admin.NestedModelAdmin, ModelAdmin):
                 {lock_notice}
             </div>'''
         )
-        
+
+    def _is_readonly_collaborator_view(self, request, obj=None):
+        if obj is None:
+            return False
+
+        return can_view_tour(request.user, obj) and not can_edit_tour(request.user, obj)
+
+    def get_inlines(self, request, obj=None):
+        if self._is_readonly_collaborator_view(request, obj):
+            return [ReadonlyWaypointInline]
+
+        return super().get_inlines(request, obj)
+
+    def get_fieldset(self, request, obj=None):
+        if self._is_readonly_collaborator_view(request, obj):
+            return (
+                (_('🎯 Main Information'), {
+                    'fields': ('title', 'subtitle', 'category', 'language'),
+                }),
+                (_('📝 Full Description'), {
+                    'fields': ('description',),
+                }),
+                (_('📍 Location and Area'), {
+                    'fields': ('place', 'coordinates'),
+                }),
+                (_('⚙️ System Information'), {
+                    'fields': ('user', 'creation_time', 'status'),
+                    'classes': ('collapse',),
+                }),
+            )
+        return super().get_fieldsets(request, obj)
+
+    def get_readonly_fields(self, request, obj=None):
+        if self._is_readonly_collaborator_view(request, obj):
+            return (
+                'title',
+                'subtitle',
+                'category',
+                'language',
+                'description',
+                'place',
+                'coordinates',
+                'user',
+                'creation_time',
+                'status',
+            )
+    
+        return super().get_readonly_fields(request, obj)
+
+            
     def get_form(self, request, obj=None, **kwargs):
         Form = super().get_form(request, obj, **kwargs)
 
