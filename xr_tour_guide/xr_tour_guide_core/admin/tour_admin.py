@@ -41,17 +41,17 @@ class TourCollaboratorInline(UnfoldNestedTabularInline):
         return can_view_tour(request.user, obj)
     
     def has_change_permission(self, request, obj=None):
-        if obj is None:
+        if obj is None or obj.pk is None:
             return True
         return can_manage_tour_collaborators(request.user, obj)
 
     def has_add_permission(self, request, obj=None):
-        if obj is None:
+        if obj is None or obj.pk is None:
             return True
         return can_manage_tour_collaborators(request.user, obj)
 
     def has_delete_permission(self, request, obj=None):
-        if obj is None:
+        if obj is None or obj.pk is None:
             return True
         return can_manage_tour_collaborators(request.user, obj)
 
