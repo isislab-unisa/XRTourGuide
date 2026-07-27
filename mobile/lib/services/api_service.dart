@@ -14,7 +14,10 @@ class ApiService {
 
   final excludedPaths = [
     '/api/token/',
-    '/api/token/refresh/',
+    '/api/token/refresh/',    
+    '/api/google-login/',
+    '/api/apple-login/',
+    '/reset-password/',
     '/api_register/',
     '/tour_list/',
     '/tour_details/',
@@ -29,13 +32,11 @@ class ApiService {
 
   static String appSignature = "APP_SIGNATURE_XR_TOUR_GUIDE_MOBILE";
   
-  static String basicUrl = 'https://';
-
   static const String centralizedUrl =
-      'COMMUNITY_SERVER_URL'; // Sostituisci con l'URL del tuo server centrale
+      'COMMUNITY_SERVER_URL'; 
 
+  static String basicUrl = centralizedUrl;
 
-      
   ApiService(this.ref) : _dio = Dio(BaseOptions(baseUrl: centralizedUrl)) {
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -100,27 +101,80 @@ class ApiService {
 
   Dio get dio => _dio;
 
+  // Options _getOptions({String? baseUrl, Options? options}) {
+  //   final opts = options ?? Options();
+  //   if (baseUrl != null) {
+  //     opts.extra = {...(opts.extra ?? {}), 'baseUrl': baseUrl};
+  //   }
+  //   return opts;
+  // }
+
   Options _getOptions({String? baseUrl, Options? options}) {
     final opts = options ?? Options();
-    if (baseUrl != null) {
-      opts.extra = {...(opts.extra ?? {}), 'baseUrl': baseUrl};
+  
+    if (baseUrl != null && baseUrl.trim().isNotEmpty) {
+      opts.extra = {
+        ...(opts.extra ?? {}),
+        'baseUrl': _normalizeBaseUrl(baseUrl),
+      };
     }
+  
     return opts;
   }
-
-  void updateBaseUrl(String newBaseUrl) {
-    String normalized = newBaseUrl;
+  
+  Options _communityOptions({Options? options}) {
+    return _getOptions(
+      baseUrl: centralizedUrl,
+      options: options,
+    );
+  }
+  
+  String _normalizeBaseUrl(String value) {
+    var normalized = value.trim();
+  
     if (!normalized.startsWith('http://') &&
         !normalized.startsWith('https://')) {
-      normalized = 'https://' + normalized;
+      normalized = 'https://$normalized';
     }
-    basicUrl = normalized;
-    debugPrint('ApiService basicUrl set to: $normalized');
+  
+    final uri = Uri.tryParse(normalized);
+  
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      throw ArgumentError.value(value, 'baseUrl', 'Invalid base URL');
+    }
+  
+    return normalized;
   }
 
+
+  // void updateBaseUrl(String newBaseUrl) {
+  //   String normalized = newBaseUrl;
+  //   if (!normalized.startsWith('http://') &&
+  //       !normalized.startsWith('https://')) {
+  //     normalized = 'https://' + normalized;
+  //   }
+  //   basicUrl = normalized;
+  //   debugPrint('ApiService basicUrl set to: $normalized');
+  // }
+
+  // String getCurrentBaseUrl() {
+  //   return basicUrl;
+  // }
+
+  void updateBaseUrl(String newBaseUrl) {
+    final normalized = _normalizeBaseUrl(newBaseUrl);
+    basicUrl = normalized;
+    debugPrint('ApiService selected service baseUrl set to: $normalized');
+  }
+  
   String getCurrentBaseUrl() {
     return basicUrl;
   }
+  
+  String getCommunityBaseUrl() {
+    return centralizedUrl;
+  }
+
 
   Future<String?> _refreshToken() async {
     try {
@@ -133,6 +187,7 @@ class ApiService {
       final response = await _dio.post(
         '/api/token/refresh/',
         data: {'refresh': refreshToken},
+        options: _communityOptions(),
       );
       final newAccessToken = response.data['access'];
       // final newRefreshToken = response.data['refreshToken'];
@@ -156,15 +211,15 @@ class ApiService {
   }) async {
     final targetUrl = urlToCheck ?? dio.options.baseUrl;
 
-    try{
+    try {
       final uri = Uri.parse(targetUrl);
       final host = uri.host;
       final port = uri.hasPort ? uri.port : (uri.scheme == "https" ? 443 : 80);
-  
+
       debugPrint("URI: ${uri}");
       debugPrint("HOST: ${host}");
       debugPrint("PORT: ${port}");
-  
+
       final socket = await Socket.connect(host, port, timeout: timeout);
       socket.destroy();
       return true;
@@ -242,10 +297,9 @@ class ApiService {
   Future<Response> googleMobileLogin(String idToken, {String? baseUrl}) async {
     try {
       final response = await dio.post(
-        '/google-mobile-login/',
+        '/api/google-login/',
         data: {'id_token': idToken},
-        options: _getOptions(
-          baseUrl: baseUrl ?? getCurrentBaseUrl(),
+        options: _communityOptions(
           options: Options(
             followRedirects: false,
             validateStatus: (status) => status != null && status < 400,
@@ -265,11 +319,10 @@ class ApiService {
     String? givenName,
     String? familyName,
     String? email,
-    String? baseUrl,
   }) async {
     try {
       final response = await dio.post(
-        '/apple-mobile-login/',
+        '/api/apple-login/',
         data: {
           'identity_token': identityToken,
           'authorization_code': authorizationCode,
@@ -277,8 +330,7 @@ class ApiService {
           'family_name': familyName,
           'email': email,
         },
-        options: _getOptions(
-          baseUrl: baseUrl ?? getCurrentBaseUrl(),
+        options: _communityOptions(
           options: Options(
             followRedirects: false,
             validateStatus: (status) => status != null && status < 400,
@@ -297,11 +349,10 @@ class ApiService {
       final response = await dio.post(
         '/api/token/',
         data: {'email': email, 'password': password},
-        options: Options(
-          validateStatus:
-              (status) =>
-                  status == 200 ||
-                  status == 401, // Allow 401 for invalid credentials
+        options: _communityOptions(
+          options: Options(
+            validateStatus: (status) => status == 200 || status == 401,
+          ),
         ),
       );
       debugPrint(
@@ -335,6 +386,7 @@ class ApiService {
           'description': description,
           'city': city,
         },
+        options: _communityOptions(),
       );
       return response;
     } catch (e) {
@@ -385,8 +437,9 @@ class ApiService {
   Future<Response> resetPassword(String email) async {
     try {
       final response = await dio.post(
-        '/forgot-password/',
+        '/reset-password/',
         data: {'email': email},
+        options: _communityOptions(),
       );
       return response;
     } catch (e) {
@@ -408,26 +461,32 @@ class ApiService {
     }
   }
 
-  Future<Response> getAllNearbyTours(int timeout, {String? baseUrl, String? language, int? limit}) async {
+  Future<Response> getAllNearbyTours(
+    int timeout, {
+    String? baseUrl,
+    String? language,
+    int? limit,
+  }) async {
     try {
       final queryParameters = <String, dynamic>{
         if (language != null && language.isNotEmpty) 'language': language,
         if (limit != null) 'num_tours': limit,
       };
-  
-      final options = timeout > 0
-          ? _getOptions(
-              baseUrl: baseUrl,
-              options: Options(sendTimeout: Duration(seconds: timeout)),
-            )
-          : _getOptions(baseUrl: baseUrl);
-  
+
+      final options =
+          timeout > 0
+              ? _getOptions(
+                baseUrl: baseUrl,
+                options: Options(sendTimeout: Duration(seconds: timeout)),
+              )
+              : _getOptions(baseUrl: baseUrl);
+
       final response = await dio.get(
         '/tour_list/',
         queryParameters: queryParameters,
         options: options,
       );
-  
+
       return response;
     } catch (e) {
       debugPrint('Failed to fetch tours: $e');
@@ -449,20 +508,21 @@ class ApiService {
         'num_tours': 5,
         if (language != null && language.isNotEmpty) 'language': language,
       };
-  
-      final options = timeout > 0
-          ? _getOptions(
-              baseUrl: baseUrl,
-              options: Options(sendTimeout: Duration(seconds: timeout)),
-            )
-          : _getOptions(baseUrl: baseUrl);
-  
+
+      final options =
+          timeout > 0
+              ? _getOptions(
+                baseUrl: baseUrl,
+                options: Options(sendTimeout: Duration(seconds: timeout)),
+              )
+              : _getOptions(baseUrl: baseUrl);
+
       final response = await dio.get(
         '/tour_list/',
         queryParameters: queryParameters,
         options: options,
       );
-  
+
       return response;
     } catch (e) {
       debugPrint('Failed to fetch tours: $e');
@@ -492,7 +552,11 @@ class ApiService {
     }
   }
 
-  Future<Response> getTourByCategory(String category, {String? baseUrl, String? language}) async {
+  Future<Response> getTourByCategory(
+    String category, {
+    String? baseUrl,
+    String? language,
+  }) async {
     try {
       final response = await dio.get(
         '/tour_list/',
