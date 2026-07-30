@@ -1329,6 +1329,27 @@
         line-height: 1.2;
         text-align: center;
     }
+
+    .footer-eu-funding {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 18px 0 12px;
+    }
+    
+    .footer-eu-logo {
+        height: 44px;
+        width: auto;
+        display: block;
+        object-fit: contain;
+    }
+    
+    .footer-eu-funding .footer-eu-note {
+        margin: 0;
+    }
+    
     /* --- RESPONSIVE --- */
     @media (max-width: 1200px) {
         .carousel-control-prev {
@@ -1749,9 +1770,17 @@
                 <span class="footer-social-label">Substack</span>
             </a>
         </div>
-        <p class="footer-eu-note">
-            {% trans "Funded by the European Union." %}
-        </p>
+        <div class="footer-eu-funding">
+            <img
+                src="{% static 'xr_tour_guide_public/img/EU.png' %}"
+                alt="{% trans 'European Union logo' %}"
+                class="footer-eu-logo"
+                loading="lazy"
+            >
+            <p class="footer-eu-note">
+                {% trans "Funded by the European Union." %}
+            </p>
+        </div>
         
         <p class="footer-disclaimer">
             {% trans "Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or European Research Executive Agency. Neither the European Union nor the granting authority can be held responsible for them." %}
