@@ -1710,8 +1710,8 @@ msgstr "Prodotti Locali"
 msgid "FUTURAL Logo"
 msgstr "Logo FUTURAL"
 
-msgid "Co-funded by the European Union."
-msgstr "Cofinanziato dall'Unione europea."
+msgid "Funded by the European Union."
+msgstr "Finanziato dall'Unione europea."
 
 msgid "Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or European Research Executive Agency. Neither the European Union nor the granting authority can be held responsible for them."
 msgstr "Le opinioni e i punti di vista espressi sono tuttavia esclusivamente quelli degli autori e non riflettono necessariamente quelli dell'Unione europea o dell'Agenzia esecutiva europea per la ricerca. Né l'Unione europea né l'autorità concedente possono esserne ritenute responsabili."
