@@ -158,5 +158,7 @@
     "preliminary_info": "Informazioni aggiuntive",
     "no_map_waypoints": "Questo tour non contiene punti georeferenziati da mostrare sulla mappa.",
     "no_recognizable_waypoints": "Questo tour non contiene punti riconoscibili.",
-    "no_tours_for_language": "Non ci sono tour disponibili per la lingua selezionata."
+    "no_tours_for_language": "Non ci sono tour disponibili per la lingua selezionata.",
+    "ar_safety_warning": "Avviso di sicurezza AR: i minori devono usare questa funzione sotto la supervisione di un adulto. Presta sempre attenzione all'ambiente circostante durante l'uso della Realtà Aumentata."
+
 }

@@ -159,5 +159,7 @@
     "preliminary_info": "Additional information",
     "no_map_waypoints": "This tour has no georeferenced points to show on the map.",
     "no_recognizable_waypoints": "This tour has no recognizable points.",
-    "no_tours_for_language": "No tours are available for the selected language."
+    "no_tours_for_language": "No tours are available for the selected language.",
+    "ar_safety_warning": "AR safety warning: children should use this feature under parental supervision. Stay aware of your surroundings while using Augmented Reality."
+
 }
