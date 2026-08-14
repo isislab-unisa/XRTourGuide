@@ -145,6 +145,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
+  bool _showCameraSafetyWarning = true;
   double _minZoomLevel = 1.0;
   double _maxZoomLevel = 1.0;
   double _currentZoomLevel = 1.0;
@@ -2131,6 +2132,7 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
   void _startRecognition() async {
     setState(() {
       _recognitionState = RecognitionState.scanning;
+      _showCameraSafetyWarning = false;
       _currentMarkdownContent = """
       """;
     });
@@ -3334,7 +3336,10 @@ class _ARCameraScreenState extends ConsumerState<ARCameraScreen>
           // Mini map (top right)
           if (widget.enableRecognition) _buildMiniMap(context),
 
-          if (_isARMode && !_totemSpawned) _buildARSafetyWarningBanner(context),
+          if (widget.enableRecognition &&
+              _isCameraInitialized &&
+              _showCameraSafetyWarning)
+            _buildARSafetyWarningBanner(context),
 
           // Draggable bottom sheet with landmark info
           _buildDraggableSheet(context),

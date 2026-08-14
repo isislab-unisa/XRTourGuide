@@ -3041,6 +3041,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        bool safetyAccepted = false;
         // Use a StatefulBuilder to manage the state of the stars within the sheet
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
@@ -3096,6 +3097,53 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           ),
                         );
                       }),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orangeAccent),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'review_online_safety_warning'.tr(),
+                              style: TextStyle(
+                                fontSize: context.r.sp(13),
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: safetyAccepted,
+                      activeColor: AppColors.primary,
+                      onChanged: (value) {
+                        setState(() {
+                          safetyAccepted = value ?? false;
+                        });
+                      },
+                      title: Text(
+                        'review_safety_confirmation'.tr(),
+                        style: TextStyle(
+                          fontSize: context.r.sp(13),
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -3169,7 +3217,25 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           onPressed: () {
                             final rating = _userRating;
                             final comment = _reviewController.text;
-
+                            if (!safetyAccepted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('review_safety_required'.tr()),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                            
+                            if (comment.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('review_empty_error'.tr()),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
                             _apiService.leaveReview(
                               tourId,
                               rating,

@@ -160,6 +160,13 @@
     "no_map_waypoints": "This tour has no georeferenced points to show on the map.",
     "no_recognizable_waypoints": "This tour has no recognizable points.",
     "no_tours_for_language": "No tours are available for the selected language.",
-    "ar_safety_warning": "AR safety warning: children should use this feature under parental supervision. Stay aware of your surroundings while using Augmented Reality."
+    "ar_safety_warning": "AR safety warning: children should use this feature under parental supervision. Stay aware of your surroundings while using Augmented Reality.",
+    "review_online_safety_warning": "Online safety reminder: do not share your full name, address, phone number, school, social media profiles, photos of yourself, or any other personal information in reviews. Children should ask an adult before posting.",
+    "review_safety_confirmation": "I understand that I must not share personal information in this review.",
+    "review_safety_required": "Please confirm the online safety reminder before sending your review.",
+    "review_empty_error": "Please write a review before sending.",
+    "profile_personal_info_warning": "Personal information safety: your profile may contain private details. Do not enter your address, phone number, school, social media accounts, or sensitive personal information. Children should update their profile only with adult supervision.",
+    "profile_safety_confirmation": "I understand that I must not share sensitive personal information in my profile.",
+    "profile_safety_required": "Please confirm the personal information safety reminder before saving."
 
 }

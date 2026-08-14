@@ -13,8 +13,6 @@ import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
 import 'utils/platform_page_route.dart';
 
-
-
 class CategoryDetailScreen extends ConsumerStatefulWidget {
   final String categoryName;
   final List<Tour> tours;
@@ -28,11 +26,11 @@ class CategoryDetailScreen extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
+  ConsumerState<CategoryDetailScreen> createState() =>
+      _CategoryDetailScreenState();
 }
 
 class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
-
   late TourService _tourService;
   late AnalyticsService _analytics;
 
@@ -43,20 +41,26 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
     super.initState();
     _tourService = ref.read(tourServiceProvider);
     _analytics = ref.read(analyticsServiceProvider);
-    _loadData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadData();
+      }
+    });
   }
 
   Future<void> _loadData() async {
     // Load all data in parallel
-    await Future.wait([
-      _loadCategoryTours(),
-    ]);
+    await Future.wait([_loadCategoryTours()]);
   }
 
   Future<void> _loadCategoryTours() async {
     try {
       final language = context.locale.languageCode.toLowerCase();
-      final tours = await _tourService.getToursByCategory(widget.categoryName, language: language);
+      final tours = await _tourService.getToursByCategory(
+        widget.categoryName,
+        language: language,
+      );
       if (mounted) {
         setState(() {
           _categoriesTour = tours;
@@ -74,24 +78,18 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
   }
 
   void _showError(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -122,7 +120,12 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
               vertical: 10.0,
             ),
             child: Text(
-              'category_results'.tr(namedArgs: {'category': widget.categoryName, 'count': '${_categoriesTour?.length ?? 0}'}),
+              'category_results'.tr(
+                namedArgs: {
+                  'category': widget.categoryName,
+                  'count': '${_categoriesTour?.length ?? 0}',
+                },
+              ),
               style: TextStyle(
                 fontSize: context.r.sp(24),
                 fontWeight: FontWeight.bold,
@@ -151,30 +154,29 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
                   reviewCount: tour.reviewCount,
                   totViews: tour.totViews.toString(),
                   // isFavorite: tour['isFavorite'] ?? false,
-                  onTap:
-                      () {
-                        unawaited(
-                          _analytics.logEvent(
-                            name: "tour_open",
-                            parameters: {
-                              "tour_id": tour.id,
-                              "is_guest": widget.isGuest.toString(),
-                              "source": "categories_list",
-                            },
-                          ),
-                        );
-                        
-                        Navigator.push(
-                          context,
-                          platformPageRoute(
-                            builder:
-                                (context) => TourDetailScreen(
-                                  tourId: tour.id,
-                                  isGuest: widget.isGuest,
-                                ),
-                          ),
-                        );
-                      }
+                  onTap: () {
+                    unawaited(
+                      _analytics.logEvent(
+                        name: "tour_open",
+                        parameters: {
+                          "tour_id": tour.id,
+                          "is_guest": widget.isGuest.toString(),
+                          "source": "categories_list",
+                        },
+                      ),
+                    );
+
+                    Navigator.push(
+                      context,
+                      platformPageRoute(
+                        builder:
+                            (context) => TourDetailScreen(
+                              tourId: tour.id,
+                              isGuest: widget.isGuest,
+                            ),
+                      ),
+                    );
+                  },
                 );
               },
             ),

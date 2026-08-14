@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 
 allprojects {
@@ -17,15 +18,26 @@ subprojects {
 }
 
 subprojects {
+    tasks.withType<KotlinCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
+}
+
+subprojects {
     afterEvaluate {
+        extensions.findByName("android")?.let {
+            configure<com.android.build.gradle.BaseExtension> {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+        }
         if (name == "ar_flutter_plugin" && extensions.findByName("android") != null) {
             configure<com.android.build.gradle.BaseExtension> {
                 namespace = "io.carius.lars.ar_flutter_plugin"
-            }
-            tasks.withType<KotlinCompile>().configureEach {
-                kotlinOptions {
-                    jvmTarget = "1.8"
-                }
             }
         }
     }

@@ -49,6 +49,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   // User data - would typically come from a user service or state management
   User? _user;
   bool _isLoadingUserDetails = true;
+  bool _profileSafetyAccepted = false;
 
   // Language settings
   //TODO : Implement language selection logic
@@ -253,6 +254,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
   // Save personal info changes
   void _savePersonalInfo() async {
+    if (!_profileSafetyAccepted) {
+      _showError('profile_safety_required'.tr());
+      return;
+    }
     _authService.updateAccount(
       _firstNameController.text,
       _lastNameController.text,
@@ -583,6 +588,36 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orangeAccent),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.privacy_tip_outlined,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'profile_personal_info_warning'.tr(),
+                              style: TextStyle(
+                                fontSize: context.r.sp(13),
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     // Full Name field
                     Text(
                       'name'.tr(),
@@ -733,6 +768,23 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 16,
+                        ),
+                      ),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _profileSafetyAccepted,
+                      activeColor: AppColors.primary,
+                      onChanged: (value) {
+                        setState(() {
+                          _profileSafetyAccepted = value ?? false;
+                        });
+                      },
+                      title: Text(
+                        'profile_safety_confirmation'.tr(),
+                        style: TextStyle(
+                          fontSize: context.r.sp(13),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),

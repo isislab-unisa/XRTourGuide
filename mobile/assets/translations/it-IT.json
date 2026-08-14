@@ -159,6 +159,12 @@
     "no_map_waypoints": "Questo tour non contiene punti georeferenziati da mostrare sulla mappa.",
     "no_recognizable_waypoints": "Questo tour non contiene punti riconoscibili.",
     "no_tours_for_language": "Non ci sono tour disponibili per la lingua selezionata.",
-    "ar_safety_warning": "Avviso di sicurezza AR: i minori devono usare questa funzione sotto la supervisione di un adulto. Presta sempre attenzione all'ambiente circostante durante l'uso della Realtà Aumentata."
-
+    "ar_safety_warning": "Avviso di sicurezza AR: i minori devono usare questa funzione sotto la supervisione di un adulto. Presta sempre attenzione all'ambiente circostante durante l'uso della Realtà Aumentata.",
+    "review_online_safety_warning": "Promemoria di sicurezza online: non condividere nome completo, indirizzo, numero di telefono, scuola, profili social, foto personali o altre informazioni private nelle recensioni. I minori devono chiedere a un adulto prima di pubblicare.",
+    "review_safety_confirmation": "Ho capito che non devo condividere informazioni personali in questa recensione.",
+    "review_safety_required": "Conferma il promemoria di sicurezza online prima di inviare la recensione.",
+    "review_empty_error": "Scrivi una recensione prima di inviarla.",
+    "profile_personal_info_warning": "Sicurezza delle informazioni personali: il profilo può contenere dati privati. Non inserire indirizzo, numero di telefono, scuola, account social o informazioni personali sensibili. I minori devono modificare il profilo solo con la supervisione di un adulto.",
+    "profile_safety_confirmation": "Ho capito che non devo condividere informazioni personali sensibili nel profilo.",
+    "profile_safety_required": "Conferma il promemoria sulla sicurezza delle informazioni personali prima di salvare."
 }
