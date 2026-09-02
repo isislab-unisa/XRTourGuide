@@ -72,6 +72,7 @@ class User(Base):
         nullable=False,
         default=UserRole.USER.value
     )
+    is_adult = Column(Boolean, nullable=False, default=False)
     google_id = Column(String(255), unique=True, nullable=True, index=True)
     apple_id = Column(String(255), unique=True, nullable=True, index=True)
 

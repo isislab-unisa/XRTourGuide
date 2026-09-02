@@ -58,6 +58,7 @@ class UserRegister(BaseModel):
     username: str
     email: EmailStr
     password: str
+    isAdult: bool
     firstName: Optional[str] = None
     lastName: Optional[str] = None
     city: Optional[str] = None
@@ -127,10 +128,9 @@ def verify_apple_identity_token(identity_token: str) -> dict:
         raise HTTPException(status_code=401, detail=f"Invalid Apple token: {str(last_error)}")
     
     except HTTPException as he:
-        print(f"Apple verify_identity HTTP error: {he.status_code} - {he.detail}", flush=True)
         raise
     except Exception as e:
-        print(f"Apple verify_identity error: {e.status_code} - {e.detail}", flush=True)
+        print(f"Apple verify_identity error: {str(e)}", flush=True)
         raise HTTPException(status_code=401, detail=f"Apple token verification failed: {str(e)}")
     
 @router.get("/", response_class=HTMLResponse)
@@ -494,11 +494,8 @@ async def apple_login(
         }
         
     except HTTPException as he:
-        print(f"Apple login HTTP error: {he.status_code} - {he.detail}", flush=True)
         raise
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         print(f"Apple login error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
@@ -552,6 +549,7 @@ async def api_verify(
         "surname": user.surname,
         "city": user.city,
         "description": user.description,
+        "is_adult": user.is_adult,
         "valid": True
     })
 

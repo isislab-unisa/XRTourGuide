@@ -666,7 +666,7 @@
         </div>
     </div>
 </div>
-
+{% include 'partials/age_confirmation_modal.html' %}
 <script>
 // Translation strings for JavaScript
 const translations = {
@@ -701,6 +701,96 @@ function togglePassword() {
 }
 
 // Registration form handler
+// document.getElementById("register-form").addEventListener("submit", async function (e) {
+//     e.preventDefault();
+
+//     const submitBtn = document.getElementById("submit-btn");
+//     const btnText = document.getElementById("btn-text");
+//     const messageBox = document.getElementById("register-message");
+
+//     // Disable button and show loading state
+//     submitBtn.disabled = true;
+//     btnText.innerHTML = '<span class="spinner"></span> ' + translations.registering;
+
+//     const data = {
+//         username: document.getElementById("username").value.trim(),
+//         email: document.getElementById("email").value.trim(),
+//         password: document.getElementById("password").value,
+//         firstName: document.getElementById("first_name").value.trim(),
+//         lastName: document.getElementById("last_name").value.trim(),
+//         city: document.getElementById("city").value.trim(),
+//         description: document.getElementById("description").value.trim(),
+//     };
+
+//     // Reset message
+//     messageBox.style.display = "none";
+//     messageBox.textContent = "";
+//     messageBox.classList.remove("text-danger", "text-success");
+
+//     try {
+//         const response = await fetch("{% url 'register' %}", {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 "X-CSRFToken": "{{ csrf_token }}",
+//             },
+//             body: JSON.stringify(data),
+//         });
+
+//         let errorMessage = "";
+
+//         if (response.ok) { // 200-299
+//             let successMessage = translations.emailSent;
+//             try {
+//                 const successData = await response.json();
+//                 if (successData && successData.message) {
+//                     successMessage = successData.message;
+//                 }
+//             } catch (parseError) {
+//                 console.log("Unable to parse success payload", parseError);
+//             }
+//             messageBox.textContent = successMessage;
+//             messageBox.classList.add("text-success");
+//             messageBox.style.display = "block";
+
+//             if (response.status === 201) {
+//                 setTimeout(() => {
+//                     window.location.href = "{% url 'login' %}";
+//                 }, 2000);
+//             } else {
+//                 submitBtn.disabled = false;
+//                 btnText.textContent = translations.register;
+//             }
+//         } else {
+//             let errorData;
+//             const contentType = response.headers.get("content-type");
+//             if (contentType && contentType.includes("application/json")) {
+//                 errorData = await response.json();
+//                 errorMessage = errorData.detail || errorData.message || translations.unknownError;
+//             } else {
+//                 errorMessage = await response.text();
+//             }
+
+//             messageBox.textContent = translations.error + ": " + errorMessage;
+//             messageBox.classList.add("text-danger");
+//             messageBox.style.display = "block";
+
+//             // Re-enable button
+//             submitBtn.disabled = false;
+//             btnText.textContent = translations.register;
+//         }
+//     } catch (error) {
+//         console.log(error);
+//         messageBox.textContent = translations.networkError;
+//         messageBox.classList.add("text-danger");
+//         messageBox.style.display = "block";
+
+//         // Re-enable button
+//         submitBtn.disabled = false;
+//         btnText.textContent = translations.register;
+//     }
+// });
+
 document.getElementById("register-form").addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -708,7 +798,24 @@ document.getElementById("register-form").addEventListener("submit", async functi
     const btnText = document.getElementById("btn-text");
     const messageBox = document.getElementById("register-message");
 
-    // Disable button and show loading state
+    // Show age confirmation modal FIRST
+    try {
+        const ageConfirmed = await AgeConfirmationModal.show();
+        
+        if (!ageConfirmed) {
+            messageBox.textContent = "{% trans 'Age confirmation is required to register' %}";
+            messageBox.classList.add("text-danger");
+            messageBox.classList.remove("text-success");
+            messageBox.style.display = "block";
+            return;
+        }
+    } catch (error) {
+        messageBox.textContent = "{% trans 'Age confirmation is required to register' %}";
+        messageBox.classList.add("text-danger");
+        messageBox.style.display = "block";
+        return;
+    }
+
     submitBtn.disabled = true;
     btnText.innerHTML = '<span class="spinner"></span> ' + translations.registering;
 
@@ -720,12 +827,11 @@ document.getElementById("register-form").addEventListener("submit", async functi
         lastName: document.getElementById("last_name").value.trim(),
         city: document.getElementById("city").value.trim(),
         description: document.getElementById("description").value.trim(),
+        isAdult: true
     };
 
-    // Reset message
     messageBox.style.display = "none";
     messageBox.textContent = "";
-    messageBox.classList.remove("text-danger", "text-success");
 
     try {
         const response = await fetch("{% url 'register' %}", {
@@ -737,18 +843,15 @@ document.getElementById("register-form").addEventListener("submit", async functi
             body: JSON.stringify(data),
         });
 
-        let errorMessage = "";
-
-        if (response.ok) { // 200-299
+        if (response.ok) {
             let successMessage = translations.emailSent;
             try {
                 const successData = await response.json();
                 if (successData && successData.message) {
                     successMessage = successData.message;
                 }
-            } catch (parseError) {
-                console.log("Unable to parse success payload", parseError);
-            }
+            } catch (parseError) {}
+            
             messageBox.textContent = successMessage;
             messageBox.classList.add("text-success");
             messageBox.style.display = "block";
@@ -774,22 +877,18 @@ document.getElementById("register-form").addEventListener("submit", async functi
             messageBox.textContent = translations.error + ": " + errorMessage;
             messageBox.classList.add("text-danger");
             messageBox.style.display = "block";
-
-            // Re-enable button
             submitBtn.disabled = false;
             btnText.textContent = translations.register;
         }
     } catch (error) {
-        console.log(error);
         messageBox.textContent = translations.networkError;
         messageBox.classList.add("text-danger");
         messageBox.style.display = "block";
-
-        // Re-enable button
         submitBtn.disabled = false;
         btnText.textContent = translations.register;
     }
 });
+
 
 // Show/hide resend verification form
 document.getElementById("show-resend-form").addEventListener("click", function(e) {
