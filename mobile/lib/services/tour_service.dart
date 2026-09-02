@@ -210,6 +210,7 @@ Future<User> getUserDetails() async {
         city: data['city'] ?? '',
         token: "abc",
         description: data['description'] ?? '',
+        isAdult: data["is_adult"] ?? false,
         reviewCount: data['reviewCount'] ?? 0,
       );
     } else {

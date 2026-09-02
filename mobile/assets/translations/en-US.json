@@ -167,6 +167,17 @@
     "review_empty_error": "Please write a review before sending.",
     "profile_personal_info_warning": "Personal information safety: your profile may contain private details. Do not enter your address, phone number, school, social media accounts, or sensitive personal information. Children should update their profile only with adult supervision.",
     "profile_safety_confirmation": "I understand that I must not share sensitive personal information in my profile.",
-    "profile_safety_required": "Please confirm the personal information safety reminder before saving."
+    "profile_safety_required": "Please confirm the personal information safety reminder before saving.",
+    "age_verification": "Age Verification",
+    "age_confirmation_message": "Please confirm you are 18 years or older. This information helps us comply with content guidelines.",
+    "age_confirmation_checkbox": "I am 18 years of age or older",
+    "continue_button": "Continue",
+    "age_verification_required": "Age verification is required to register",
+    "must_be_adult_to_review": "You must be 18 years or older to leave a review",
+    "age_verification_info": "Your age information is required to use review features.",
+    "post_login_age_message": "To access review features, please confirm you are 18 years or older. This can be updated later in your profile settings.",
+    "age_confirmation_saved": "Age confirmation saved successfully",
+    "error_saving_age": "Error saving age confirmation. Please try again."
+
 
 }

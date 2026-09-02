@@ -8,6 +8,7 @@ class User {
   final String city;
   final String token;
   final String description;
+  final bool isAdult;
   int reviewCount = 0;
 
   User({
@@ -18,6 +19,7 @@ class User {
     required this.city,
     required this.token,
     required this.description,
+    required this.isAdult,
     this.reviewCount = 0,
   });
 
@@ -30,6 +32,7 @@ class User {
       city: json['latitude'] as String,
       token: json['category'] as String,
       description: json['subcategory'] as String,
+      isAdult: json['isAdult'] as bool,
       reviewCount: json['reviewCount'] as int,
     );
   }

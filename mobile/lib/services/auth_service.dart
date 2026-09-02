@@ -145,7 +145,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> register(String username, String password, String name, String surname, String mail, String description, String city) async {
+  Future<void> register(String username, String password, String name, String surname, String mail, String description, String city, bool isAdult) async {
     _authStatus = AuthStatus.loading;
     notifyListeners();
 
@@ -160,6 +160,7 @@ class AuthService extends ChangeNotifier {
         mail,
         description,
         city,
+        isAdult,
       );
 
       _authStatus = AuthStatus.registering;
@@ -246,6 +247,11 @@ class AuthService extends ChangeNotifier {
     _googleInitialized = true;
   }
 
+  bool _userIsAdult = false;
+  bool get userIsAdult => _userIsAdult;
+  bool _needsAgeConfirmation = false;
+  bool get needsAgeConfirmation => _needsAgeConfirmation;
+
   Future<void> loginWithGoogle() async {
     try {
       await _ensureGoogleInitialized();
@@ -264,6 +270,9 @@ class AuthService extends ChangeNotifier {
       final accessToken = response.data['access'];
       final refreshToken = response.data['refresh'];
       final int userId = response.data['user']["id"];
+
+      _userIsAdult = response.data['user']["is_adult"] as bool? ?? false;
+      _needsAgeConfirmation = !_userIsAdult;
 
       await _storageService.saveTokens(
         accessToken: accessToken,
@@ -311,6 +320,9 @@ class AuthService extends ChangeNotifier {
       final refreshToken = response.data['refresh'];
       final int userId = response.data['user']["id"];
 
+      bool userIsAdult = response.data['user']["is_adult"] as bool? ?? false;
+      _needsAgeConfirmation = !userIsAdult;
+
       await _storageService.saveTokens(
         accessToken: accessToken,
         refreshToken: refreshToken
@@ -321,6 +333,19 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint("Apple Login Error: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> updateAgeConfirmation(bool isAdult) async {
+    try {
+      // Usa l'endpoint esistente updateAccount ma passa solo isAdult
+      await apiService.updateAgeConfirmation(isAdult);
+      _userIsAdult = isAdult;
+      _needsAgeConfirmation = false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating age confirmation: $e');
       rethrow;
     }
   }

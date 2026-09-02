@@ -832,6 +832,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    final authService = ref.watch(authServiceProvider);
+    final userIsAdult = authService.userIsAdult;
+
     if (_isLoadingTourDetails || _isLoadingWaypoints) {
       return Scaffold(
         appBar: AppBar(backgroundColor: Colors.white, toolbarHeight: 0.1),
@@ -1846,6 +1849,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           ),
                           const Spacer(),
                           if (!widget.isGuest &&
+                              !userIsAdult &&
                               !_hasUserAlreadyReviewed &&
                               !_isCheckingUserReview)
                             IconButton(
@@ -2116,34 +2120,37 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           // Waypoints markers
                           MarkerLayer(
                             markers:
-                            // _waypoints.asMap().entries.map((entry) {
-                            //   int index = entry.key;
-                            //   Waypoint waypoint = entry.value;
-                            //   return _buildWaypointMarker(
-                            //     index,
-                            //     waypoint,
-                            //     isItineraryView: true,
-                            //   );
-                            // }).toList(),
-                            _waypoints.asMap().entries
-                                .where(
-                                  (entry) => !entry.value.isPreliminaryInfo,
-                                )
-                                .map((entry) {
-                                  final rawIndex = entry.key;
-                                  final waypoint = entry.value;
-                                  final displayIndex =
-                                      _displayWaypointNumberForRawIndex(
-                                        rawIndex,
-                                      );
+                                // _waypoints.asMap().entries.map((entry) {
+                                //   int index = entry.key;
+                                //   Waypoint waypoint = entry.value;
+                                //   return _buildWaypointMarker(
+                                //     index,
+                                //     waypoint,
+                                //     isItineraryView: true,
+                                //   );
+                                // }).toList(),
+                                _waypoints
+                                    .asMap()
+                                    .entries
+                                    .where(
+                                      (entry) => !entry.value.isPreliminaryInfo,
+                                    )
+                                    .map((entry) {
+                                      final rawIndex = entry.key;
+                                      final waypoint = entry.value;
+                                      final displayIndex =
+                                          _displayWaypointNumberForRawIndex(
+                                            rawIndex,
+                                          );
 
-                                  return _buildWaypointMarker(
-                                    rawIndex,
-                                    waypoint,
-                                    isItineraryView: true,
-                                    displayIndex: displayIndex,
-                                  );
-                                }).toList(),
+                                      return _buildWaypointMarker(
+                                        rawIndex,
+                                        waypoint,
+                                        isItineraryView: true,
+                                        displayIndex: displayIndex,
+                                      );
+                                    })
+                                    .toList(),
                           ),
                         ],
                       ),
@@ -2812,7 +2819,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                                 longitude: sub.longitude,
                                 isPreliminaryInfo: sub.isPreliminaryInfo,
                                 parentIndex:
-                                    displayIndex ?? 1, // Passa l'indice del waypoint principale
+                                    displayIndex ??
+                                    1, // Passa l'indice del waypoint principale
                                 isSubWaypoint:
                                     true, // Identifica come sub-waypoint
                               );
@@ -3226,7 +3234,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                               );
                               return;
                             }
-                            
+
                             if (comment.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(

@@ -166,5 +166,15 @@
     "review_empty_error": "Scrivi una recensione prima di inviarla.",
     "profile_personal_info_warning": "Sicurezza delle informazioni personali: il profilo può contenere dati privati. Non inserire indirizzo, numero di telefono, scuola, account social o informazioni personali sensibili. I minori devono modificare il profilo solo con la supervisione di un adulto.",
     "profile_safety_confirmation": "Ho capito che non devo condividere informazioni personali sensibili nel profilo.",
-    "profile_safety_required": "Conferma il promemoria sulla sicurezza delle informazioni personali prima di salvare."
+    "profile_safety_required": "Conferma il promemoria sulla sicurezza delle informazioni personali prima di salvare.",
+    "age_verification": "Verifica dell'Età",
+    "age_confirmation_message": "Conferma che hai 18 anni o più. Questa informazione ci aiuta a rispettare le linee guida sui contenuti.",
+    "age_confirmation_checkbox": "Ho 18 anni o più",
+    "continue_button": "Continua",
+    "age_verification_required": "La verifica dell'età è obbligatoria per registrarsi",
+    "must_be_adult_to_review": "Devi avere 18 anni o più per lasciare una recensione",
+    "age_verification_info": "Le tue informazioni sull'età sono necessarie per utilizzare le funzioni di recensione.",
+    "post_login_age_message": "Per accedere alle funzioni di recensione, conferma di avere 18 anni o più. Puoi aggiornare questa informazione in seguito nelle impostazioni del profilo.",
+    "age_confirmation_saved": "Conferma dell'età salvata con successo",
+    "error_saving_age": "Errore nel salvataggio della conferma dell'età. Riprova."
 }

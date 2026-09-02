@@ -67,7 +67,8 @@ def api_profile_detail(request: Request, db: Session = Depends(get_db)):
         "first_name": user.name,
         "last_name": user.surname,
         "city": user.city,
-        "description": user.description
+        "description": user.description,
+        "is_adult": user.is_adult
     }
 
 @router.post(
@@ -118,6 +119,9 @@ async def update_profile(
     user.name = data.get("firstName", user.name)
     user.surname = data.get("lastName", user.surname)
     user.description = data.get("description", user.description)
+
+    if "isAdult" in data:
+        user.is_adult = data.get("isAdult", user.is_adult)
 
     db.commit()
 

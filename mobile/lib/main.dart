@@ -16,7 +16,7 @@ import 'package:app_links/app_links.dart';
 import 'tour_details_page.dart';
 import 'dart:convert';
 import 'utils/platform_page_route.dart';
-
+import 'elements/age_confirmation_dialog.dart';
 import 'utils/responsive.dart';
 
 // This is a top-level function and MUST NOT be a method of a class.
@@ -1374,11 +1374,46 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       context: context,
                     ),
 
+                    // _buildPrimaryButton(
+                    //   text: 'register'.tr(),
+                    //   onPressed: () {
+                    //     setState(() {
+                    //       authService.register(
+                    //         _usernameController.text,
+                    //         _passwordController.text,
+                    //         _nameController.text,
+                    //         _surnameController.text,
+                    //         _emailController.text,
+                    //         _descriptionController.text,
+                    //         _cityController.text,
+                    //       );
+                    //     });
+                    //   },
+                    //   context: context,
+                    // ),
+                    // 
                     _buildPrimaryButton(
                       text: 'register'.tr(),
-                      onPressed: () {
-                        setState(() {
-                          authService.register(
+                      onPressed: () async {  // ✅ Cambia in async
+                        // ✅ Mostra prima il dialog di conferma età
+                        final ageConfirmed = await AgeConfirmationDialog.show(context);
+                        
+                        if (!ageConfirmed) {
+                          // L'utente ha cancellato o non ha confermato
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('age_verification_required'.tr()),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                          }
+                          return;
+                        }
+                        
+                        // ✅ Procedi con la registrazione
+                        try {
+                          await authService.register(
                             _usernameController.text,
                             _passwordController.text,
                             _nameController.text,
@@ -1386,11 +1421,22 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             _emailController.text,
                             _descriptionController.text,
                             _cityController.text,
+                            ageConfirmed,
                           );
-                        });
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Registration error: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       },
                       context: context,
                     ),
+
                     const SizedBox(height: 20),
                     Container(
                       width: isTablet ? 400 : double.infinity,

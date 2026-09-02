@@ -21,12 +21,17 @@ import 'providers/home_providers.dart'; // Importa i nuovi provider
 import 'services/analytics_service.dart';
 import 'utils/responsive.dart';
 import 'utils/platform_page_route.dart';
+import 'elements/post_login_age_dialog.dart';
+import 'services/auth_service.dart';
+
 
 class TravelExplorerScreen extends ConsumerStatefulWidget {
   final bool isGuest;
 
-  const TravelExplorerScreen({Key? key, required this.isGuest})
-    : super(key: key);
+  const TravelExplorerScreen({
+    Key? key,
+    required this.isGuest,
+  }) : super(key: key);
 
   @override
   ConsumerState<TravelExplorerScreen> createState() =>
@@ -65,6 +70,42 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
 
     // Carica i dati offline all'avvio
     _loadOfflineTours();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAgeConfirmation();
+    });
+  }
+
+  Future<void> _checkAgeConfirmation() async {
+    final authService = ref.read(authServiceProvider);
+    
+    if (authService.needsAgeConfirmation && mounted) {
+      final confirmed = await PostLoginAgeDialog.show(context);
+      
+      if (confirmed != null) {
+        try {
+          await authService.updateAgeConfirmation(confirmed);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('age_confirmation_saved'.tr()),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('error_saving_age'.tr()),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+    }
   }
 
   Future<void> _checkInitialConnectivity() async {
@@ -169,10 +210,13 @@ class _TravelExplorerScreenState extends ConsumerState<TravelExplorerScreen>
           .loadTours(forceRefresh: forceRefresh, language: language),
     );
 
-    final position = await _getCurrentPosition().timeout(const Duration(seconds: 2), onTimeout: () => null);
+    final position = await _getCurrentPosition().timeout(
+      const Duration(seconds: 2),
+      onTimeout: () => null,
+    );
 
     if (!mounted || position == null) return;
-    
+
     await ref
         .read(nearbyToursProvider.notifier)
         .loadTours(
