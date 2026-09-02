@@ -58,7 +58,7 @@ class UserRegister(BaseModel):
     username: str
     email: EmailStr
     password: str
-    isAdult: bool
+    isAdult: bool = False
     firstName: Optional[str] = None
     lastName: Optional[str] = None
     city: Optional[str] = None
@@ -633,6 +633,7 @@ async def api_register(
         surname=data.lastName,
         city=data.city,
         description=data.description,
+        is_adult=data.isAdult,
         active=False,
         email_verified=False,
         email_verification_token=email_verification_token,

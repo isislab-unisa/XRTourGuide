@@ -1,29 +1,26 @@
 {% load i18n %}
-<!-- Age Confirmation Modal -->
+<!-- Age Confirmation Modal - Non-blocking, informational -->
 <div id="age-confirmation-modal" class="age-modal">
     <div class="age-modal-backdrop"></div>
     <div class="age-modal-content">
         <div class="age-modal-header">
             <div class="age-icon">🔞</div>
-            <h3>{% trans "Age Verification Required" %}</h3>
-            <p>{% trans "You must be 18 years of age or older to register." %}</p>
+            <h3>{% trans "Age Verification" %}</h3>
+            <p>{% trans "Please confirm if you are 18 years or older to access all functionalities of the application." %}</p>
         </div>
         
         <div class="age-modal-body">
             <label class="age-checkbox-container">
                 <input type="checkbox" id="age-confirm-checkbox" class="age-checkbox">
                 <span class="age-checkbox-label">
-                    {% trans "I confirm that I am 18 years of age or older" %}
+                    {% trans "I am 18 years of age or older" %}
                 </span>
             </label>
         </div>
         
         <div class="age-modal-footer">
-            <button type="button" id="age-modal-cancel" class="age-btn age-btn-cancel">
-                {% trans "Cancel" %}
-            </button>
-            <button type="button" id="age-modal-confirm" class="age-btn age-btn-primary" disabled>
-                {% trans "Confirm & Continue" %}
+            <button type="button" id="age-modal-continue" class="age-btn age-btn-primary">
+                {% trans "Continue" %}
             </button>
         </div>
     </div>
@@ -54,7 +51,6 @@
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease-out;
 }
 
 .age-modal-content {
@@ -66,22 +62,17 @@
     max-width: 480px;
     width: 90%;
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
-    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    animation: modalSlideIn 0.4s ease-out;
 }
 
 @keyframes modalSlideIn {
     from {
         opacity: 0;
-        transform: translateY(-40px) scale(0.9);
+        transform: translateY(-30px);
     }
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
 }
 
@@ -93,12 +84,6 @@
 .age-icon {
     font-size: 4rem;
     margin-bottom: 20px;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
 }
 
 .age-modal-header h3 {
@@ -117,7 +102,7 @@
 }
 
 .age-modal-body {
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    background: #f7fafc;
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 30px;
@@ -137,7 +122,6 @@
     width: 22px;
     height: 22px;
     cursor: pointer;
-    flex-shrink: 0;
     accent-color: #2d3748;
 }
 
@@ -161,17 +145,8 @@
     font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
     font-family: 'DM Sans', sans-serif;
-}
-
-.age-btn-cancel {
-    background: #e2e8f0;
-    color: #2d3748;
-}
-
-.age-btn-cancel:hover {
-    background: #cbd5e0;
+    transition: all 0.3s ease;
 }
 
 .age-btn-primary {
@@ -180,21 +155,14 @@
     box-shadow: 0 4px 14px rgba(45, 55, 72, 0.25);
 }
 
-.age-btn-primary:not(:disabled):hover {
+.age-btn-primary:hover {
     background: #1a202c;
-}
-
-.age-btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    transform: translateY(-2px);
 }
 
 @media (max-width: 480px) {
     .age-modal-content {
         padding: 35px 25px;
-    }
-    .age-modal-footer {
-        flex-direction: column;
     }
 }
 </style>
@@ -203,7 +171,7 @@
 const AgeConfirmationModal = (function() {
     let modal = null;
     let checkbox = null;
-    let confirmBtn = null;
+    let continueBtn = null;
     let resolveCallback = null;
 
     function init() {
@@ -211,30 +179,21 @@ const AgeConfirmationModal = (function() {
         if (!modal) return;
 
         checkbox = document.getElementById('age-confirm-checkbox');
-        confirmBtn = document.getElementById('age-modal-confirm');
+        continueBtn = document.getElementById('age-modal-continue');
         
-        const cancelBtn = document.getElementById('age-modal-cancel');
         const backdrop = modal.querySelector('.age-modal-backdrop');
 
-        checkbox.addEventListener('change', function() {
-            confirmBtn.disabled = !this.checked;
-        });
-
-        confirmBtn.addEventListener('click', function() {
-            if (checkbox.checked) hide(true);
-        });
-
-        cancelBtn.addEventListener('click', function() {
-            hide(false);
+        continueBtn.addEventListener('click', function() {
+            hide();
         });
 
         backdrop.addEventListener('click', function() {
-            hide(false);
+            hide();
         });
 
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && modal.classList.contains('show')) {
-                hide(false);
+                hide();
             }
         });
     }
@@ -242,18 +201,21 @@ const AgeConfirmationModal = (function() {
     function show() {
         return new Promise((resolve) => {
             resolveCallback = resolve;
-            checkbox.checked = false;
-            confirmBtn.disabled = true;
+            checkbox.checked = false; // Reset
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
         });
     }
 
-    function hide(confirmed) {
+    function hide() {
+        const isChecked = checkbox.checked;
         modal.classList.remove('show');
         document.body.style.overflow = '';
-        if (resolveCallback) resolveCallback(confirmed);
-        resolveCallback = null;
+        
+        if (resolveCallback) {
+            resolveCallback(isChecked); // Restituisce true o false
+            resolveCallback = null;
+        }
     }
 
     return { init: init, show: show };

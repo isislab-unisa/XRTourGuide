@@ -1,3 +1,5 @@
+from requests.utils import is_ipv4_address
+
 from django.shortcuts import render, redirect
 from xr_tour_guide_core.models import Tour
 import requests
@@ -232,6 +234,7 @@ def register(request):
         surname = data.get("lastName")
         description = data.get("description")
         city = data.get("city")
+        is_adult = data.get("isAdult", False)
 
         try:
             response = requests.post(
@@ -244,7 +247,8 @@ def register(request):
                     "firstName": name,
                     "lastName": surname,
                     "description": description,
-                    "city": city
+                    "city": city,
+                    "isAdult": is_adult
                 },
                 headers=get_idp_headers(),
                 timeout=10

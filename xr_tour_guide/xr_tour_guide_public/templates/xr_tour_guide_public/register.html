@@ -798,23 +798,9 @@ document.getElementById("register-form").addEventListener("submit", async functi
     const btnText = document.getElementById("btn-text");
     const messageBox = document.getElementById("register-message");
 
-    // Show age confirmation modal FIRST
-    try {
-        const ageConfirmed = await AgeConfirmationModal.show();
-        
-        if (!ageConfirmed) {
-            messageBox.textContent = "{% trans 'Age confirmation is required to register' %}";
-            messageBox.classList.add("text-danger");
-            messageBox.classList.remove("text-success");
-            messageBox.style.display = "block";
-            return;
-        }
-    } catch (error) {
-        messageBox.textContent = "{% trans 'Age confirmation is required to register' %}";
-        messageBox.classList.add("text-danger");
-        messageBox.style.display = "block";
-        return;
-    }
+    // Mostra il modal e aspetta la risposta dell'utente
+    const isAdult = await AgeConfirmationModal.show();
+    console.log('User age confirmation:', isAdult); // true o false
 
     submitBtn.disabled = true;
     btnText.innerHTML = '<span class="spinner"></span> ' + translations.registering;
@@ -827,7 +813,7 @@ document.getElementById("register-form").addEventListener("submit", async functi
         lastName: document.getElementById("last_name").value.trim(),
         city: document.getElementById("city").value.trim(),
         description: document.getElementById("description").value.trim(),
-        isAdult: true
+        isAdult: isAdult  // ✅ Valore reale dal checkbox (true/false)
     };
 
     messageBox.style.display = "none";
@@ -865,10 +851,10 @@ document.getElementById("register-form").addEventListener("submit", async functi
                 btnText.textContent = translations.register;
             }
         } else {
-            let errorData;
+            let errorMessage;
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
-                errorData = await response.json();
+                const errorData = await response.json();
                 errorMessage = errorData.detail || errorData.message || translations.unknownError;
             } else {
                 errorMessage = await response.text();

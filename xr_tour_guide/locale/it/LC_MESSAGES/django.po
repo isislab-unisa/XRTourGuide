@@ -1724,3 +1724,15 @@ msgstr "XRTourGuide fa parte del progetto FUTURAL, che punta a dare slancio al f
 
 msgid "Contacts"
 msgstr "Contatti"
+
+msgid "Age Verification"
+msgstr "Verifica dell'età"
+
+msgid "Please confirm if you are 18 years or older to access all functionalities of the application."
+msgstr "Si prega di confermare se si hanno 18 anni o più per accedere a tutte le funzionalità dell'applicazione."
+
+msgid "I am 18 years of age or older"
+msgstr "Ho 18 anni o più"
+
+msgid "Continue"
+msgstr "Continua"
