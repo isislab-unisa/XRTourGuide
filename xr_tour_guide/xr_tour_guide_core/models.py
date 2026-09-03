@@ -52,7 +52,7 @@ class CustomUser(AbstractUser):
     city = models.CharField(max_length=100, blank=True, verbose_name=_("City"))
     description = models.TextField(blank=True, verbose_name=_("Description"))
     email = models.EmailField(unique=True, verbose_name=_("Email"))
-    is_adult = models.BooleanField(default=False, verbose_name=_("Is Adult"))
+    is_adult = models.IntegerField(default=0, verbose_name=_("Is Adult"))
 
 class MinioStorage(S3Boto3Storage):
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
