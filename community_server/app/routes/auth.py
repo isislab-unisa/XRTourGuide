@@ -58,14 +58,16 @@ class UserRegister(BaseModel):
     username: str
     email: EmailStr
     password: str
-    isAdult: bool = False
+    isAdult: int = 0
     firstName: Optional[str] = None
     lastName: Optional[str] = None
     city: Optional[str] = None
     description: Optional[str] = None
 
+
 class GoogleLoginRequest(BaseModel):
     id_token: str
+    is_adult: Optional[int] = None
     
 class AppleLoginRequest(BaseModel):
     identity_token: str
@@ -73,6 +75,7 @@ class AppleLoginRequest(BaseModel):
     given_name: Optional[str] = None
     family_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    is_adult: Optional[int] = None
     
 def _generate_unique_username(db: Session, email: str) -> str:
     base_username = email.split("@")[0]
@@ -332,6 +335,7 @@ async def google_login(
         user = db.query(models.User).filter(models.User.email == email).first()
 
         if not user:
+            is_adult = data.is_adult if data.is_adult is not None else 0
             username = email.split("@")[0]
             base_username = username
             counter = 1
@@ -347,7 +351,8 @@ async def google_login(
                 active=True,
                 email_verified=True,
                 google_id=google_id,
-                role=models.UserRole.USER
+                role=models.UserRole.USER,
+                is_adult=is_adult
             )
 
             user.set_password(secrets.token_urlsafe(32))
@@ -355,8 +360,11 @@ async def google_login(
             db.commit()
             db.refresh(user)
         else:
+            
             if not user.google_id:
                 user.google_id = google_id
+                if data.is_adult is not None:
+                    user.is_adult = data.is_adult
                 db.commit()
 
             if not user.active:
@@ -415,6 +423,8 @@ async def apple_login(
         apple_id = payload.get("sub")
         token_email = payload.get("email")
         email = data.email or token_email
+
+        is_adult = data.is_adult if data.is_adult is not None else 0
         
         given_name = data.given_name or ""
         family_name = data.family_name or ""
@@ -441,6 +451,7 @@ async def apple_login(
                 active=True,
                 email_verified=True,
                 apple_id=apple_id,
+                is_adult=is_adult,
                 role=models.UserRole.USER
             )
             
@@ -451,6 +462,9 @@ async def apple_login(
         else:
             if not user.apple_id:
                 user.apple_id = apple_id
+
+            if data.is_adult is not None:
+                user.is_adult = data.is_adult
                 
             if not user.email_verified:
                 user.email_verified = True

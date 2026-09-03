@@ -9,6 +9,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.io.FileInputStream
+import java.util.Properties
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.picaresque.xrtourguide"
     compileSdk = flutter.compileSdkVersion
@@ -37,11 +46,27 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreAlias = keystoreProperties.getProperty("keyAlias")
+            val keystoreKeyPassword = keystoreProperties.getProperty("keyPassword")
+            val keystoreStoreFile = keystoreProperties.getProperty("storeFile")
+            val keystoreStorePassword = keystoreProperties.getProperty("storePassword")
+
+            if (!keystoreAlias.isNullOrEmpty() && !keystoreStoreFile.isNullOrEmpty()) {
+                keyAlias = keystoreAlias
+                keyPassword = keystoreKeyPassword
+                storeFile = file(keystoreStoreFile)
+                storePassword = keystoreStorePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
 
             isMinifyEnabled = true
             isShrinkResources = true

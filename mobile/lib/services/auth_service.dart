@@ -19,9 +19,14 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService(ref);
 });
 
-const String googleIosClientId = String.fromEnvironment("GOOGLE_IOS_CLIENT_ID", defaultValue: "");
-const String googleWebClientId = String.fromEnvironment("GOOGLE_WEB_CLIENT_ID", defaultValue: "");
-
+const String googleIosClientId = String.fromEnvironment(
+  "GOOGLE_IOS_CLIENT_ID",
+  defaultValue: "",
+);
+const String googleWebClientId = String.fromEnvironment(
+  "GOOGLE_WEB_CLIENT_ID",
+  defaultValue: "",
+);
 
 class AuthService extends ChangeNotifier {
   final Ref ref;
@@ -34,15 +39,13 @@ class AuthService extends ChangeNotifier {
   AuthStatus get authStatus => _authStatus;
 
   String? _loginErrorMessage;
-  String? get loginErrorMessage=> _loginErrorMessage;
-
+  String? get loginErrorMessage => _loginErrorMessage;
 
   AuthService(this.ref) {
     apiService = ref.read(apiServiceProvider);
     _analytics = ref.read(analyticsServiceProvider);
     _checkAuthStatus();
   }
-
 
   Future<void> _checkAuthStatus() async {
     _authStatus = AuthStatus.loading;
@@ -51,11 +54,15 @@ class AuthService extends ChangeNotifier {
     final accessToken = await _storageService.getAccessToken();
     final refreshToken = await _storageService.getRefreshToken();
 
-    final serverUp = await apiService.pingServer(timeout: const Duration(seconds: 2));
+    final serverUp = await apiService.pingServer(
+      timeout: const Duration(seconds: 2),
+    );
 
     if (serverUp) {
       if (refreshToken != null) {
-        final refreshed = await _refreshAccessTokenSilently(timeout: const Duration(seconds: 5));
+        final refreshed = await _refreshAccessTokenSilently(
+          timeout: const Duration(seconds: 5),
+        );
         if (refreshed) {
           _authStatus = AuthStatus.authenticated;
         } else {
@@ -77,15 +84,14 @@ class AuthService extends ChangeNotifier {
     // [LOGGER] Log the auth status check event
     await _analytics.logEvent(
       name: "auth_status_resolved",
-      parameters: {
-        'status' : _authStatus.name,
-        'server_up': serverUp,
-      },
+      parameters: {'status': _authStatus.name, 'server_up': serverUp},
     );
   }
 
-  Future<bool> _refreshAccessTokenSilently({Duration timeout = const Duration(seconds: 4)}) async{
-    try{
+  Future<bool> _refreshAccessTokenSilently({
+    Duration timeout = const Duration(seconds: 4),
+  }) async {
+    try {
       final refreshToken = await _storageService.getRefreshToken();
       if (refreshToken == null) return false;
 
@@ -99,14 +105,17 @@ class AuthService extends ChangeNotifier {
         ),
       );
 
-      if (response.statusCode == 200){
+      if (response.statusCode == 200) {
         final newAccess = response.data["access"] as String?;
         if (newAccess == null) return false;
-        await _storageService.saveTokens(accessToken: newAccess, refreshToken: refreshToken);
+        await _storageService.saveTokens(
+          accessToken: newAccess,
+          refreshToken: refreshToken,
+        );
         return true;
       }
       return false;
-    }catch (e) {
+    } catch (e) {
       return false;
     }
   }
@@ -139,13 +148,23 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       debugPrint("Login Error: $e");
       // _authStatus = AuthStatus.unauthenticated;
-      _loginErrorMessage ??= "An error occurred during login. Please try again.";
+      _loginErrorMessage ??=
+          "An error occurred during login. Please try again.";
       // notifyListeners();
       rethrow;
     }
   }
 
-  Future<void> register(String username, String password, String name, String surname, String mail, String description, String city, bool isAdult) async {
+  Future<void> register(
+    String username,
+    String password,
+    String name,
+    String surname,
+    String mail,
+    String description,
+    String city,
+    bool isAdult,
+  ) async {
     _authStatus = AuthStatus.loading;
     notifyListeners();
 
@@ -170,14 +189,9 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> deleteAccount(
-    String password,
-  ) async {
-
+  Future<void> deleteAccount(String password) async {
     try {
-      await apiService.deleteAccount(
-        password,
-      );
+      await apiService.deleteAccount(password);
       _authStatus = AuthStatus.unauthenticated;
     } catch (e) {
       debugPrint("Delete account error: $e");
@@ -194,14 +208,14 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateAccount(String firstName, String lastName, String mail, String description) async {
+  Future<void> updateAccount(
+    String firstName,
+    String lastName,
+    String mail,
+    String description,
+  ) async {
     try {
-      await apiService.updateAccount(
-        firstName,
-        lastName,
-        mail,
-        description,
-      );
+      await apiService.updateAccount(firstName, lastName, mail, description);
     } catch (e) {
       debugPrint("Update Account error: $e");
     }
@@ -217,7 +231,6 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
-
 
   Future<void> logout() async {
     debugPrint("Logout Called");
@@ -241,16 +254,21 @@ class AuthService extends ChangeNotifier {
     if (_googleInitialized) return;
 
     await _googleSignIn.initialize(
-      clientId: (Platform.isIOS && googleIosClientId.isNotEmpty) ? googleIosClientId : null,
+      clientId:
+          (Platform.isIOS && googleIosClientId.isNotEmpty)
+              ? googleIosClientId
+              : null,
       serverClientId: googleWebClientId.isNotEmpty ? googleWebClientId : null,
     );
     _googleInitialized = true;
   }
 
+  int _userAdultStatus = 0;
+  int get userAdultStatus => _userAdultStatus;
   bool _userIsAdult = false;
-  bool get userIsAdult => _userIsAdult;
+  bool get userIsAdult => _userAdultStatus == 1;
   bool _needsAgeConfirmation = false;
-  bool get needsAgeConfirmation => _needsAgeConfirmation;
+  bool get needsAgeConfirmation => _userAdultStatus == 0;
 
   Future<void> loginWithGoogle() async {
     try {
@@ -271,8 +289,8 @@ class AuthService extends ChangeNotifier {
       final refreshToken = response.data['refresh'];
       final int userId = response.data['user']["id"];
 
-      _userIsAdult = response.data['user']["is_adult"] as bool? ?? false;
-      _needsAgeConfirmation = !_userIsAdult;
+      _userAdultStatus = response.data["user"]["is_adult"] as int? ?? 0;
+      _needsAgeConfirmation = _userAdultStatus == 0;
 
       await _storageService.saveTokens(
         accessToken: accessToken,
@@ -320,12 +338,12 @@ class AuthService extends ChangeNotifier {
       final refreshToken = response.data['refresh'];
       final int userId = response.data['user']["id"];
 
-      bool userIsAdult = response.data['user']["is_adult"] as bool? ?? false;
-      _needsAgeConfirmation = !userIsAdult;
+      _userAdultStatus = response.data["user"]["is_adult"] as int? ?? 0;
+      _needsAgeConfirmation = _userAdultStatus == 0;
 
       await _storageService.saveTokens(
         accessToken: accessToken,
-        refreshToken: refreshToken
+        refreshToken: refreshToken,
       );
 
       _authStatus = AuthStatus.authenticated;
@@ -337,11 +355,11 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> updateAgeConfirmation(bool isAdult) async {
+  Future<void> updateAgeConfirmation(int adultStatus) async {
     try {
       // Usa l'endpoint esistente updateAccount ma passa solo isAdult
-      await apiService.updateAgeConfirmation(isAdult);
-      _userIsAdult = isAdult;
+      await apiService.updateAgeConfirmation(adultStatus);
+      _userAdultStatus = adultStatus;
       _needsAgeConfirmation = false;
       notifyListeners();
     } catch (e) {

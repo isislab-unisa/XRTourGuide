@@ -30,10 +30,9 @@ class ApiService {
     '/apple-mobile-login/',
   ];
 
-  static String appSignature = "APP_SIGNATURE_XR_TOUR_GUIDE_MOBILE";
+  static String appSignature = "APP_SIGNATURE";
   
-  static const String centralizedUrl =
-      'COMMUNITY_SERVER_URL'; 
+  static const String centralizedUrl = 'COMMUNITY_SERVER)_URL';
 
   static String basicUrl = centralizedUrl;
 
@@ -373,6 +372,7 @@ class ApiService {
     String mail,
     String description,
     String city,
+    bool isAdult,
   ) async {
     try {
       final response = await dio.post(
@@ -384,6 +384,7 @@ class ApiService {
           'lastName': surname,
           'email': mail,
           'description': description,
+          'isAdult': isAdult,
           'city': city,
         },
         options: _communityOptions(),
@@ -391,6 +392,19 @@ class ApiService {
       return response;
     } catch (e) {
       debugPrint('Failed to register: $e');
+      rethrow;
+    }
+  }
+
+  Future<Response> updateAgeConfirmation(int adultStatus) async {
+    try {
+      final response = await dio.post(
+        '/update_profile/',
+        data: {'isAdult': adultStatus},
+      );
+      return response;
+    } catch (e) {
+      debugPrint('Failed to update age confirmation: $e');
       rethrow;
     }
   }

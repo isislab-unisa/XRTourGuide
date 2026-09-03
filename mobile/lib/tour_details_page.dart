@@ -834,6 +834,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
 
     final authService = ref.watch(authServiceProvider);
     final userIsAdult = authService.userIsAdult;
+    print('userIsAdult: $userIsAdult');
 
     if (_isLoadingTourDetails || _isLoadingWaypoints) {
       return Scaffold(
@@ -1849,7 +1850,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           ),
                           const Spacer(),
                           if (!widget.isGuest &&
-                              !userIsAdult &&
+                              userIsAdult == 1 &&
                               !_hasUserAlreadyReviewed &&
                               !_isCheckingUserReview)
                             IconButton(

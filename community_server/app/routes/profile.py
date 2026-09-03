@@ -121,8 +121,10 @@ async def update_profile(
     user.description = data.get("description", user.description)
 
     if "isAdult" in data:
-        user.is_adult = data.get("isAdult", user.is_adult)
-
+        is_adult = data.get("isAdult")
+        if is_adult in [0, 1, 2]:
+            user.is_adult = is_adult
+            
     db.commit()
 
     return {"message": "Profile updated successfully"}

@@ -4,8 +4,8 @@ import 'package:easy_localization/easy_localization.dart';
 class PostLoginAgeDialog extends StatefulWidget {
   const PostLoginAgeDialog({super.key});
 
-  static Future<bool?> show(BuildContext context) async {
-    return await showDialog<bool>(
+  static Future<int?> show(BuildContext context) async {
+    return await showDialog<int>(
       context: context,
       barrierDismissible: false,
       builder: (context) => const PostLoginAgeDialog(),
@@ -74,7 +74,7 @@ class _PostLoginAgeDialogState extends State<PostLoginAgeDialog> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(_isConfirmed),
+                  onPressed: () => Navigator.of(context).pop(_isConfirmed ? 1 : 2),
                   child: Text('continue_button'.tr()),
                 ),
               ),
