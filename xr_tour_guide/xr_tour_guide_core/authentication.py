@@ -63,11 +63,16 @@ class JWTFastAPIAuthentication(BaseAuthentication):
             user.last_name = payload.get("surname", user.last_name)
             user.city = payload.get("city", user.city) or "Not provided"
             user.description = payload.get("description", user.description) or "Not provided"
-            user.is_adult = payload.get("is_adult", 0)
-            if isinstance(user.is_adult, bool):
-                user.is_adult = 1 if user.is_adult else 0
+            adult_status = payload.get("is_adult", 0)
+            if isinstance(adult_status, bool):
+                adult_status = 1 if adult_status else 0
             else:
-                user.is_adult = int(user.is_adult) if user.is_adult in [0, 1, 2] else 0
+                try:
+                    adult_status = int(adult_status)
+                except (TypeError, ValueError):
+                    adult_status = 0
+            
+            user.is_adult = adult_status if adult_status in [0, 1, 2] else 0
             user.save()
         except User.DoesNotExist:
             user = User.objects.create_user(

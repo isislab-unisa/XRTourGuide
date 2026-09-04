@@ -32,7 +32,7 @@ class ApiService {
 
   static String appSignature = "APP_SIGNATURE";
   
-  static const String centralizedUrl = 'COMMUNITY_SERVER)_URL';
+  static const String centralizedUrl = 'COMMUNITY_SERVER_URL';
 
   static String basicUrl = centralizedUrl;
 
@@ -372,7 +372,7 @@ class ApiService {
     String mail,
     String description,
     String city,
-    bool isAdult,
+    int isAdult,
   ) async {
     try {
       final response = await dio.post(

@@ -224,7 +224,8 @@ async def api_login(request: Request, db: Session = Depends(get_db), service: Se
             "name": user.name,
             "surname": user.surname,
             "city": user.city,
-            "description": user.description
+            "description": user.description,
+            "is_adult": user.is_adult
         }
     }
 
@@ -391,7 +392,8 @@ async def google_login(
                 "name": user.name,
                 "surname": user.surname,
                 "city": user.city,
-                "description": user.description
+                "description": user.description,
+                "is_adult": user.is_adult
             }
         }
 
@@ -503,7 +505,8 @@ async def apple_login(
                 "name": user.name,
                 "surname": user.surname,
                 "city": user.city,
-                "description": user.description
+                "description": user.description,
+                "is_adult": user.is_adult
             }
         }
         

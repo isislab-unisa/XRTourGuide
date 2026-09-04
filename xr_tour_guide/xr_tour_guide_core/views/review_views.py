@@ -70,6 +70,12 @@ def create_review(request):
     rating = request.data.get('rating')
     review_text = request.data.get('comment')
 
+    if request.user.is_adult != 1:
+        return Response(
+            {"detail": "You must be an adult to create a review."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
     try:
         tour = Tour.objects.get(id=tour_id)
     except Tour.DoesNotExist:

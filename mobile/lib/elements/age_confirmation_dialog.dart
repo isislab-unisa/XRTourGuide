@@ -4,14 +4,16 @@ import 'package:easy_localization/easy_localization.dart';
 class AgeConfirmationDialog extends StatefulWidget {
   const AgeConfirmationDialog({super.key});
 
-  static Future<bool> show(BuildContext context) async {
-    final result = await showDialog<bool>(
+  static Future<int> show(BuildContext context) async {
+    final result = await showDialog<int>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black54,
       builder: (context) => const AgeConfirmationDialog(),
     );
-    return result ?? false;
+
+    // 2 = utente non ha dichiarato di essere maggiorenne
+    return result ?? 2;
   }
 
   @override
@@ -48,7 +50,7 @@ class _AgeConfirmationDialogState extends State<AgeConfirmationDialog> {
               'age_confirmation_message'.tr(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey[600],
-              ),
+                  ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -85,16 +87,17 @@ class _AgeConfirmationDialogState extends State<AgeConfirmationDialog> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(false),
+                    // 2 = dichiara/non conferma maggiorenne
+                    onPressed: () => Navigator.of(context).pop(0),
                     child: Text('cancel'.tr()),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isConfirmed
-                        ? () => Navigator.of(context).pop(true)
-                        : null,
+                    // checked => 1, unchecked => 2
+                    onPressed: () =>
+                        Navigator.of(context).pop(_isConfirmed ? 1 : 2),
                     child: Text('continue_button'.tr()),
                   ),
                 ),

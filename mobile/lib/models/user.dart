@@ -8,7 +8,7 @@ class User {
   final String city;
   final String token;
   final String description;
-  final bool isAdult;
+  final int isAdult;
   int reviewCount = 0;
 
   User({
@@ -23,6 +23,10 @@ class User {
     this.reviewCount = 0,
   });
 
+  bool get isAdultConfirmed => isAdult == 1;
+  bool get needsAgeVerification => isAdult == 0;
+  bool get isMinor => isAdult == 2;
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as int,
@@ -32,7 +36,7 @@ class User {
       city: json['latitude'] as String,
       token: json['category'] as String,
       description: json['subcategory'] as String,
-      isAdult: json['isAdult'] as bool,
+      isAdult: json['is_adult'] as int? ?? json['isAdult'] as int? ?? 0,
       reviewCount: json['reviewCount'] as int,
     );
   }

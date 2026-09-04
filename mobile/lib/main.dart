@@ -1396,20 +1396,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                       text: 'register'.tr(),
                       onPressed: () async {  // ✅ Cambia in async
                         // ✅ Mostra prima il dialog di conferma età
-                        final ageConfirmed = await AgeConfirmationDialog.show(context);
-                        
-                        if (!ageConfirmed) {
-                          // L'utente ha cancellato o non ha confermato
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('age_verification_required'.tr()),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
-                          }
-                          return;
-                        }
+                        final adultStatus = await AgeConfirmationDialog.show(context);
                         
                         // ✅ Procedi con la registrazione
                         try {
@@ -1421,7 +1408,7 @@ class _AuthFlowScreenState extends ConsumerState<AuthFlowScreen> {
                             _emailController.text,
                             _descriptionController.text,
                             _cityController.text,
-                            ageConfirmed,
+                            adultStatus,
                           );
                         } catch (e) {
                           if (mounted) {

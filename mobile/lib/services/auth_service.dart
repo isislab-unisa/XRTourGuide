@@ -163,7 +163,7 @@ class AuthService extends ChangeNotifier {
     String mail,
     String description,
     String city,
-    bool isAdult,
+    int isAdult,
   ) async {
     _authStatus = AuthStatus.loading;
     notifyListeners();
