@@ -88,6 +88,19 @@ class AuthService extends ChangeNotifier {
     );
   }
 
+  Future<void> _loadAdultStatusFromProfile() async {
+    try {
+      final response = await apiService.getProfileDetails();
+
+      if (response.statusCode == 200) {
+        _userAdultStatus = _parseAdultStatus(response.data['is_adult']);
+        _needsAgeConfirmation = _userAdultStatus == 0;
+      }
+    } catch (e) {
+      debugPrint('Error loading adult status from profile: $e');
+    }
+  }
+
   Future<bool> _refreshAccessTokenSilently({
     Duration timeout = const Duration(seconds: 4),
   }) async {
@@ -112,6 +125,7 @@ class AuthService extends ChangeNotifier {
           accessToken: newAccess,
           refreshToken: refreshToken,
         );
+        await _loadAdultStatusFromProfile();
         return true;
       }
       return false;
@@ -120,10 +134,26 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> login(String email, String password) async {
-    // _authStatus = AuthStatus.loading;
-    // notifyListeners();
+  int _parseAdultStatus(dynamic value) {
+    if (value is int && [0, 1, 2].contains(value)) {
+      return value;
+    }
 
+    if (value is bool) {
+      return value ? 1 : 0;
+    }
+
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null && [0, 1, 2].contains(parsed)) {
+        return parsed;
+      }
+    }
+
+    return 0;
+  }
+
+  Future<void> login(String email, String password) async {
     try {
       final response = await apiService.login(email, password);
       if (response.statusCode == 401) {
@@ -135,8 +165,11 @@ class AuthService extends ChangeNotifier {
 
       final accessToken = response.data['access'];
       final refreshToken = response.data['refresh'];
+      final userData = response.data["user"];
 
-      int userId = response.data['user']["id"];
+      int userId = userData["id"];
+      _userAdultStatus = _parseAdultStatus(userData["is_adult"]);
+      _needsAgeConfirmation = _userAdultStatus == 0;
 
       await _storageService.saveTokens(
         accessToken: accessToken,
@@ -218,6 +251,7 @@ class AuthService extends ChangeNotifier {
       await apiService.updateAccount(firstName, lastName, mail, description);
     } catch (e) {
       debugPrint("Update Account error: $e");
+      rethrow;
     }
   }
 

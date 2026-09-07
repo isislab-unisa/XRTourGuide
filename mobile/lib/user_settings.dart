@@ -258,27 +258,47 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       _showError('profile_safety_required'.tr());
       return;
     }
-    _authService.updateAccount(
-      _firstNameController.text,
-      _lastNameController.text,
-      _emailController.text,
-      _descriptionController.text,
-    );
 
-    await _loadUserDetails(); // Reload user details after saving
+    try {
+      setState(() {
+        _isLoadingUserDetails = true;
+      });
 
-    setState(() {
-      // _fullName = _nameController.text;
-      // _email = _emailController.text;
-      _currentScreen = ProfileScreenState.main;
-    });
-    // Show a snackbar to confirm changes
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('personal_info_update_success'.tr()),
-        backgroundColor: AppColors.success,
-      ),
-    );
+      await _authService.updateAccount(
+        _firstNameController.text,
+        _lastNameController.text,
+        _emailController.text,
+        _descriptionController.text,
+      );
+
+      _user = null;
+
+      await _loadUserDetails(); // Reload user details after saving
+
+      if (!mounted) return;
+
+      setState(() {
+        // _fullName = _nameController.text;
+        // _email = _emailController.text;
+        _currentScreen = ProfileScreenState.main;
+        _profileSafetyAccepted = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('personal_info_update_success'.tr()),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingUserDetails = false;
+      });
+
+      _showError('error_loading_user_detials'.tr());
+    }
   }
 
   // Save language selection

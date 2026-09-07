@@ -1850,7 +1850,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen>
                           ),
                           const Spacer(),
                           if (!widget.isGuest &&
-                              userIsAdult == 1 &&
+                              userIsAdult &&
                               !_hasUserAlreadyReviewed &&
                               !_isCheckingUserReview)
                             IconButton(
