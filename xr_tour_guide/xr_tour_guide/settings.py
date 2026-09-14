@@ -35,7 +35,17 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = False
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-CSRF_TRUSTED_ORIGINS = ['https://xrtourguide.di.unisa.it']
+# CSRF_TRUSTED_ORIGINS = [os.getenv('CSRF_TRUSTED_ORIGIN')]
+CSRF_TRUSTED_ORIGINS = [
+    "https://xrtourguide.di.unisa.it",
+    "https://xrtourguide.eu",
+    "https://www.xrtourguide.eu",
+    "http://localhost",
+    "http://127.0.0.1",
+    "http://localhost:8001",
+    "http://127.0.0.1:8001",
+]
+
 CORS_ORIGIN_ALLOW = True
 
 SECURE_SSL_REDIRECT = False
@@ -48,7 +58,10 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "web",
     "xr_tour_guide_unisa",
-    "xrtourguide.di.unisa.it"
+    "xrtourguide.di.unisa.it",
+    "www.xrtourguide.di.unisa.it",
+    "xrtourguide.eu",
+    "www.xrtourguide.eu",
 ]
 
 FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME')
@@ -124,10 +137,10 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Permetti richieste da Google
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost',
-    'http://127.0.0.1',
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     'http://localhost',
+#     'http://127.0.0.1',
+# ]
 # SOCIALACCOUNT_LOGIN_ON_GET = True
 # SOCIALACCOUNT_AUTO_SIGNUP = True
 # SOCIALACCOUNT_ADAPTER = 'xr_tour_guide_core.accounts.adapters.CustomSocialAccountAdapter'
