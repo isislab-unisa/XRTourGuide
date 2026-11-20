@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = f"mysql+pymysql://{os.getenv('CS_DB_USER')}:{os.getenv('CS_DB_PASSWORD')}@{os.getenv('CS_DB_HOST')}:{os.getenv('CS_DB_PORT')}/{os.getenv('CS_DB_NAME')}"
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=True, pool_pre_ping=True, pool_recycle=3600)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
